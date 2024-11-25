@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
 
+import com.bluerobotics.blueberry.schema.parser.elements.BaseTypeElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BlockElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BlockEndElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BlockStartElement;
@@ -151,7 +152,12 @@ public class BlueberrySchemaParser implements Constants {
 			m_elements.add(new DefineElement(start, end, s));
 			break;
 		default:
-			m_elements.add(new TokenElement(start, end, s));
+			BaseTypeElement bte = BaseTypeElement.makeNew(start, end, s);
+			if(bte != null) {
+				m_elements.add(bte);
+			} else {
+				m_elements.add(new TokenElement(start, end, s));
+			}
 			break;
 		}
 	
