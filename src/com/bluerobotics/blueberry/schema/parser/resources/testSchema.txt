@@ -5,7 +5,7 @@
 /*
  * Define the packet header
  */
-define Packet {
+define Packet block {
 	uint32 key //this should be set when this defined block is used below
 	uint16 length  //the length of the packet in words
 	/* a CCITT CRC-16 for the  packet
@@ -18,14 +18,14 @@ define Packet {
 /*
  * Now the payload header
  */
-define Payload {
+define Payload block {
 	uint16 key
 	uint8 length //the length of the payload in 4-byte words
 }
 /*
  * This is the header for an array
  */
-define Array {
+define Array block {
 	uint16 key
 	uint8 length
 	uint8 repeat
