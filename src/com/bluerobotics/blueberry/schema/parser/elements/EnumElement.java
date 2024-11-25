@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BraceStartElement extends SingleCharElement {
-	public BraceStartElement(Coord start) {
-		super(start);
+public class EnumElement extends TokenElement {
+	public EnumElement(Coord start, Coord end, String s) {
+		super(start, end, s);
 	}
 }

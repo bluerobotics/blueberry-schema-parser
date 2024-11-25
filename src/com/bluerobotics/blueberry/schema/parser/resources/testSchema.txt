@@ -60,14 +60,14 @@ Packet BrPacket(key = 0x45554c42) {
 		// field declaration. The defined type is "HwDef" and the field 
 		// field name is "hwDef"
 		define HwDef compound hwDef {
-			enum16 hwType {
+			enum uint16 hwType {
 				UNDEFINED_HW_TYPE   = 0xffff
 				SFDQ_HW_TYPE        = 0x0000
 				BLUE_SERVO_HW_TYPE  = 0x0001
 				LUMEN_HW_TYPE       = 0x0002
 				NUCLEO_HW_TYPE      = 0x0003
 			}
-			enum8 mcuType {
+			enum uint8 mcuType {
 				UNDEFINED = 0xff
 				STM32F446 = 0x01
 				STM32H563 = 0x02

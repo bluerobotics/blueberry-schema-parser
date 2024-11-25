@@ -23,14 +23,16 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
 
+import com.bluerobotics.blueberry.schema.parser.elements.BlockElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BlockEndElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BlockStartElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BraceEndElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BraceStartElement;
+import com.bluerobotics.blueberry.schema.parser.elements.BracketEndElement;
+import com.bluerobotics.blueberry.schema.parser.elements.BracketStartElement;
 import com.bluerobotics.blueberry.schema.parser.elements.CommentElement;
 import com.bluerobotics.blueberry.schema.parser.elements.CompoundElement;
 import com.bluerobotics.blueberry.schema.parser.elements.Coord;
 import com.bluerobotics.blueberry.schema.parser.elements.DefineElement;
+import com.bluerobotics.blueberry.schema.parser.elements.EnumElement;
 import com.bluerobotics.blueberry.schema.parser.elements.EolElement;
 import com.bluerobotics.blueberry.schema.parser.elements.EqualsElement;
 import com.bluerobotics.blueberry.schema.parser.elements.TokenElement;
@@ -49,8 +51,10 @@ public class BlueberrySchemaParser implements Constants {
 	private static final String FIELD_BLOCK_START = "{";
 	private static final String FIELD_BLOCK_END = "}";
 	private static final String COMPOUND_MODIFIER = "compound";
-	private static final String BRACE_START = "(";
-	private static final String BRACE_END = ")";
+	private static final String ENUM_MODIFIER = "enum";
+	private static final String BLOCK_MODIFIER = "block";
+	private static final String BRACKET_START = "(";
+	private static final String BRACKET_END = ")";
 	private static final String EQUALS = "=";
 
 	
@@ -125,17 +129,23 @@ public class BlueberrySchemaParser implements Constants {
 		case FIELD_BLOCK_END:
 			m_elements.add(new BlockEndElement(start));
 			break;
-		case BRACE_START:
-			m_elements.add(new BraceStartElement(start));
+		case BRACKET_START:
+			m_elements.add(new BracketStartElement(start));
 			break;
-		case BRACE_END:
-			m_elements.add(new BraceEndElement(start));
+		case BRACKET_END:
+			m_elements.add(new BracketEndElement(start));
 			break;
 		case EQUALS:
 			m_elements.add(new EqualsElement(start));
 			break;
 		case COMPOUND_MODIFIER:
 			m_elements.add(new CompoundElement(start, end, s));
+			break;
+		case ENUM_MODIFIER:
+			m_elements.add(new EnumElement(start, end, s));
+			break;
+		case BLOCK_MODIFIER:
+			m_elements.add(new BlockElement(start, end, s));
 			break;
 		case DEFINED_BLOCK_TOKEN:
 			m_elements.add(new DefineElement(start, end, s));
