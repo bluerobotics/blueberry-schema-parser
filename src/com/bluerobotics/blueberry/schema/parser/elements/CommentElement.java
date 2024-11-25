@@ -31,7 +31,7 @@ public class CommentElement extends ParserElement {
 		super(start, end);
 		m_blockNotLine = blockNotLine;
 		m_comment = comment;
-		System.out.println("CommentElement() adding \""+m_comment+"\"");
+//		System.out.println(this);
 	}
 	public String toString() {
 		return "CommentElement(\"" + getComment() + "\")";

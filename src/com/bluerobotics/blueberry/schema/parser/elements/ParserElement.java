@@ -31,10 +31,10 @@ public abstract class ParserElement {
 		m_start = start;
 		m_end = start;
 	}
-	Coord getStart() {
+	public Coord getStart() {
 		return m_start;
 	}
-	Coord getEnd() {
+	public Coord getEnd() {
 		return m_end;
 	}
 }

@@ -27,6 +27,9 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 public class EolElement extends ParserElement {
 	public EolElement(Coord start) {
 		super(start,start);
-		System.out.println("EolElement()");
+		
+	}
+	public String toString() {
+		return getClass().getSimpleName()+"()";
 	}
 }

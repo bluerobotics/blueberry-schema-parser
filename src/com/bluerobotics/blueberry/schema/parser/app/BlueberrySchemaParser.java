@@ -28,7 +28,9 @@ import com.bluerobotics.blueberry.schema.parser.elements.BlockStartElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BraceEndElement;
 import com.bluerobotics.blueberry.schema.parser.elements.BraceStartElement;
 import com.bluerobotics.blueberry.schema.parser.elements.CommentElement;
+import com.bluerobotics.blueberry.schema.parser.elements.CompoundElement;
 import com.bluerobotics.blueberry.schema.parser.elements.Coord;
+import com.bluerobotics.blueberry.schema.parser.elements.DefineElement;
 import com.bluerobotics.blueberry.schema.parser.elements.EolElement;
 import com.bluerobotics.blueberry.schema.parser.elements.EqualsElement;
 import com.bluerobotics.blueberry.schema.parser.elements.TokenElement;
@@ -50,6 +52,8 @@ public class BlueberrySchemaParser implements Constants {
 	private static final String BRACE_START = "(";
 	private static final String BRACE_END = ")";
 	private static final String EQUALS = "=";
+
+	
 	private String m_token = "";
 
 
@@ -83,7 +87,10 @@ public class BlueberrySchemaParser implements Constants {
 		}
 		while(c != null);
 		
-		
+		System.out.println("************* Output ************");
+		for(ParserElement pe : m_elements) {
+			System.out.println(pe.toString());
+		}
 	}
 
 	
@@ -127,7 +134,12 @@ public class BlueberrySchemaParser implements Constants {
 		case EQUALS:
 			m_elements.add(new EqualsElement(start));
 			break;
-			
+		case COMPOUND_MODIFIER:
+			m_elements.add(new CompoundElement(start, end, s));
+			break;
+		case DEFINED_BLOCK_TOKEN:
+			m_elements.add(new DefineElement(start, end, s));
+			break;
 		default:
 			m_elements.add(new TokenElement(start, end, s));
 			break;
@@ -151,12 +163,37 @@ public class BlueberrySchemaParser implements Constants {
 			result = result.incrementIndex(LINE_COMMENT_START);
 			String comment = result.remainingString();
 			result = result.gotoEol();
-			m_elements.add(new CommentElement(start, end, comment, false));
+			//find the index of the first element of the line that this comment occurred on.
+			//place this commment before that element
+			
+			m_elements.add(getFirstIndexBeforeLine(start.line), new CommentElement(start, end, comment, false));
 		}
 		
 		return result;
 	}
 	
+	private int getFirstIndexBeforeLine(int line) {
+		int i = m_elements.size();
+		if(i > 0) {
+			--i;
+			boolean done = false;
+			while(!done) {
+				int lt = m_elements.get(i).getStart().line;
+				if(lt < line) {
+					++i;
+					done = true;
+				} else {
+					if(i <= 0) {
+						break;
+					} else {
+						--i;
+					}
+				}
+			}
+			
+		}
+		return i;
+	}
 	/**
 	 * Checks if the next element of the file is a block comment
 	 * @return the next Coord after a comment if there is one. null if incomplete comment, c if no comment

@@ -32,7 +32,10 @@ public class TokenElement extends ParserElement {
 	public TokenElement(Coord start, Coord end, String name) {
 		super(start, end);
 		m_name = name;
-		System.out.println("TokenElement(\""+m_name+"\")");
 		
+		
+	}
+	public String toString() {
+		return getClass().getSimpleName()+"(\""+m_name+"\")";
 	}
 }

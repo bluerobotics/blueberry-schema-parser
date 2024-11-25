@@ -24,12 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public abstract class SingleCharElement extends ParserElement {
-	public SingleCharElement(Coord start) {
-		super(start,start.incrementIndex(1));
-//		System.out.println(getClass().getSimpleName()+"()");
-	}
-	public String toString() {
-		return getClass().getSimpleName()+"()";
+public class CompoundElement extends TokenElement {
+	public CompoundElement(Coord start, Coord end, String s) {
+		super(start, end, s);
 	}
 }
