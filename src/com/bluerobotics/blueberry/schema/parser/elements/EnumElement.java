@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class EnumElement extends TokenElement {
-	public EnumElement(Coord start, Coord end, String s) {
-		super(start, end, s);
+public class EnumElement extends ParserElement {
+	public EnumElement(Coord start, Coord end) {
+		super(start, end);
 	}
 }

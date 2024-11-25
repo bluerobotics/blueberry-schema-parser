@@ -37,4 +37,7 @@ public abstract class ParserElement {
 	public Coord getEnd() {
 		return m_end;
 	}
+	public String toString() {
+		return getClass().getSimpleName() + "()";
+	}
 }

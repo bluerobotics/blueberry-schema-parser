@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BlockElement extends TokenElement {
-	public BlockElement(Coord start, Coord end, String s) {
-		super(start, end, s);
+public class BlockElement extends ParserElement {
+	public BlockElement(Coord start, Coord end) {
+		super(start, end);
 	}
 }

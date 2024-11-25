@@ -26,18 +26,25 @@ package com.bluerobotics.blueberry.schema.parser.elements;
  */
 public class CommentElement extends ParserElement {
 	private final boolean m_blockNotLine;
-	private final String m_comment;
+	private final String[] m_comment;
 	public CommentElement(Coord start, Coord end, String comment, boolean blockNotLine) {
 		super(start, end);
 		m_blockNotLine = blockNotLine;
-		m_comment = comment;
+		m_comment = comment.split("\\R");
 //		System.out.println(this);
 	}
 	public String toString() {
-		return "CommentElement(\"" + getComment() + "\")";
+		return "CommentElement(\"" + getAbbreviatedComment() + "\")";
 	}
-	public String getComment() {
+	public String[] getComment() {
 		return m_comment;
+	}
+	public String getAbbreviatedComment() {
+		String result = "";
+		for(String s : m_comment) {
+			result += s.substring(0, 20)+"... ";
+		}
+		return result;
 	}
 	
 }

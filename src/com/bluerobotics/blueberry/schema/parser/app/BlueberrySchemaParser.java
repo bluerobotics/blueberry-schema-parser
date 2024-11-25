@@ -143,13 +143,13 @@ public class BlueberrySchemaParser implements Constants {
 			m_elements.add(new CompoundElement(start, end, s));
 			break;
 		case ENUM_MODIFIER:
-			m_elements.add(new EnumElement(start, end, s));
+			m_elements.add(new EnumElement(start, end));
 			break;
 		case BLOCK_MODIFIER:
-			m_elements.add(new BlockElement(start, end, s));
+			m_elements.add(new BlockElement(start, end));
 			break;
 		case DEFINED_BLOCK_TOKEN:
-			m_elements.add(new DefineElement(start, end, s));
+			m_elements.add(new DefineElement(start, end));
 			break;
 		default:
 			BaseTypeElement bte = BaseTypeElement.makeNew(start, end, s);
