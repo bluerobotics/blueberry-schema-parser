@@ -19,27 +19,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
+package com.bluerobotics.blueberry.schema.parser.structure;
 
 /**
  * 
  */
-public interface Type {
-	public enum Size {
-		ONE_BIT(1),
-		ONE_BYTE(8),
-		TWO_BYTE(16),
-		ONE_WORD(32),
-		MULTI_WORD(Integer.MAX_VALUE),
-		;
-		private int bitNum;
-		Size(int bn){
-			bitNum = bn;
-		}
-		public int getBitCount() {
-			return bitNum;
-		}
-	}
-	
-	public Size getSize();
+public class ArrayType extends BlockType {
+
 }

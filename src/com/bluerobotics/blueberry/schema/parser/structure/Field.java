@@ -19,30 +19,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
-
-import java.util.ArrayList;
+package com.bluerobotics.blueberry.schema.parser.structure;
 
 /**
  * 
  */
-public class BitFieldType extends ByteType implements BaseType {
-	private final ArrayList<BoolType> m_bools = new ArrayList<BoolType>();
-	@Override
-	public Size getSize() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+public abstract class Field {
+	private final String m_name;
+	private final Type m_type;
 	
-	public void add(BoolType t) {
-		if(!isFull()) {
-			m_bools.add(t);
-		} else {
-			throw new RuntimeException("Cannot add more than 8 bits to this byte!");
-		}
+	protected Field(String name, Type type) {
+		m_name = name;
+		m_type = type;
 	}
-	public boolean isFull() {
-		return m_bools.size() >= 8;
-	}
-
 }

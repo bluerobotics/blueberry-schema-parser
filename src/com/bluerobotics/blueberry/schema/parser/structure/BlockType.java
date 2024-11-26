@@ -19,11 +19,27 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
+package com.bluerobotics.blueberry.schema.parser.structure;
+
+import java.util.ArrayList;
 
 /**
- * Indicats that this type will be stored at a fixed location in the parent block
+ * 
  */
-public interface BaseType {
+public class BlockType extends AbstractBlockType {
+	ArrayList<BlockType> m_blockTypes = new ArrayList<BlockType>();
+
+	
+	
+	public void add(BlockType t) {
+		if(t != null) {
+			m_blockTypes.add(t);
+		}
+	}
+
+	@Override
+	public Size getSize() {
+		return Size.MULTI_WORD;
+	}
 
 }

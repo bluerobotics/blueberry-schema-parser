@@ -19,18 +19,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
+package com.bluerobotics.blueberry.schema.parser.structure;
 
 /**
- * 
+ * Indicats that this type will be stored at a fixed location in the parent block
  */
-public class BoolType implements Type {
-
-	
-
-	@Override
-	public Size getSize() {
-		return Size.ONE_BIT;
-	}
+public interface BaseType extends Type {
 
 }

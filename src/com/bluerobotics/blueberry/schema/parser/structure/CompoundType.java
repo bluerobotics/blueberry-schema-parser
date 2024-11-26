@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
+package com.bluerobotics.blueberry.schema.parser.structure;
 
 /**
  * A block type whose fields all fit within a 4-byte word so it can be treated like a base type

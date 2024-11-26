@@ -19,11 +19,35 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.types;
+package com.bluerobotics.blueberry.schema.parser.structure;
+
+import java.util.ArrayList;
 
 /**
  * 
  */
-public class ArrayType extends BlockType {
+public abstract class AbstractBlockType implements Type {
+	private final ArrayList<ByteType> m_baseTypes = new ArrayList<ByteType>();
+	private int m_bitCount = 0;
+
+	
+	public void add(ByteType t) {
+		if(t != null) {
+			m_bitCount += t.getSize().getBitCount();
+			m_baseTypes.add(t);
+		}
+	}
+	/**
+	 * gets the total number of bits of all the base types in this block
+	 * @return
+	 */
+	public int getBitCount() {
+		return m_bitCount;
+	}
+	
+	
+
+
+
 
 }
