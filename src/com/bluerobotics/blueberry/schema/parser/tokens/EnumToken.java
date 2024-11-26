@@ -47,7 +47,11 @@ public class EnumToken extends Token {
 		return m_baseType;
 	}
 	public String toString() {
-		String s = (m_baseType != null) ? m_baseType.name() : "";
+		String s = " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
+		
+		for(NameValue nv : m_nameValues) {
+			s += nv.name.getName() + " ";
+		}
 		return getClass().getSimpleName()+"("+s+")";
 	}
 	public void setBaseType(BaseType bt) {

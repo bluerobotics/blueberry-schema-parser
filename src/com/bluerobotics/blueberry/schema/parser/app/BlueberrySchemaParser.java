@@ -147,7 +147,7 @@ public class BlueberrySchemaParser implements Constants {
 				
 				Token bs = m_elements.get(k);
 				Token be = m_elements.get(m);
-				i = m;
+				i = k;
 				
 				//everything inside the block should be part of the enum 
 				ArrayList<Token> list = new ArrayList<Token>();
