@@ -19,56 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.elements;
+package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
  * 
  */
-public class BaseTypeToken extends Token {
-	public enum BaseType {
-		BOOL("bool"),
-		INT8("int8"),
-		UINT8("uint8"),
-		INT16("int16"),
-		UINT16("uint16"),
-		INT32("int32"),
-		UINT32("uint32"),
-		FLOAT32("float32"),
-		;
-		private String m_name;
-		private BaseType(String s) {
-			m_name = s;
-		}
-		String getName() {
-			return m_name;
-		}
-		static BaseType lookup(String s) {
-			BaseType result = null;
-			for(BaseType bt : values()) {
-				if(bt.getName().equals(s.trim())) {
-					result = bt;
-					break;
-				}
-			}
-			return result;
-		}
-	}
-	private final BaseType m_type;
-	public BaseTypeToken(Coord start, Coord end, BaseType bt) {
+public class DefineToken extends Token {
+	private String m_typeName = null;
+	public DefineToken(Coord start, Coord end) {
 		super(start, end);
-		m_type = bt;
-		
 	}
-
-	public static BaseTypeToken makeNew(Coord start, Coord end, String s) {
-		BaseTypeToken result = null;
-		BaseType bt = BaseType.lookup(s);
-		if(bt != null) {
-			result = new BaseTypeToken(start, end, bt);
-		}
-		return result;
+	public void setTypeName(String s) {
+		m_typeName = s;
+	}
+	public String getTypeName() {
+		return m_typeName;
 	}
 	public String toString() {
-		return "BaseTypeElement("+m_type+")";
+		String tns = (m_typeName == null) ? "()" : "(\""+m_typeName+"\")";
+		return getClass().getSimpleName()+tns;
 	}
 }

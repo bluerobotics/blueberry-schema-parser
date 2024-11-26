@@ -19,13 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.elements;
+package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
  * 
  */
-public class CompoundToken extends SingleWordToken {
-	public CompoundToken(Coord start, Coord end, String s) {
-		super(start, end, s);
+public class SingleWordToken extends Token {
+	private final String m_name;
+
+	
+	
+	public SingleWordToken(Coord start, Coord end, String name) {
+		super(start, end);
+		m_name = name;
+		
+		
+	}
+	public String toString() {
+		return getClass().getSimpleName()+"(\""+m_name+"\")";
+	}
+	public String getName() {
+		return m_name;
 	}
 }

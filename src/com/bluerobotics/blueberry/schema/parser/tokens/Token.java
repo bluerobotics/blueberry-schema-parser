@@ -19,32 +19,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.elements;
+package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
  * 
  */
-public class CommentToken extends Token {
-	private final boolean m_blockNotLine;
-	private final String[] m_comment;
-	public CommentToken(Coord start, Coord end, String comment, boolean blockNotLine) {
-		super(start, end);
-		m_blockNotLine = blockNotLine;
-		m_comment = comment.split("\\R");
-//		System.out.println(this);
+public abstract class Token {
+	private final Coord m_start;
+	private final Coord m_end;
+	public Token(Coord start, Coord end) {
+		m_start = start;
+		m_end = start;
+	}
+	public Coord getStart() {
+		return m_start;
+	}
+	public Coord getEnd() {
+		return m_end;
 	}
 	public String toString() {
-		return "CommentElement(\"" + getAbbreviatedComment() + "\")";
+		return getClass().getSimpleName() + "()";
 	}
-	public String[] getComment() {
-		return m_comment;
-	}
-	public String getAbbreviatedComment() {
-		String result = "";
-		for(String s : m_comment) {
-			result += s.substring(0, 20)+"... ";
-		}
-		return result;
-	}
-	
 }

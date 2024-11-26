@@ -23,23 +23,23 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
 
-import com.bluerobotics.blueberry.schema.parser.elements.BaseTypeToken;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockToken;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockEndToken;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockStartToken;
-import com.bluerobotics.blueberry.schema.parser.elements.BracketEndToken;
-import com.bluerobotics.blueberry.schema.parser.elements.BracketStartToken;
-import com.bluerobotics.blueberry.schema.parser.elements.CommentToken;
-import com.bluerobotics.blueberry.schema.parser.elements.CompoundToken;
-import com.bluerobotics.blueberry.schema.parser.elements.Coord;
-import com.bluerobotics.blueberry.schema.parser.elements.DefineToken;
-import com.bluerobotics.blueberry.schema.parser.elements.EnumToken;
-import com.bluerobotics.blueberry.schema.parser.elements.EolToken;
-import com.bluerobotics.blueberry.schema.parser.elements.EqualsToken;
-import com.bluerobotics.blueberry.schema.parser.elements.FieldNameToken;
-import com.bluerobotics.blueberry.schema.parser.elements.SchemaParserException;
-import com.bluerobotics.blueberry.schema.parser.elements.SingleWordToken;
-import com.bluerobotics.blueberry.schema.parser.elements.Token;
+import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BlockEndToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BlockStartToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BracketEndToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BracketStartToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.CompoundToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.tokens.DefineToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
@@ -97,8 +97,9 @@ public class BlueberrySchemaParser implements Constants {
 			
 			
 			collapseDefines();
-			identifyFieldNames();
-			identifyBlockTypes();
+			collapseEnums();
+//			identifyFieldNames();
+//			identifyBlockTypes();
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -194,6 +195,50 @@ public class BlueberrySchemaParser implements Constants {
 					m_elements.remove(i);
 				} else {
 					throw new SchemaParserException("Define keyword must be followed by a type name!", t.getStart());
+				}
+			}
+			
+		
+			
+			
+			notDone = false;
+		}
+		
+	}
+	/**
+	 * Collapse all the enum tokens and the following base type together
+	 * @throws SchemaParserException 
+	 */
+	private void collapseEnums() throws SchemaParserException {
+		boolean notDone = true;
+		int i = 0;
+		
+		while(i < m_elements.size()){
+			//first find next define element
+			EnumToken dt = null;
+			while(dt == null) {
+				Token t = m_elements.get(i);
+				if(t instanceof EnumToken) {
+					dt = (EnumToken)t;
+				} else {
+					++i;
+				
+					if(i >= m_elements.size()) {
+						break;
+					}
+				}
+			}
+			
+			if(dt != null) {
+				//now get next token
+				++i;
+				Token t = i < m_elements.size() ? m_elements.get(i) : null;
+				if(t instanceof BaseTypeToken) {
+					BaseTypeToken swt = (BaseTypeToken)t;
+					dt.setBaseType(swt.getBaseType());
+					m_elements.remove(i);
+				} else {
+					throw new SchemaParserException("Enum keyword must be followed by a base type name!", t.getStart());
 				}
 			}
 			

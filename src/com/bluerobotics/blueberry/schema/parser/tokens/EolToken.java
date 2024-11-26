@@ -19,13 +19,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.elements;
+package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
  * 
  */
-public class BlockStartToken extends SingleCharToken {
-	public BlockStartToken(Coord start) {
-		super(start);
+public class EolToken extends Token {
+	public EolToken(Coord start) {
+		super(start,start);
+		
+	}
+	public String toString() {
+		return getClass().getSimpleName()+"()";
 	}
 }

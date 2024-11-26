@@ -19,24 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.elements;
+package com.bluerobotics.blueberry.schema.parser.tokens;
+
+import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 
 /**
  * 
  */
-public class DefineToken extends Token {
-	private String m_typeName = null;
-	public DefineToken(Coord start, Coord end) {
+public class EnumToken extends Token {
+	private BaseType m_baseType = null;
+	public EnumToken(Coord start, Coord end) {
 		super(start, end);
 	}
-	public void setTypeName(String s) {
-		m_typeName = s;
-	}
-	public String getTypeName() {
-		return m_typeName;
+	public BaseType getBaseType() {
+		return m_baseType;
 	}
 	public String toString() {
-		String tns = (m_typeName == null) ? "()" : "(\""+m_typeName+"\")";
-		return getClass().getSimpleName()+tns;
+		String s = (m_baseType != null) ? m_baseType.name() : "";
+		return getClass().getSimpleName()+"("+s+")";
+	}
+	public void setBaseType(BaseType bt) {
+		m_baseType = bt;
 	}
 }
