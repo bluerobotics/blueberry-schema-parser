@@ -95,9 +95,10 @@ public class BlueberrySchemaParser implements Constants {
 				
 			}
 			
-			
+			collapseComments();
 			collapseDefines();
 			collapseEnums();
+			collapseEnumValues();
 //			identifyFieldNames();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
@@ -109,6 +110,129 @@ public class BlueberrySchemaParser implements Constants {
 		for(Token pe : m_elements) {
 			System.out.println(pe.toString());
 		}
+	}
+	/**
+	 * Combine comment tokens if there are consecutive ones
+	 */
+	private void collapseComments() {
+		// TODO Auto-generated method stub
+		
+	}
+	/**
+	 * processes the name value pairs defined for an eenum
+	 * @throws SchemaParserException 
+	 */
+	private void collapseEnumValues() throws SchemaParserException {
+		boolean notDone = true;
+		int i = 0;
+		
+		while(i < m_elements.size()){
+			//first find next define element
+			int j = findToken(i, EnumToken.class, true);
+
+			if(j >= 0) {
+				//this should be safe because of how j was determined
+				EnumToken et = (EnumToken)(m_elements.get(j));
+				
+				int k = findToken(j, BlockStartToken.class, true);
+				int m = findToken(k, BlockEndToken.class, true);
+				
+				if(k < 0) {
+					throw new SchemaParserException("Could not find a block start after enum keyword", et.getStart());
+				}
+				
+				if(m < 0) {
+					throw new SchemaParserException("Could not find a matching block end after enum block start",m_elements.get(k).getStart());
+				}
+				
+				Token bs = m_elements.get(k);
+				Token be = m_elements.get(m);
+				i = m;
+				
+				//everything inside the block should be part of the enum 
+				ArrayList<Token> list = new ArrayList<Token>();
+				CommentToken ct = null;
+				for(int x = k; x < m; ++x) {
+					Token t = m_elements.get(x);
+					if(t instanceof EolToken) {
+						if(list.size() == 0) {
+							
+						} else if(list.size() != 3) {
+							throw new SchemaParserException("Malformed enum value assignment", bs.getStart());
+						} else {
+						
+							Token t0 = list.get(0);
+							Token t1 = list.get(1);
+							Token t2 = list.get(2);
+							if(!(t0 instanceof SingleWordToken)) {
+								throw new SchemaParserException("This token is bad!", t0.getStart());
+							}
+							if(!(t1 instanceof EqualsToken)) {
+								throw new SchemaParserException("This token should be an equals sign!", t1.getStart());
+							}
+							if(!(t2 instanceof SingleWordToken)) {
+								throw new SchemaParserException("This token is bad!", t2.getStart());
+							}
+							
+							
+							SingleWordToken svt1 = (SingleWordToken)t0;
+							SingleWordToken svt2 = (SingleWordToken)t2;
+							
+							et.addNameValue(svt1, svt2, ct);
+							ct = null;
+							list.clear();
+						}
+						
+						
+					} else if(t instanceof SingleWordToken || t instanceof EqualsToken) {
+						list.add(t);
+					} else if(t instanceof CommentToken) {
+						//this is normal
+						ct = (CommentToken)t;
+					}
+				}
+				
+				//now remove the stuff in the block
+				for(int x = m; x >= k; --x) {
+					m_elements.remove(x);
+				}
+				
+			
+				
+			} else {
+				break;
+			}
+		}
+		
+	}
+	
+	private int findToken(int i, Class<?> c, boolean forwardNotReverse) {
+		if(i < 0) {
+			return -1;
+		}
+		int result = -1;
+		boolean notDone = true;
+		int n = m_elements.size();
+		int j = i;
+		while(notDone) {
+			Token t = m_elements.get(j);
+			if(t.getClass() == c) {
+				result = j;
+				break;
+			}
+			if(forwardNotReverse) {
+				++j;
+				if(j >= n) {
+					notDone = false;
+				}
+			} else {
+				--j;
+				if(j < 0) {
+					notDone = false;
+				}
+			}
+		}
+		return result;
 	}
 	/**
 	 * now any single word token at the end of a line is a fieldname or before a block start
@@ -166,88 +290,58 @@ public class BlueberrySchemaParser implements Constants {
 	 * @throws SchemaParserException 
 	 */
 	private void collapseDefines() throws SchemaParserException {
-		boolean notDone = true;
 		int i = 0;
 		
 		while(i < m_elements.size()){
 			//first find next define element
-			DefineToken dt = null;
-			while(dt == null) {
-				Token t = m_elements.get(i);
-				if(t instanceof DefineToken) {
-					dt = (DefineToken)t;
-				} else {
-					++i;
-				
-					if(i >= m_elements.size()) {
-						break;
-					}
-				}
-			}
-			
-			if(dt != null) {
+			int j = findToken(i, DefineToken.class, true);
+
+			if(j >= 0) {
+				//this should be safe because of how j was determined
+				DefineToken dt = (DefineToken)(m_elements.get(j));
 				//now get next token
-				++i;
-				Token t = i < m_elements.size() ? m_elements.get(i) : null;
-				if(t instanceof SingleWordToken) {
-					SingleWordToken swt = (SingleWordToken)t;
+				int k = findToken(j, SingleWordToken.class, true);
+				if(k == j + 1) {//it better be the very next token
+					SingleWordToken swt = (SingleWordToken)(m_elements.get(k));
 					dt.setTypeName(swt.getName());
-					m_elements.remove(i);
+					m_elements.remove(k);
 				} else {
-					throw new SchemaParserException("Define keyword must be followed by a type name!", t.getStart());
+					throw new SchemaParserException("Define keyword must be followed by a type name!", dt.getStart());
 				}
+				i = k;
+			} else {
+				break;
 			}
-			
-		
-			
-			
-			notDone = false;
 		}
-		
 	}
 	/**
 	 * Collapse all the enum tokens and the following base type together
 	 * @throws SchemaParserException 
 	 */
 	private void collapseEnums() throws SchemaParserException {
-		boolean notDone = true;
 		int i = 0;
 		
 		while(i < m_elements.size()){
 			//first find next define element
-			EnumToken dt = null;
-			while(dt == null) {
-				Token t = m_elements.get(i);
-				if(t instanceof EnumToken) {
-					dt = (EnumToken)t;
-				} else {
-					++i;
-				
-					if(i >= m_elements.size()) {
-						break;
-					}
-				}
-			}
-			
-			if(dt != null) {
+			int j = findToken(i, EnumToken.class, true);
+
+			if(j >= 0) {
+				//this should be safe because of how j was determined
+				EnumToken et = (EnumToken)(m_elements.get(j));
 				//now get next token
-				++i;
-				Token t = i < m_elements.size() ? m_elements.get(i) : null;
-				if(t instanceof BaseTypeToken) {
-					BaseTypeToken swt = (BaseTypeToken)t;
-					dt.setBaseType(swt.getBaseType());
-					m_elements.remove(i);
+				int k = findToken(j, BaseTypeToken.class, true);
+				if(k == j + 1) {//it better be the very next token
+					BaseTypeToken swt = (BaseTypeToken)(m_elements.get(k));
+					et.setBaseType(swt.getBaseType());
+					m_elements.remove(k);
 				} else {
-					throw new SchemaParserException("Enum keyword must be followed by a base type name!", t.getStart());
+					throw new SchemaParserException("Enum keyword must be followed by a base type name!", et.getStart());
 				}
+				i = k;
+			} else {
+				break;
 			}
-			
-		
-			
-			
-			notDone = false;
 		}
-		
 	}
 	private Coord processEol(Coord c) {
 		Coord result = c;

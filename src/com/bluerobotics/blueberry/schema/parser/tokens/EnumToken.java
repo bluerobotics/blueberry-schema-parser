@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 
 /**
@@ -28,6 +30,16 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
  */
 public class EnumToken extends Token {
 	private BaseType m_baseType = null;
+	private class NameValue {
+		SingleWordToken value;
+		SingleWordToken name;
+		CommentToken comment;
+		NameValue(SingleWordToken n, SingleWordToken v, CommentToken c){
+			name = n;
+			value = v;
+		}
+	}
+	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
 	public EnumToken(Coord start, Coord end) {
 		super(start, end);
 	}
@@ -40,5 +52,10 @@ public class EnumToken extends Token {
 	}
 	public void setBaseType(BaseType bt) {
 		m_baseType = bt;
+	}
+	public void addNameValue(SingleWordToken name, SingleWordToken value, CommentToken c) {
+		
+		m_nameValues.add(new NameValue(name, value, c));
+		
 	}
 }
