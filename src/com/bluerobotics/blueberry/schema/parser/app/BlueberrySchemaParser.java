@@ -23,21 +23,23 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
 
-import com.bluerobotics.blueberry.schema.parser.elements.BaseTypeElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockEndElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BlockStartElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BracketEndElement;
-import com.bluerobotics.blueberry.schema.parser.elements.BracketStartElement;
-import com.bluerobotics.blueberry.schema.parser.elements.CommentElement;
-import com.bluerobotics.blueberry.schema.parser.elements.CompoundElement;
+import com.bluerobotics.blueberry.schema.parser.elements.BaseTypeToken;
+import com.bluerobotics.blueberry.schema.parser.elements.BlockToken;
+import com.bluerobotics.blueberry.schema.parser.elements.BlockEndToken;
+import com.bluerobotics.blueberry.schema.parser.elements.BlockStartToken;
+import com.bluerobotics.blueberry.schema.parser.elements.BracketEndToken;
+import com.bluerobotics.blueberry.schema.parser.elements.BracketStartToken;
+import com.bluerobotics.blueberry.schema.parser.elements.CommentToken;
+import com.bluerobotics.blueberry.schema.parser.elements.CompoundToken;
 import com.bluerobotics.blueberry.schema.parser.elements.Coord;
-import com.bluerobotics.blueberry.schema.parser.elements.DefineElement;
-import com.bluerobotics.blueberry.schema.parser.elements.EnumElement;
-import com.bluerobotics.blueberry.schema.parser.elements.EolElement;
-import com.bluerobotics.blueberry.schema.parser.elements.EqualsElement;
-import com.bluerobotics.blueberry.schema.parser.elements.TokenElement;
-import com.bluerobotics.blueberry.schema.parser.elements.ParserElement;
+import com.bluerobotics.blueberry.schema.parser.elements.DefineToken;
+import com.bluerobotics.blueberry.schema.parser.elements.EnumToken;
+import com.bluerobotics.blueberry.schema.parser.elements.EolToken;
+import com.bluerobotics.blueberry.schema.parser.elements.EqualsToken;
+import com.bluerobotics.blueberry.schema.parser.elements.FieldNameToken;
+import com.bluerobotics.blueberry.schema.parser.elements.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.elements.SingleWordToken;
+import com.bluerobotics.blueberry.schema.parser.elements.Token;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
@@ -62,7 +64,7 @@ public class BlueberrySchemaParser implements Constants {
 	private String m_token = "";
 
 
-	private final ArrayList<ParserElement> m_elements = new ArrayList<ParserElement>();
+	private final ArrayList<Token> m_elements = new ArrayList<Token>();
 	/**
 	 * @param args
 	 */
@@ -80,29 +82,132 @@ public class BlueberrySchemaParser implements Constants {
 		//split into lines
 		
 		Coord c = new Coord(0,0, schema.split("\\R"));
-		do {
-			c = c.trim();
+		
+		try {
+			while(c != null) {
+				c = c.trim();
+				
+				c = processBlockComment(c);
+				c = processLineComment(c);
+				c = processNextToken(c);
+				c = processEol(c);
+				
+				
+			}
 			
-			c = processBlockComment(c);
-			c = processLineComment(c);
-			c = processNextToken(c);
-			c = processEol(c);
 			
-			
+			collapseDefines();
+			identifyFieldNames();
+			identifyBlockTypes();
+		} catch (SchemaParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		while(c != null);
 		
 		System.out.println("************* Output ************");
-		for(ParserElement pe : m_elements) {
+		for(Token pe : m_elements) {
 			System.out.println(pe.toString());
 		}
 	}
-
-	
+	/**
+	 * now any single word token at the end of a line is a fieldname or before a block start
+	 * @throws SchemaParserException 
+	 */
+	private void identifyFieldNames() throws SchemaParserException {
+		boolean notDone = true;
+		int i = 0;
+		int n = m_elements.size();
+		for(i = 0; i < m_elements.size() - 1; ++i){
+			
+			Token ti = m_elements.get(i);
+			Token tj = null;
+			//find last element of this line
+			int j;
+			for(j = i; j < n - 1; ++j) {
+				Token t = m_elements.get(j+1);
+				if(t.getStart().getLineIndex() > ti.getStart().getLineIndex()) {
+					break;
+				} else {
+					tj = t;
+				}
+			}
+			//tj should be the last element of this line
+			//backtrack if a block start
+			if(tj instanceof BlockStartToken) {
+				--j;
+				tj = m_elements.get(j);
+			}
+			if(tj instanceof SingleWordToken) {
+				SingleWordToken swt = (SingleWordToken)tj;
+				FieldNameToken fnt = new FieldNameToken(swt);
+				m_elements.set(i, fnt);
+			}
+		
+			
+			//first find next define element
+			
+			
+		
+			
+			n = m_elements.size();
+		}
+		
+	}
+	/**
+	 * any single word token at the start of a line or after a 
+	 */
+	private void identifyBlockTypes() {
+		// TODO Auto-generated method stub
+		
+	}
+	/**
+	 * Collapse all the define tokens and the following single word tokens together
+	 * @throws SchemaParserException 
+	 */
+	private void collapseDefines() throws SchemaParserException {
+		boolean notDone = true;
+		int i = 0;
+		
+		while(i < m_elements.size()){
+			//first find next define element
+			DefineToken dt = null;
+			while(dt == null) {
+				Token t = m_elements.get(i);
+				if(t instanceof DefineToken) {
+					dt = (DefineToken)t;
+				} else {
+					++i;
+				
+					if(i >= m_elements.size()) {
+						break;
+					}
+				}
+			}
+			
+			if(dt != null) {
+				//now get next token
+				++i;
+				Token t = i < m_elements.size() ? m_elements.get(i) : null;
+				if(t instanceof SingleWordToken) {
+					SingleWordToken swt = (SingleWordToken)t;
+					dt.setTypeName(swt.getName());
+					m_elements.remove(i);
+				} else {
+					throw new SchemaParserException("Define keyword must be followed by a type name!", t.getStart());
+				}
+			}
+			
+		
+			
+			
+			notDone = false;
+		}
+		
+	}
 	private Coord processEol(Coord c) {
 		Coord result = c;
 		if(result.remainingString().isBlank()) {
-			m_elements.add(new EolElement(result));
+			m_elements.add(new EolToken(result));
 			result = result.nextLine();
 		}
 		return result;
@@ -125,38 +230,38 @@ public class BlueberrySchemaParser implements Constants {
 	private void addToken(Coord start, Coord end, String s) {
 		switch(s) {
 		case FIELD_BLOCK_START:
-			m_elements.add(new BlockStartElement(start));
+			m_elements.add(new BlockStartToken(start));
 			break;
 		case FIELD_BLOCK_END:
-			m_elements.add(new BlockEndElement(start));
+			m_elements.add(new BlockEndToken(start));
 			break;
 		case BRACKET_START:
-			m_elements.add(new BracketStartElement(start));
+			m_elements.add(new BracketStartToken(start));
 			break;
 		case BRACKET_END:
-			m_elements.add(new BracketEndElement(start));
+			m_elements.add(new BracketEndToken(start));
 			break;
 		case EQUALS:
-			m_elements.add(new EqualsElement(start));
+			m_elements.add(new EqualsToken(start));
 			break;
 		case COMPOUND_MODIFIER:
-			m_elements.add(new CompoundElement(start, end, s));
+			m_elements.add(new CompoundToken(start, end, s));
 			break;
 		case ENUM_MODIFIER:
-			m_elements.add(new EnumElement(start, end));
+			m_elements.add(new EnumToken(start, end));
 			break;
 		case BLOCK_MODIFIER:
-			m_elements.add(new BlockElement(start, end));
+			m_elements.add(new BlockToken(start, end));
 			break;
 		case DEFINED_BLOCK_TOKEN:
-			m_elements.add(new DefineElement(start, end));
+			m_elements.add(new DefineToken(start, end));
 			break;
 		default:
-			BaseTypeElement bte = BaseTypeElement.makeNew(start, end, s);
+			BaseTypeToken bte = BaseTypeToken.makeNew(start, end, s);
 			if(bte != null) {
 				m_elements.add(bte);
 			} else {
-				m_elements.add(new TokenElement(start, end, s));
+				m_elements.add(new SingleWordToken(start, end, s));
 			}
 			break;
 		}
@@ -182,7 +287,7 @@ public class BlueberrySchemaParser implements Constants {
 			//find the index of the first element of the line that this comment occurred on.
 			//place this commment before that element
 			
-			m_elements.add(getFirstIndexBeforeLine(start.line), new CommentElement(start, end, comment, false));
+			m_elements.add(getFirstIndexBeforeLine(start.line), new CommentToken(start, end, comment, false));
 		}
 		
 		return result;
@@ -213,8 +318,9 @@ public class BlueberrySchemaParser implements Constants {
 	/**
 	 * Checks if the next element of the file is a block comment
 	 * @return the next Coord after a comment if there is one. null if incomplete comment, c if no comment
+	 * @throws SchemaParserException 
 	 */
-	private Coord processBlockComment(Coord c){
+	private Coord processBlockComment(Coord c) throws SchemaParserException{
 		if(c == null) {
 			return null;
 		}
@@ -241,7 +347,7 @@ public class BlueberrySchemaParser implements Constants {
 					if(!ns.isBlank()) {
 						comment += ns;
 					}
-					m_elements.add(new CommentElement(start, end, comment, true));
+					m_elements.add(new CommentToken(start, end, comment, true));
 					keepGoing = false;
 					result = end.incrementIndex(COMMENT_BLOCK_END).newLineIfEol();
 				} else {
@@ -263,7 +369,7 @@ public class BlueberrySchemaParser implements Constants {
 					if(result == null) {
 						keepGoing = false; 
 						result = null;
-						throw new RuntimeException("Block comment missing end!");
+						throw new SchemaParserException("Block comment missing end!", c);
 					}
 					
 				}

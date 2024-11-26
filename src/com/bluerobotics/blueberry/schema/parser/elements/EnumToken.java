@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BlockStartElement extends SingleCharElement {
-	public BlockStartElement(Coord start) {
-		super(start);
+public class EnumToken extends Token {
+	public EnumToken(Coord start, Coord end) {
+		super(start, end);
 	}
 }

@@ -24,20 +24,12 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public abstract class ParserElement {
-	private final Coord m_start;
-	private final Coord m_end;
-	public ParserElement(Coord start, Coord end) {
-		m_start = start;
-		m_end = start;
-	}
-	public Coord getStart() {
-		return m_start;
-	}
-	public Coord getEnd() {
-		return m_end;
+public class EolToken extends Token {
+	public EolToken(Coord start) {
+		super(start,start);
+		
 	}
 	public String toString() {
-		return getClass().getSimpleName() + "()";
+		return getClass().getSimpleName()+"()";
 	}
 }

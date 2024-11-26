@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BracketStartElement extends SingleCharElement {
-	public BracketStartElement(Coord start) {
+public class EqualsToken extends SingleCharToken {
+	public EqualsToken(Coord start) {
 		super(start);
 	}
 }

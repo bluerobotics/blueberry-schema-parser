@@ -24,18 +24,20 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class TokenElement extends ParserElement {
-	private final String m_name;
-
-	
-	
-	public TokenElement(Coord start, Coord end, String name) {
-		super(start, end);
-		m_name = name;
-		
-		
+public abstract class Token {
+	private final Coord m_start;
+	private final Coord m_end;
+	public Token(Coord start, Coord end) {
+		m_start = start;
+		m_end = start;
+	}
+	public Coord getStart() {
+		return m_start;
+	}
+	public Coord getEnd() {
+		return m_end;
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"(\""+m_name+"\")";
+		return getClass().getSimpleName() + "()";
 	}
 }

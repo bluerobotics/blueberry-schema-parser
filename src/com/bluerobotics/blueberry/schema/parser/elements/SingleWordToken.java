@@ -24,8 +24,21 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BracketEndElement extends SingleCharElement {
-	public BracketEndElement(Coord start) {
-		super(start);
+public class SingleWordToken extends Token {
+	private final String m_name;
+
+	
+	
+	public SingleWordToken(Coord start, Coord end, String name) {
+		super(start, end);
+		m_name = name;
+		
+		
+	}
+	public String toString() {
+		return getClass().getSimpleName()+"(\""+m_name+"\")";
+	}
+	public String getName() {
+		return m_name;
 	}
 }

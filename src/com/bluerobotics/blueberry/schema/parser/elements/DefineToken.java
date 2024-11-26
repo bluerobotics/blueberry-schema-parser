@@ -24,8 +24,19 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class CompoundElement extends TokenElement {
-	public CompoundElement(Coord start, Coord end, String s) {
-		super(start, end, s);
+public class DefineToken extends Token {
+	private String m_typeName = null;
+	public DefineToken(Coord start, Coord end) {
+		super(start, end);
+	}
+	public void setTypeName(String s) {
+		m_typeName = s;
+	}
+	public String getTypeName() {
+		return m_typeName;
+	}
+	public String toString() {
+		String tns = (m_typeName == null) ? "()" : "(\""+m_typeName+"\")";
+		return getClass().getSimpleName()+tns;
 	}
 }

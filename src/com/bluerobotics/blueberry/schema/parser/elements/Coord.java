@@ -212,5 +212,8 @@ public class Coord {
 		s = "Coord(\""+s+"\")";
 		return s;
 	}
+	public int getLineIndex() {
+		return line;
+	}
 	
 }

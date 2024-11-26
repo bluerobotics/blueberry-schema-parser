@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class BlockEndElement extends SingleCharElement {
-	public BlockEndElement(Coord start) {
-		super(start);
+public class CompoundToken extends SingleWordToken {
+	public CompoundToken(Coord start, Coord end, String s) {
+		super(start, end, s);
 	}
 }

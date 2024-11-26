@@ -24,10 +24,10 @@ package com.bluerobotics.blueberry.schema.parser.elements;
 /**
  * 
  */
-public class EolElement extends ParserElement {
-	public EolElement(Coord start) {
-		super(start,start);
-		
+public abstract class SingleCharToken extends Token {
+	public SingleCharToken(Coord start) {
+		super(start,start.incrementIndex(1));
+//		System.out.println(getClass().getSimpleName()+"()");
 	}
 	public String toString() {
 		return getClass().getSimpleName()+"()";

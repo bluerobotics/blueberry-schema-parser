@@ -32,4 +32,10 @@ public abstract class Field {
 		m_name = name;
 		m_type = type;
 	}
+	Type getType() {
+		return m_type;
+	}
+	String getName() {
+		return m_name;
+	}
 }
