@@ -94,12 +94,11 @@ public class BlueberrySchemaParser implements Constants {
 				
 				
 			}
-			
 			collapseComments();
 			collapseDefines();
 			collapseEnums();
 			collapseEnumValues();
-//			identifyFieldNames();
+			identifyFieldNames();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
@@ -111,8 +110,11 @@ public class BlueberrySchemaParser implements Constants {
 			System.out.println(pe.toString());
 		}
 	}
+	
 	/**
 	 * Combine comment tokens if there are consecutive ones
+	 * Block comments will not be collapsed. Consecutive line comments will collapse into blocks.
+	 * Line comments following block comments will collapse into the block. 
 	 */
 	private void collapseComments() {
 		// TODO Auto-generated method stub
@@ -242,39 +244,26 @@ public class BlueberrySchemaParser implements Constants {
 		boolean notDone = true;
 		int i = 0;
 		int n = m_elements.size();
-		for(i = 0; i < m_elements.size() - 1; ++i){
-			
-			Token ti = m_elements.get(i);
-			Token tj = null;
-			//find last element of this line
-			int j;
-			for(j = i; j < n - 1; ++j) {
-				Token t = m_elements.get(j+1);
-				if(t.getStart().getLineIndex() > ti.getStart().getLineIndex()) {
-					break;
-				} else {
-					tj = t;
+		while(i < n) {
+			int eol = findToken(i, EolToken.class, true);
+			int fnti = eol;
+			if(eol >= 0) {
+				//rewind to the previous open bracket
+				int bracket = findToken(eol, BracketStartToken.class, false);
+				if(bracket > i) {//only valid if it occurs after the point that we started looking
+					fnti = bracket;
 				}
+				//rewind to the first single word token. This should be a field
+				fnti = findToken(fnti, SingleWordToken.class, false);
+				if(fnti > i) {
+					
+					FieldNameToken fnt = new FieldNameToken((SingleWordToken)m_elements.get(fnti));
+					m_elements.set(fnti, fnt);//this will replace the swt
+				}
+				i = eol+1;
+			} else {
+				break;
 			}
-			//tj should be the last element of this line
-			//backtrack if a block start
-			if(tj instanceof BlockStartToken) {
-				--j;
-				tj = m_elements.get(j);
-			}
-			if(tj instanceof SingleWordToken) {
-				SingleWordToken swt = (SingleWordToken)tj;
-				FieldNameToken fnt = new FieldNameToken(swt);
-				m_elements.set(i, fnt);
-			}
-		
-			
-			//first find next define element
-			
-			
-		
-			
-			n = m_elements.size();
 		}
 		
 	}
@@ -284,6 +273,26 @@ public class BlueberrySchemaParser implements Constants {
 	private void identifyBlockTypes() {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	/**
+	 * identifies that last token of the line that the specified index is on
+	 * @param i
+	 * @return
+	 */
+	private int advanceToEndOfLine(int i) {
+		Token ti = m_elements.get(i);
+		int j = i;
+		int n = m_elements.size();
+		int result = i;
+		while(j < n) {
+			Token tj = m_elements.get(j);
+			if(tj.getStart().getLineIndex() > ti.getStart().getLineIndex()) {
+				break;
+			}
+			result = j;
+		}
+		return j;
 	}
 	/**
 	 * Collapse all the define tokens and the following single word tokens together
