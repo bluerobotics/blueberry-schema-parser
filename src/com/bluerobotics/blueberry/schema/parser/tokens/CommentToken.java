@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
@@ -34,7 +36,7 @@ public class CommentToken extends Token {
 //		System.out.println(this);
 	}
 	public String toString() {
-		return "CommentElement(\"" + getAbbreviatedComment() + "\")";
+		return getClass().getSimpleName()+"(\"" + getAbbreviatedComment() + "\")";
 	}
 	public String[] getComment() {
 		return m_comment;
@@ -45,6 +47,29 @@ public class CommentToken extends Token {
 			result += s.substring(0, 20)+"... ";
 		}
 		return result;
+	}
+	public CommentToken combine(CommentToken ct) {
+		String cs = "";
+		boolean firstTime = true;
+		for(String s : m_comment) {
+			if(!firstTime) {
+				cs += "\n";
+			}
+			
+			cs += s;
+			firstTime = false;
+		}
+
+		for(String s : ct.m_comment) {
+			
+			cs += "\n";
+			
+			cs += s;
+			firstTime = false;
+		}
+		
+		CommentToken ctn = new CommentToken(getStart(), getEnd(), cs, true);
+		return ctn;
 	}
 	
 }

@@ -99,6 +99,7 @@ public class BlueberrySchemaParser implements Constants {
 			collapseEnums();
 			collapseEnumValues();
 			identifyFieldNames();
+			collapseEols();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
@@ -111,21 +112,97 @@ public class BlueberrySchemaParser implements Constants {
 		}
 	}
 	
+	private void collapseEols() {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, EolToken.class, true);
+				
+			int k = i - 1;
+			int j = i + 1;
+			Token tj = null;
+			Token tk = null;
+			if(k >= 0) {
+				
+				tk = m_elements.get(k);
+			}
+			
+			
+			
+			if(j < m_elements.size()) {
+				tj = m_elements.get(j);
+			}
+			if(tk instanceof BlockStartToken) {
+				m_elements.remove(i);
+			} else if(tk instanceof BlockEndToken) {
+				m_elements.remove(i);
+			} else if(tj instanceof EolToken) {
+				m_elements.remove(i);
+			} else if(tj instanceof BlockStartToken) {
+				m_elements.remove(i);
+			} else if(tj instanceof BlockEndToken) {
+				m_elements.remove(i);
+			} else {
+				i = j;
+			}
+			
+			
+		}
+				
+		
+	}
 	/**
 	 * Combine comment tokens if there are consecutive ones
 	 * Block comments will not be collapsed. Consecutive line comments will collapse into blocks.
 	 * Line comments following block comments will collapse into the block. 
 	 */
 	private void collapseComments() {
-		// TODO Auto-generated method stub
-		
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, CommentToken.class, true);
+				
+			
+			if(i >= 0) {
+				CommentToken cti = (CommentToken)m_elements.get(i);
+				boolean notDone = true;
+				int j = i+1; 
+				while(notDone) {
+					if(j < m_elements.size()) {
+						Token tj = m_elements.get(j);
+						if(tj instanceof EolToken) {
+							++j;
+						} else if(tj instanceof CommentToken) {
+							CommentToken ctj = (CommentToken)tj;
+							CommentToken ctn = cti.combine(ctj);
+							m_elements.set(i, ctn);
+							for(int k = j; k > i; --k) {
+								m_elements.remove(k);
+							}
+							notDone = false;
+						} else {
+							//end becuase we've seen a token that is not an eol or comment
+							notDone = false;
+							//trigger looking for the next one
+							++i;
+					
+						}
+					} else {
+						notDone = false;
+						i = Integer.MAX_VALUE;
+					}
+				}
+			} else {
+				i = Integer.MAX_VALUE;
+			}
+		}
+
 	}
 	/**
 	 * processes the name value pairs defined for an eenum
 	 * @throws SchemaParserException 
 	 */
 	private void collapseEnumValues() throws SchemaParserException {
-		boolean notDone = true;
 		int i = 0;
 		
 		while(i < m_elements.size()){
