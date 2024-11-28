@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-public class Coord {
+public class Coord implements Comparable<Coord> {
 	public final int line;
 	public final int index;
 	private String[] m_lines;
@@ -214,6 +214,36 @@ public class Coord {
 	}
 	public int getLineIndex() {
 		return line;
+	}
+	@Override
+	public int compareTo(Coord o) {
+		int result = 0;
+		if(line > o.line) {
+			result = 1;
+		} else if(line < o.line) {
+			result = -1;
+		} else {
+			if(index > o.index) {
+				result = 1;
+			} else if(index < o.index) {
+				result = -1;
+			}
+		}
+		return result;
+	}
+	public Coord getFirst(Coord c) {
+		Coord result = this;
+		if(c != null && result.compareTo(c) > 0) {
+			result = c;
+		}
+		return result;
+	}
+	public Coord getLast(Coord c) {
+		Coord result = this;
+		if(c != null && result.compareTo(c) < 0) {
+			result = c;
+		}
+		return result;
 	}
 	
 }

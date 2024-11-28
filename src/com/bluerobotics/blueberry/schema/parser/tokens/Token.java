@@ -40,4 +40,5 @@ public abstract class Token {
 	public String toString() {
 		return getClass().getSimpleName() + "()";
 	}
+	
 }

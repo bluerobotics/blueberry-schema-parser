@@ -37,6 +37,8 @@ import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
@@ -96,8 +98,10 @@ public class BlueberrySchemaParser implements Constants {
 			}
 			collapseComments();
 			collapseDefines();
+			collapseNumbers();
+			collapseNameValues();
 			collapseEnums();
-			collapseEnumValues();
+//			collapseEnumValues();
 			identifyFieldNames();
 			collapseEols();
 //			identifyBlockTypes();
@@ -112,6 +116,80 @@ public class BlueberrySchemaParser implements Constants {
 		}
 	}
 	
+	private void collapseNameValues() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, EqualsToken.class, true);
+			
+			if(i > 0 && i < m_elements.size()) {
+				int ni = i - 1;//this should point to a name
+				int vi = i + 1;//this should point to a number
+				int cti = ni -1;//this should point to a comment, maybe
+				Token equalsT = m_elements.get(i);//equals
+				Token numberT = m_elements.get(vi);//number
+				Token nameT = m_elements.get(ni);//name
+				Token commentT= null;//comment
+				CommentToken ct = null;
+				if(cti >= 0) {
+					Token t = m_elements.get(cti);
+					if(t instanceof CommentToken) {
+						commentT = (CommentToken)t;
+					}
+				}
+				
+
+				if(numberT instanceof NumberToken && nameT instanceof SingleWordToken) {
+					NumberToken nt = (NumberToken)numberT;
+					SingleWordToken swt = (SingleWordToken)nameT;
+					NameValueToken nvt = new NameValueToken(swt, nt, ct);
+					if(commentT != null) {
+						m_elements.set(cti, nvt);//put the new thing in the place of the comment
+						m_elements.remove(numberT);//remove the number
+						m_elements.remove(equalsT);//remove the equals
+						m_elements.remove(nameT);//remove the name
+						
+					} else {
+						m_elements.set(ni, nvt);//put the new thing in the place of the name
+						m_elements.remove(numberT);//remove the number
+						m_elements.remove(equalsT);//remove the equals
+					}
+					++i;
+					
+					
+				} else {
+					throw new SchemaParserException("Incorrect tokens around equals.", numberT.getStart());
+				}
+			} else {
+				break;
+			}
+		}
+	}
+	private void collapseNumbers() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, EqualsToken.class, true);
+			
+			if(i > 0 && i < m_elements.size()) {
+				++i;
+				Token t = (Token)m_elements.get(i);
+				if(t instanceof SingleWordToken) {
+					SingleWordToken swt = (SingleWordToken)t;
+					NumberToken nt = NumberToken.wrap(swt);
+					if(nt != null) {
+						m_elements.set(i, nt);
+					} else {
+						throw new SchemaParserException("Cannot parse \"" + swt.getName()+ "\"as number.", t.getStart());
+					}
+				} else {
+					throw new SchemaParserException("Incorrect token after equals.", t.getStart());
+				}
+			} else {
+				break;
+			}
+		}
+	}
 	private void collapseEols() {
 		int i = 0;
 		while(i < m_elements.size()){
@@ -134,6 +212,8 @@ public class BlueberrySchemaParser implements Constants {
 			}
 			if(tk instanceof BlockStartToken) {
 				m_elements.remove(i);
+			} else if(tk instanceof NameValueToken) {
+				m_elements.remove(i);
 			} else if(tk instanceof BlockEndToken) {
 				m_elements.remove(i);
 			} else if(tj instanceof EolToken) {
@@ -141,6 +221,8 @@ public class BlueberrySchemaParser implements Constants {
 			} else if(tj instanceof BlockStartToken) {
 				m_elements.remove(i);
 			} else if(tj instanceof BlockEndToken) {
+				m_elements.remove(i);
+			} else if(tj instanceof NameValueToken) {
 				m_elements.remove(i);
 			} else {
 				i = j;
@@ -249,15 +331,15 @@ public class BlueberrySchemaParser implements Constants {
 							if(!(t1 instanceof EqualsToken)) {
 								throw new SchemaParserException("This token should be an equals sign!", t1.getStart());
 							}
-							if(!(t2 instanceof SingleWordToken)) {
+							if(!(t2 instanceof NumberToken)) {
 								throw new SchemaParserException("This token is bad!", t2.getStart());
 							}
 							
 							
-							SingleWordToken svt1 = (SingleWordToken)t0;
-							SingleWordToken svt2 = (SingleWordToken)t2;
+							SingleWordToken svt = (SingleWordToken)t0;
+							NumberToken nt = (NumberToken)t2;
 							
-							et.addNameValue(svt1, svt2, ct);
+							et.addNameValue(svt, nt, ct);
 							ct = null;
 							list.clear();
 						}

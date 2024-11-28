@@ -31,10 +31,10 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 public class EnumToken extends Token {
 	private BaseType m_baseType = null;
 	private class NameValue {
-		SingleWordToken value;
+		NumberToken value;
 		SingleWordToken name;
 		CommentToken comment;
-		NameValue(SingleWordToken n, SingleWordToken v, CommentToken c){
+		NameValue(SingleWordToken n, NumberToken v, CommentToken c){
 			name = n;
 			value = v;
 		}
@@ -57,7 +57,7 @@ public class EnumToken extends Token {
 	public void setBaseType(BaseType bt) {
 		m_baseType = bt;
 	}
-	public void addNameValue(SingleWordToken name, SingleWordToken value, CommentToken c) {
+	public void addNameValue(SingleWordToken name, NumberToken value, CommentToken c) {
 		
 		m_nameValues.add(new NameValue(name, value, c));
 		
