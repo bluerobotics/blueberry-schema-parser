@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BlockTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
@@ -105,6 +106,7 @@ public class BlueberrySchemaParser implements Constants {
 			collapseEnums();
 			collapseEnumValues();
 			identifyFieldNames();
+			identifyBlockTypeInstances();
 			collapseEols();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
@@ -118,6 +120,35 @@ public class BlueberrySchemaParser implements Constants {
 		}
 	}
 	
+	private void identifyBlockTypeInstances() {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, SingleWordToken.class, true);
+			
+			if(i > 1 && i < m_elements.size() - 1) {//note the limits here!
+				Token t = m_elements.get(i);
+
+				SingleWordToken swt = (SingleWordToken)t;
+				//if this is followed by a field name and starts a line
+				//then it is a block type instance
+				
+				Token nextT = m_elements.get(i + 1);
+				Token prevT = m_elements.get(i - 1);
+				
+				if(nextT instanceof FieldNameToken && (prevT instanceof EolToken || prevT instanceof CommentToken)) {
+					//yup, this is a BlockTypeInstance
+					BlockTypeToken btt = new BlockTypeToken(swt);
+					m_elements.set(i, btt);
+				}
+				++i;
+			} else {
+				break;
+			}
+			
+		}
+		
+	}
 	private void collapseNameValues() throws SchemaParserException {
 		int i = 0;
 		while(i < m_elements.size()){
