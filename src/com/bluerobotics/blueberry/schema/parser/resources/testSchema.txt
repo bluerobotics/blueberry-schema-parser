@@ -37,7 +37,7 @@ define Array block {
 /* 
  * This is the top level hierarchy of a BR packet
  */
-Packet BrPacket(key = 0x45554c42) {
+Packet brPacket(key = 0x45554c42) {
 
 	/* this section conveys the ID of the device
 	 * this a unique identifier
@@ -47,7 +47,7 @@ Packet BrPacket(key = 0x45554c42) {
 	 * A bus controller does not need to send an ID payload.
 	 * A packet without one shall still be processed by a peripheral
 	 */
-	Payload IdPayload(key = 0x0001) {
+	Payload idPayload(key = 0x0001) {
 		uint32 id
 	}
 	
@@ -55,7 +55,7 @@ Packet BrPacket(key = 0x45554c42) {
 	 * A payload for a peripheral to convey its details to the controller.
 	 * A controller requests a version payload by sending an empty one.
 	 */
-	Payload VersionPayload(key = 0x0002) {
+	Payload versionPayload(key = 0x0002) {
 	
 		uint32 fw //this is the version of the firmware
 	

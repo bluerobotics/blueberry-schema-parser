@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class BlockStartToken extends SingleCharToken {
-	public BlockStartToken(Coord start) {
+public class BraceEndToken extends SingleCharToken {
+	public BraceEndToken(Coord start) {
 		super(start);
 	}
 }

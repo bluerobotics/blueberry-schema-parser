@@ -30,16 +30,8 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
  */
 public class EnumToken extends Token {
 	private BaseType m_baseType = null;
-	private class NameValue {
-		NumberToken value;
-		SingleWordToken name;
-		CommentToken comment;
-		NameValue(SingleWordToken n, NumberToken v, CommentToken c){
-			name = n;
-			value = v;
-		}
-	}
-	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
+	
+	private final ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();
 	public EnumToken(Coord start, Coord end) {
 		super(start, end);
 	}
@@ -49,7 +41,7 @@ public class EnumToken extends Token {
 	public String toString() {
 		String s = " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
 		
-		for(NameValue nv : m_nameValues) {
+		for(NameValueToken nv : m_nameValues) {
 			s += nv.name.getName() + " ";
 		}
 		return getClass().getSimpleName()+"("+s+")";
@@ -57,9 +49,9 @@ public class EnumToken extends Token {
 	public void setBaseType(BaseType bt) {
 		m_baseType = bt;
 	}
-	public void addNameValue(SingleWordToken name, NumberToken value, CommentToken c) {
+	public void addNameValue(NameValueToken nvt) {
 		
-		m_nameValues.add(new NameValue(name, value, c));
+		m_nameValues.add(nvt);
 		
 	}
 }

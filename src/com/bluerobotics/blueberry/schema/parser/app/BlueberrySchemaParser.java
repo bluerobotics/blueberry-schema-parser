@@ -24,8 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.app;
 import java.util.ArrayList;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.BlockEndToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.BlockStartToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketStartToken;
@@ -101,7 +101,7 @@ public class BlueberrySchemaParser implements Constants {
 			collapseNumbers();
 			collapseNameValues();
 			collapseEnums();
-//			collapseEnumValues();
+			collapseEnumValues();
 			identifyFieldNames();
 			collapseEols();
 //			identifyBlockTypes();
@@ -210,17 +210,17 @@ public class BlueberrySchemaParser implements Constants {
 			if(j < m_elements.size()) {
 				tj = m_elements.get(j);
 			}
-			if(tk instanceof BlockStartToken) {
+			if(tk instanceof BraceStartToken) {
 				m_elements.remove(i);
 			} else if(tk instanceof NameValueToken) {
 				m_elements.remove(i);
-			} else if(tk instanceof BlockEndToken) {
+			} else if(tk instanceof BraceEndToken) {
 				m_elements.remove(i);
 			} else if(tj instanceof EolToken) {
 				m_elements.remove(i);
-			} else if(tj instanceof BlockStartToken) {
+			} else if(tj instanceof BraceStartToken) {
 				m_elements.remove(i);
-			} else if(tj instanceof BlockEndToken) {
+			} else if(tj instanceof BraceEndToken) {
 				m_elements.remove(i);
 			} else if(tj instanceof NameValueToken) {
 				m_elements.remove(i);
@@ -295,8 +295,8 @@ public class BlueberrySchemaParser implements Constants {
 				//this should be safe because of how j was determined
 				EnumToken et = (EnumToken)(m_elements.get(j));
 				
-				int k = findToken(j, BlockStartToken.class, true);
-				int m = findToken(k, BlockEndToken.class, true);
+				int k = findToken(j, BraceStartToken.class, true);
+				int m = findToken(k, BraceEndToken.class, true);
 				
 				if(k < 0) {
 					throw new SchemaParserException("Could not find a block start after enum keyword", et.getStart());
@@ -311,45 +311,18 @@ public class BlueberrySchemaParser implements Constants {
 				i = k;
 				
 				//everything inside the block should be part of the enum 
-				ArrayList<Token> list = new ArrayList<Token>();
+				
 				CommentToken ct = null;
-				for(int x = k; x < m; ++x) {
+				for(int x = k+1; x < m; ++x) {
 					Token t = m_elements.get(x);
-					if(t instanceof EolToken) {
-						if(list.size() == 0) {
-							
-						} else if(list.size() != 3) {
-							throw new SchemaParserException("Malformed enum value assignment", bs.getStart());
-						} else {
-						
-							Token t0 = list.get(0);
-							Token t1 = list.get(1);
-							Token t2 = list.get(2);
-							if(!(t0 instanceof SingleWordToken)) {
-								throw new SchemaParserException("This token is bad!", t0.getStart());
-							}
-							if(!(t1 instanceof EqualsToken)) {
-								throw new SchemaParserException("This token should be an equals sign!", t1.getStart());
-							}
-							if(!(t2 instanceof NumberToken)) {
-								throw new SchemaParserException("This token is bad!", t2.getStart());
-							}
-							
-							
-							SingleWordToken svt = (SingleWordToken)t0;
-							NumberToken nt = (NumberToken)t2;
-							
-							et.addNameValue(svt, nt, ct);
-							ct = null;
-							list.clear();
-						}
-						
-						
-					} else if(t instanceof SingleWordToken || t instanceof EqualsToken) {
-						list.add(t);
-					} else if(t instanceof CommentToken) {
-						//this is normal
-						ct = (CommentToken)t;
+					
+					if(t instanceof NameValueToken) {
+						NameValueToken nvt = (NameValueToken)t;
+						et.addNameValue(nvt);
+					} else if(t instanceof EolToken) {
+						//don't do anything here. It will all be fine!
+					} else {
+						throw new SchemaParserException("Did not expect "+t.toString() + "in enum block!", t.getStart());
 					}
 				}
 				
@@ -537,10 +510,10 @@ public class BlueberrySchemaParser implements Constants {
 	private void addToken(Coord start, Coord end, String s) {
 		switch(s) {
 		case FIELD_BLOCK_START:
-			m_elements.add(new BlockStartToken(start));
+			m_elements.add(new BraceStartToken(start));
 			break;
 		case FIELD_BLOCK_END:
-			m_elements.add(new BlockEndToken(start));
+			m_elements.add(new BraceEndToken(start));
 			break;
 		case BRACKET_START:
 			m_elements.add(new BracketStartToken(start));
