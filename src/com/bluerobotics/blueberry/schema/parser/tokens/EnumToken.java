@@ -42,7 +42,7 @@ public class EnumToken extends Token {
 		String s = " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
 		
 		for(NameValueToken nv : m_nameValues) {
-			s += nv.name.getName() + " ";
+			s += nv.getName() + " ";
 		}
 		return getClass().getSimpleName()+"("+s+")";
 	}

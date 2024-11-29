@@ -65,11 +65,12 @@ Packet brPacket(key = 0x45554c42) {
 		// field name is "hwDef"
 		define HwDef compound hwDef {
 			enum uint16 hwType {
-				UNDEFINED_HW_TYPE   = 0xffff
-				SFDQ_HW_TYPE        = 0x0000
-				BLUE_SERVO_HW_TYPE  = 0x0001
-				LUMEN_HW_TYPE       = 0x0002
-				NUCLEO_HW_TYPE      = 0x0003
+				UNDEFINED   = 0xffff
+				SFDQ      	= 0x0000
+				BLUE_SERVO	= 0x0001
+				LUMEN       = 0x0002
+				NUCLEO     	= 0x0003
+				BLUE_ESC
 			}
 			enum uint8 mcuType {
 				UNDEFINED = 0xff

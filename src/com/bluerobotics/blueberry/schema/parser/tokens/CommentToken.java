@@ -38,6 +38,9 @@ public class CommentToken extends Token {
 	public String toString() {
 		return getClass().getSimpleName()+"(\"" + getAbbreviatedComment() + "\")";
 	}
+	public boolean isLineComnent() {
+		return !m_blockNotLine;
+	}
 	public String[] getComment() {
 		return m_comment;
 	}

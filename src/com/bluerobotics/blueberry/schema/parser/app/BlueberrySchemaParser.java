@@ -23,6 +23,8 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
 
+import javax.swing.plaf.synth.SynthCheckBoxMenuItemUI;
+
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
@@ -256,10 +258,14 @@ public class BlueberrySchemaParser implements Constants {
 							++j;
 						} else if(tj instanceof CommentToken) {
 							CommentToken ctj = (CommentToken)tj;
-							CommentToken ctn = cti.combine(ctj);
-							m_elements.set(i, ctn);
-							for(int k = j; k > i; --k) {
-								m_elements.remove(k);
+							if(cti.isLineComnent() || ctj.isLineComnent()) {
+								CommentToken ctn = cti.combine(ctj);
+								m_elements.set(i, ctn);
+								for(int k = j; k > i; --k) {
+									m_elements.remove(k);
+								}
+							} else {
+								++i;
 							}
 							notDone = false;
 						} else {
@@ -321,6 +327,25 @@ public class BlueberrySchemaParser implements Constants {
 						et.addNameValue(nvt);
 					} else if(t instanceof EolToken) {
 						//don't do anything here. It will all be fine!
+					} else if(t instanceof SingleWordToken) {
+						//this is likely an enum element that has not been assigned a value
+						//should probably check that next and previous token are EOLs
+						SingleWordToken swt = (SingleWordToken)t;
+						Token nextT = m_elements.get(x + 1);
+						Token prevT = m_elements.get(x - 1);
+						if(nextT instanceof EolToken) {
+							if(prevT instanceof EolToken) {
+								NameValueToken nvt = new NameValueToken(swt, null, null);
+								et.addNameValue(nvt);
+							} else {
+								throw new SchemaParserException("Unexpected input while parsing enum elements", prevT.getStart());
+							}
+						
+							
+						} else {
+							throw new SchemaParserException("Unexpected input while parsing enum elements", nextT.getStart());
+
+						}
 					} else {
 						throw new SchemaParserException("Did not expect "+t.toString() + "in enum block!", t.getStart());
 					}
