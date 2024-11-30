@@ -107,6 +107,7 @@ public class BlueberrySchemaParser implements Constants {
 			collapseEnumValues();
 			identifyFieldNames();
 			identifyBlockTypeInstances();
+			collapseBlockTokenNameValues();
 			collapseEols();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
@@ -120,6 +121,64 @@ public class BlueberrySchemaParser implements Constants {
 		}
 	}
 	
+	
+	/**
+	 * grab any name values from within brackets that occur on a block type allocation
+	 * @throws SchemaParserException 
+	 */
+	private void collapseBlockTokenNameValues() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, BlockTypeToken.class, true);
+			
+			
+			if(i > 0 && i < m_elements.size()) {//note the limits here!
+				BlockTypeToken btt = (BlockTypeToken)m_elements.get(i);
+				int bs = findToken(i, BracketStartToken.class, true);
+				int be = findToken(i, BracketEndToken.class, true);
+				BracketStartToken bst = null;
+				BracketEndToken bet = null;
+				
+				
+				if(bs >= 0) {
+					bst = (BracketStartToken)m_elements.get(bs);
+					//throw this out if it's not on the same line
+					if(bst.getStart().getLineIndex() != btt.getStart().getLineIndex()) {
+						bst = null;
+					}
+				}
+				if(be >= 0) {
+					bet = (BracketEndToken)m_elements.get(be);
+				}
+				
+				if(bst != null) {
+					if(bet == null) {
+						throw new SchemaParserException("No closing brackets for opening brackets.", bst.getStart());
+					}
+				
+					int j = bs+1;
+					while(m_elements.get(j) != bet) {
+						Token t = m_elements.get(j);
+						if(t instanceof NameValueToken) {
+							btt.add((NameValueToken)t);
+							m_elements.remove(j);
+						} else {
+							if(t instanceof EolToken) {
+								++j;
+							} else {
+								throw new SchemaParserException("Unexpected token!", t.getStart());
+							}
+						}
+					}
+				}
+			} else {
+				break;
+			}
+			++i;
+		
+		}
+	}
 	private void identifyBlockTypeInstances() {
 		int i = 0;
 		while(i < m_elements.size()){

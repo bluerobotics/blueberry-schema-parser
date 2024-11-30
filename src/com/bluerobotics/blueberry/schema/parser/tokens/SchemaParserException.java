@@ -13,11 +13,19 @@ public class SchemaParserException extends Exception {
 	private final Coord m_location;
 	
 	public SchemaParserException(String s, Coord c){
-		super(s);
+		super(addLineAndPointer(s, c));
 		m_location = c;
 	}
 	public Coord getLocaation() {
 		return m_location;
+	}
+	
+	private static String addLineAndPointer(String s, Coord c) {
+		s += "\n";
+		s += c.getString() + "\n";
+		s += " ".repeat(c.index);
+		s += "^\n";
+		return s;
 	}
 
 }
