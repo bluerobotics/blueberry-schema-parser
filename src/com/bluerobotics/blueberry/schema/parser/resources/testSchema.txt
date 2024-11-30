@@ -60,11 +60,8 @@ Packet brPacket(key = 0x45554c42) {
 		uint32 fw //this is the version of the firmware
 	
 		// this defines the type of hardware (i.e. type/purpose of PCB)
-		// note that this is an example of a combination define and
-		// field declaration. The defined type is "HwDef" and the field 
-		// field name is "hwDef"
-		define HwDef compound hwDef {
-			enum uint16 hwType {
+		define HwDef compound {
+			define HwType enum uint16 {
 				UNDEFINED   = 0xffff
 				SFDQ      	= 0x0000
 				BLUE_SERVO	= 0x0001
@@ -72,16 +69,19 @@ Packet brPacket(key = 0x45554c42) {
 				NUCLEO     	= 0x0003
 				BLUE_ESC
 			}
-			enum uint8 mcuType {
+			HwType hwType
+			define McuType enum uint8 {
 				UNDEFINED = 0xff
 				STM32F446 = 0x01
 				STM32H563 = 0x02
 				STM32H573 = 0x03
 				STM32G071 = 0x04
 			}
+			McuType mcuType
 			uint8 revision
 			}
 		}
+		HwDef hwDef //this allocates a field of the hardware definition compound type
 		/*
 	     * a payload for conveying ADC values
 		 */

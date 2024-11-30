@@ -36,12 +36,14 @@ import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CompoundToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.tokens.DefineToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.DefinedTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.NestedFieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
@@ -111,8 +113,9 @@ public class BlueberrySchemaParser implements Constants {
 			identifyBlockTypeInstances();
 			collapseBlockTokenNameValues();
 			collapseBaseTypeAllocations();
-			collapseEnumAllocations();
+//			collapseEnumAllocations();
 			collapseNestedFieldAllocations();
+			collapseDefinedTypes();
 			
 			
 			collapseEols();
@@ -125,6 +128,28 @@ public class BlueberrySchemaParser implements Constants {
 		System.out.println("************* Output ************");
 		for(Token pe : m_elements) {
 			System.out.println(pe.toString());
+		}
+	}
+	private void collapseDefinedTypes() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, DefineToken.class, true);
+			
+			if(i > 0 && i < m_elements.size() - 1) {//note the limits here!
+				DefineToken dt = (DefineToken)m_elements.get(i);
+				Token nextT = m_elements.get(i + 1);
+				if(nextT instanceof DefinedTypeToken) {
+					DefinedTypeToken dtt = (DefinedTypeToken)nextT;
+					dtt.setDefinedTypeName(dt);
+					m_elements.remove(i);
+				} else {
+					throw new SchemaParserException("Expected either block, enum or compound here!", nextT.getStart());
+					
+				}
+			} else {
+				break;
+			}
 		}
 	}
 	private void collapseNestedFieldAllocations() throws SchemaParserException {
@@ -147,7 +172,7 @@ public class BlueberrySchemaParser implements Constants {
 				Token tNext = m_elements.get(i + 1);
 				if(tNext instanceof FieldNameToken) {
 					fnt = (FieldNameToken)tNext;
-					FieldAllocationToken fat = new FieldAllocationToken(fnt, et, ct);
+					FieldAllocationToken fat = new NestedFieldAllocationToken(fnt, et, ct);
 					if(ct != null) {
 						m_elements.set(i - 1, fat);
 						m_elements.remove(i + 1);
@@ -296,6 +321,10 @@ public class BlueberrySchemaParser implements Constants {
 		
 		}
 	}
+	/**
+	 * This looks for single word tokens at the start of a line that are followed by a field name
+	 * these are then converted to block type tokens
+	 */
 	private void identifyBlockTypeInstances() {
 		int i = 0;
 		while(i < m_elements.size()){

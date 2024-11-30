@@ -24,8 +24,27 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class CompoundToken extends SingleWordToken implements TypeToken {
+public class CompoundToken extends SingleWordToken implements TypeToken, DefinedTypeToken {
+	private DefineToken m_define = null;
 	public CompoundToken(Coord start, Coord end, String s) {
 		super(start, end, s);
+	}
+
+	@Override
+	public DefineToken getDefineToken() {
+		return m_define;
+	}
+
+	@Override
+	public void setDefinedTypeName(DefineToken dt) {
+		m_define = dt;
+	}
+	
+	public String toString() {
+		String s = getClass().getSimpleName();
+		s += "(";
+		s += m_define.getTypeName();
+		s += ")";
+		return s;
 	}
 }

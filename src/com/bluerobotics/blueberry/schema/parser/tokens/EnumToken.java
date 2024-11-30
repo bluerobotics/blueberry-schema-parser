@@ -28,8 +28,9 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 /**
  * 
  */
-public class EnumToken extends AbstractToken implements TypeToken {
+public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeToken {
 	private BaseType m_baseType = null;
+	private DefineToken m_define = null;
 	
 	private final ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();
 	public EnumToken(Coord start, Coord end) {
@@ -39,12 +40,16 @@ public class EnumToken extends AbstractToken implements TypeToken {
 		return m_baseType;
 	}
 	public String toString() {
-		String s = " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
+		String s = getClass().getSimpleName()+"(";
+		s += m_define.getTypeName() + " ";
+		s += " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
+
 		
 		for(NameValueToken nv : m_nameValues) {
 			s += nv.getName() + " ";
 		}
-		return getClass().getSimpleName()+"("+s+")";
+		s += ")";
+		return s;
 	}
 	public void setBaseType(BaseType bt) {
 		m_baseType = bt;
@@ -57,5 +62,13 @@ public class EnumToken extends AbstractToken implements TypeToken {
 	@Override
 	public String getName() {
 		return "enum "+m_baseType.name();
+	}
+	@Override
+	public DefineToken getDefineToken() {
+		return m_define;
+	}
+	@Override
+	public void setDefinedTypeName(DefineToken dt) {
+		m_define = dt;
 	}
 }
