@@ -21,58 +21,27 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.util.ArrayList;
-
 /**
  * 
  */
-public class CommentToken extends AbstractToken {
-	private final boolean m_blockNotLine;
-	private final String[] m_comment;
-	public CommentToken(Coord start, Coord end, String comment, boolean blockNotLine) {
-		super(start, end);
-		m_blockNotLine = blockNotLine;
-		m_comment = comment.split("\\R");
-//		System.out.println(this);
+public class FieldAllocationToken extends AbstractToken {
+	private FieldNameToken name;
+	private TypeToken type;
+	private CommentToken comment;
+	public FieldAllocationToken(FieldNameToken n, TypeToken t, CommentToken c){
+		super(n.getStart().getFirst(t.getStart()).getFirst(c != null ? c.getStart() : null),
+				n.getEnd().getLast(t.getEnd()).getLast(c != null ? c.getEnd() : null));
+		
+		name = n;
+		type = t;
+		comment = c;
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"(\"" + getAbbreviatedComment() + "\")";
+		String s = getClass().getSimpleName();
+		s += "(";
+		s += type.getName();
+		s += " " + name.getName();
+		s += ")";
+		return s;
 	}
-	public boolean isLineComnent() {
-		return !m_blockNotLine;
-	}
-	public String[] getComment() {
-		return m_comment;
-	}
-	public String getAbbreviatedComment() {
-		String result = "";
-		for(String s : m_comment) {
-			result += s.substring(0, 20)+"... ";
-		}
-		return result;
-	}
-	public CommentToken combine(CommentToken ct) {
-		String cs = "";
-		boolean firstTime = true;
-		for(String s : m_comment) {
-			if(!firstTime) {
-				cs += "\n";
-			}
-			
-			cs += s;
-			firstTime = false;
-		}
-
-		for(String s : ct.m_comment) {
-			
-			cs += "\n";
-			
-			cs += s;
-			firstTime = false;
-		}
-		
-		CommentToken ctn = new CommentToken(getStart(), getEnd(), cs, true);
-		return ctn;
-	}
-	
 }

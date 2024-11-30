@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class CompoundToken extends SingleWordToken {
+public class CompoundToken extends SingleWordToken implements TypeToken {
 	public CompoundToken(Coord start, Coord end, String s) {
 		super(start, end, s);
 	}

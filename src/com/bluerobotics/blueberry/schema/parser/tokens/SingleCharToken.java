@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public abstract class SingleCharToken extends Token {
+public abstract class SingleCharToken extends AbstractToken {
 	public SingleCharToken(Coord start) {
 		super(start,start.incrementIndex(1));
 //		System.out.println(getClass().getSimpleName()+"()");

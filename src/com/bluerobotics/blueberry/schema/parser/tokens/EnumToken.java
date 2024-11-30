@@ -28,7 +28,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 /**
  * 
  */
-public class EnumToken extends Token {
+public class EnumToken extends AbstractToken implements TypeToken {
 	private BaseType m_baseType = null;
 	
 	private final ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();
@@ -53,5 +53,9 @@ public class EnumToken extends Token {
 		
 		m_nameValues.add(nvt);
 		
+	}
+	@Override
+	public String getName() {
+		return "enum "+m_baseType.name();
 	}
 }

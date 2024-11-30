@@ -6,7 +6,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class NameValueToken extends Token {
+public class NameValueToken extends AbstractToken {
 	private final NumberToken value;
 	private final SingleWordToken name;
 	private final CommentToken comment;

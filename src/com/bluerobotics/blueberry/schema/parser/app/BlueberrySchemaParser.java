@@ -39,12 +39,14 @@ import com.bluerobotics.blueberry.schema.parser.tokens.DefineToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
+import com.bluerobotics.blueberry.schema.parser.tokens.AbstractToken;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
@@ -69,7 +71,7 @@ public class BlueberrySchemaParser implements Constants {
 	private String m_token = "";
 
 
-	private final ArrayList<Token> m_elements = new ArrayList<Token>();
+	private final ArrayList<AbstractToken> m_elements = new ArrayList<AbstractToken>();
 	/**
 	 * @param args
 	 */
@@ -108,6 +110,11 @@ public class BlueberrySchemaParser implements Constants {
 			identifyFieldNames();
 			identifyBlockTypeInstances();
 			collapseBlockTokenNameValues();
+			collapseBaseTypeAllocations();
+			collapseEnumAllocations();
+			collapseNestedFieldAllocations();
+			
+			
 			collapseEols();
 //			identifyBlockTypes();
 		} catch (SchemaParserException e) {
@@ -120,8 +127,118 @@ public class BlueberrySchemaParser implements Constants {
 			System.out.println(pe.toString());
 		}
 	}
+	private void collapseNestedFieldAllocations() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, BlockTypeToken.class, true);
+			
+			if(i > 0 && i < m_elements.size() - 1) {//note the limits here!
+
+				BlockTypeToken et = (BlockTypeToken)m_elements.get(i);
+				CommentToken ct = null;
+				FieldNameToken fnt = null;
+				if(i > 0) {
+					Token tPrev = m_elements.get(i - 1);
+					if(tPrev instanceof CommentToken) {
+						ct = (CommentToken)tPrev;
+					}
+				}
+				Token tNext = m_elements.get(i + 1);
+				if(tNext instanceof FieldNameToken) {
+					fnt = (FieldNameToken)tNext;
+					FieldAllocationToken fat = new FieldAllocationToken(fnt, et, ct);
+					if(ct != null) {
+						m_elements.set(i - 1, fat);
+						m_elements.remove(i + 1);
+						m_elements.remove(i);
+					} else {
+						m_elements.set(i,  fat);
+						m_elements.remove(i + 1);
+					}
+				} else {
+					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
+				}
+			} else {
+				break;
+			}
+		}
+	}
+	private void collapseEnumAllocations() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, EnumToken.class, true);
+			
+			if(i > 0 && i < m_elements.size() - 1) {//note the limits here!
+
+				EnumToken et = (EnumToken)m_elements.get(i);
+				CommentToken ct = null;
+				FieldNameToken fnt = null;
+				if(i > 0) {
+					Token tPrev = m_elements.get(i - 1);
+					if(tPrev instanceof CommentToken) {
+						ct = (CommentToken)tPrev;
+					}
+				}
+				Token tNext = m_elements.get(i + 1);
+				if(tNext instanceof FieldNameToken) {
+					fnt = (FieldNameToken)tNext;
+					FieldAllocationToken fat = new FieldAllocationToken(fnt, et, ct);
+					if(ct != null) {
+						m_elements.set(i - 1, fat);
+						m_elements.remove(i + 1);
+						m_elements.remove(i);
+					} else {
+						m_elements.set(i,  fat);
+						m_elements.remove(i + 1);
+					}
+				} else {
+					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
+				}
+			} else {
+				break;
+			}
+		}
+	}
 	
-	
+	private void collapseBaseTypeAllocations() throws SchemaParserException {
+		int i = 0;
+		while(i < m_elements.size()){
+			//first find next define element
+			i = findToken(i, BaseTypeToken.class, true);
+			
+			if(i > 0 && i < m_elements.size() - 1) {//note the limits here!
+
+				BaseTypeToken swt = (BaseTypeToken)m_elements.get(i);
+				CommentToken ct = null;
+				FieldNameToken fnt = null;
+				if(i > 0) {
+					Token tPrev = m_elements.get(i - 1);
+					if(tPrev instanceof CommentToken) {
+						ct = (CommentToken)tPrev;
+					}
+				}
+				Token tNext = m_elements.get(i + 1);
+				if(tNext instanceof FieldNameToken) {
+					fnt = (FieldNameToken)tNext;
+					FieldAllocationToken fat = new FieldAllocationToken(fnt, swt, ct);
+					if(ct != null) {
+						m_elements.set(i - 1, fat);
+						m_elements.remove(i + 1);
+						m_elements.remove(i);
+					} else {
+						m_elements.set(i,  fat);
+						m_elements.remove(i + 1);
+					}
+				} else {
+					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
+				}
+			} else {
+				break;
+			}
+		}
+	}
 	/**
 	 * grab any name values from within brackets that occur on a block type allocation
 	 * @throws SchemaParserException 
@@ -302,19 +419,16 @@ public class BlueberrySchemaParser implements Constants {
 			if(j < m_elements.size()) {
 				tj = m_elements.get(j);
 			}
-			if(tk instanceof BraceStartToken) {
-				m_elements.remove(i);
-			} else if(tk instanceof NameValueToken) {
-				m_elements.remove(i);
-			} else if(tk instanceof BraceEndToken) {
-				m_elements.remove(i);
-			} else if(tj instanceof EolToken) {
-				m_elements.remove(i);
-			} else if(tj instanceof BraceStartToken) {
-				m_elements.remove(i);
-			} else if(tj instanceof BraceEndToken) {
-				m_elements.remove(i);
-			} else if(tj instanceof NameValueToken) {
+			if(tk instanceof BraceStartToken ||
+				tk instanceof CommentToken ||
+				tk instanceof FieldAllocationToken ||
+				tk instanceof NameValueToken ||
+				tk instanceof BraceEndToken ||
+				tj instanceof EolToken ||
+				tj instanceof FieldAllocationToken ||
+				tj instanceof BraceStartToken ||
+				tj instanceof BraceEndToken ||
+				tj instanceof NameValueToken) {
 				m_elements.remove(i);
 			} else {
 				i = j;

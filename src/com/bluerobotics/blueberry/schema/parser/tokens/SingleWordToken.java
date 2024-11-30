@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class SingleWordToken extends Token {
+public class SingleWordToken extends AbstractToken {
 	private final String m_name;
 
 	

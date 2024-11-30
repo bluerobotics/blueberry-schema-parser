@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class BaseTypeToken extends Token {
+public class BaseTypeToken extends AbstractToken implements TypeToken {
 	public enum BaseType {
 		BOOL("bool"),
 		INT8("int8"),
@@ -74,5 +74,10 @@ public class BaseTypeToken extends Token {
 
 	public BaseType getBaseType() {
 		return m_type;
+	}
+
+	@Override
+	public String getName() {
+		return m_type.name();
 	}
 }

@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class BlockToken extends Token {
+public class BlockToken extends AbstractToken {
 	public BlockToken(Coord start, Coord end) {
 		super(start, end);
 	}

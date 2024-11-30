@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class DefineToken extends Token {
+public class DefineToken extends AbstractToken {
 	private String m_typeName = null;
 	public DefineToken(Coord start, Coord end) {
 		super(start, end);
