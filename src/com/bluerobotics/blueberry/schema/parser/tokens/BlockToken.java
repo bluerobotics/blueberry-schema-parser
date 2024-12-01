@@ -29,6 +29,7 @@ import java.util.ArrayList;
 public class BlockToken extends AbstractToken implements DefinedTypeToken {
 	private DefineToken m_define = null;
 	private ArrayList<FieldAllocationToken> m_nestedFields = new ArrayList<FieldAllocationToken>();
+	private CommentToken m_comment = null;
 
 	public BlockToken(Coord start, Coord end) {
 		super(start, end);
@@ -50,5 +51,13 @@ public class BlockToken extends AbstractToken implements DefinedTypeToken {
 	@Override
 	public void add(FieldAllocationToken fat) {
 		m_nestedFields .add(fat);
+	}
+	@Override
+	public void setComment(CommentToken t) {
+		m_comment = t;
+	}
+	@Override
+	public CommentToken getComment() {
+		return m_comment;
 	}
 }

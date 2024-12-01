@@ -31,7 +31,8 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeToken {
 	private BaseType m_baseType = null;
 	private DefineToken m_define = null;
-	
+	private CommentToken m_comment = null;
+
 	private final ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();
 	public EnumToken(Coord start, Coord end) {
 		super(start, end);
@@ -74,5 +75,13 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 	@Override
 	public void add(FieldAllocationToken fat) {
 		//this doesn't need to to anything here
+	}
+	@Override
+	public void setComment(CommentToken t) {
+		m_comment = t;
+	}
+	@Override
+	public CommentToken getComment() {
+		return m_comment;
 	}
 }

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 public class CompoundToken extends SingleWordToken implements TypeToken, DefinedTypeToken {
 	private ArrayList<FieldAllocationToken> m_nestedFields = new ArrayList<FieldAllocationToken>();
 	private DefineToken m_define = null;
+	private CommentToken m_comment = null;
 	public CompoundToken(Coord start, Coord end, String s) {
 		super(start, end, s);
 	}
@@ -54,5 +55,15 @@ public class CompoundToken extends SingleWordToken implements TypeToken, Defined
 	@Override
 	public void add(FieldAllocationToken fat) {
 		m_nestedFields.add(fat);
+	}
+
+	@Override
+	public void setComment(CommentToken t) {
+		m_comment = t;
+	}
+
+	@Override
+	public CommentToken getComment() {
+		return m_comment;
 	}
 }

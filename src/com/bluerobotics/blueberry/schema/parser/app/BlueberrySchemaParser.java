@@ -112,12 +112,14 @@ public class BlueberrySchemaParser implements Constants {
 			collapseEnumValues();
 			identifyFieldNames();
 			identifyBlockTypeInstances();
-			collapseBlockTokenNameValues();
+			collapseBlockTypeTokenNameValues();
 			collapseBaseTypeAllocations();
 			collapseNestedFieldAllocations();
 			collapseDefinedTypes();			
 			collapseEols();
 			collapseDefinedTypeFields(0);
+			collapseDefinedTypeComments();
+			
 			
 			
 			
@@ -130,6 +132,25 @@ public class BlueberrySchemaParser implements Constants {
 		System.out.println("************* Output ************");
 		for(Token pe : m_tokens) {
 			System.out.println(pe.toString());
+		}
+	}
+	private void collapseDefinedTypeComments() {
+		int i = 0;
+		while(i < m_tokens.size()){
+			//find the next brace
+			i = findToken(i, true, BlockToken.class, CompoundToken.class, EnumToken.class);
+			
+			if(i > 0 && i < m_tokens.size()) {
+				DefinedTypeToken dtt = (DefinedTypeToken)m_tokens.get(i);
+				Token prevT = m_tokens.get(i - 1);
+				if(prevT instanceof CommentToken) {
+					dtt.setComment((CommentToken)prevT);
+					m_tokens.remove(i - 1);
+				}
+				++i;
+			} else {
+				break;
+			}
 		}
 	}
 	/**
@@ -322,7 +343,7 @@ public class BlueberrySchemaParser implements Constants {
 	 * grab any name values from within brackets that occur on a block type allocation
 	 * @throws SchemaParserException 
 	 */
-	private void collapseBlockTokenNameValues() throws SchemaParserException {
+	private void collapseBlockTypeTokenNameValues() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
 			//first find next define element
