@@ -21,10 +21,13 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
 public class CompoundToken extends SingleWordToken implements TypeToken, DefinedTypeToken {
+	private ArrayList<FieldAllocationToken> m_nestedFields = new ArrayList<FieldAllocationToken>();
 	private DefineToken m_define = null;
 	public CompoundToken(Coord start, Coord end, String s) {
 		super(start, end, s);
@@ -46,5 +49,10 @@ public class CompoundToken extends SingleWordToken implements TypeToken, Defined
 		s += m_define.getTypeName();
 		s += ")";
 		return s;
+	}
+
+	@Override
+	public void add(FieldAllocationToken fat) {
+		m_nestedFields.add(fat);
 	}
 }

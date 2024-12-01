@@ -16,28 +16,28 @@ define Packet block {
 	 */
 	uint32 crc
 }
-/*
- * Now the payload header
- */
-define Payload block {
-	uint16 key
-	uint8 length //the length of the payload in 4-byte words
-	uint8 blocks //this is an index to the block fields section of the packet
-	
-}
-/*
- * This is the header for an array
- */
-define Array block {
-	uint8 key //a unique identifier of this block
-	uint8 length //the length of one unit of this block
-	uint8 repeat //this indicates the number units of this block
-	uint8 blocks //this indicates the index to the first block field of this block - the first field of base types
-}	
 /* 
  * This is the top level hierarchy of a BR packet
  */
 Packet brPacket(key = 0x45554c42) {
+	/*
+	 * Now the payload header
+	 */
+	define Payload block {
+		uint16 key
+		uint8 length //the length of the payload in 4-byte words
+		uint8 blocks //this is an index to the block fields section of the packet
+		
+	}
+	/*
+	 * This is the header for an array
+	 */
+	define Array block {
+		uint8 key //a unique identifier of this block
+		uint8 length //the length of one unit of this block
+		uint8 repeat //this indicates the number units of this block
+		uint8 blocks //this indicates the index to the first block field of this block - the first field of base types
+	}	
 
 	/* this section conveys the ID of the device
 	 * this a unique identifier

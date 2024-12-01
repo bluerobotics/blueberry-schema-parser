@@ -71,4 +71,8 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 	public void setDefinedTypeName(DefineToken dt) {
 		m_define = dt;
 	}
+	@Override
+	public void add(FieldAllocationToken fat) {
+		//this doesn't need to to anything here
+	}
 }

@@ -27,4 +27,5 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 public interface DefinedTypeToken extends Token {
 	public DefineToken getDefineToken();
 	public void setDefinedTypeName(DefineToken dt);
+	public void add(FieldAllocationToken fat);
 }
