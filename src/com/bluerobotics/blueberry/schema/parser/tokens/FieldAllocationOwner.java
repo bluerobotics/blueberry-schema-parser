@@ -21,9 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-/**
- * 
- */
-public interface DefinedTypeToken extends Token, FieldAllocationOwner {
-	public DefineToken getDefineToken();
-	public void setDefinedTypeName(DefineToken dt);}
+public interface FieldAllocationOwner {
+	public void add(FieldAllocationToken fat);
+}

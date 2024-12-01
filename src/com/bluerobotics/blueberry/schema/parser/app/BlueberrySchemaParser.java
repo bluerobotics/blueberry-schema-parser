@@ -40,6 +40,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.DefinedTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationOwner;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
@@ -155,8 +156,8 @@ public class BlueberrySchemaParser implements Constants {
 					}
 					//if the previous token is a DefinedTypeToken
 					Token prevT = m_tokens.get(i - 1);
-					if(prevT instanceof DefinedTypeToken) {
-						DefinedTypeToken dtt = (DefinedTypeToken)prevT;
+					if(prevT instanceof FieldAllocationOwner) {
+						FieldAllocationOwner dtt = (FieldAllocationOwner)prevT;
 						//so now i to j should be the braces to remove
 						for(int k = j - 1; k > i; --k) {
 							Token tk = m_tokens.get(k);

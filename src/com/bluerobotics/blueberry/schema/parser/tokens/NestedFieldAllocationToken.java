@@ -21,12 +21,20 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
-public class NestedFieldAllocationToken extends FieldAllocationToken {
+public class NestedFieldAllocationToken extends FieldAllocationToken implements FieldAllocationOwner {
+	private ArrayList<FieldAllocationToken> m_fieldAllocations = new ArrayList<FieldAllocationToken>();
 	public NestedFieldAllocationToken(FieldNameToken n, TypeToken t, CommentToken c){
 		super(n, t, c);
+	}
+
+	@Override
+	public void add(FieldAllocationToken fat) {
+		m_fieldAllocations.add(fat);
 	}
 
 }
