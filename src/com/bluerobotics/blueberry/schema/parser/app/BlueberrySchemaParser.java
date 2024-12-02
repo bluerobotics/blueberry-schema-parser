@@ -70,11 +70,10 @@ public class BlueberrySchemaParser implements Constants {
 	private static final String BRACKET_END = ")";
 	private static final String EQUALS = "=";
 
-	
-	private String m_token = "";
 
 
-	private final ArrayList<AbstractToken> m_tokens = new ArrayList<AbstractToken>();
+	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
+	private final ArrayList<Token> m_defines = new ArrayList<Token>();
 	/**
 	 * @param args
 	 */
@@ -117,8 +116,11 @@ public class BlueberrySchemaParser implements Constants {
 			collapseNestedFieldAllocations();
 			collapseDefinedTypes();			
 			collapseEols();
-			collapseDefinedTypeFields(0);
 			collapseDefinedTypeComments();
+			collapseDefinedTypeFields(0, null);
+
+//			moveDefines();
+//			removeEmptyBraces();
 			
 			
 			
@@ -129,9 +131,48 @@ public class BlueberrySchemaParser implements Constants {
 			e.printStackTrace();
 		}
 		
-		System.out.println("************* Output ************");
+		System.out.println("************* Allocations ************");
 		for(Token pe : m_tokens) {
 			System.out.println(pe.toString());
+		}
+		System.out.println("************* Defines ***************");
+		for(Token pe : m_defines) {
+			System.out.println(pe.toString());
+		}
+	}
+
+	private void removeEmptyBraces() {
+		int i = 0;
+		while(i < m_tokens.size()){
+			//find the next brace
+			i = findToken(i, true, BraceStartToken.class);
+			
+			if(i >= 0 && i < m_tokens.size()) {
+				Token nextT = m_tokens.get(i+1);
+				if(nextT instanceof BraceEndToken) {
+					m_tokens.remove(i);
+					m_tokens.remove(i);
+				} else {
+					++i;
+				}
+			} else {
+				break;
+			}
+		}
+	}
+	private void moveDefines() {
+		int i = 0;
+		while(i < m_tokens.size()){
+			//find the next brace
+			i = findToken(i, true, BlockToken.class, CompoundToken.class, EnumToken.class);
+			
+			if(i >= 0 && i < m_tokens.size()) {	
+				Token t = m_tokens.get(i);
+				m_defines.add(t);
+				m_tokens.remove(i);
+			} else {
+				break;
+			}
 		}
 	}
 	private void collapseDefinedTypeComments() {
@@ -158,49 +199,64 @@ public class BlueberrySchemaParser implements Constants {
 	 * this will recurse and close all braces from deepest level outwards
 	 * @param start - the first index to scan
 	 * @param end - the end of the list of elements to scan, not including this element
-	 * @return the index of an end token
+	 * @return the index of a closing brace token
 	 * @throws SchemaParserException 
 	 */
-	private int collapseDefinedTypeFields(int start) throws SchemaParserException {
+	private int collapseDefinedTypeFields(int start, FieldAllocationOwner owner) throws SchemaParserException {
 		int result = -1;
 		int i = start;
+		int bsi = -1;
+
 		while(i < m_tokens.size()){
 			//find the next brace
-			i = findToken(i, true, BraceStartToken.class, BraceEndToken.class);
+//			i = findToken(i, true, BraceStartToken.class, BraceEndToken.class);
 			
-			if(i > 0 && i < m_tokens.size() - 1) {
-				Token ti = m_tokens.get(i);
-				if(ti instanceof BraceStartToken) {
-					int j = collapseDefinedTypeFields(i + 1);
-					if(j < 0) {
-						throw new SchemaParserException("Could not find closing brace!", ti.getStart());
-					}
-					//if the previous token is a DefinedTypeToken
-					Token prevT = m_tokens.get(i - 1);
-					if(prevT instanceof FieldAllocationOwner) {
-						FieldAllocationOwner dtt = (FieldAllocationOwner)prevT;
-						//so now i to j should be the braces to remove
-						for(int k = j - 1; k > i; --k) {
-							Token tk = m_tokens.get(k);
-							if(tk instanceof FieldAllocationToken) {
-								dtt.add((FieldAllocationToken)tk);
-								m_tokens.remove(k);
-							}
-						}
-						i += 2;//point past the block end
-					} else {
-						i = j + 1;
-					}
+			Token ti = m_tokens.get(i);
+			if(bsi < 0 && owner != null) {
+				if(ti instanceof CommentToken) {
 					
-				} else if(ti instanceof BraceEndToken) {
-					//This will unroll this level of recursion
-					result = i;
+				} else if(ti instanceof BraceStartToken) {
+					bsi = i;
+				} else {
+					result = start;
 					break;
-					
 				}
-			} else {
-				break;
+				++i;
+				
+			} else if(ti instanceof FieldAllocationOwner) {
+				//we've found another owner so recurse
+				int m = collapseDefinedTypeFields(i + 1, (FieldAllocationOwner)ti);
+
+				if(ti instanceof DefinedTypeToken) {
+					DefinedTypeToken dtt = (DefinedTypeToken)ti;
+					m_defines.add(dtt);
+					m_tokens.remove(i);
+				} else if(owner != null && ti instanceof FieldAllocationToken) {
+					owner.add((FieldAllocationToken)ti);
+					m_tokens.remove(i);
+				}
+//				i = m;
+				
+			} else if(ti instanceof BraceEndToken) {
+				//can probably delete everything since the brace start, which was bsi
+				if(bsi < 0) {
+					throw new SchemaParserException("That's weird, we should have had an open brace before this, line "+ti.getStart().getLineIndex(), ti.getStart());
+				}
+				for(int k = i; k >= bsi; --k) {
+					m_tokens.remove(k);
+				}
+				result = start;
+				break;//bail out of this level of recursion
+			} else if(ti instanceof FieldAllocationToken) {
+				if(owner != null) {
+					owner.add((FieldAllocationToken)ti);
+				}
+				++i;
+			
+			} else  {
+				++i;
 			}
+		
 		}
 		return result;
 			

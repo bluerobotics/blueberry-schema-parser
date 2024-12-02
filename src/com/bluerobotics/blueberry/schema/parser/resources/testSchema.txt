@@ -27,8 +27,8 @@ Packet brPacket(key = 0x45554c42) {
 		uint16 key
 		uint8 length //the length of the payload in 4-byte words
 		uint8 blocks //this is an index to the block fields section of the packet
-		
 	}
+	
 	/*
 	 * This is the header for an array
 	 */
@@ -37,7 +37,7 @@ Packet brPacket(key = 0x45554c42) {
 		uint8 length //the length of one unit of this block
 		uint8 repeat //this indicates the number units of this block
 		uint8 blocks //this indicates the index to the first block field of this block - the first field of base types
-	}	
+	}
 
 	/* this section conveys the ID of the device
 	 * this a unique identifier
@@ -79,16 +79,17 @@ Packet brPacket(key = 0x45554c42) {
 			}
 			McuType mcuType
 			uint8 revision
-			}
+		
 		}
 		HwDef hwDef //this allocates a field of the hardware definition compound type
-		/*
-	     * a payload for conveying ADC values
-		 */
-		Payload AdcPayload(key = 0x0003) {
-			Array values {
-				float32 value
-			}
+		
+	}
+	/*
+     * a payload for conveying ADC values
+	 */
+	Payload adcPayload(key = 0x0003) {
+		Array values {
+			float32 value
 		}
 	}
 }	
