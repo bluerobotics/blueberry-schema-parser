@@ -21,6 +21,9 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.List;
+
 public interface FieldAllocationOwner {
 	public void add(FieldAllocationToken fat);
+	public List<FieldAllocationToken> getFields();
 }

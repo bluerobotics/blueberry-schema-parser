@@ -22,11 +22,12 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
  */
-public class BlockToken extends AbstractToken implements DefinedTypeToken {
+public class BlockToken extends AbstractToken implements DefinedTypeToken, FieldAllocationOwner {
 	private DefineToken m_define = null;
 	private ArrayList<FieldAllocationToken> m_nestedFields = new ArrayList<FieldAllocationToken>();
 	private CommentToken m_comment = null;
@@ -59,5 +60,9 @@ public class BlockToken extends AbstractToken implements DefinedTypeToken {
 	@Override
 	public CommentToken getComment() {
 		return m_comment;
+	}
+	@Override
+	public List<FieldAllocationToken> getFields() {
+		return m_nestedFields;
 	}
 }

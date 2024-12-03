@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 
@@ -72,10 +73,10 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 	public void setDefinedTypeName(DefineToken dt) {
 		m_define = dt;
 	}
-	@Override
-	public void add(FieldAllocationToken fat) {
-		//this doesn't need to to anything here
-	}
+//	@Override
+//	public void add(FieldAllocationToken fat) {
+//		//this doesn't need to to anything here
+//	}
 	@Override
 	public void setComment(CommentToken t) {
 		m_comment = t;
@@ -84,4 +85,9 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 	public CommentToken getComment() {
 		return m_comment;
 	}
+//	@Override
+//	public List<FieldAllocationToken> getFields() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 }

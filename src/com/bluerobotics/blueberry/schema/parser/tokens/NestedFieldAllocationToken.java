@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
@@ -35,6 +36,11 @@ public class NestedFieldAllocationToken extends FieldAllocationToken implements 
 	@Override
 	public void add(FieldAllocationToken fat) {
 		m_fieldAllocations.add(fat);
+	}
+	
+	@Override
+	public List<FieldAllocationToken> getFields() {
+		return m_fieldAllocations;
 	}
 
 }

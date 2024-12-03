@@ -130,15 +130,15 @@ public class BlueberrySchemaParser implements Constants {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		System.out.println("************* Allocations ************");
-		for(Token pe : m_tokens) {
-			System.out.println(pe.toString());
-		}
 		System.out.println("************* Defines ***************");
 		for(Token pe : m_defines) {
 			System.out.println(pe.toString());
 		}
+		System.out.println("************* Allocations ************");
+		for(Token pe : m_tokens) {
+			System.out.println(pe.toString());
+		}
+		
 	}
 
 	private void removeEmptyBraces() {
@@ -230,15 +230,16 @@ public class BlueberrySchemaParser implements Constants {
 				if(m < 0) {
 					break;
 				} else if(ti instanceof DefinedTypeToken) {
-					DefinedTypeToken dtt = (DefinedTypeToken)ti;
-					m_defines.add(dtt);
+					m_defines.add((DefinedTypeToken)ti);
 					m_tokens.remove(i);
 				} else if(owner != null && ti instanceof FieldAllocationToken) {
 					owner.add((FieldAllocationToken)ti);
 					m_tokens.remove(i);
 				}
 //				i = m;
-				
+			} else if(ti instanceof EnumToken) {
+				m_defines.add((EnumToken)ti);
+				m_tokens.remove(i);
 			} else if(ti instanceof BraceEndToken) {
 				//can probably delete everything since the brace start, which was bsi
 				if(bsi < 0) {
@@ -257,6 +258,11 @@ public class BlueberrySchemaParser implements Constants {
 			
 			} else  {
 				++i;
+			}
+			if(i >= m_tokens.size()) {
+				if(bsi >= 0) {
+					throw new SchemaParserException("No closing brace!", m_tokens.get(bsi).getStart());
+				}
 			}
 		
 		}

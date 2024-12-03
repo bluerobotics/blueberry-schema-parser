@@ -47,7 +47,7 @@ public class CommentToken extends AbstractToken {
 	public String getAbbreviatedComment() {
 		String result = "";
 		for(String s : m_comment) {
-			result += s.substring(0, 20)+"... ";
+			result += s.length() < 20 ? s + " " : s.substring(0, 20)+"... ";
 		}
 		return result;
 	}
