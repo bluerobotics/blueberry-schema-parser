@@ -224,10 +224,12 @@ public class BlueberrySchemaParser implements Constants {
 				++i;
 				
 			} else if(ti instanceof FieldAllocationOwner) {
+				
 				//we've found another owner so recurse
 				int m = collapseDefinedTypeFields(i + 1, (FieldAllocationOwner)ti);
-
-				if(ti instanceof DefinedTypeToken) {
+				if(m < 0) {
+					break;
+				} else if(ti instanceof DefinedTypeToken) {
 					DefinedTypeToken dtt = (DefinedTypeToken)ti;
 					m_defines.add(dtt);
 					m_tokens.remove(i);
