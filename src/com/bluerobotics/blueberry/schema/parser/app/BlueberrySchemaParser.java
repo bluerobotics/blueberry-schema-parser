@@ -49,6 +49,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.AbstractToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.starfishmedical.utils.ResourceTools;
@@ -56,21 +57,8 @@ import com.starfishmedical.utils.ResourceTools;
 /**
  * 
  */
-public class BlueberrySchemaParser implements Constants {
-	private static final String COMMENT_BLOCK_START = "/*";
-	private static final String COMMENT_BLOCK_END = "*/";
-	private static final String COMMENT_BLOCK_MIDDLE = "*";
-	private static final String LINE_COMMENT_START = "//";
-	private static final String DEFINED_BLOCK_TOKEN = "define";
-	private static final String FIELD_BLOCK_START = "{";
-	private static final String FIELD_BLOCK_END = "}";
-	private static final String COMPOUND_MODIFIER = "compound";
-	private static final String ENUM_MODIFIER = "enum";
-	private static final String BLOCK_MODIFIER = "block";
-	private static final String ARRAY_MODIFIER = "array";
-	private static final String BRACKET_START = "(";
-	private static final String BRACKET_END = ")";
-	private static final String EQUALS = "=";
+public class BlueberrySchemaParser implements Constants, TokenConstants {
+	
 
 
 
