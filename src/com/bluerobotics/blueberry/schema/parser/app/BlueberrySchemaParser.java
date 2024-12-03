@@ -50,6 +50,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.AbstractToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
@@ -66,6 +67,7 @@ public class BlueberrySchemaParser implements Constants {
 	private static final String COMPOUND_MODIFIER = "compound";
 	private static final String ENUM_MODIFIER = "enum";
 	private static final String BLOCK_MODIFIER = "block";
+	private static final String ARRAY_MODIFIER = "array";
 	private static final String BRACKET_START = "(";
 	private static final String BRACKET_END = ")";
 	private static final String EQUALS = "=";
@@ -74,6 +76,8 @@ public class BlueberrySchemaParser implements Constants {
 
 	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
 	private final ArrayList<Token> m_defines = new ArrayList<Token>();
+	private CommentToken m_topLevelComment = null;
+	private FieldAllocationToken m_topLevelField = null;
 	/**
 	 * @param args
 	 */
@@ -118,9 +122,15 @@ public class BlueberrySchemaParser implements Constants {
 			collapseEols();
 			collapseDefinedTypeComments();
 			collapseDefinedTypeFields(0, null);
+			//now there should probably only be one allocated field and a comment
+			removeTopLevelComment();
+			removeTopLevelField();
+			
+			if(m_tokens.size() > 0) {
+				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
+			}
 
-//			moveDefines();
-//			removeEmptyBraces();
+
 			
 			
 			
@@ -134,13 +144,28 @@ public class BlueberrySchemaParser implements Constants {
 		for(Token pe : m_defines) {
 			System.out.println(pe.toString());
 		}
-		System.out.println("************* Allocations ************");
-		for(Token pe : m_tokens) {
-			System.out.println(pe.toString());
-		}
+		
 		
 	}
 
+	private void removeTopLevelField() {
+		for(Token t : m_tokens) {
+			if(t instanceof FieldAllocationToken) {
+				m_topLevelField  = (FieldAllocationToken)t;
+				m_tokens.remove(t);
+				break;
+			}
+		}		
+	}
+	private void removeTopLevelComment() {
+		for(Token t : m_tokens) {
+			if(t instanceof CommentToken) {
+				m_topLevelComment = (CommentToken)t;
+				m_tokens.remove(t);
+				break;
+			}
+		}
+	}
 	private void removeEmptyBraces() {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -936,6 +961,9 @@ public class BlueberrySchemaParser implements Constants {
 			break;
 		case BLOCK_MODIFIER:
 			m_tokens.add(new BlockToken(start, end));
+			break;
+		case ARRAY_MODIFIER:
+			m_tokens.add(new ArrayToken(start, end));
 			break;
 		case DEFINED_BLOCK_TOKEN:
 			m_tokens.add(new DefineToken(start, end));

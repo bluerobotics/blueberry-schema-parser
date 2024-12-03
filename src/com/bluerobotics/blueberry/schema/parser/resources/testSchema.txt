@@ -32,11 +32,10 @@ Packet brPacket(key = 0x45554c42) {
 	/*
 	 * This is the header for an array
 	 */
-	define Array block {
-		uint8 key //a unique identifier of this block
+	define Array array {
+		uint16 key //a unique identifier of this block
 		uint8 length //the length of one unit of this block
-		uint8 repeat //this indicates the number units of this block
-		uint8 blocks //this indicates the index to the first block field of this block - the first field of base types
+		uint8 repeats //this indicates the number units of this block
 	}
 
 	/* this section conveys the ID of the device
