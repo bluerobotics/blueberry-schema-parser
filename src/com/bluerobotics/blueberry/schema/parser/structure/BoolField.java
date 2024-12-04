@@ -21,25 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-import java.util.ArrayList;
-
 /**
  * 
  */
-public class BlockType extends AbstractBlockType {
-	ArrayList<BlockType> m_blockTypes = new ArrayList<BlockType>();
+public class BoolField extends Field {
 
-	
-	
-	public void add(BlockType t) {
-		if(t != null) {
-			m_blockTypes.add(t);
-		}
-	}
-
-	@Override
-	public Size getSize() {
-		return Size.MULTI_WORD;
+	protected BoolField(String name, String[] comment) {
+		super(name, Type.BOOL, comment);
+		// TODO Auto-generated constructor stub
 	}
 
 }

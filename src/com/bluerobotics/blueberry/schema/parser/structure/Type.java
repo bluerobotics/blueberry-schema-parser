@@ -24,22 +24,38 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 /**
  * 
  */
-public interface Type {
-	public enum Size {
-		ONE_BIT(1),
-		ONE_BYTE(8),
-		TWO_BYTE(16),
-		ONE_WORD(32),
-		MULTI_WORD(Integer.MAX_VALUE),
-		;
-		private int bitNum;
-		Size(int bn){
-			bitNum = bn;
-		}
-		public int getBitCount() {
-			return bitNum;
-		}
+public enum Type {
+	BOOL        (1),
+	INT8        (8),
+	UINT8       (8),
+	INT16       (16),
+	UINT16      (16),
+	INT32       (32),
+	UINT32      (32),
+	FLOAT32     (32),
+	COMPOUND    (32),
+	BLOCK       (Integer.MAX_VALUE),
+	;
+	
+	
+	
+
+
+
+
+
+
+	private int bitNum;
+	Type(int bn){
+		bitNum = bn;
+	}
+	public int getBitCount() {
+		return bitNum;
+	}
+	public boolean isBaseType() {
+		return bitNum <= 32;
 	}
 	
-	public Size getSize();
+	
+	
 }

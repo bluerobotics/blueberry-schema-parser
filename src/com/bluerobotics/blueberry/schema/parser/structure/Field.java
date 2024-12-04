@@ -27,10 +27,12 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 public abstract class Field {
 	private final String m_name;
 	private final Type m_type;
+	private final String[] m_comment;
 	
-	protected Field(String name, Type type) {
+	protected Field(String name, Type type, String[] comment) {
 		m_name = name;
 		m_type = type;
+		m_comment = comment;
 	}
 	Type getType() {
 		return m_type;
@@ -38,4 +40,11 @@ public abstract class Field {
 	String getName() {
 		return m_name;
 	}
+	String[] getComment() {
+		return m_comment;
+	}
+	int getBitCount() {
+		return m_type.getBitCount();
+	}
+	
 }

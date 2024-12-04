@@ -21,27 +21,27 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-/**
- * A block type whose fields all fit within a 4-byte word so it can be treated like a base type
- */
-public class CompoundType extends AbstractBlockType implements BaseType {
-	
+import java.util.ArrayList;
 
-	@Override
-	public void add(ByteType t) {
-		if(getBitCount() + t.getSize().getBitCount() <= 32) {
-			super.add(t);
+/**
+ * 
+ */
+public class BitFieldField extends Field {
+	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
+	private BitFieldField(String name, String[] comment) {
+		super(name, Type.UINT8, comment);
+	}
+	
+	
+	public void add(BoolField t) {
+		if(!isFull()) {
+			m_bools.add(t);
 		} else {
-			throw new RuntimeException("Cannot exceed 32 bits in a compound type!");
+			throw new RuntimeException("Cannot add more than 8 bits to this byte!");
 		}
 	}
-
-	@Override
-	public Size getSize() {
-		return Size.ONE_WORD;
+	public boolean isFull() {
+		return m_bools.size() >= 8;
 	}
-
-	
-	
 
 }

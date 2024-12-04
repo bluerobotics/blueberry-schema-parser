@@ -21,14 +21,31 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
 public class BlockField extends Field {
+	private final ArrayList<Field> m_baseTypes = new ArrayList<Field>();
+	private int m_bitCount = 0;
 
-	protected BlockField(String name, BlockType type) {
-		super(name, type);
+	protected BlockField(String name, Type type, String[] comment) {
+		super(name, type, comment);
 		
 	}
+	
+	public void add(Field f) {
+		if(f != null) {
+			m_bitCount += f.getBitCount();
+			m_baseTypes.add(f);
+		}
+	}
+
+	@Override
+	int getBitCount() {
+		return m_bitCount;
+	}
+	
 
 }
