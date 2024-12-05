@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+
 /**
  * 
  */
@@ -46,5 +48,12 @@ public abstract class Field {
 	int getBitCount() {
 		return m_type.getBitCount();
 	}
+	/**
+	 * checks the type to see if it's compatible with this field
+	 * @param t the type to check
+	 * @return the same type
+	 * @throws RuntimeException if the type is not compatible
+	 */
+	abstract Type checkType(Type t) throws RuntimeException;
 	
 }

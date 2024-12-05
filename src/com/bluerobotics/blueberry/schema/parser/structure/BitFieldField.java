@@ -28,8 +28,8 @@ import java.util.ArrayList;
  */
 public class BitFieldField extends Field {
 	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
-	private BitFieldField(String name, String[] comment) {
-		super(name, Type.UINT8, comment);
+	public BitFieldField() {
+		super("", Type.UINT8, null);
 	}
 	
 	
@@ -42,6 +42,31 @@ public class BitFieldField extends Field {
 	}
 	public boolean isFull() {
 		return m_bools.size() >= 8;
+	}
+	@Override
+	Type checkType(Type t) throws RuntimeException {
+		switch(t) {
+		case BLOCK:
+		case BOOL:
+		case COMPOUND:
+			throw new RuntimeException("Field must only contain base types.");
+		case FLOAT32:
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+		case BOOLFIELD:
+			break;
+		default:
+			break;
+				
+		}
+		return t;
+	}
+	public boolean hasRoom() {
+		return m_bools.size() < 8;
 	}
 
 }

@@ -21,26 +21,28 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
-public class BoolField extends Field {
-
-	protected BoolField(String name, String[] comment) {
-		super(name, Type.BOOL, comment);
-	}
-	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-		
-		
-		case BOOLFIELD:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain bitfield types.");
-	
+public class EnumField extends BaseField {
+	public class NameValue {
+		String name;
+		long value;
+		public NameValue(String n, long v) {
+			name = n;
+			value = v;
 		}
-		return t;
+	}
+	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
+
+	public EnumField(String name, Type type, String[] comment) {
+		super(name, type, comment);
+	}
+	
+	public void addNameValue(String n, long v) {
+		m_nameValues.add(new NameValue(n,v));
 	}
 
 }

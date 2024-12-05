@@ -24,23 +24,20 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 /**
  * 
  */
-public class BoolField extends Field {
+public class ArrayField extends BlockField {
 
-	protected BoolField(String name, String[] comment) {
-		super(name, Type.BOOL, comment);
+	protected ArrayField(String name, String[] comment) {
+		super(name, Type.ARRAY, comment);
+
 	}
+
 	@Override
 	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-		
-		
-		case BOOLFIELD:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain bitfield types.");
-	
+		if(t != Type.ARRAY) {
+			throw new RuntimeException("Type must be Array");
 		}
 		return t;
 	}
+	
 
 }

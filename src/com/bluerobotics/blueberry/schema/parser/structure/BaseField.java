@@ -21,11 +21,35 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+
 /**
  * 
  */
 public class BaseField extends Field {
 	public BaseField(String name, Type type, String[] comment) {
 		super(name, type, comment);
+	}
+
+	@Override
+	Type checkType(Type t) throws RuntimeException {
+		switch(t) {
+	
+		case FLOAT32:
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+		case BOOLFIELD:
+			break;
+		case BLOCK:
+		case BOOL:
+		case COMPOUND:
+			throw new RuntimeException("Field must only contain base types.");
+				
+		}
+		return t;
 	}
 }

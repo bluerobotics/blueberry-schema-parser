@@ -21,26 +21,64 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
+import java.util.ArrayList;
+
 /**
  * 
  */
-public class BoolField extends Field {
+public class CompoundField extends Field {
+	private final ArrayList<Field> m_baseTypes = new ArrayList<Field>();
 
-	protected BoolField(String name, String[] comment) {
-		super(name, Type.BOOL, comment);
+
+	public CompoundField(String name, String[] comment) {
+		super(name, Type.COMPOUND, comment);
 	}
+
+	public void add(Field f) {
+	
+	
+		if(f instanceof BoolField) {
+			addBool((BoolField)f);
+		} else {
+			m_baseTypes.add(f);
+		}
+		if(getBitCount() > 32) {
+			throw new RuntimeException("Bitcount cannot be greater than 32!");
+		}
+	}
+
+	private void addBool(BoolField bf) {
+		boolean done = false;
+		for(Field f : m_baseTypes) {
+			if(f instanceof BitFieldField) {
+				BitFieldField bff = (BitFieldField)f;
+				if(bff.hasRoom()) {
+					bff.add(bf);
+					done = true;
+					break;
+				}
+			}
+		}
+		if(!done) {
+			BitFieldField bff = new BitFieldField();
+			bff.add(bf);
+			add(bff);
+			
+		}
+	}
+
 	@Override
 	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-		
-		
-		case BOOLFIELD:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain bitfield types.");
-	
+		if(t != Type.COMPOUND) {
+			throw new RuntimeException("Must of type Compound!");
 		}
 		return t;
 	}
+	
+	public int getRoom() {
+		return 32 - getBitCount();
+	}
+	
+	
 
 }
