@@ -52,7 +52,7 @@ public abstract class ParentField extends Field {
 		for(Field ft : fs) {
 			if(ft instanceof CompoundField) {
 				CompoundField cft = (CompoundField)ft;
-				if(cft.getName() == null && cft.getRoom() > f.getBitCount()) {
+				if(cft.getName() == null && cft.getRoom() >= f.getBitCount()) {
 					cf = cft;
 					break;
 				}
