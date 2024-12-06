@@ -30,11 +30,16 @@ public class EnumField extends BaseField {
 	public class NameValue {
 		String name;
 		long value;
+		boolean isValue;
 		String[] comment;
 		public NameValue(String n, long v, String[] c) {
 			name = n;
 			value = v;
 			comment = c;
+		}
+		
+		public String toString() {
+			return getClass().getSimpleName() + "(" + name + " = " + value + ")"; 
 		}
 	}
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
@@ -46,5 +51,5 @@ public class EnumField extends BaseField {
 	public void addNameValue(String name, long value, String[] comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
-
+	
 }

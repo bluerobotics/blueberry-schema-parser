@@ -7,7 +7,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
  * 
  */
 public class NameValueToken extends AbstractToken {
-	private final NumberToken value;
+	private NumberToken value;
 	private final SingleWordToken name;
 	private final CommentToken comment;
 	public NameValueToken(SingleWordToken n, NumberToken v, CommentToken c){
@@ -24,16 +24,24 @@ public class NameValueToken extends AbstractToken {
 	public long getValue() {
 		return value.getNumber();
 	}
-	public String[] getComment() {
-		return comment.getComment();
+	public boolean isValue() {
+		return value != null;
+	}
+	public CommentToken getComment() {
+		return comment;
 	}
 	public String toString() {
 		String s = getClass().getSimpleName();
 		s += "(";
 		s += name.getName();
-		s += " = ";
-		s += value.getName();
+		if(isValue()) {
+			s += " = ";
+			s += value.getName();
+		}
 		s += ")";
 		return s;
+	}
+	public void setValue(long v) {
+		value = NumberToken.make(v);
 	}
 }

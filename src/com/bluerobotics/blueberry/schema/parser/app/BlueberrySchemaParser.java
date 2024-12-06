@@ -127,6 +127,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			removeTopLevelComment();
 			removeTopLevelField();
 			
+			fillInMissingEnumValues();
+			fillInMissingKeyValues();
+			
 			if(m_tokens.size() > 0) {
 				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
 			}
@@ -154,6 +157,31 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	}
 
+	private void fillInMissingKeyValues() {
+		// TODO Auto-generated method stub
+		
+	}
+	/**
+	 * Scans for enum tokens that are missing values for their elements.
+	 * Fills them in with the smallest, unused, positive, integer value.
+	 */
+	private void fillInMissingEnumValues() {
+		for(Token t : m_defines) {
+			if(t instanceof EnumToken) {
+				EnumToken et = (EnumToken)t;
+				long nextValue = 0;
+				for(NameValueToken nvt : et.getNameValueTokens()) {
+					if(nvt.isValue()) {
+						if(nvt.getValue() == nextValue) {
+							++nextValue;
+						}
+					} else {
+						nvt.setValue(nextValue);
+					}
+				}
+			}
+		}
+	}
 	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
 		TypeToken tt = t.getType();
 		String fieldName = t.getFieldName();
@@ -175,7 +203,22 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						}
 					}
 					
+				} else if(f instanceof CompoundField) {
+					CompoundField cf = (CompoundField)f;
+					if(type instanceof FieldAllocationOwner) {
+						FieldAllocationOwner fao = (FieldAllocationOwner)type;
+						for(FieldAllocationToken fat : fao.getFields()) {
+							if(fat instanceof NestedFieldAllocationToken) {
+								buildPackets(fat, cf);
+							} else {
+								cf.add(makeField(fat.getType(), fat.getFieldName(), fat.getComment()));
+							}
+							
+						}
+					}
+					
 				}
+		
 			} else {
 				throw new SchemaParserException("Could not find defined type: \"" + tt.getName() + "\"", tt.getStart());
 			}
@@ -196,9 +239,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					
 				}
 				
-			} else {
-				//it should always be that if its a nested token it should be a parent field
-				throw new RuntimeException("This should never have happened - I think.");
+			
+//			} else {
+//				//it should always be that if its a nested token it should be a parent field
+//				throw new RuntimeException("This should never have happened - I think.");
 			}
 		}
 	
@@ -220,7 +264,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private Field makeField(Token t, String fieldName, CommentToken comment) {
 		Field result = null;
 		
-		String[] c = comment == null ? new String[0] : comment.getComment();
+		String[] c = getComment(comment);
 		
 		
 		if(t instanceof ArrayToken) {
@@ -232,9 +276,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			EnumToken et = (EnumToken)t;
 			
 			
-			EnumField ef = new EnumField(fieldName, lookupBaseType(et.getBaseType()), et.getComment().getComment());
+			EnumField ef = new EnumField(fieldName, lookupBaseType(et.getBaseType()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
-				ef.addNameValue(nvt.getName(), nvt.getValue(), nvt.getComment());
+				
+				ef.addNameValue(nvt.getName(), nvt.getValue(), getComment(nvt.getComment()));
+			
 			}
 			result = ef;
 		} else if(t instanceof CompoundToken) {
@@ -310,6 +356,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 		
+	}
+	/**
+	 * helper method to trap nulls
+	 * @param ct
+	 * @return
+	 */
+	private String[] getComment(CommentToken ct) {
+		return ct == null ? new String[0] : ct.getComment();
 	}
 	/**
 	 *  looks up a defined type given a type name

@@ -12,13 +12,18 @@ public class NumberToken extends SingleWordToken {
 		super(swt.getStart(), swt.getEnd(), swt.getName());
 		m_value = v;
 	}
+	private NumberToken(long v) {
+		super(null, null, null);
+		m_value = v;
+	}
+	
 	public static NumberToken wrap(SingleWordToken swt) {
 		
 		NumberToken result = null;
 		Long v = 0L;
 		boolean success = false;
 		try {
-			parse(swt.getName());
+			v = parse(swt.getName());
 			success = true;
 		} catch(NumberFormatException e) {
 			
@@ -27,6 +32,11 @@ public class NumberToken extends SingleWordToken {
 			result = new NumberToken(swt, v);
 		}
 		return result;
+	}
+	public static NumberToken make(long v) {
+		NumberToken nt = new NumberToken(v);
+		return nt;
+		
 	}
 	private static long parse(String s) {
 		long result = 0;
