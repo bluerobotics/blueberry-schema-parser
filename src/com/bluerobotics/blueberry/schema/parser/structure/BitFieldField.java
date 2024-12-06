@@ -29,7 +29,7 @@ import java.util.ArrayList;
 public class BitFieldField extends Field {
 	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
 	public BitFieldField() {
-		super("", Type.UINT8, null);
+		super(null, Type.BOOLFIELD, null);
 	}
 	
 	
@@ -49,7 +49,6 @@ public class BitFieldField extends Field {
 		case BLOCK:
 		case BOOL:
 		case COMPOUND:
-			throw new RuntimeException("Field must only contain base types.");
 		case FLOAT32:
 		case INT16:
 		case INT32:
@@ -57,6 +56,7 @@ public class BitFieldField extends Field {
 		case UINT16:
 		case UINT32:
 		case UINT8:
+			throw new RuntimeException("Field must only contain base types.");
 		case BOOLFIELD:
 			break;
 		default:

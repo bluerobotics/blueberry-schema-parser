@@ -47,4 +47,10 @@ public class FieldAllocationToken extends AbstractToken {
 	public String getFieldName() {
 		return name.getName();
 	}
+	public TypeToken getType() {
+		return type;
+	}
+	public CommentToken getComment() {
+		return comment;
+	}
 }

@@ -24,7 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 import java.util.ArrayList;
 
 /**
- * 
+ * This token indicates a type that must have been defined. We haven't checked yet. 
+ * It is a single word token that has not yet been identified as something else and it starts a line 
  */
 public class BlockTypeToken extends SingleWordToken implements TypeToken {
 	private ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();

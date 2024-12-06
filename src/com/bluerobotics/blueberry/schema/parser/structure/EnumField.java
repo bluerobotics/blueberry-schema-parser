@@ -30,9 +30,11 @@ public class EnumField extends BaseField {
 	public class NameValue {
 		String name;
 		long value;
-		public NameValue(String n, long v) {
+		String[] comment;
+		public NameValue(String n, long v, String[] c) {
 			name = n;
 			value = v;
+			comment = c;
 		}
 	}
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
@@ -41,8 +43,8 @@ public class EnumField extends BaseField {
 		super(name, type, comment);
 	}
 	
-	public void addNameValue(String n, long v) {
-		m_nameValues.add(new NameValue(n,v));
+	public void addNameValue(String name, long value, String[] comment) {
+		m_nameValues.add(new NameValue(name,value, comment));
 	}
 
 }

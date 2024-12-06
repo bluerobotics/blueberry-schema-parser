@@ -22,10 +22,12 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.plaf.synth.SynthCheckBoxMenuItemUI;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
@@ -50,6 +52,16 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
+import com.bluerobotics.blueberry.schema.parser.tokens.TypeToken;
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
+import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
+import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
+import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
+import com.bluerobotics.blueberry.schema.parser.structure.Type;
 import com.bluerobotics.blueberry.schema.parser.tokens.AbstractToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.starfishmedical.utils.ResourceTools;
@@ -63,9 +75,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
-	private final ArrayList<Token> m_defines = new ArrayList<Token>();
+	private final ArrayList<DefinedTypeToken> m_defines = new ArrayList<DefinedTypeToken>();
+	private Field m_topLevelField = null;
 	private CommentToken m_topLevelComment = null;
-	private FieldAllocationToken m_topLevelField = null;
+	private FieldAllocationToken m_topLevelToken = null;
 	/**
 	 * @param args
 	 */
@@ -117,6 +130,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(m_tokens.size() > 0) {
 				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
 			}
+			
+			
+			//now build model of packets
+			
+			buildPackets(m_topLevelToken, null);
 
 
 			
@@ -136,10 +154,181 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	}
 
+	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
+		TypeToken tt = t.getType();
+		String fieldName = t.getFieldName();
+		CommentToken ct = t.getComment();
+		Field f = null;
+		if(tt instanceof BlockTypeToken) {
+			DefinedTypeToken type = lookupType(tt.getName());
+			if(type != null) {
+				f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
+				
+				if(f instanceof BlockField) {
+					//if this is a block type then add header stuff
+					BlockField bf = (BlockField)f;
+					if(type instanceof FieldAllocationOwner) {
+						FieldAllocationOwner fao = (FieldAllocationOwner)type;
+						for(FieldAllocationToken fat : fao.getFields()) {
+							
+							bf.addToHeader(makeField(fat.getType(), fat.getFieldName(), fat.getComment()));
+						}
+					}
+					
+				}
+			} else {
+				throw new SchemaParserException("Could not find defined type: \"" + tt.getName() + "\"", tt.getStart());
+			}
+		} else {
+			//it's not a clock type token, which means it's not a defined type
+			f = makeField(tt, fieldName, ct);
+		}
+		if(t instanceof NestedFieldAllocationToken) {
+			NestedFieldAllocationToken nfat = (NestedFieldAllocationToken)t;
+			if(f instanceof ParentField) {
+				//add child fields
+				ParentField pf = (ParentField)f;
+				
+
+				List<FieldAllocationToken> list = nfat.getFields();
+				for(FieldAllocationToken fat : list) {
+					buildPackets(fat, pf);//recurse into nested token
+					
+				}
+				
+			} else {
+				//it should always be that if its a nested token it should be a parent field
+				throw new RuntimeException("This should never have happened - I think.");
+			}
+		}
+	
+		if(f != null) {
+			if(parentField == null) {
+				m_topLevelField = f;
+			} else {
+				parentField.add(f);
+			}
+		} else {
+			throw new SchemaParserException("Couldn't make a field for some reason", null);
+		}
+	}
+	/**
+	 * creates a field from a token
+	 * @param fat
+	 * @return
+	 */
+	private Field makeField(Token t, String fieldName, CommentToken comment) {
+		Field result = null;
+		
+		String[] c = comment == null ? new String[0] : comment.getComment();
+		
+		
+		if(t instanceof ArrayToken) {
+			ArrayToken at = (ArrayToken)t;
+			result = new ArrayField(fieldName, c);
+		} else if(t instanceof BlockToken) {
+			result = new BlockField(fieldName, c);
+		} else if(t instanceof EnumToken) {
+			EnumToken et = (EnumToken)t;
+			
+			
+			EnumField ef = new EnumField(fieldName, lookupBaseType(et.getBaseType()), et.getComment().getComment());
+			for(NameValueToken nvt : et.getNameValueTokens()) {
+				ef.addNameValue(nvt.getName(), nvt.getValue(), nvt.getComment());
+			}
+			result = ef;
+		} else if(t instanceof CompoundToken) {
+			CompoundToken ct = (CompoundToken)t;
+			CompoundField cf = new CompoundField(fieldName, c);
+			result = cf;
+		
+			
+		} else if(t instanceof BaseTypeToken) {
+			BaseTypeToken btt = (BaseTypeToken)t;
+			Type tp = lookupBaseType(btt.getBaseType());
+			switch(tp) {
+			
+			case BOOL:
+				result = new BoolField(fieldName, c);
+				break;
+			case INT16:
+			case INT32:
+			case INT8:
+			case UINT16:
+			case UINT32:
+			case UINT8:
+			case FLOAT32:
+				result = new BaseField(fieldName, tp, c);
+				break;
+			
+			default:
+				break;
+			
+			
+			}
+			
+		}
+		if(result == null) {
+			throw new RuntimeException("Result is null!");
+		}
+		return result;
+	}
+	/**
+	 * converts from a token base type to a field type
+	 * @param bt
+	 * @return
+	 */
+	Type lookupBaseType(BaseType bt) {
+		Type result = null;
+		switch(bt) {
+		case BOOL:
+			result = Type.BOOL;
+			break;
+		case FLOAT32:
+			result = Type.FLOAT32;
+			break;
+		case INT16:
+			result = Type.INT16;
+			break;
+		case INT32:
+			result = Type.INT32;
+			break;
+		case INT8:
+			result = Type.INT8;
+			break;
+		case UINT16:
+			result = Type.UINT16;
+			break;
+		case UINT32:
+			result = Type.UINT32;
+			break;
+		case UINT8:
+			result = Type.UINT8;
+			break;
+		
+		
+		}
+		return result;
+		
+	}
+	/**
+	 *  looks up a defined type given a type name
+	 * @param typeName
+	 * @return
+	 */
+	private DefinedTypeToken lookupType(String typeName) {
+		DefinedTypeToken result = null;
+		for(DefinedTypeToken t : m_defines) {
+			if(t.getDefineToken().getTypeName().equals(typeName)) {
+				result = t;
+			}
+		}
+		return result;
+	}
 	private void removeTopLevelField() {
 		for(Token t : m_tokens) {
 			if(t instanceof FieldAllocationToken) {
-				m_topLevelField  = (FieldAllocationToken)t;
+				m_topLevelToken  = (FieldAllocationToken)t;
 				m_tokens.remove(t);
 				break;
 			}
@@ -181,7 +370,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			if(i >= 0 && i < m_tokens.size()) {	
 				Token t = m_tokens.get(i);
-				m_defines.add(t);
+				m_defines.add((DefinedTypeToken)t);
 				m_tokens.remove(i);
 			} else {
 				break;

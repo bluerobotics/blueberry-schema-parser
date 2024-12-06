@@ -22,50 +22,31 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.structure;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
  */
-public class CompoundField extends Field {
+public class CompoundField extends ParentField {
 	private final ArrayList<Field> m_baseTypes = new ArrayList<Field>();
+	private boolean m_dontFill = false;
 
 
 	public CompoundField(String name, String[] comment) {
 		super(name, Type.COMPOUND, comment);
 	}
 
+	@Override
 	public void add(Field f) {
-	
-	
-		if(f instanceof BoolField) {
-			addBool((BoolField)f);
-		} else {
-			m_baseTypes.add(f);
+		if(f.getBitCount() >= 32) {
+			throw new RuntimeException("You can't add this to a compound word!");
+		} else if(f instanceof BoolField) {
+			addBool(m_baseTypes, (BoolField)f);
 		}
-		if(getBitCount() > 32) {
-			throw new RuntimeException("Bitcount cannot be greater than 32!");
-		}
+		m_baseTypes.add(f);
 	}
 
-	private void addBool(BoolField bf) {
-		boolean done = false;
-		for(Field f : m_baseTypes) {
-			if(f instanceof BitFieldField) {
-				BitFieldField bff = (BitFieldField)f;
-				if(bff.hasRoom()) {
-					bff.add(bf);
-					done = true;
-					break;
-				}
-			}
-		}
-		if(!done) {
-			BitFieldField bff = new BitFieldField();
-			bff.add(bf);
-			add(bff);
-			
-		}
-	}
+	
 
 	@Override
 	Type checkType(Type t) throws RuntimeException {
@@ -76,8 +57,23 @@ public class CompoundField extends Field {
 	}
 	
 	public int getRoom() {
-		return 32 - getBitCount();
+		int result = 32 - getBitCount(m_baseTypes);
+		if(m_dontFill) {
+			result = 0;
+		}
+		
+		return result;
 	}
+	public List<Field> getFields(){
+		return m_baseTypes;
+	}
+
+	@Override
+	int getBitCount() {
+		return 32;
+	}
+	
+	
 	
 	
 

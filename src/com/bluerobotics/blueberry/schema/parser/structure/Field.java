@@ -33,7 +33,7 @@ public abstract class Field {
 	
 	protected Field(String name, Type type, String[] comment) {
 		m_name = name;
-		m_type = type;
+		m_type = checkType(type);
 		m_comment = comment;
 	}
 	Type getType() {
@@ -55,5 +55,9 @@ public abstract class Field {
 	 * @throws RuntimeException if the type is not compatible
 	 */
 	abstract Type checkType(Type t) throws RuntimeException;
+	
+	public String toString() {
+		return getClass().getSimpleName()+"("+m_name+")";
+	}
 	
 }

@@ -61,6 +61,9 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 		m_nameValues.add(nvt);
 		
 	}
+	public List<NameValueToken> getNameValueTokens(){
+		return m_nameValues;
+	}
 	@Override
 	public String getName() {
 		return "enum "+m_baseType.name();

@@ -22,15 +22,15 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.structure;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
  */
-public class BlockField extends Field {
-	private final ArrayList<Field> m_header = new ArrayList<Field>();
-	private final ArrayList<Field> m_baseTypes = new ArrayList<Field>();
-	private final ArrayList<BlockField> m_blockTypes = new ArrayList<BlockField>();
-	private int m_bitCount = 0;
+public class BlockField extends ParentField {
+	private final ArrayList<Field> m_headerFields = new ArrayList<Field>();
+	private final ArrayList<Field> m_baseFields = new ArrayList<Field>();
+	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
 
 	protected BlockField(String name, Type type, String[] comment) {
 		super(name, type, comment);
@@ -39,36 +39,38 @@ public class BlockField extends Field {
 	public BlockField(String name, String[] comment) {
 		super(name, Type.BLOCK, comment);
 	}
-	
+	@Override
 	public void add(Field f) {
 		if(f == null) {
 			return;
 		}
-
-		m_bitCount += f.getBitCount();
-		m_baseTypes.add(f);
-		
-		if(f.getType() == Type.BOOL) {
-			addBool(f);
-		} else if(f.getBitCount() < 32) {
-			addSubWord(f);
-		} else if(f instanceof BlockField){
-			m_blockTypes.add((BlockField)f);
+		if(f instanceof BlockField) {
+			m_blockFields.add((BlockField)f);
 		} else {
-			m_baseTypes.add(f);
+			add(m_baseFields, f);
 		}
+		
+		
 	}
+	
+	
+	
 
-	private void addSubWord(Field f) {
+	public void addToHeader(Field f) {
+		if(f == null) {
+			return;
+		}
+		add(m_headerFields, f);
+		
+		
 		
 	}
-	private void addBool(Field f) {
-		// TODO Auto-generated method stub
-		
+	protected List<Field> getHeaderFields(){
+		return m_headerFields;
 	}
 	@Override
 	int getBitCount() {
-		return m_bitCount;
+		return getBitCount(m_headerFields) + getBitCount(m_baseFields);
 	}
 	@Override
 	Type checkType(Type t) throws RuntimeException {
@@ -82,6 +84,8 @@ public class BlockField extends Field {
 		}
 		return t;
 	}
+	
+	
 	
 
 }

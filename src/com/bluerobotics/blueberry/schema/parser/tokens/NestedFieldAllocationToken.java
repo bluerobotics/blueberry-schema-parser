@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ * This represents an allocated field that has children fields.
  */
 public class NestedFieldAllocationToken extends FieldAllocationToken implements FieldAllocationOwner {
 	private ArrayList<FieldAllocationToken> m_fieldAllocations = new ArrayList<FieldAllocationToken>();
