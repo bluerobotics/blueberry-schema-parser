@@ -65,8 +65,15 @@ public class BlockField extends ParentField {
 		
 		
 	}
-	protected List<Field> getHeaderFields(){
+	public List<Field> getHeaderFields(){
 		return m_headerFields;
+	}
+	public List<BlockField> getBlockFields(){
+		return m_blockFields;
+	}
+	@Override
+	public List<Field> getBaseFields(){
+		return m_baseFields;
 	}
 	@Override
 	int getBitCount() {

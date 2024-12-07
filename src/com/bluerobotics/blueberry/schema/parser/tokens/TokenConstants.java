@@ -39,4 +39,5 @@ public interface TokenConstants {
 	public static final String BRACKET_START = "(";
 	public static final String BRACKET_END = ")";
 	public static final String EQUALS = "=";
+	public static final String KEY_FIELD_NAME = "key";
 }

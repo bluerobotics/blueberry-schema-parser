@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.structure;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
@@ -44,7 +45,8 @@ public abstract class ParentField extends Field {
 			fs.add(f);
 		}
 	}
-	
+
+	public abstract List<Field> getBaseFields();
 
 	protected void addSubWord(ArrayList<Field> fs, Field f) {
 		//first scan for an existing compound word that has room
@@ -73,7 +75,7 @@ public abstract class ParentField extends Field {
 			if(ft instanceof CompoundField && ft.getName() == null) {
 				CompoundField cft = (CompoundField)ft;
 			
-				for(Field ft2 : cft.getFields()) {
+				for(Field ft2 : cft.getBaseFields()) {
 					if(ft2 instanceof BitFieldField) {
 						BitFieldField bff2 = (BitFieldField)ft2;
 						if(!bff2.isFull()){

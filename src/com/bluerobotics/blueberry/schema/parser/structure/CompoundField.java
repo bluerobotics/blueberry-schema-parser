@@ -64,7 +64,8 @@ public class CompoundField extends ParentField {
 		
 		return result;
 	}
-	public List<Field> getFields(){
+	@Override
+	public List<Field> getBaseFields(){
 		return m_baseTypes;
 	}
 

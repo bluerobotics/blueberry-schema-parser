@@ -74,7 +74,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
 	private final ArrayList<DefinedTypeToken> m_defines = new ArrayList<DefinedTypeToken>();
-	private Field m_topLevelField = null;
+	private BlockField m_topLevelField = null;
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
 	/**
@@ -133,7 +133,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			removeTopLevelField();
 			
 			fillInMissingEnumValues();
-			fillInMissingKeyValues(m_topLevelToken);
+//			fillInMissingKeyValues(m_topLevelToken);
 			
 			if(m_tokens.size() > 0) {
 				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
@@ -144,8 +144,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			buildPackets(m_topLevelToken, null);
 
-
-			
+			fillInMissingKeyValues(m_topLevelField);	
 			
 			
 			
@@ -162,40 +161,120 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	}
 	/**
-	 * scan for defined type instances that don't have keys set
-	 * assigns the lowest, positive integer value
+	 * scans through block fields looking for the key field in the header and makes sure it's set to something
+	 * @param f
 	 */
-	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
-		List<FieldAllocationToken> fats = nfat.getFields();
+	private void fillInMissingKeyValues(BlockField bf) {
 		
-		for(FieldAllocationToken fat : fats) {
-			TypeToken tt = fat.getType();
-			if(tt instanceof BlockTypeToken) {
-				BlockTypeToken btt = (BlockTypeToken)tt;
-				NameValueToken nvt = btt.getValue("key");
-				if(nvt == null) {
-					long nextValue = 0;
-					for(FieldAllocationToken fat2 : fats) {
-						if(tt instanceof BlockTypeToken) {
-							BlockTypeToken btt2 = (BlockTypeToken)tt;
-							NameValueToken nvt2 = btt.getValue("key");
-							if(nvt != null) {
-								if(nextValue == nvt.getValue()) {
-									++nextValue;
-								}
-							}
-						}
-					}
-					nvt = new NameValueToken(new SingleWordToken(null, null, "key"), NumberToken.make(nextValue), null);
-					btt.add(nvt);
-				}	
-				
+		
+		long nextKey = 0;
+		for(BlockField bf2 : bf.getBlockFields()) {
+			//get the next key value
+			BaseField key = getKeyField(bf2.getHeaderFields());
+			if(key instanceof FixedIntField) {
+				FixedIntField ikey = (FixedIntField)key;
+				if(ikey.getValue() == nextKey) {
+					++nextKey;
+				}
+			}
+			//recurse through hierarchy
+			fillInMissingKeyValues(bf2);
+			
+		}
+		//now scan through again and fix any missing key values
+		for(BlockField bf2 : bf.getBlockFields()) {
+			//get the next key value
+			BaseField key = getKeyField(bf2.getHeaderFields());
+			if(key instanceof FixedIntField) {
+				//we're good, it's got a value
+			} else {
+				setKeyField(bf2.getHeaderFields(), nextKey);
+				++nextKey;
 			}
 		}
 		
+	
 		
 		
 	}
+	/**
+	 * recurse through base fields to find the field called key and set its value
+	 * @param fs
+	 * @param key
+	 */
+	private void setKeyField(List<Field> fs, long key) {
+		for(Field f : fs) {
+			String n = f.getName();
+			if(n != null && n.equals(KEY_FIELD_NAME)) {
+				
+				int i = fs.indexOf(f);
+				FixedIntField fif = new FixedIntField(f, key);
+				fs.set(i, fif);
+			} else if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				setKeyField(pf.getBaseFields(), key);
+			}
+		}
+	}
+	private BaseField getKeyField(List<Field> fs) {
+		BaseField result = null;
+		for(Field f : fs) {
+			String n = f.getName();
+			if(n != null && n.equals(KEY_FIELD_NAME)) {
+				if(f instanceof BaseField) {
+					result = (BaseField)f;
+				} else {
+					throw new RuntimeException("Key field should be of type BaseField");
+				}
+			} else if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				result = getKeyField(pf.getBaseFields());
+			}
+			if(result != null) {
+				break;
+			}
+		}
+		return result;
+	}
+//	/**
+//	 * scan for defined type instances that don't have keys set
+//	 * assigns the lowest, positive integer value
+//	 */
+//	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
+//		List<FieldAllocationToken> fats = nfat.getFields();
+//		
+//		for(FieldAllocationToken fat : fats) {
+//			TypeToken tt = fat.getType();
+//			if(fat instanceof NestedFieldAllocationToken) {
+//				NestedFieldAllocationToken nfat2 = (NestedFieldAllocationToken)fat;
+//				fillInMissingKeyValues(nfat2);
+//			}
+//			if(tt instanceof BlockTypeToken) {
+//				BlockTypeToken btt = (BlockTypeToken)tt;
+//				NameValueToken nvt = btt.getValue("key");
+//				if(nvt == null) {
+//					long nextValue = 0;
+//					for(FieldAllocationToken fat2 : fats) {
+//						if(tt instanceof BlockTypeToken) {
+//							BlockTypeToken btt2 = (BlockTypeToken)tt;
+//							NameValueToken nvt2 = btt.getValue("key");
+//							if(nvt != null) {
+//								if(nextValue == nvt.getValue()) {
+//									++nextValue;
+//								}
+//							}
+//						}
+//					}
+//					nvt = new NameValueToken(new SingleWordToken(null, null, "key"), NumberToken.make(nextValue), null);
+//					btt.add(nvt);
+//				}	
+//				
+//			}
+//		}
+//		
+//		
+//		
+//	}
 	/**
 	 * Scans for enum tokens that are missing values for their elements.
 	 * Fills them in with the smallest, unused, positive, integer value.
@@ -239,7 +318,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							if(f2.isInt()) {
 								NameValueToken nvt = btt.getValue(fat.getFieldName());
 								if(nvt != null) {
-									f2 = new FixedIntField(f2.getName(), f2.getType(), f2.getComment(), nvt.getValue());
+									f2 = new FixedIntField(f2, nvt.getValue());
 								}
 							}
 							bf.addToHeader(f2);
@@ -292,7 +371,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	
 		if(f != null) {
 			if(parentField == null) {
-				m_topLevelField = f;
+				m_topLevelField = (BlockField)f;
 			} else {
 				parentField.add(f);
 			}

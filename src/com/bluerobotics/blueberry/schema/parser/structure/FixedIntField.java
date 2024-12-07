@@ -27,8 +27,8 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 public class FixedIntField extends BaseField {
 	private final long m_value;
 
-	public FixedIntField(String name, Type type, String[] comment, long value) {
-		super(name, type, comment);
+	public FixedIntField(Field f, long value) {
+		super(f.getName(), f.getType(), f.getComment());
 		m_value = value;
 	}
 	@Override
