@@ -36,13 +36,13 @@ public abstract class Field {
 		m_type = checkType(type);
 		m_comment = comment;
 	}
-	Type getType() {
+	public Type getType() {
 		return m_type;
 	}
-	String getName() {
+	public String getName() {
 		return m_name;
 	}
-	String[] getComment() {
+	public String[] getComment() {
 		return m_comment;
 	}
 	int getBitCount() {
@@ -58,6 +58,34 @@ public abstract class Field {
 	
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name+")";
+	}
+	
+	public boolean isInt() {
+		boolean result = false;
+		switch(getType()) {
+		case ARRAY:
+			break;
+		case BLOCK:
+			break;
+		case BOOL:
+			break;
+		case BOOLFIELD:
+			break;
+		case COMPOUND:
+			break;
+		case FLOAT32:
+			break;
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+			result = true;
+			break;
+		
+		}
+		return result;
 	}
 	
 }

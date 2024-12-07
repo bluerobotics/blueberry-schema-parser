@@ -24,14 +24,23 @@ package com.bluerobotics.blueberry.schema.parser.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.plaf.synth.SynthCheckBoxMenuItemUI;
-
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
+import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
+import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
+import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
+import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
+import com.bluerobotics.blueberry.schema.parser.structure.Type;
+import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
-import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockTypeToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
@@ -53,17 +62,6 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.TypeToken;
-import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
-import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
-import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
-import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
-import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
-import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
-import com.bluerobotics.blueberry.schema.parser.structure.Type;
-import com.bluerobotics.blueberry.schema.parser.tokens.AbstractToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
@@ -77,8 +75,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
 	private final ArrayList<DefinedTypeToken> m_defines = new ArrayList<DefinedTypeToken>();
 	private Field m_topLevelField = null;
-	private CommentToken m_topLevelComment = null;
-	private FieldAllocationToken m_topLevelToken = null;
+	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
+	private NestedFieldAllocationToken m_topLevelToken = null;
 	/**
 	 * @param args
 	 */
@@ -128,7 +126,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			removeTopLevelField();
 			
 			fillInMissingEnumValues();
-			fillInMissingKeyValues();
+			fillInMissingKeyValues(m_topLevelToken);
 			
 			if(m_tokens.size() > 0) {
 				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
@@ -156,9 +154,39 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		
 	}
-
-	private void fillInMissingKeyValues() {
-		// TODO Auto-generated method stub
+	/**
+	 * scan for defined type instances that don't have keys set
+	 * assigns the lowest, positive integer value
+	 */
+	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
+		List<FieldAllocationToken> fats = nfat.getFields();
+		
+		for(FieldAllocationToken fat : fats) {
+			TypeToken tt = fat.getType();
+			if(tt instanceof BlockTypeToken) {
+				BlockTypeToken btt = (BlockTypeToken)tt;
+				NameValueToken nvt = btt.getValue("key");
+				if(nvt == null) {
+					long nextValue = 0;
+					for(FieldAllocationToken fat2 : fats) {
+						if(tt instanceof BlockTypeToken) {
+							BlockTypeToken btt2 = (BlockTypeToken)tt;
+							NameValueToken nvt2 = btt.getValue("key");
+							if(nvt != null) {
+								if(nextValue == nvt.getValue()) {
+									++nextValue;
+								}
+							}
+						}
+					}
+					nvt = new NameValueToken(new SingleWordToken(null, null, "key"), NumberToken.make(nextValue), null);
+					btt.add(nvt);
+				}	
+				
+			}
+		}
+		
+		
 		
 	}
 	/**
@@ -188,9 +216,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		CommentToken ct = t.getComment();
 		Field f = null;
 		if(tt instanceof BlockTypeToken) {
+			BlockTypeToken btt = (BlockTypeToken)tt;
 			DefinedTypeToken type = lookupType(tt.getName());
 			if(type != null) {
-				f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
+				f = makeField(t);
+//				f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
 				
 				if(f instanceof BlockField) {
 					//if this is a block type then add header stuff
@@ -198,8 +228,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(type instanceof FieldAllocationOwner) {
 						FieldAllocationOwner fao = (FieldAllocationOwner)type;
 						for(FieldAllocationToken fat : fao.getFields()) {
-							
-							bf.addToHeader(makeField(fat.getType(), fat.getFieldName(), fat.getComment()));
+							Field f2 = makeField(fat);
+							if(f2.isInt()) {
+								NameValueToken nvt = btt.getValue(fat.getFieldName());
+								if(nvt != null) {
+									f2 = new FixedIntField(f2.getName(), f2.getType(), f2.getComment(), nvt.getValue());
+								}
+							}
+							bf.addToHeader(f2);
 						}
 					}
 					
@@ -211,7 +247,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							if(fat instanceof NestedFieldAllocationToken) {
 								buildPackets(fat, cf);
 							} else {
-								cf.add(makeField(fat.getType(), fat.getFieldName(), fat.getComment()));
+								cf.add(makeField(fat));
 							}
 							
 						}
@@ -224,7 +260,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		} else {
 			//it's not a clock type token, which means it's not a defined type
-			f = makeField(tt, fieldName, ct);
+			f = makeField(t);
+			
 		}
 		if(t instanceof NestedFieldAllocationToken) {
 			NestedFieldAllocationToken nfat = (NestedFieldAllocationToken)t;
@@ -256,19 +293,34 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Couldn't make a field for some reason", null);
 		}
 	}
+	
 	/**
 	 * creates a field from a token
 	 * @param fat
 	 * @return
 	 */
-	private Field makeField(Token t, String fieldName, CommentToken comment) {
+	private Field makeField(FieldAllocationToken fat) {
+//		f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
+		
+		TypeToken t = fat.getType();
+		String fieldName = fat.getFieldName();
+		CommentToken comment = fat.getComment();
+		
+		if(t instanceof BlockTypeToken) {
+			BlockTypeToken btt = (BlockTypeToken)t;
+			DefinedTypeToken dtt = lookupType(t.getName()); 
+			t = dtt;
+			comment = comment == null ? dtt.getComment() : comment.combine(dtt.getComment());
+		}
+		
+		
 		Field result = null;
 		
 		String[] c = getComment(comment);
 		
 		
 		if(t instanceof ArrayToken) {
-			ArrayToken at = (ArrayToken)t;
+//			ArrayToken at = (ArrayToken)t;
 			result = new ArrayField(fieldName, c);
 		} else if(t instanceof BlockToken) {
 			result = new BlockField(fieldName, c);
@@ -381,8 +433,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	private void removeTopLevelField() {
 		for(Token t : m_tokens) {
-			if(t instanceof FieldAllocationToken) {
-				m_topLevelToken  = (FieldAllocationToken)t;
+			if(t instanceof NestedFieldAllocationToken) {
+				m_topLevelToken  = (NestedFieldAllocationToken)t;
 				m_tokens.remove(t);
 				break;
 			}
@@ -391,9 +443,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void removeTopLevelComment() {
 		for(Token t : m_tokens) {
 			if(t instanceof CommentToken) {
-				m_topLevelComment = (CommentToken)t;
+				m_topLevelComments.add((CommentToken)t);
 				m_tokens.remove(t);
-				break;
+				
 			}
 		}
 	}

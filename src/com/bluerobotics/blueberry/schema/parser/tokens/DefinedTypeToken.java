@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public interface DefinedTypeToken extends Token {
+public interface DefinedTypeToken extends Token, TypeToken {
 	public DefineToken getDefineToken();
 	public void setDefinedTypeName(DefineToken dt);
 	public void setComment(CommentToken t);

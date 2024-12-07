@@ -36,5 +36,16 @@ public class BlockTypeToken extends SingleWordToken implements TypeToken {
 		//
 		m_nameValues.add(nvt);
 	}
+	public NameValueToken getValue(String name) {
+		NameValueToken result = null;
+		for(NameValueToken nvt : m_nameValues) {
+			if(nvt.getName().equals(name)) {
+				result = nvt;
+				break;
+			}
+		}
+		return result;
+	}
+	
 	
 }

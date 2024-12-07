@@ -65,4 +65,8 @@ public class BlockToken extends AbstractToken implements DefinedTypeToken, Field
 	public List<FieldAllocationToken> getFields() {
 		return m_nestedFields;
 	}
+	@Override
+	public String getName() {
+		return m_define.getTypeName();
+	}
 }

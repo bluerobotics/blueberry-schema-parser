@@ -19,29 +19,45 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.tokens;
+package com.bluerobotics.blueberry.schema.parser.structure;
 
 /**
  * 
  */
-public abstract class AbstractToken implements Token {
-	private final Coord m_start;
-	private final Coord m_end;
-	public AbstractToken(Coord start, Coord end) {
-		m_start = start;
-		m_end = start;
+public class FixedIntField extends BaseField {
+	private final long m_value;
+
+	public FixedIntField(String name, Type type, String[] comment, long value) {
+		super(name, type, comment);
+		m_value = value;
 	}
 	@Override
-	public Coord getStart() {
-		return m_start;
-	}
-	@Override
-	public Coord getEnd() {
-		return m_end;
-	}
-	public String toString() {
-		return getClass().getSimpleName() + "()";
+	Type checkType(Type t) throws RuntimeException {
+		switch(t) {
+	
+		
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+			break;
+		case BLOCK:
+		case BOOL:
+		case COMPOUND:
+		case FLOAT32:
+		case BOOLFIELD:
+
+			throw new RuntimeException("Field must only contain base types.");
+				
+		}
+		return t;
 	}
 	
+	public long getValue() {
+		return m_value;
+	}
 	
+
 }
