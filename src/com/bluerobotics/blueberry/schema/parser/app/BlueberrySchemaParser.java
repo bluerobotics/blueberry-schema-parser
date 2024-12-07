@@ -81,7 +81,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		System.out.println("BlueberrySchemaParser args: "+ args);
+		String sargs = "[";
+		boolean firstTime = true;
+		for(String s : args) {
+			sargs = sargs + (firstTime ? "" : " ") + s;
+			firstTime = false;
+		}
+		sargs += "]";
+		System.out.println("BlueberrySchemaParser args:"+ sargs);
 		String sf = ResourceTools.loadText(RESOURCE_PATH + "testSchema.txt");
 		
 		BlueberrySchemaParser p = new BlueberrySchemaParser(sf);
