@@ -91,13 +91,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser args:"+ sargs);
 		String sf = ResourceTools.loadText(RESOURCE_PATH + "testSchema.txt");
 		
-		BlueberrySchemaParser p = new BlueberrySchemaParser(sf);
+		try {
+			BlueberrySchemaParser p = new BlueberrySchemaParser(sf);
+		} catch (SchemaParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		
 		
 		
 	}
-	public BlueberrySchemaParser(String schema) {
+	public BlueberrySchemaParser(String schema) throws SchemaParserException {
 		//split into lines
 		
 		Coord c = new Coord(0,0, schema.split("\\R"));
@@ -128,8 +133,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseEols();
 			collapseDefinedTypeComments();
 			collapseDefinedTypeFields(0, null);
-			//now there should probably only be one allocated field and a comment
-			removeTopLevelComment();
+			removeTopLevelComments();
 			removeTopLevelField();
 			
 			fillInMissingEnumValues();
@@ -158,6 +162,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			System.out.println(pe.toString());
 		}
 		
+		
+		if(m_tokens.size() > 0) {
+			throw new SchemaParserException("Unexpected token left after parsing.", m_tokens.get(0).getStart());
+		}
 		
 	}
 	/**
@@ -296,6 +304,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * constructs a hierarchy of fields to represent all the packets
+	 * This applies all defined types 
+	 * @param t
+	 * @param parentField
+	 * @throws SchemaParserException
+	 */
 	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
 		TypeToken tt = t.getType();
 		String fieldName = t.getFieldName();
@@ -517,6 +532,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 	}
+	/**
+	 * There probably is only one nested field allocation token left
+	 * Remove it and set is as the top level token
+	 */
 	private void removeTopLevelField() {
 		for(Token t : m_tokens) {
 			if(t instanceof NestedFieldAllocationToken) {
@@ -526,7 +545,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}		
 	}
-	private void removeTopLevelComment() {
+	/**
+	 * Any comments left must be file-level comments
+	 * This includes any file header comments, light license headers, etc.
+	 */
+	private void removeTopLevelComments() {
 		for(Token t : m_tokens) {
 			if(t instanceof CommentToken) {
 				m_topLevelComments.add((CommentToken)t);
@@ -569,6 +592,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * This grabs any comments that precede a defined type token and assigns to that token
+	 */
 	private void collapseDefinedTypeComments() {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -592,7 +618,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * scan a range of tokens to resolve field allocaations in defined types
 	 * this will recurse and close all braces from deepest level outwards
 	 * @param start - the first index to scan
-	 * @param end - the end of the list of elements to scan, not including this element
+	 * @param owner - the owner of the block of field allocations
 	 * @return the index of a closing brace token
 	 * @throws SchemaParserException 
 	 */
@@ -663,6 +689,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result;
 			
 	}
+	/**
+	 * Any sequence of a define token and a defined type token gets collapsed into a single defined type token
+	 * @throws SchemaParserException
+	 */
 	private void collapseDefinedTypes() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -685,6 +715,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * A sequence of Comment, BlockType and FieldName form the allocation of a blockType
+	 * These get collapsed into a nested field allocation
+	 * @throws SchemaParserException
+	 */
 	private void collapseNestedFieldAllocations() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -759,7 +794,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	
+	/**
+	 * Any sequence of a Comment, BaseType, FieldName is the allocation of a base type field
+	 * so collapse them to a single field allocation token
+	 * @throws SchemaParserException
+	 */
 	private void collapseBaseTypeAllocations() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -799,6 +838,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	/**
 	 * grab any name values from within brackets that occur on a block type allocation
+	 * These will define constant values in the block header
 	 * @throws SchemaParserException 
 	 */
 	private void collapseBlockTypeTokenNameValues() throws SchemaParserException {
@@ -890,6 +930,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		
 	}
+	/**
+	 * now collapse any token sequences of form CommentToken, SingleValueToken, EqualsToken, NumberToken to a NameValueToken 
+	 * @throws SchemaParserException
+	 */
 	private void collapseNameValues() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -939,6 +983,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * any single word token after an equals sign must be a number so replace it with a number token
+	 * @throws SchemaParserException
+	 */
 	private void collapseNumbers() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -964,6 +1012,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * remove all end of line tokens that are preceded or followed by a token that no longer needs an EOL token
+	 * This likely now removes all EOL tokens
+	 */
 	private void collapseEols() {
 		int i = 0;
 		while(i < m_tokens.size()){
@@ -1056,7 +1108,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 	/**
-	 * processes the name value pairs defined for an eenum
+	 * processes the name value pairs defined for an enum
+	 * They are identified as being contained in a following block of braces
 	 * @throws SchemaParserException 
 	 */
 	private void collapseEnumValues() throws SchemaParserException {
@@ -1255,6 +1308,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	/**
 	 * Collapse all the enum tokens and the following base type together
+	 * The base type becomes the type of the enum
 	 * @throws SchemaParserException 
 	 */
 	private void collapseEnums() throws SchemaParserException {
