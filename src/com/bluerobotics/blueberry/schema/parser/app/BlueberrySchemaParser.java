@@ -246,45 +246,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 
-	/**
-	 * recurse through base fields to find the field called key and set its value
-	 * @param fs
-	 * @param key
-	 */
-	private void setKeyField(List<Field> fs, long key) {
-		for(Field f : fs) {
-			String n = f.getName();
-			if(n != null && n.equals(KEY_FIELD_NAME)) {
-				
-				int i = fs.indexOf(f);
-				FixedIntField fif = new FixedIntField(f, key);
-				fs.set(i, fif);
-			} else if(f instanceof ParentField) {
-				ParentField pf = (ParentField)f;
-				setKeyField(pf.getBaseFields(), key);
-			}
-		}
-	}
-	private BaseField getKeyField(List<Field> fs) {
-		BaseField result = null;
-		for(Field f : fs) {
-			String n = f.getName();
-			if(n != null && n.equals(KEY_FIELD_NAME)) {
-				if(f instanceof BaseField) {
-					result = (BaseField)f;
-				} else {
-					throw new RuntimeException("Key field should be of type BaseField");
-				}
-			} else if(f instanceof ParentField) {
-				ParentField pf = (ParentField)f;
-				result = getKeyField(pf.getBaseFields());
-			}
-			if(result != null) {
-				break;
-			}
-		}
-		return result;
-	}
 
 	
 	/**
@@ -343,8 +304,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
 		TypeToken tt = t.getType();
-		String fieldName = t.getFieldName();
-		CommentToken ct = t.getComment();
 		Field f = null;
 		if(tt instanceof BlockTypeToken) {
 			BlockTypeToken btt = (BlockTypeToken)tt;
@@ -438,7 +397,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		CommentToken comment = fat.getComment();
 		
 		if(t instanceof BlockTypeToken) {
-			BlockTypeToken btt = (BlockTypeToken)t;
 			DefinedTypeToken dtt = lookupType(t.getName()); 
 			t = dtt;
 			comment = comment == null ? dtt.getComment() : comment.combine(dtt.getComment());
@@ -467,7 +425,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			result = ef;
 		} else if(t instanceof CompoundToken) {
-			CompoundToken ct = (CompoundToken)t;
 			CompoundField cf = new CompoundField(fieldName, c);
 			result = cf;
 		
@@ -588,40 +545,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	private void removeEmptyBraces() {
-		int i = 0;
-		while(i < m_tokens.size()){
-			//find the next brace
-			i = findToken(i, true, BraceStartToken.class);
-			
-			if(i >= 0 && i < m_tokens.size()) {
-				Token nextT = m_tokens.get(i+1);
-				if(nextT instanceof BraceEndToken) {
-					m_tokens.remove(i);
-					m_tokens.remove(i);
-				} else {
-					++i;
-				}
-			} else {
-				break;
-			}
-		}
-	}
-	private void moveDefines() {
-		int i = 0;
-		while(i < m_tokens.size()){
-			//find the next brace
-			i = findToken(i, true, BlockToken.class, CompoundToken.class, EnumToken.class);
-			
-			if(i >= 0 && i < m_tokens.size()) {	
-				Token t = m_tokens.get(i);
-				m_defines.add((DefinedTypeToken)t);
-				m_tokens.remove(i);
-			} else {
-				break;
-			}
-		}
-	}
+
+
 	/**
 	 * This grabs any comments that precede a defined type token and assigns to that token
 	 */
@@ -787,43 +712,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	private void collapseEnumAllocations() throws SchemaParserException {
-		int i = 0;
-		while(i < m_tokens.size()){
-			//first find next define element
-			i = findToken(i, true, EnumToken.class);
-			
-			if(i > 0 && i < m_tokens.size() - 1) {//note the limits here!
-
-				EnumToken et = (EnumToken)m_tokens.get(i);
-				CommentToken ct = null;
-				FieldNameToken fnt = null;
-				if(i > 0) {
-					Token tPrev = m_tokens.get(i - 1);
-					if(tPrev instanceof CommentToken) {
-						ct = (CommentToken)tPrev;
-					}
-				}
-				Token tNext = m_tokens.get(i + 1);
-				if(tNext instanceof FieldNameToken) {
-					fnt = (FieldNameToken)tNext;
-					FieldAllocationToken fat = new FieldAllocationToken(fnt, et, ct);
-					if(ct != null) {
-						m_tokens.set(i - 1, fat);
-						m_tokens.remove(i + 1);
-						m_tokens.remove(i);
-					} else {
-						m_tokens.set(i,  fat);
-						m_tokens.remove(i + 1);
-					}
-				} else {
-					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
-				}
-			} else {
-				break;
-			}
-		}
-	}
+	
 	/**
 	 * Any sequence of a Comment, BaseType, FieldName is the allocation of a base type field
 	 * so collapse them to a single field allocation token
@@ -1163,14 +1052,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(m < 0) {
 					throw new SchemaParserException("Could not find a matching block end after enum block start",m_tokens.get(k).getStart());
 				}
-				
-				Token bs = m_tokens.get(k);
-				Token be = m_tokens.get(m);
+			
 				i = k;
 				
 				//everything inside the block should be part of the enum 
 				
-				CommentToken ct = null;
 				for(int x = k+1; x < m; ++x) {
 					Token t = m_tokens.get(x);
 					
@@ -1254,7 +1140,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException 
 	 */
 	private void identifyFieldNames() throws SchemaParserException {
-		boolean notDone = true;
 		int i = 0;
 		int n = m_tokens.size();
 		while(i < n) {
@@ -1280,33 +1165,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		
 	}
-	/**
-	 * any single word token at the start of a line or after a 
-	 */
-	private void identifyBlockTypes() {
-		// TODO Auto-generated method stub
-		
-	}
 	
-	/**
-	 * identifies that last token of the line that the specified index is on
-	 * @param i
-	 * @return
-	 */
-	private int advanceToEndOfLine(int i) {
-		Token ti = m_tokens.get(i);
-		int j = i;
-		int n = m_tokens.size();
-		int result = i;
-		while(j < n) {
-			Token tj = m_tokens.get(j);
-			if(tj.getStart().getLineIndex() > ti.getStart().getLineIndex()) {
-				break;
-			}
-			result = j;
-		}
-		return j;
-	}
+	
+
 	/**
 	 * Collapse all the define tokens and the following single word tokens together
 	 * @throws SchemaParserException 
@@ -1433,11 +1294,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	
 		
 	}
-	private Coord moveToNextToken(Coord c) {
-		Coord result = c.advanceToNext(' ','\t','{','}','(',')','=');
-		
-		return result;
-	}
+
 	private Coord processLineComment(Coord c) {
 		if(c == null) {
 			return null;
@@ -1490,7 +1347,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			return null;
 		}
 		Coord result = c;
-		String line = "";
 	
 		//first check for comment block
 		if(result.startsWith(COMMENT_BLOCK_START)) {
