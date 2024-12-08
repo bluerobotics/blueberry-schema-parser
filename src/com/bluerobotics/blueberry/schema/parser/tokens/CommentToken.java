@@ -21,8 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.util.ArrayList;
-
 /**
  * 
  */

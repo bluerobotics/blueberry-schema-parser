@@ -27,8 +27,8 @@ import java.util.List;
 /**
  * 
  */
-public class CompoundField extends ParentField {
-	private final ArrayList<Field> m_baseTypes = new ArrayList<Field>();
+public class CompoundField extends BaseField implements ParentField {
+	private final ArrayList<BaseField> m_baseTypes = new ArrayList<BaseField>();
 	private boolean m_dontFill = false;
 
 
@@ -43,7 +43,7 @@ public class CompoundField extends ParentField {
 		} else if(f instanceof BoolField) {
 			addBool(m_baseTypes, (BoolField)f);
 		}
-		m_baseTypes.add(f);
+		m_baseTypes.add((BaseField)f);
 	}
 
 	
@@ -65,12 +65,12 @@ public class CompoundField extends ParentField {
 		return result;
 	}
 	@Override
-	public List<Field> getBaseFields(){
+	public List<BaseField> getBaseFields(){
 		return m_baseTypes;
 	}
 
 	@Override
-	int getBitCount() {
+	public int getBitCount() {
 		return 32;
 	}
 	

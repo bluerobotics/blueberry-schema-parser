@@ -27,7 +27,7 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 public class FixedIntField extends BaseField {
 	private final long m_value;
 
-	public FixedIntField(Field f, long value) {
+	public FixedIntField(BaseField f, long value) {
 		super(f.getName(), f.getType(), f.getComment());
 		m_value = value;
 	}
@@ -43,6 +43,7 @@ public class FixedIntField extends BaseField {
 		case UINT32:
 		case UINT8:
 			break;
+		case ARRAY:
 		case BLOCK:
 		case BOOL:
 		case COMPOUND:
@@ -50,6 +51,8 @@ public class FixedIntField extends BaseField {
 		case BOOLFIELD:
 
 			throw new RuntimeException("Field must only contain base types.");
+		
+
 				
 		}
 		return t;

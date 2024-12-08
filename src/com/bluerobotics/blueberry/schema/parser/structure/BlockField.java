@@ -27,9 +27,9 @@ import java.util.List;
 /**
  * 
  */
-public class BlockField extends ParentField {
-	private final ArrayList<Field> m_headerFields = new ArrayList<Field>();
-	private final ArrayList<Field> m_baseFields = new ArrayList<Field>();
+public class BlockField extends Field implements ParentField {
+	private final ArrayList<BaseField> m_headerFields = new ArrayList<BaseField>();
+	private final ArrayList<BaseField> m_baseFields = new ArrayList<BaseField>();
 	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
 
 	protected BlockField(String name, Type type, String[] comment) {
@@ -46,8 +46,10 @@ public class BlockField extends ParentField {
 		}
 		if(f instanceof BlockField) {
 			m_blockFields.add((BlockField)f);
+		} else if(f instanceof BaseField){
+			add(m_baseFields, (BaseField)f);
 		} else {
-			add(m_baseFields, f);
+			throw new RuntimeException("Field is not block or base, it's "+f.getType());
 		}
 		
 		
@@ -56,7 +58,7 @@ public class BlockField extends ParentField {
 	
 	
 
-	public void addToHeader(Field f) {
+	public void addToHeader(BaseField f) {
 		if(f == null) {
 			return;
 		}
@@ -65,18 +67,18 @@ public class BlockField extends ParentField {
 		
 		
 	}
-	public List<Field> getHeaderFields(){
+	public List<BaseField> getHeaderFields(){
 		return m_headerFields;
 	}
 	public List<BlockField> getBlockFields(){
 		return m_blockFields;
 	}
 	@Override
-	public List<Field> getBaseFields(){
+	public List<BaseField> getBaseFields(){
 		return m_baseFields;
 	}
 	@Override
-	int getBitCount() {
+	public int getBitCount() {
 		return getBitCount(m_headerFields) + getBitCount(m_baseFields);
 	}
 	@Override

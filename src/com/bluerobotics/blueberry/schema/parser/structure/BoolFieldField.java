@@ -22,13 +22,14 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.structure;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
  */
-public class BitFieldField extends Field {
+public class BoolFieldField extends BaseField {
 	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
-	public BitFieldField() {
+	public BoolFieldField() {
 		super(null, Type.BOOLFIELD, null);
 	}
 	
@@ -67,6 +68,9 @@ public class BitFieldField extends Field {
 	}
 	public boolean hasRoom() {
 		return m_bools.size() < 8;
+	}
+	public List<BoolField> getBoolFields(){
+		return m_bools;
 	}
 
 }

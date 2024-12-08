@@ -6,7 +6,7 @@
  * Define the packet header
  */
 define Packet block {
-	uint32 key //this should be set when this defined block is used below
+	uint32 key //this should be set when this defined block is used below.
 	uint16 length  //the length of the packet in words
 	uint16 blocks //this is an index to the block fields section of the packet
 	/* a CRC-32 for packet error detection
@@ -33,7 +33,7 @@ Packet brPacket(key = 0x45554c42) {
 	 * This is the header for an array
 	 */
 	define Array array {
-		uint16 key //a unique identifier of this block
+		uint8 key //a unique identifier of this block
 		uint8 length //the length of one unit of this block
 		uint8 repeats //this indicates the number units of this block
 	}
@@ -48,6 +48,15 @@ Packet brPacket(key = 0x45554c42) {
 	 */
 	Payload idPayload(key = 0x0001) {
 		uint32 id
+	}
+	/**
+	 * a request by the bus controller to all devices that have not communicated successfully recently
+	 * the controller can specify the probability and timeframe that the peripherals will respond
+	 * the peripherals will respond with an idPayload
+	 */
+	Payload whosTherePayload {
+		float32 probability //the probability that the peripheral will respond. 1.0 is 100% probability, 0.0 is zero.
+		float32 time //the time in seconds within which the device should respond.
 	}
 	
 	/*
@@ -84,11 +93,22 @@ Packet brPacket(key = 0x45554c42) {
 		
 	}
 	/*
-     * a payload for conveying ADC values
+     * a payload for conveying ADC values and configuring the adc
+     * the controller can send this with configuration parameters
+     * the peripheral can send this with adc values and/or config parameters
 	 */
 	Payload adcPayload(key = 0x0003) {
 		Array values {
 			float32 value
+		}
+		Array timeConstants {
+			float32 seconds
+		}
+		Array gains {
+			float32 gain
+		}
+		Array offsets {
+			float32 offset
 		}
 	}
 }

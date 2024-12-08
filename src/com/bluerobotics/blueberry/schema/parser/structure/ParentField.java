@@ -27,28 +27,23 @@ import java.util.List;
 /**
  * 
  */
-public abstract class ParentField extends Field {
-	protected ParentField(String name, Type type, String[] comment) {
-		super(name, type, comment);
-	}
+public interface ParentField {
 
-	public abstract void add(Field f);
-
-	protected void add(ArrayList<Field> fs, Field f) {
+	public  void add(Field f);
+	public List<BaseField> getBaseFields();
+	
+	default void add(ArrayList<BaseField> fs, BaseField f) {
 		if(f instanceof BoolField) {
 			addBool(fs, (BoolField)f);
 		} else if(f.getBitCount() < 32) {
 			addSubWord(fs, f);
-		} else if(f instanceof BlockField){
-			fs.add((BlockField)f);
+	
 		} else {
 			fs.add(f);
 		}
 	}
 
-	public abstract List<Field> getBaseFields();
-
-	protected void addSubWord(ArrayList<Field> fs, Field f) {
+	default void addSubWord(ArrayList<BaseField> fs, Field f) {
 		//first scan for an existing compound word that has room
 		CompoundField cf = null;
 		for(Field ft : fs) {
@@ -69,15 +64,15 @@ public abstract class ParentField extends Field {
 		
 	}
 	
-	protected void addBool(ArrayList<Field> fs, BoolField f) {
-		BitFieldField bff = null;
+	default void addBool(ArrayList<BaseField> fs, BoolField f) {
+		BoolFieldField bff = null;
 		for(Field ft : fs) {
 			if(ft instanceof CompoundField && ft.getName() == null) {
 				CompoundField cft = (CompoundField)ft;
 			
 				for(Field ft2 : cft.getBaseFields()) {
-					if(ft2 instanceof BitFieldField) {
-						BitFieldField bff2 = (BitFieldField)ft2;
+					if(ft2 instanceof BoolFieldField) {
+						BoolFieldField bff2 = (BoolFieldField)ft2;
 						if(!bff2.isFull()){
 							bff = bff2;
 							break;
@@ -90,12 +85,12 @@ public abstract class ParentField extends Field {
 			}
 		}
 		if(bff == null) {
-			bff = new BitFieldField();
-			add(bff);
+			bff = new BoolFieldField();
+			addSubWord(fs, bff);
 		}
 		bff.add(f);
 	}
-	protected int getBitCount(ArrayList<Field> fs) {
+	default int getBitCount(ArrayList<BaseField> fs) {
 		int result = 0;
 		for(Field f : fs) {
 			result += f.getBitCount();

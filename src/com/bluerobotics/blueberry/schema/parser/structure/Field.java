@@ -21,8 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
-
 /**
  * 
  */
@@ -45,7 +43,7 @@ public abstract class Field {
 	public String[] getComment() {
 		return m_comment;
 	}
-	int getBitCount() {
+	public int getBitCount() {
 		return m_type.getBitCount();
 	}
 	/**

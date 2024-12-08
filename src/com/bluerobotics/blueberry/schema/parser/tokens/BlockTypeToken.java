@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This token indicates a type that must have been defined. We haven't checked yet. 
@@ -45,6 +46,9 @@ public class BlockTypeToken extends SingleWordToken implements TypeToken {
 			}
 		}
 		return result;
+	}
+	public List<NameValueToken> getNameValues(){
+		return m_nameValues;
 	}
 	
 	
