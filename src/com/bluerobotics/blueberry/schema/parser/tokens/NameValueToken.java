@@ -18,8 +18,17 @@ public class NameValueToken extends AbstractToken {
 		value = v;
 		comment = c;
 	}
+	public NameValueToken(String n, long v) {
+		super(null, null);
+		name = new SingleWordToken(null, null, n);
+		value = NumberToken.make(v);
+		comment = null;
+	}
 	public String getName() {
 		return name.getName();
+	}
+	public NumberToken getNumberToken() {
+		return value;
 	}
 	public long getValue() {
 		return value.getNumber();

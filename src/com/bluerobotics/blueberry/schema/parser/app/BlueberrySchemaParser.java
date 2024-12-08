@@ -137,7 +137,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			removeTopLevelField();
 			
 			fillInMissingEnumValues();
-//			fillInMissingKeyValues(m_topLevelToken);
+			checkForDuplicateEnumValues();
+			fillInMissingKeyValues(m_topLevelToken);
+			checkForDuplicateKeyValues(m_topLevelToken);
 			
 			if(m_tokens.size() > 0) {
 				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
@@ -148,7 +150,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			buildPackets(m_topLevelToken, null);
 
-			fillInMissingKeyValues(m_topLevelField);	
 			
 			
 			
@@ -169,42 +170,82 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	}
 	/**
-	 * scans through block fields looking for the key field in the header and makes sure it's set to something
-	 * @param f
+	 * scan all block fields to check for any with duplicate key values
+	 * @param nfat
+	 * @throws SchemaParserException
 	 */
-	private void fillInMissingKeyValues(BlockField bf) {
-		
-		
-		long nextKey = 0;
-		for(BlockField bf2 : bf.getBlockFields()) {
-			//get the next key value
-			BaseField key = getKeyField(bf2.getHeaderFields());
-			if(key instanceof FixedIntField) {
-				FixedIntField ikey = (FixedIntField)key;
-				if(ikey.getValue() == nextKey) {
-					++nextKey;
+	private void checkForDuplicateKeyValues(NestedFieldAllocationToken nfat) throws SchemaParserException {
+		for(FieldAllocationToken fat : nfat.getFields()) {
+			if(fat instanceof NestedFieldAllocationToken) {
+				//recurse
+				fillInMissingKeyValues((NestedFieldAllocationToken)fat);
+				//now check this one
+				BlockTypeToken btt = (BlockTypeToken)fat.getType();//this should always be of this type for an nfat - I think
+				DefinedTypeToken dtt = lookupType(btt.getName());
+				if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
+					NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+					long v = nvt.getValue();
+					//now check all other fields 
+	
+					for(FieldAllocationToken fat2 : nfat.getFields()) {
+						if(fat instanceof NestedFieldAllocationToken) {
+							BlockTypeToken btt2 = (BlockTypeToken)fat2.getType();//this should always be of this type for an nfat - I think
+							NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
+
+							if(nvt2 != nvt) {
+								if(nvt2.getValue() == v) {
+									throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
+								}
+								
+							}
+						}
+					}
 				}
 			}
-			//recurse through hierarchy
-			fillInMissingKeyValues(bf2);
-			
 		}
-		//now scan through again and fix any missing key values
-		for(BlockField bf2 : bf.getBlockFields()) {
-			//get the next key value
-			BaseField key = getKeyField(bf2.getHeaderFields());
-			if(key instanceof FixedIntField) {
-				//we're good, it's got a value
-			} else {
-				setKeyField(bf2.getHeaderFields(), nextKey);
-				++nextKey;
+	
+	}
+	/**
+	 * traverse the hierarchy and check every defined type to be sure they have a key value set
+	 * @param m_topLevelToken2
+	 */
+	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
+		for(FieldAllocationToken fat : nfat.getFields()) {
+			if(fat instanceof NestedFieldAllocationToken) {
+				//recurse
+				fillInMissingKeyValues((NestedFieldAllocationToken)fat);
+				//now check this one
+				BlockTypeToken btt = (BlockTypeToken)fat.getType();//this should always be of this type for an nfat - I think
+				DefinedTypeToken dtt = lookupType(btt.getName());
+				if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
+					NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+					if(nvt == null) {
+						//this doesn't have one.
+						//cycle through its siblings to determine a good value
+						long v = 0;
+						for(FieldAllocationToken fat2 : nfat.getFields()) {
+							if(fat instanceof NestedFieldAllocationToken) {
+								BlockTypeToken btt2 = (BlockTypeToken)fat2.getType();//this should always be of this type for an nfat - I think
+								NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
+	
+								if(nvt2 != null) {
+									if(nvt2.getValue() == v) {
+										++v;
+									}
+									
+								}
+							}
+						}
+						//v should now be a good value
+						btt.add(new NameValueToken(KEY_FIELD_NAME, v));
+					}
+					
+				}
 			}
 		}
-		
-	
-		
-		
 	}
+
+
 	/**
 	 * recurse through base fields to find the field called key and set its value
 	 * @param fs
@@ -244,45 +285,34 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 	}
-//	/**
-//	 * scan for defined type instances that don't have keys set
-//	 * assigns the lowest, positive integer value
-//	 */
-//	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
-//		List<FieldAllocationToken> fats = nfat.getFields();
-//		
-//		for(FieldAllocationToken fat : fats) {
-//			TypeToken tt = fat.getType();
-//			if(fat instanceof NestedFieldAllocationToken) {
-//				NestedFieldAllocationToken nfat2 = (NestedFieldAllocationToken)fat;
-//				fillInMissingKeyValues(nfat2);
-//			}
-//			if(tt instanceof BlockTypeToken) {
-//				BlockTypeToken btt = (BlockTypeToken)tt;
-//				NameValueToken nvt = btt.getValue("key");
-//				if(nvt == null) {
-//					long nextValue = 0;
-//					for(FieldAllocationToken fat2 : fats) {
-//						if(tt instanceof BlockTypeToken) {
-//							BlockTypeToken btt2 = (BlockTypeToken)tt;
-//							NameValueToken nvt2 = btt.getValue("key");
-//							if(nvt != null) {
-//								if(nextValue == nvt.getValue()) {
-//									++nextValue;
-//								}
-//							}
-//						}
-//					}
-//					nvt = new NameValueToken(new SingleWordToken(null, null, "key"), NumberToken.make(nextValue), null);
-//					btt.add(nvt);
-//				}	
-//				
-//			}
-//		}
-//		
-//		
-//		
-//	}
+
+	
+	/**
+	 * Scans enum tokens and checks for duplicate values
+	 * @throws SchemaParserException 
+	 */
+	private void checkForDuplicateEnumValues() throws SchemaParserException {
+		for(Token t : m_defines) {
+			if(t instanceof EnumToken) {
+				EnumToken et = (EnumToken)t;
+				for(NameValueToken nvt : et.getNameValueTokens()) {
+					if(!nvt.isValue()) {
+						throw new SchemaParserException("Weird! There is no value set for this enum value.", nvt.getStart());
+					}
+					for(NameValueToken nvt2 : et.getNameValueTokens()) {
+						if(nvt2 == nvt) {
+							//don't worry, these are the same element
+						} else if(nvt.getName().equals(nvt2.getName())) {
+							//found two names that are the same
+							throw new SchemaParserException("Two enum element names are the same!", nvt2.getStart());
+						} else if(nvt.getValue() == nvt2.getValue()) {
+							throw new SchemaParserException("Two enum elements have the same values!", nvt2.getStart());
+						}
+					}
+				}
+			}
+		}
+	}
 	/**
 	 * Scans for enum tokens that are missing values for their elements.
 	 * Fills them in with the smallest, unused, positive, integer value.

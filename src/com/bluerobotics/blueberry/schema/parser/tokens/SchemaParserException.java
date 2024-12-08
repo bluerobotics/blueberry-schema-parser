@@ -21,7 +21,7 @@ public class SchemaParserException extends Exception {
 	}
 	
 	private static String addLineAndPointer(String s, Coord c) {
-		s += "\n";
+		s +=  "at line "+ c.line + "\n";
 		s += c.getString() + "\n";
 		s += " ".repeat(c.index);
 		s += "^\n";
