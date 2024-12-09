@@ -87,7 +87,7 @@ Packet brPacket(key = 0x45554c42) {
 			}
 			McuType mcuType
 			uint8 revision
-			//bool testBit1
+			//bool testBit1 //this causes it to fail because there's not enough room
 			
 		
 		}
