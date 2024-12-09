@@ -66,29 +66,24 @@ public interface ParentField {
 	
 	default void addBool(ArrayList<BaseField> fs, BoolField f) {
 		BoolFieldField bff = null;
+		boolean success = false;
 		for(Field ft : fs) {
 			if(ft instanceof CompoundField && ft.getName() == null) {
 				CompoundField cft = (CompoundField)ft;
-			
-				for(Field ft2 : cft.getBaseFields()) {
-					if(ft2 instanceof BoolFieldField) {
-						BoolFieldField bff2 = (BoolFieldField)ft2;
-						if(!bff2.isFull()){
-							bff = bff2;
-							break;
-						}
-					}
+				success = cft.addBool(f);
+				if(success) {
+					break;
 				}
+				
 			}
-			if(bff != null) {
-				break;
-			}
+			
 		}
-		if(bff == null) {
+		if(!success) {
 			bff = new BoolFieldField();
 			addSubWord(fs, bff);
+			bff.add(f);
 		}
-		bff.add(f);
+		
 	}
 	default int getBitCount(ArrayList<BaseField> fs) {
 		int result = 0;

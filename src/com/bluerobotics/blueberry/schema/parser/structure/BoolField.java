@@ -34,7 +34,7 @@ public class BoolField extends BaseField {
 		switch(t) {
 		
 		
-		case BOOLFIELD:
+		case BOOL:
 			break;
 		default:
 			throw new RuntimeException("Field must only contain bitfield types.");
@@ -42,5 +42,7 @@ public class BoolField extends BaseField {
 		}
 		return t;
 	}
+	
+	
 
 }

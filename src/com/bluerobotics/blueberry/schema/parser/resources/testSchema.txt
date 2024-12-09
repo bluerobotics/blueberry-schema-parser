@@ -87,10 +87,13 @@ Packet brPacket(key = 0x45554c42) {
 			}
 			McuType mcuType
 			uint8 revision
+			//bool testBit1
+			
 		
 		}
 		HwDef hwDef //this allocates a field of the hardware definition compound type
-		
+		bool testBit2
+		bool testBit3
 	}
 	/*
      * a payload for conveying ADC values and configuring the adc

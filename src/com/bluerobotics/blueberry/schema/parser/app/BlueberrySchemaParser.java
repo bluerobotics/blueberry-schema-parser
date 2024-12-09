@@ -162,7 +162,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			buildPackets(m_topLevelToken, null);
 
-			fillExtraSpaceInCompoundFields(m_topLevelField);
+			padExtraSpaceInCompoundFields(m_topLevelField);
 			computeIndeces(m_topLevelField, 0);
 			
 			
@@ -253,7 +253,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			}
 //		}
 	}
-	private void fillExtraSpaceInCompoundFields(BlockField bf) {
+	private void padExtraSpaceInCompoundFields(BlockField bf) {
 		//first check header
 		for(Field f : bf.getHeaderFields()) {
 			packCompoundField(f);	
@@ -262,7 +262,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			packCompoundField(f);
 		}
 		for(BlockField bf2 : bf.getBlockFields()) {
-			fillExtraSpaceInCompoundFields(bf2);
+			padExtraSpaceInCompoundFields(bf2);
 		}
 	}
 	private void packCompoundField(Field f) {
@@ -275,8 +275,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			} else if(r == 16) {
 				cf.add(new BaseField(null, Type.UINT16, null));
 			} else if(r == 24) {
-				cf.add(new BaseField(null, Type.UINT16, null));
 				cf.add(new BaseField(null, Type.UINT8, null));
+				cf.add(new BaseField(null, Type.UINT16, null));
 	
 			}
 		}

@@ -26,6 +26,8 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
+import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
@@ -89,12 +91,15 @@ public class TestWriter implements Writer {
 //			write(i, (EnumField)f);
 		} else if(f instanceof FixedIntField) {
 			write(i, (FixedIntField)f);
+		} else if(f instanceof BoolFieldField) {
+			write(i, (BoolFieldField)f);
 		} else if(f instanceof BaseField) {
 			write(i, (BaseField)f);
 		} else if(f instanceof BlockField) {
 			write(i, (BlockField)f);
 		}
 	}
+	
 	private void write(int i, List<BaseField> fs) {
 		boolean firstTime = true;
 		for(Field f : fs) {
@@ -114,6 +119,17 @@ public class TestWriter implements Writer {
 		start(f);
 		end();
 //		eol(i);
+	}
+	private void write(int i, BoolFieldField f) {
+		start(f);
+		++i;
+		for(BoolField bf : f.getBoolFields()) {
+			eol(i);
+			start(bf);
+			end();
+		}
+		
+		end();
 	}
 	private void write(int i, CompoundField f) {
 		if(f.getName() != null) {
