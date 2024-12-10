@@ -28,11 +28,11 @@ import java.util.ArrayList;
  */
 public class EnumField extends BaseField {
 	public class NameValue {
-		String name;
+		FieldName name;
 		long value;
 		boolean isValue;
 		String[] comment;
-		public NameValue(String n, long v, String[] c) {
+		public NameValue(FieldName n, long v, String[] c) {
 			name = n;
 			value = v;
 			comment = c;
@@ -44,11 +44,11 @@ public class EnumField extends BaseField {
 	}
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
 
-	public EnumField(String name, Type type, String[] comment) {
+	public EnumField(FieldName name, Type type, String[] comment) {
 		super(name, type, comment);
 	}
 	
-	public void addNameValue(String name, long value, String[] comment) {
+	public void addNameValue(FieldName name, long value, String[] comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
 	

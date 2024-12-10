@@ -33,6 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
@@ -470,22 +471,22 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		if(t instanceof ArrayToken) {
 //			ArrayToken at = (ArrayToken)t;
-			result = new ArrayField(fieldName, c);
+			result = new ArrayField(FieldName.fromCamel(fieldName), c);
 		} else if(t instanceof BlockToken) {
-			result = new BlockField(fieldName, c);
+			result = new BlockField(FieldName.fromCamel(fieldName), c);
 		} else if(t instanceof EnumToken) {
 			EnumToken et = (EnumToken)t;
 			
 			
-			EnumField ef = new EnumField(fieldName, lookupBaseType(et.getBaseType()), getComment(et.getComment()));
+			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), lookupBaseType(et.getBaseType()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 				
-				ef.addNameValue(nvt.getName(), nvt.getValue(), getComment(nvt.getComment()));
+				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue(), getComment(nvt.getComment()));
 			
 			}
 			result = ef;
 		} else if(t instanceof CompoundToken) {
-			CompoundField cf = new CompoundField(fieldName, c);
+			CompoundField cf = new CompoundField(FieldName.fromCamel(fieldName), c);
 			result = cf;
 		
 			
@@ -495,7 +496,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			switch(tp) {
 			
 			case BOOL:
-				result = new BoolField(fieldName, c);
+				result = new BoolField(FieldName.fromCamel(fieldName), c);
 				break;
 			case INT16:
 			case INT32:
@@ -504,7 +505,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			case UINT32:
 			case UINT8:
 			case FLOAT32:
-				result = new BaseField(fieldName, tp, c);
+				result = new BaseField(FieldName.fromCamel(fieldName), tp, c);
 				break;
 			
 			default:

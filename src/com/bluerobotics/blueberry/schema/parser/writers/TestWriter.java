@@ -62,7 +62,7 @@ public class TestWriter extends SourceWriter {
 		w(f.getType().name());
 		if(f.getName() != null) {
 			w(" ");
-			w(f.getName());
+			w(f.getName().toCamel(true));
 		}
 //		w(" ");
 	}

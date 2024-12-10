@@ -26,7 +26,7 @@ package com.bluerobotics.blueberry.schema.parser.structure;
  */
 public class BoolField extends BaseField {
 
-	public BoolField(String name, String[] comment) {
+	public BoolField(FieldName name, String[] comment) {
 		super(name, Type.BOOL, comment);
 	}
 	@Override

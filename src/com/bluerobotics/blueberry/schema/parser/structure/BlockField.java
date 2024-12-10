@@ -32,11 +32,11 @@ public class BlockField extends Field implements ParentField {
 	private final ArrayList<BaseField> m_baseFields = new ArrayList<BaseField>();
 	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
 
-	protected BlockField(String name, Type type, String[] comment) {
+	protected BlockField(FieldName name, Type type, String[] comment) {
 		super(name, type, comment);
 		
 	}
-	public BlockField(String name, String[] comment) {
+	public BlockField(FieldName name, String[] comment) {
 		super(name, Type.BLOCK, comment);
 	}
 	@Override

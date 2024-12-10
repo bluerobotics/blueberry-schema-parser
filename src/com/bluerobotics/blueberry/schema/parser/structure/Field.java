@@ -22,11 +22,11 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.structure;
 
 public abstract class Field {
-	private final String m_name;
+	private final FieldName m_name;
 	private final Type m_type;
 	private final String[] m_comment;
 	
-	protected Field(String name, Type type, String[] comment) {
+	protected Field(FieldName name, Type type, String[] comment) {
 		m_name = name;
 		m_type = checkType(type);
 		m_comment = comment;
@@ -34,7 +34,7 @@ public abstract class Field {
 	public Type getType() {
 		return m_type;
 	}
-	public String getName() {
+	public FieldName getName() {
 		return m_name;
 	}
 	public String[] getComment() {

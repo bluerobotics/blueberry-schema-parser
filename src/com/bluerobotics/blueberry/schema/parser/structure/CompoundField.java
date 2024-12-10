@@ -32,7 +32,7 @@ public class CompoundField extends BaseField implements ParentField {
 	private boolean m_dontFill = false;
 
 
-	public CompoundField(String name, String[] comment) {
+	public CompoundField(FieldName name, String[] comment) {
 		super(name, Type.COMPOUND, comment);
 	}
 

@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 
 public class CWriter extends SourceWriter {
@@ -59,7 +60,7 @@ public class CWriter extends SourceWriter {
 		for(BlockField bf : bfs) {
 			for(BaseField f : bf.getAllBaseFields()) {
 				if(f.getName() != null) {
-					writeDefine(w, i, f.getName(), ""+f.getIndex());
+					writeDefine(w, i, f.getName().addPrefix(top.getName()).addSuffix("field"), ""+f.getIndex());
 				}
 			}
 		}
@@ -75,11 +76,11 @@ public class CWriter extends SourceWriter {
 		w.append(" ".repeat(indent*INDENT_SPACE_NUM));
 
 	}
-	private void writeDefine(BufferedWriter w, int i, String name, String value) throws IOException {
+	private void writeDefine(BufferedWriter w, int i, FieldName name, String value) throws IOException {
 		indent(w, i);
 		w.append("#define ");
-		w.append(WriterUtils.camelToSnake(name, true)+"_FIELD ");
-		w.append("(" + value + ")");
+		w.append(name.toSnake(true));
+		w.append(" (" + value + ")");
 		newLine(w, i);
 		
 	}
