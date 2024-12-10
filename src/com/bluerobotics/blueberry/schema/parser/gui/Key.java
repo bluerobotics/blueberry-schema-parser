@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package com.bluerobotics.blueberry.schema.parser.app;
+package com.bluerobotics.blueberry.schema.parser.gui;
 
 import java.io.File;
 import java.net.URI;
@@ -37,9 +37,11 @@ public enum Key implements SettingsKey {
 //	APP_WIDTH(Integer.class, 640),
 	
 	SCHEMA_FILE_PATH(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
-	JAVA_DIRECCTORY(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
-	C_DIRECCTORY(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
+	JAVA_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
+	C_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
 	
+	
+	DEFAULT_FILE_PATH(File.class, (new File(System.getProperty("user.dir")))),
 	APP_POS_X(Integer.class, 0),
 	APP_POS_Y(Integer.class, 0),
 	APP_WIDTH(Integer.class, 1000),

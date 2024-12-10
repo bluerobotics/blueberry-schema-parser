@@ -21,22 +21,49 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 
-public class CWriter extends Writer {
+public class CWriter extends SourceWriter {
+	private final FieldUtils m_utils = new FieldUtils(); 
 
 	public CWriter(File dir) {
 		super(dir);
 	}
 
 	@Override
-	public void write(BlockField bf) {
+	public void write(BlockField bf, String header) {
 		
-		StringWriter sw = new StringWriter();
+		try {
+			test(bf, header);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
+	
+	private void test(BlockField top, String h) throws IOException {
+		List<BlockField> bfs = m_utils.getAllBlockFields(top);
+		BufferedWriter w = makeFileWriter("test", "h");
+		w.append(h);
+		for(BlockField bf : bfs) {
+			for(BaseField f : bf.getAllBaseFields()) {
+				w.newLine();
+
+				w.append(f.getName());
+			}
+		}
+		w.close();
+	}
+	
+	
 
 }

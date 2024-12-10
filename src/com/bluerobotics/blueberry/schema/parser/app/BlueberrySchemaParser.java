@@ -33,6 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 import com.bluerobotics.blueberry.schema.parser.structure.Type;
@@ -95,13 +96,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		String sf = ResourceTools.loadText(RESOURCE_PATH + "testSchema.txt");
 		BlueberrySchemaParser p = new BlueberrySchemaParser();
 		try {
-			p.parse(sf);
+			p.parse(sf.split("\\R"));
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		TestWriter tw = new TestWriter(new File(""));
-		tw.write(p.getTopLevelField());
+		tw.write(p.getTopLevelField(), p.getHeader());
 		System.out.println(tw.getOutput());
 		
 		
@@ -109,15 +110,24 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		
 	}
+	public String getHeader() {
+		String result = "";
+		for(CommentToken ct : m_topLevelComments) {
+			for(String s : ct.getComment()) {
+				result += s + "\n";
+			}
+		}
+		return result;
+	}
 	/**
 	 * this method performs the parsing of the schema and builds a structure of fields to represent the packet
 	 * @param schema - a string containing the schema to parse
 	 * @throws SchemaParserException
 	 */
-	public void parse(String schema) throws SchemaParserException {
+	public void parse(String[] schemaLines) throws SchemaParserException {
 		//split into lines
 		
-		Coord c = new Coord(0,0, schema.split("\\R"));
+		Coord c = new Coord(0,0, schemaLines);
 		
 		try {
 			while(c != null) {
@@ -162,9 +172,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			//now build model of packets
 			
 			buildPackets(m_topLevelToken, null);
-
-			padExtraSpaceInCompoundFields(m_topLevelField);
-			computeIndeces(m_topLevelField, 0);
+			FieldUtils fu = new FieldUtils();
+			fu.padExtraSpaceInCompoundFields(m_topLevelField);
+			fu.computeIndeces(m_topLevelField, 0);
 			
 			
 			
@@ -183,45 +193,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		
 	}
-	/**
-	 * traverse header and base fields of blocks to number them
-	 * @param bf
-	 */
-	private void computeIndeces(Field f, int i) {
-		if(f instanceof BlockField) {
-			BlockField bf = (BlockField)f;
-			i = 0;
-			for(BaseField fb : bf.getHeaderFields()) {
-				computeIndeces(fb, i);
-				i += 4;
-			}
-			for(BaseField fb : bf.getBaseFields()) {
-				computeIndeces(fb,i);
-				i += 4;
-			}
-			for(BlockField bf2 : bf.getBlockFields()) {
-				computeIndeces(bf2,0);
-			}
-		} else if(f instanceof CompoundField) {
-			CompoundField cf = (CompoundField)f;
-			cf.setIndex(i);
-			for(BaseField fb : cf.getBaseFields()) {
-				computeIndeces(fb,i);
-				i += fb.getBitCount()/8;
-			}
-		} else if(f instanceof BoolFieldField) {
-			BoolFieldField bf = (BoolFieldField)f;
-			bf.setIndex(i);
-			int j = 0;
-			for(BoolField bool : bf.getBoolFields()) {
-				bool.setIndex(j);
-				++j;
-			}
-		} else if(f instanceof BaseField) {
-			((BaseField) f).setIndex(i);
-		}
-		
-	}
+
 	/**
 	 * this is supposed to scan for constant fields and check to be sure they fit in the allocated number of bits
 	 * @param nfat
@@ -254,34 +226,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			}
 //		}
 	}
-	private void padExtraSpaceInCompoundFields(BlockField bf) {
-		//first check header
-		for(Field f : bf.getHeaderFields()) {
-			packCompoundField(f);	
-		}
-		for(Field f : bf.getBaseFields()) {
-			packCompoundField(f);
-		}
-		for(BlockField bf2 : bf.getBlockFields()) {
-			padExtraSpaceInCompoundFields(bf2);
-		}
-	}
-	private void packCompoundField(Field f) {
-		if(f instanceof CompoundField) {
-			CompoundField cf = (CompoundField)f;
-			
-			int r = cf.getRoom();
-			if(r == 8) {
-				cf.add(new BaseField(null, Type.UINT8, null));
-			} else if(r == 16) {
-				cf.add(new BaseField(null, Type.UINT16, null));
-			} else if(r == 24) {
-				cf.add(new BaseField(null, Type.UINT8, null));
-				cf.add(new BaseField(null, Type.UINT16, null));
-	
-			}
-		}
-	}
+
 	/**
 	 * scan all block fields to check for any with duplicate key values
 	 * @param nfat

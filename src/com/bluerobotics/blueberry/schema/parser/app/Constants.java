@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import com.starfishmedical.utils.ResourceTools;
 
@@ -29,7 +30,7 @@ public interface Constants {
 	public static final String APP_NAME = "Blueberry Schema Parser";
 	public static final String VERSION = "0.0.0";// Don't forget to change this in the POM too!
 
-	
+	public static final File HOME_DIR = new File(System.getProperty("user.dir"));
 	public static final String RESOURCE_PATH = "com/bluerobotics/blueberry/schema/parser/resources/";
 	public static final BufferedImage BLUEBERRY_LOGO = ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo.png");
 

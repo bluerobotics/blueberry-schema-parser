@@ -54,6 +54,13 @@ public class BlockField extends Field implements ParentField {
 		
 		
 	}
+	public List<BaseField> getAllBaseFields(){
+		ArrayList<BaseField> result = new ArrayList<BaseField>();
+		result.addAll(m_headerFields);
+		result.addAll(m_baseFields);
+		return result;
+		
+	}
 	
 	
 	

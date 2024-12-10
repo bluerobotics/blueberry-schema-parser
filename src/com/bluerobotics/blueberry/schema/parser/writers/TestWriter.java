@@ -37,7 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 /**
  * A class to test writing something useful from the computed schema packet format
  */
-public class TestWriter extends Writer {
+public class TestWriter extends SourceWriter {
 	public TestWriter(File dir) {
 		super(dir);
 	}
@@ -46,7 +46,7 @@ public class TestWriter extends Writer {
 		return m_writer.toString();
 	}
 	@Override
-	public void write(BlockField bf) {
+	public void write(BlockField bf, String header) {
 		write(0, bf);
 	}
 	private void start(Field f) {

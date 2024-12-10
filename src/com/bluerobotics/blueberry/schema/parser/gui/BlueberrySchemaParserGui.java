@@ -1,0 +1,233 @@
+package com.bluerobotics.blueberry.schema.parser.gui;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Image;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.stream.Stream;
+
+import javax.swing.Box;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.border.EmptyBorder;
+
+import com.bluerobotics.blueberry.schema.parser.app.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.app.Constants;
+import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
+import com.starfishmedical.settings.Settings;
+import com.starfishmedical.settings.SettingsDialog;
+import com.starfishmedical.settings.SettingsTableCellEditor;
+import com.starfishmedical.settings.SettingsTableCellRenderer;
+import com.starfishmedical.settings.SettingsTableModel;
+import com.starfishmedical.sfdq.actions.ActionManager;
+import com.starfishmedical.sfdq.gui.ToolBar;
+import com.starfishmedical.utils.ResourceTools;
+import com.starfishmedical.utils.UtilMethods;
+
+
+public class BlueberrySchemaParserGui implements Constants {
+	private final Settings m_settings;
+	private final JFrame m_frame;
+//	private MenuBar m_menuBar;
+	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser();
+
+	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
+	private final JTextArea m_text = new JTextArea();
+
+	public BlueberrySchemaParserGui(Settings s) {
+		m_settings = s;
+		JFrame f = new JFrame();
+		f.setIconImage(BLUEBERRY_LOGO);
+		m_frame = f;
+		Container cp = f.getContentPane();
+		cp.setLayout(new BorderLayout());
+	
+		
+		int x = s.getInt(Key.APP_POS_X);
+		int y = s.getInt(Key.APP_POS_Y);
+		int w = s.getInt(Key.APP_WIDTH);
+		int h = s.getInt(Key.APP_HEIGHT);
+		f.setLocation(x, y);
+		f.setSize(w, h);
+		f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		
+		f.addWindowListener(new WindowAdapter(){
+			@Override
+			public void windowClosing(WindowEvent e) {
+				super.windowClosing(e);
+				exit();
+			}
+		});
+		f.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int w = e.getComponent().getWidth();
+				int h = e.getComponent().getHeight();
+				w = w < 200 ? 200 : w;
+				h  = h < 200 ? 200 : h;
+				s.set(Key.APP_WIDTH, w);
+				s.set(Key.APP_HEIGHT, h);
+			}
+			@Override
+			public void componentMoved(ComponentEvent e) {
+				int x = e.getComponent().getX();
+				int y = e.getComponent().getY();
+				s.set(Key.APP_POS_X, x);
+				s.set(Key.APP_POS_Y, y);
+			}
+		});
+		registerActions();
+
+		
+		ToolBar toolbar = new ToolBar() {
+			private static final long serialVersionUID = 1L;
+
+			//add initializer to abstract class
+			{
+				JButton comp = new JButton("<html><p>"+ APP_NAME + "</p>"+VERSION+"</p></html>");
+				comp.setIcon(new ImageIcon(BLUEBERRY_LOGO.getScaledInstance(-1, 48, Image.SCALE_SMOOTH)));
+				comp.setRequestFocusEnabled(false);//this stops buttons from taking focus
+				comp.setBackground(Color.BLUE);//don't know why this works, but it keeps the rollover from showing a weird gradient
+				comp.setBorder(new EmptyBorder(5,5,5,5));
+				comp.setOpaque(false);
+				Dimension d = new Dimension(300,50);
+//				comp.setPreferredSize(d);
+				comp.setMaximumSize(d);
+				comp.setFocusable(false);
+				add(comp);
+				setFloatable(false);
+				
+				addItem(m_actions, ActionInfos.PARSE_SCHEMA);
+				addItem(m_actions, ActionInfos.GENERATE_C);
+				addItem(m_actions, ActionInfos.GENERATE_JAVA);
+
+				addSeparator(new Dimension(20,20));
+//				addItem( m_actions, ActionInfos.HELP);
+				
+				addGlue();
+				addItem(m_actions, ActionInfos.MINIMIZE);
+				addItem(m_actions, ActionInfos.NORMALIZE);
+				addItem(m_actions, ActionInfos.MAXIMIZE);
+				addItem(m_actions, ActionInfos.EXIT);
+			
+			}
+		};
+		
+		
+		f.add(toolbar, BorderLayout.NORTH);
+		JTable setTable = new JTable(new SettingsTableModel(m_settings, Key.values()));
+	
+		setTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+		setTable.setRowHeight((int)(setTable.getFont().getSize()*1.5));
+		setTable.getColumnModel().getColumn(1).setCellEditor(new SettingsTableCellEditor(m_settings));
+		setTable.getColumnModel().getColumn(1).setCellRenderer(new SettingsTableCellRenderer(m_settings));
+//		settings.setDefaultEditor(File.class, new SettingsTableFileCellEditor());
+//		settings.setDefaultEditor(SerialPort.class, new SettingsTableSerialPortCellEditor());
+		Box b = Box.createVerticalBox();
+		b.add(new JScrollPane(setTable));
+		m_text.setPreferredSize(new Dimension(500,500));
+		b.add(new JScrollPane(m_text));
+		cp.add(b);		
+		
+		f.setVisible(true);
+
+	}
+	private Settings getSettings() {
+		return m_settings;
+	}
+	public JFrame getFrame(){
+		return m_frame;
+	}
+
+	private void registerActions() {
+		m_actions.registerActions(ActionInfos.values());
+		m_actions.addKeyBindings(m_frame.getRootPane());
+	
+		m_actions.addListener(ActionInfos.HELP, e -> {});
+		m_actions.addListener(ActionInfos.EXIT, e -> exit());
+		m_actions.addListener(ActionInfos.MINIMIZE, e -> m_frame.setExtendedState(Frame.ICONIFIED));
+		m_actions.addListener(ActionInfos.NORMALIZE, e -> m_frame.setExtendedState(Frame.NORMAL));
+		m_actions.addListener(ActionInfos.MAXIMIZE, e -> m_frame.setExtendedState(Frame.MAXIMIZED_BOTH));
+		
+		m_actions.addListener(ActionInfos.SETTINGS_LOAD, e -> getSettings().loadSettings(getFrame(), Key.DEFAULT_FILE_PATH));
+		m_actions.addListener(ActionInfos.SETTINGS_SAVE, e -> getSettings().saveSettings(getFrame(), Key.DEFAULT_FILE_PATH));
+		m_actions.addListener(ActionInfos.SETTINGS_SHOW, e -> SettingsDialog.showSettingsDialog(getFrame(), getSettings(), Key.values()));
+		m_actions.addListener(ActionInfos.PARSE_SCHEMA, e -> parse());
+		m_actions.addListener(ActionInfos.GENERATE_C, e -> generateC());
+		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
+
+	}
+
+	private void generateJava() {
+		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
+		m_text.append("Generating Java code in \"" + dir+"\"\n");
+		
+
+//		JavaWriter jw = new JavaWriter(dir);
+//		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		m_text.append("Done");
+	}
+	private void generateC() {
+		File dir = m_settings.getFile(Key.C_DIRECTORY);
+		m_text.append("Generating C code in \"" + dir+"\"\n");
+		
+		
+		CWriter cw = new CWriter(dir);
+		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		m_text.append("Done");
+	}
+	private void parse() {
+		
+		URI uri = m_settings.getUri(Key.SCHEMA_FILE_PATH);
+		m_text.append("Parsing \""+uri+"\"\n");
+		BufferedReader br;
+		String[] ss = null;
+		try {
+			br = UtilMethods.getReaderFromFileUri(uri);
+			Stream<String> lines = br.lines();
+			ss = lines.toArray(String[]::new);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			m_text.append(e.toString());
+		}
+		
+		if(ss != null) {
+			try {
+				m_parser.parse(ss);
+			} catch (SchemaParserException e) {
+				m_text.append(e.toString());
+			}
+		}
+		m_text.append("Done\n");
+	}
+	public static void main(String...args){
+		Settings settings = new Settings(BlueberrySchemaParserGui.class);
+		ResourceTools.setFonts();
+		
+		BlueberrySchemaParserGui gui = new BlueberrySchemaParserGui(settings);
+	
+	
+	}	
+	public void exit() {
+		
+		System.exit(0);
+		
+			
+	}
+}

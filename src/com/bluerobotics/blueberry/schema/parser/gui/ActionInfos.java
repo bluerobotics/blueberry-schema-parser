@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.app;
+package com.bluerobotics.blueberry.schema.parser.gui;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -32,6 +32,9 @@ import com.starfishmedical.sfdq.actions.ActionInfo;
 
 
 public enum ActionInfos implements ActionInfo {
+	PARSE_SCHEMA("Parse", "parse.png", "Parse the chosen schema file.", KeyEvent.VK_UNDEFINED, "ctrl alt P"),
+	GENERATE_C("Generete C", "generateC.png", "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
+	GENERATE_JAVA("Generete Java", "generateJ.png", "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
 	HELP("Help", "help.png", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
 	EXIT("Exit", "exit.png", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
 	MINIMIZE("Minimize", "minimizeWindow.png", "Hide the app window.", KeyEvent.VK_UNDEFINED, ""),
@@ -41,7 +44,6 @@ public enum ActionInfos implements ActionInfo {
 	
 	SETTINGS_LOAD("Load settings", "loadSettings.png", "Load previously saved settings.", KeyEvent.VK_L),
 	SETTINGS_SAVE("Save settings", "saveSettings.png", "Save current application settings.", KeyEvent.VK_E),
-	
 	SETTINGS_SHOW("Show settings", "settings.png", "Show the settings dialog.", KeyEvent.VK_UNDEFINED),
 
 	;

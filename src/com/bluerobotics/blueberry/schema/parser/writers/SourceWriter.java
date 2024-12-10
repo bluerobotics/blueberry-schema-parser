@@ -21,21 +21,36 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 
 /**
  * 
  */
-public abstract class Writer {
-	public final File m_directory;
-	public Writer(File dir) {
+public abstract class SourceWriter {
+	protected final File m_directory;
+	public SourceWriter(File dir) {
 		if(!dir.isDirectory()) {
 			throw new RuntimeException("Specified file location is not a directory!");
 		}
 		m_directory = dir;
 	}
-	public abstract void write(BlockField bf);
+	public abstract void write(BlockField bf, String header);
+	
+	protected BufferedWriter makeFileWriter(String name, String ext) {
+		File f = new File(m_directory, name+"."+ext);
+		BufferedWriter w = null;
+		try {
+			w = new BufferedWriter(new FileWriter(f));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return w;
+	}
 
 }
