@@ -21,11 +21,21 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
+import java.io.File;
+
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 
 /**
  * 
  */
-public interface Writer {
-	public void write(BlockField bf);
+public abstract class Writer {
+	public final File m_directory;
+	public Writer(File dir) {
+		if(!dir.isDirectory()) {
+			throw new RuntimeException("Specified file location is not a directory!");
+		}
+		m_directory = dir;
+	}
+	public abstract void write(BlockField bf);
+
 }

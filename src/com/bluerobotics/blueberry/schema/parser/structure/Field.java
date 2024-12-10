@@ -21,9 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-/**
- * 
- */
 public abstract class Field {
 	private final String m_name;
 	private final Type m_type;

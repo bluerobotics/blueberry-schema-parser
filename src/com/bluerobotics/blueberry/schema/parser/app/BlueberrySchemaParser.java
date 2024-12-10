@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.app;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +100,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		TestWriter tw = new TestWriter();
+		TestWriter tw = new TestWriter(new File(""));
 		tw.write(p.getTopLevelField());
 		System.out.println(tw.getOutput());
 		

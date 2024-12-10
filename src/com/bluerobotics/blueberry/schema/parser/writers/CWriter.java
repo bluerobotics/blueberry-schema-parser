@@ -19,18 +19,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.app;
+package com.bluerobotics.blueberry.schema.parser.writers;
 
-import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.StringWriter;
 
-import com.starfishmedical.utils.ResourceTools;
+import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 
-public interface Constants {
-	public static final String APP_NAME = "Blueberry Schema Parser";
-	public static final String VERSION = "0.0.0";// Don't forget to change this in the POM too!
+public class CWriter extends Writer {
 
-	
-	public static final String RESOURCE_PATH = "com/bluerobotics/blueberry/schema/parser/resources/";
-	public static final BufferedImage BLUEBERRY_LOGO = ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo.png");
+	public CWriter(File dir) {
+		super(dir);
+	}
+
+	@Override
+	public void write(BlockField bf) {
+		
+		StringWriter sw = new StringWriter();
+		
+	}
 
 }

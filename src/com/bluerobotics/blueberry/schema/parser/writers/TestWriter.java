@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
+import java.io.File;
 import java.io.StringWriter;
 import java.util.List;
 
@@ -36,7 +37,10 @@ import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 /**
  * A class to test writing something useful from the computed schema packet format
  */
-public class TestWriter implements Writer {
+public class TestWriter extends Writer {
+	public TestWriter(File dir) {
+		super(dir);
+	}
 	StringWriter m_writer = new StringWriter();
 	public String getOutput() {
 		return m_writer.toString();
