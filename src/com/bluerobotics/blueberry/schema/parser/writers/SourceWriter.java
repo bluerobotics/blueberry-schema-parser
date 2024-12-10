@@ -39,7 +39,7 @@ public abstract class SourceWriter {
 		}
 		m_directory = dir;
 	}
-	public abstract void write(BlockField bf, String header);
+	public abstract void write(BlockField bf, String... headers);
 	
 	protected BufferedWriter makeFileWriter(String name, String ext) {
 		File f = new File(m_directory, name+"."+ext);

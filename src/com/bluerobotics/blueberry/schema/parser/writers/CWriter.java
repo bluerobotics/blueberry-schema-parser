@@ -32,17 +32,18 @@ import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 
 public class CWriter extends SourceWriter {
-	private final FieldUtils m_utils = new FieldUtils(); 
+	private static final int INDENT_SPACE_NUM = 4;
+	private final FieldUtils m_fu = new FieldUtils(); 
 
 	public CWriter(File dir) {
 		super(dir);
 	}
 
 	@Override
-	public void write(BlockField bf, String header) {
+	public void write(BlockField bf, String... headers) {
 		
 		try {
-			test(bf, header);
+			test(bf, headers);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -50,20 +51,59 @@ public class CWriter extends SourceWriter {
 		
 	}
 	
-	private void test(BlockField top, String h) throws IOException {
-		List<BlockField> bfs = m_utils.getAllBlockFields(top);
+	private void test(BlockField top, String... h) throws IOException {
+		List<BlockField> bfs = m_fu.getAllBlockFields(top);
 		BufferedWriter w = makeFileWriter("test", "h");
-		w.append(h);
+		int i = 0;
+		addBlockComment(w, i, h);
 		for(BlockField bf : bfs) {
 			for(BaseField f : bf.getAllBaseFields()) {
-				w.newLine();
-
-				w.append(f.getName());
+				if(f.getName() != null) {
+					writeDefine(w, i, f.getName(), ""+f.getIndex());
+				}
 			}
 		}
 		w.close();
 	}
 	
+	
+	private void newLine(BufferedWriter w, int indent) throws IOException {
+		w.append("\n");
+		indent(w, indent);
+	}
+	private void indent(BufferedWriter w, int indent) throws IOException {
+		w.append(" ".repeat(indent*INDENT_SPACE_NUM));
+
+	}
+	private void writeDefine(BufferedWriter w, int i, String name, String value) throws IOException {
+		indent(w, i);
+		w.append("#define ");
+		w.append(WriterUtils.camelToSnake(name, true)+"_FIELD ");
+		w.append("(" + value + ")");
+		newLine(w, i);
+		
+	}
+	private void addBlockComment(BufferedWriter w, int indent, String... cs) throws IOException {
+		for(String c : cs) {
+			String[] ss = c.split("\\R");
+			int n = ss.length - 1;
+			
+			for(int i = 0; i <= n; ++i) {
+				if(i == 0) {
+					indent(w, indent);
+					w.append("/*");
+					
+				}
+				newLine(w, indent);
+				w.append(" * "+ss[i]);
+				if(i == n) {
+					newLine(w, indent);
+					w.append(" */");
+					newLine(w, indent);
+				}
+			}
+		}
+	}
 	
 
 }

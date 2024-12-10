@@ -110,11 +110,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		
 	}
-	public String getHeader() {
-		String result = "";
-		for(CommentToken ct : m_topLevelComments) {
+	public String[] getHeader() {
+		String[] result = new String[m_topLevelComments.size()];
+		for(int i = 0; i < m_topLevelComments.size(); ++i) {
+			CommentToken ct = m_topLevelComments.get(i);
+			result[i] = "";
 			for(String s : ct.getComment()) {
-				result += s + "\n";
+				result[i] += s + "\n";
 			}
 		}
 		return result;

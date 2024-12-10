@@ -46,7 +46,7 @@ public class TestWriter extends SourceWriter {
 		return m_writer.toString();
 	}
 	@Override
-	public void write(BlockField bf, String header) {
+	public void write(BlockField bf, String... headers) {
 		write(0, bf);
 	}
 	private void start(Field f) {
