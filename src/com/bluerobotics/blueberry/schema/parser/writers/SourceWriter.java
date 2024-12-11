@@ -27,11 +27,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 
 /**
  * 
@@ -88,12 +90,12 @@ public abstract class SourceWriter {
 	protected StringBuffer getBuffer() {
 		return m_buffer;
 	}
-	protected void scanThroughBaseFields(BlockField top, Consumer<BaseField> consumer) {
+	protected void scanThroughBaseFields(BlockField top, BiConsumer<BaseField, ParentField> consumer) {
 		for(BlockField bf : top.getBlockFields()) {
 			scanThroughBaseFields((BlockField)bf, consumer);
 		}
 		for(BaseField f : top.getAllBaseFields()) {
-			consumer.accept(f);
+			consumer.accept(f, top);
 		}
 	}
 

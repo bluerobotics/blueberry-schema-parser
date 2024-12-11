@@ -36,6 +36,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
+import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 
 public class CWriter extends SourceWriter {
 	private final FieldUtils m_fu = new FieldUtils(); 
@@ -52,12 +53,15 @@ public class CWriter extends SourceWriter {
 		
 		
 	}
-	private void test(BlockField top, String... h) {
+	private void test(BlockField top, String... hs) {
 //		List<BlockField> bfs = top.getBlockFields();
 		clear();
-		addBlockComment(h);
+		for(String h : hs) {
+			addBlockComment(h);
+		}
 		writeDefines(top);
 		writeEnums(top);
+		addBaseFields(top);
 		
 		
 		
@@ -68,7 +72,7 @@ public class CWriter extends SourceWriter {
 	private void writeEnums(BlockField top) {
 		//first make a list of all unique enums
 		ArrayList<EnumField> es = new ArrayList<EnumField>();
-		scanThroughBaseFields(top, f -> {
+		scanThroughBaseFields(top, (f, p) -> {
 			if(f instanceof EnumField) {
 				EnumField e = (EnumField)f;
 				boolean found = false;
@@ -110,7 +114,7 @@ public class CWriter extends SourceWriter {
 	}
 
 	private void writeDefines(BlockField top) {
-		scanThroughBaseFields(top, f -> {
+		scanThroughBaseFields(top, (f, p) -> {
 			if(f.getName() != null) {
 				boolean multiLine = f.getComment().split("\\R").length > 1 ;
 				String c = "";
@@ -142,41 +146,49 @@ public class CWriter extends SourceWriter {
 		appendNewLine();
 		
 	}
-	private void addDocComment(String... cs) {
+	private void addDocComment(String cs) {
 		addBlockComment(true, cs);
 	}
-	private void addBlockComment(String... cs) {
+	private void addBlockComment(String cs) {
 		addBlockComment(false, cs);
 	}
 	/**
 	 * Adds some block comments
 	 * @param docNotBlock
-	 * @param cs
+	 * @param c
 	 */
-	private void addBlockComment(boolean docNotBlock, String... cs) {
-		if(cs.length > 0) {
-			for(String c : cs) {
-				String[] ss = c.split("\\R");
-				int n = ss.length - 1;
-				String startToken = docNotBlock ? "/**" : "/*";
-				if(!c.isBlank()){
-					for(int i = 0; i <= n; ++i) {
-						if(i == 0) {
-							appendIndent();
-							append(startToken);
-							
-						}
-						appendNewLine();
-						append(" * "+ss[i]);
-						if(i == n) {
-							appendNewLine();
-							append(" */");
-							appendNewLine();
-						}
-					}
+	private void addBlockComment(boolean docNotBlock, String c) {
+		
+			
+		String[] ss = c.split("\\R");
+		int n = ss.length - 1;
+		String startToken = docNotBlock ? "/**" : "/*";
+		if(!c.isBlank()){
+			for(int i = 0; i <= n; ++i) {
+				if(i == 0) {
+					appendIndent();
+					append(startToken);
+					
+				}
+				appendNewLine();
+				append(" * "+ss[i]);
+				if(i == n) {
+					appendNewLine();
+					append(" */");
+					appendNewLine();
 				}
 			}
 		}
+	}
+
+	private void addBaseFields(BlockField top) {
+		scanThroughBaseFields(top, (f, p) -> {
+			addBaseGetterPrototype(f,p);
+		});
+	}
+	private void addBaseGetterPrototype(BaseField f, ParentField p) {
+//		String c = "gets the "+f.getName().toCamel(false)+" field\n"+f.getComment();
+		
 	}
 	
 
