@@ -33,7 +33,6 @@ import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 
 public class CWriter extends SourceWriter {
-	private static final int INDENT_SPACE_NUM = 4;
 	private final FieldUtils m_fu = new FieldUtils(); 
 
 	public CWriter(File dir) {
@@ -43,64 +42,81 @@ public class CWriter extends SourceWriter {
 	@Override
 	public void write(BlockField bf, String... headers) {
 		
-		try {
+		
 			test(bf, headers);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 		
 	}
-	
-	private void test(BlockField top, String... h) throws IOException {
-		List<BlockField> bfs = m_fu.getAllBlockFields(top);
-		BufferedWriter w = makeFileWriter("test", "h");
+	private void test(BlockField top, String... h) {
+//		List<BlockField> bfs = top.getBlockFields();
+		clear();
 		int i = 0;
-		addBlockComment(w, i, h);
-		for(BlockField bf : bfs) {
-			for(BaseField f : bf.getAllBaseFields()) {
-				if(f.getName() != null) {
-					writeDefine(w, i, f.getName().addPrefix(top.getName()).addSuffix("field"), ""+f.getIndex());
-				}
-			}
-		}
-		w.close();
-	}
-	
-	
-	private void newLine(BufferedWriter w, int indent) throws IOException {
-		w.append("\n");
-		indent(w, indent);
-	}
-	private void indent(BufferedWriter w, int indent) throws IOException {
-		w.append(" ".repeat(indent*INDENT_SPACE_NUM));
-
-	}
-	private void writeDefine(BufferedWriter w, int i, FieldName name, String value) throws IOException {
-		indent(w, i);
-		w.append("#define ");
-		w.append(name.toSnake(true));
-		w.append(" (" + value + ")");
-		newLine(w, i);
+		addBlockComment(i, h);
+		writeDefines(i, top);
+		writeToFile("test","h");
 		
 	}
-	private void addBlockComment(BufferedWriter w, int indent, String... cs) throws IOException {
+	
+	private void writeDefines(int i, BlockField top) {
+		List<BlockField> bfs = top.getBlockFields();
+		
+
+		for(BlockField bf : bfs) {
+		
+			writeDefines(i, (BlockField)bf);
+		}
+		for(BaseField f : top.getAllBaseFields()) {
+			if(f.getName() != null) {
+				boolean multiLine = f.getComment().split("\\R").length > 1 ;
+				String c = "";
+				if(multiLine) {
+					addBlockComment(i, f.getComment());
+				} else {
+					String s = f.getComment();
+					if(!s.isBlank()) {
+						c = "    //"+f.getComment();
+					}
+				}
+				
+				writeDefine(i, f.getName().addPrefix(top.getName()).addSuffix("field"), ""+f.getIndex(),c);
+			}
+				
+			
+		}
+		
+	}
+	
+	
+
+	private void writeDefine(int i, FieldName name, String value, String comment) {
+		indent(i);
+		append("#define ");
+		append(name.toSnake(true));
+		append(" (" + value + ")");
+		if(!comment.isEmpty()) {
+			append(comment);
+		}
+		newLine(i);
+		
+	}
+//	private void writeEnums(Bu)
+	private void addBlockComment(int indent, String... cs) {
 		for(String c : cs) {
 			String[] ss = c.split("\\R");
 			int n = ss.length - 1;
 			
 			for(int i = 0; i <= n; ++i) {
 				if(i == 0) {
-					indent(w, indent);
-					w.append("/*");
+					indent(indent);
+					append("/*");
 					
 				}
-				newLine(w, indent);
-				w.append(" * "+ss[i]);
+				newLine(indent);
+				append(" * "+ss[i]);
 				if(i == n) {
-					newLine(w, indent);
-					w.append(" */");
-					newLine(w, indent);
+					newLine(indent);
+					append(" */");
+					newLine(indent);
 				}
 			}
 		}

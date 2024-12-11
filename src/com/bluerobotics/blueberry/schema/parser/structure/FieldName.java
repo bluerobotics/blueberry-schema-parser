@@ -159,6 +159,9 @@ public class FieldName {
 		}
 		return new FieldName(ss);
 	}
+	public String toString() {
+		return toCamel(false);
+	}
 	
 
 }

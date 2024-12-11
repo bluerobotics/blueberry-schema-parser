@@ -24,9 +24,9 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 public abstract class Field {
 	private final FieldName m_name;
 	private final Type m_type;
-	private final String[] m_comment;
+	private final String m_comment;
 	
-	protected Field(FieldName name, Type type, String[] comment) {
+	protected Field(FieldName name, Type type, String comment) {
 		m_name = name;
 		m_type = checkType(type);
 		m_comment = comment;
@@ -37,7 +37,7 @@ public abstract class Field {
 	public FieldName getName() {
 		return m_name;
 	}
-	public String[] getComment() {
+	public String getComment() {
 		return m_comment;
 	}
 	public int getBitCount() {

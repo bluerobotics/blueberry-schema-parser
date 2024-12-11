@@ -184,6 +184,9 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_text.append("Done");
 	}
 	private void generateC() {
+		if(m_parser.getTopLevelField() == null) {
+			parse();
+		}
 		File dir = m_settings.getFile(Key.C_DIRECTORY);
 		m_text.append("Generating C code in \"" + dir+"\"\n");
 		

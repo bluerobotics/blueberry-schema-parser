@@ -115,10 +115,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		String[] result = new String[m_topLevelComments.size()];
 		for(int i = 0; i < m_topLevelComments.size(); ++i) {
 			CommentToken ct = m_topLevelComments.get(i);
-			result[i] = "";
-			for(String s : ct.getComment()) {
-				result[i] += s + "\n";
-			}
+			result[i] = ct.combineLines();
+			
 		}
 		return result;
 	}
@@ -135,7 +133,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		try {
 			while(c != null) {
 				c = c.trim();
-				
 				c = processBlockComment(c);
 				c = processLineComment(c);
 				c = processNextToken(c);
@@ -466,7 +463,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		Field result = null;
 		
-		String[] c = getComment(comment);
+		String c = getComment(comment);
 		
 		
 		if(t instanceof ArrayToken) {
@@ -563,8 +560,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param ct
 	 * @return
 	 */
-	private String[] getComment(CommentToken ct) {
-		return ct == null ? new String[0] : ct.getComment();
+	private String getComment(CommentToken ct) {
+		return ct == null ? "" : ct.combineLines();
 	}
 	/**
 	 *  looks up a defined type given a type name
@@ -574,6 +571,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private DefinedTypeToken lookupType(String typeName) {
 		DefinedTypeToken result = null;
 		for(DefinedTypeToken t : m_defines) {
+			if(t.getDefineToken() == null) {
+				System.out.println("blah");
+			}
 			if(t.getDefineToken().getTypeName().equals(typeName)) {
 				result = t;
 			}
@@ -598,7 +598,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * This includes any file header comments, light license headers, etc.
 	 */
 	private void removeTopLevelComments() {
-		for(Token t : m_tokens) {
+		ArrayList<Token> ts = new ArrayList<Token>();
+		ts.addAll(m_tokens);
+		for(Token t : ts) {
 			if(t instanceof CommentToken) {
 				m_topLevelComments.add((CommentToken)t);
 				m_tokens.remove(t);
@@ -1410,7 +1412,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		Coord result = c;
 	
 		//first check for comment block
-		if(result.startsWith(COMMENT_BLOCK_START)) {
+		while(result.startsWith(COMMENT_BLOCK_START)) {
 			
 			result = result.indexOf(COMMENT_BLOCK_START);
 			result = result.incrementIndex(COMMENT_BLOCK_START);
@@ -1426,6 +1428,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(result.contains(COMMENT_BLOCK_END)) {
 					Coord end = result.indexOf(COMMENT_BLOCK_END);
 					String ns = result.fromThisToThatString(end);
+					
 					if(!ns.isBlank()) {
 						comment += ns;
 					}

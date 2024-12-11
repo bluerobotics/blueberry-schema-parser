@@ -206,7 +206,7 @@ public class Coord implements Comparable<Coord> {
 		return new Coord(this.line, getString().length(), this.m_lines);
 	}
 	public String toString() {
-		Coord end = incrementIndex(5);
+		Coord end = incrementIndex(10);
 		String s = fromThisToThatString(end);
 		s += "...";
 		s = "Coord(\""+s+"\")";

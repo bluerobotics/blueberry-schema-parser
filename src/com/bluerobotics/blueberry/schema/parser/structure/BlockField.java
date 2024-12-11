@@ -32,11 +32,11 @@ public class BlockField extends Field implements ParentField {
 	private final ArrayList<BaseField> m_baseFields = new ArrayList<BaseField>();
 	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
 
-	protected BlockField(FieldName name, Type type, String[] comment) {
+	protected BlockField(FieldName name, Type type, String comment) {
 		super(name, type, comment);
 		
 	}
-	public BlockField(FieldName name, String[] comment) {
+	public BlockField(FieldName name, String comment) {
 		super(name, Type.BLOCK, comment);
 	}
 	@Override
@@ -56,8 +56,21 @@ public class BlockField extends Field implements ParentField {
 	}
 	public List<BaseField> getAllBaseFields(){
 		ArrayList<BaseField> result = new ArrayList<BaseField>();
-		result.addAll(m_headerFields);
-		result.addAll(m_baseFields);
+		for(BaseField f : m_headerFields) {
+			if(f instanceof ParentField) {
+				result.addAll(((ParentField)f).getBaseFields());
+			} else {
+				result.add(f);
+			}
+		}
+		for(BaseField f : m_baseFields) {
+			if(f instanceof ParentField) {
+				result.addAll(((ParentField)f).getBaseFields());
+			} else {
+				result.add(f);
+			}
+		}
+		
 		return result;
 		
 	}

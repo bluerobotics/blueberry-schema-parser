@@ -72,5 +72,17 @@ public class CommentToken extends AbstractToken {
 		CommentToken ctn = new CommentToken(getStart(), getEnd(), cs, true);
 		return ctn;
 	}
+	public String combineLines() {
+		String result = "";
+		boolean firstLine = true;
+		for(String s : getComment()) {
+			if(!firstLine) {
+				result += "\n";
+			}
+			firstLine = false;
+			result += s;
+		}
+		return result;
+	}
 	
 }

@@ -26,7 +26,7 @@ package com.bluerobotics.blueberry.schema.parser.structure;
  */
 public class BaseField extends Field {
 	private int m_index = -1;
-	public BaseField(FieldName name, Type type, String[] comment) {
+	public BaseField(FieldName name, Type type, String comment) {
 		super(name, type, comment);
 	}
 

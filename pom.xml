@@ -32,7 +32,7 @@
   <dependency>
 		<groupId>org.openjfx</groupId>
 		<artifactId>javafx-swing</artifactId>
-		<version>11-ea+19</version>
+		<version>21.0.6-ea+2</version>
 	</dependency>
 	<dependency>
 	  <groupId>com.starfishmedical.sfdq</groupId>
