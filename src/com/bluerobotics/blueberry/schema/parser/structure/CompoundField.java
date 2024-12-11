@@ -27,13 +27,15 @@ import java.util.List;
 /**
  * 
  */
-public class CompoundField extends BaseField implements ParentField {
+public class CompoundField extends BaseField implements ParentField, DefinedField {
 	private final ArrayList<BaseField> m_baseTypes = new ArrayList<BaseField>();
 	private boolean m_dontFill = false;
+	private final FieldName m_typeName;
 
 
-	public CompoundField(FieldName name, String comment) {
+	public CompoundField(FieldName name, FieldName typeName, String comment) {
 		super(name, Type.COMPOUND, comment);
+		m_typeName = typeName;
 	}
 
 	@Override
@@ -97,6 +99,11 @@ public class CompoundField extends BaseField implements ParentField {
 	@Override
 	public int getBitCount() {
 		return 32;
+	}
+
+	@Override
+	public FieldName getTypeName() {
+		return m_typeName;
 	}
 	
 	

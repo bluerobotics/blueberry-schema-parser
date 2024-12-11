@@ -27,8 +27,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.function.Consumer;
 
+import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.Field;
 
 /**
  * 
@@ -36,8 +39,10 @@ import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 public abstract class SourceWriter {
 	protected final File m_directory;
 	private static final int INDENT_SPACE_NUM = 4;
+	
 
 	protected StringBuffer m_buffer = new StringBuffer();
+	protected int m_indent = 0;
 	public SourceWriter(File dir) {
 		if(!dir.isDirectory()) {
 			throw new RuntimeException("Specified file location is not a directory!");
@@ -46,7 +51,12 @@ public abstract class SourceWriter {
 	}
 	public abstract void write(BlockField bf, String... headers);
 	
-	
+	protected void indent() {
+		++m_indent;
+	}
+	protected void outdent() {
+		--m_indent;
+	}
 	protected void writeToFile(String name, String extension) {
 		File f = new File(m_directory, name+"."+extension);
 		BufferedWriter w = null;
@@ -67,16 +77,24 @@ public abstract class SourceWriter {
 	protected void clear() {
 		m_buffer = new StringBuffer();
 	}
-	protected void newLine(int indent){
+	protected void appendNewLine(){
 		append("\n");
-		indent(indent);
+		appendIndent();
 	}
-	protected void indent(int indent){
-		append(" ".repeat(indent*INDENT_SPACE_NUM));
+	protected void appendIndent(){
+		append(" ".repeat(m_indent*INDENT_SPACE_NUM));
 
 	}
 	protected StringBuffer getBuffer() {
 		return m_buffer;
+	}
+	protected void scanThroughBaseFields(BlockField top, Consumer<BaseField> consumer) {
+		for(BlockField bf : top.getBlockFields()) {
+			scanThroughBaseFields((BlockField)bf, consumer);
+		}
+		for(BaseField f : top.getAllBaseFields()) {
+			consumer.accept(f);
+		}
 	}
 
 }

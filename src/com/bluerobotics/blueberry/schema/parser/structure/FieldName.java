@@ -162,6 +162,19 @@ public class FieldName {
 	public String toString() {
 		return toCamel(false);
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		boolean result = false;
+		if(obj instanceof FieldName) {
+			FieldName fn = (FieldName)obj;
+			if(fn.toCamel(true).equals(toCamel(true))) {
+				result = true;
+			}
+		}
+		return result;
+	}
+	
 	
 
 }

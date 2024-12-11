@@ -27,17 +27,21 @@ import java.util.List;
 /**
  * 
  */
-public class BlockField extends Field implements ParentField {
+public class BlockField extends Field implements ParentField, DefinedField {
 	private final ArrayList<BaseField> m_headerFields = new ArrayList<BaseField>();
 	private final ArrayList<BaseField> m_baseFields = new ArrayList<BaseField>();
 	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
+	private final FieldName m_typeName;
 
-	protected BlockField(FieldName name, Type type, String comment) {
+	protected BlockField(FieldName name, FieldName typeName, Type type, String comment) {
 		super(name, type, comment);
+		m_typeName = typeName;
 		
 	}
-	public BlockField(FieldName name, String comment) {
+	public BlockField(FieldName name, FieldName typeName, String comment) {
 		super(name, Type.BLOCK, comment);
+		m_typeName = typeName;
+
 	}
 	@Override
 	public void add(Field f) {
@@ -112,6 +116,10 @@ public class BlockField extends Field implements ParentField {
 				
 		}
 		return t;
+	}
+	@Override
+	public FieldName getTypeName() {
+		return m_typeName;
 	}
 	
 	

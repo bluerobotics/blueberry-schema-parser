@@ -25,10 +25,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
+import com.bluerobotics.blueberry.schema.parser.structure.Field;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 
@@ -50,27 +55,67 @@ public class CWriter extends SourceWriter {
 	private void test(BlockField top, String... h) {
 //		List<BlockField> bfs = top.getBlockFields();
 		clear();
-		int i = 0;
-		addBlockComment(i, h);
-		writeDefines(i, top);
+		addBlockComment(h);
+		writeDefines(top);
+		writeEnums(top);
+		
+		
+		
 		writeToFile("test","h");
 		
 	}
 	
-	private void writeDefines(int i, BlockField top) {
-		List<BlockField> bfs = top.getBlockFields();
-		
+	private void writeEnums(BlockField top) {
+		//first make a list of all unique enums
+		ArrayList<EnumField> es = new ArrayList<EnumField>();
+		scanThroughBaseFields(top, f -> {
+			if(f instanceof EnumField) {
+				EnumField e = (EnumField)f;
+				boolean found = false;
+				//check that this new one isn't the same as an existing one
+				for(EnumField ef : es) {
+					if(ef.getTypeName().equals(e)) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					es.add(e);
+				}
+			}
+		});	
+		for(EnumField ef : es) {
+			addDocComment(ef.getComment());
+			append("typedef enum {");
+			
+			indent();
+			for(NameValue nv : ef.getNameValues()) {
+				appendNewLine();
+				append(nv.getName().toSnake(true));
+				append(" = " + nv.getValue());
+				String c = nv.getComment();
+				if(c != null && !c.isBlank()) {
+					append("// "+c);
+				}
+				
+				
+			}
+			outdent();
+			appendNewLine();
+			append("} "+ef.getTypeName().toCamel(true));
+			appendNewLine();
+			appendNewLine();
 
-		for(BlockField bf : bfs) {
-		
-			writeDefines(i, (BlockField)bf);
 		}
-		for(BaseField f : top.getAllBaseFields()) {
+	}
+
+	private void writeDefines(BlockField top) {
+		scanThroughBaseFields(top, f -> {
 			if(f.getName() != null) {
 				boolean multiLine = f.getComment().split("\\R").length > 1 ;
 				String c = "";
 				if(multiLine) {
-					addBlockComment(i, f.getComment());
+					addBlockComment(false, f.getComment());
 				} else {
 					String s = f.getComment();
 					if(!s.isBlank()) {
@@ -78,45 +123,57 @@ public class CWriter extends SourceWriter {
 					}
 				}
 				
-				writeDefine(i, f.getName().addPrefix(top.getName()).addSuffix("field"), ""+f.getIndex(),c);
+				writeDefine(f.getName().addPrefix(top.getName()).addSuffix("field"), ""+f.getIndex(),c);
 			}
-				
-			
-		}
-		
+		});	
 	}
+
 	
 	
 
-	private void writeDefine(int i, FieldName name, String value, String comment) {
-		indent(i);
+	private void writeDefine(FieldName name, String value, String comment) {
+		appendIndent();
 		append("#define ");
 		append(name.toSnake(true));
 		append(" (" + value + ")");
 		if(!comment.isEmpty()) {
 			append(comment);
 		}
-		newLine(i);
+		appendNewLine();
 		
 	}
-//	private void writeEnums(Bu)
-	private void addBlockComment(int indent, String... cs) {
-		for(String c : cs) {
-			String[] ss = c.split("\\R");
-			int n = ss.length - 1;
-			
-			for(int i = 0; i <= n; ++i) {
-				if(i == 0) {
-					indent(indent);
-					append("/*");
-					
-				}
-				newLine(indent);
-				append(" * "+ss[i]);
-				if(i == n) {
-					newLine(indent);
-					append(" */");
-					newLine(indent);
+	private void addDocComment(String... cs) {
+		addBlockComment(true, cs);
+	}
+	private void addBlockComment(String... cs) {
+		addBlockComment(false, cs);
+	}
+	/**
+	 * Adds some block comments
+	 * @param docNotBlock
+	 * @param cs
+	 */
+	private void addBlockComment(boolean docNotBlock, String... cs) {
+		if(cs.length > 0) {
+			for(String c : cs) {
+				String[] ss = c.split("\\R");
+				int n = ss.length - 1;
+				String startToken = docNotBlock ? "/**" : "/*";
+				if(!c.isBlank()){
+					for(int i = 0; i <= n; ++i) {
+						if(i == 0) {
+							appendIndent();
+							append(startToken);
+							
+						}
+						appendNewLine();
+						append(" * "+ss[i]);
+						if(i == n) {
+							appendNewLine();
+							append(" */");
+							appendNewLine();
+						}
+					}
 				}
 			}
 		}

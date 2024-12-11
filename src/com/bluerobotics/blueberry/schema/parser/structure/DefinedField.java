@@ -21,55 +21,9 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * 
  */
-public class EnumField extends BaseField implements DefinedField {
-	public class NameValue {
-		FieldName name;
-		long value;
-		boolean isValue;
-		String comment;
-		public NameValue(FieldName n, long v, String c) {
-			name = n;
-			value = v;
-			comment = c;
-		}
-		public FieldName getName() {
-			return name;
-		}
-		public long getValue() {
-			return value;
-		}
-		public String getComment() {
-			return comment;
-		}
-		
-		public String toString() {
-			return getClass().getSimpleName() + "(" + name + " = " + value + ")"; 
-		}
-	}
-	private final FieldName m_typeName;
-	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
-
-	public EnumField(FieldName name, FieldName typeName, Type type, String comment) {
-		super(name, type, comment);
-		m_typeName = typeName;
-	}
-	
-	public void addNameValue(FieldName name, long value, String comment) {
-		m_nameValues.add(new NameValue(name,value, comment));
-	}
-
-	@Override
-	public FieldName getTypeName() {
-		return m_typeName;
-	}
-	public List<NameValue> getNameValues(){
-		return m_nameValues;
-	}
-	
+public interface DefinedField {
+	public FieldName getTypeName();
 }

@@ -26,8 +26,8 @@ package com.bluerobotics.blueberry.schema.parser.structure;
  */
 public class ArrayField extends BlockField {
 
-	public ArrayField(FieldName name, String comment) {
-		super(name, Type.ARRAY, comment);
+	public ArrayField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, Type.ARRAY, comment);
 
 	}
 

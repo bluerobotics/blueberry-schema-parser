@@ -57,7 +57,7 @@ public interface ParentField {
 		}
 		if(cf == null) {
 			//there is no existing cf with room
-			cf = new CompoundField(null, null);
+			cf = new CompoundField(null, null, null);
 			fs.add(cf);
 		}
 		cf.add(f);

@@ -453,9 +453,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		TypeToken t = fat.getType();
 		String fieldName = fat.getFieldName();
 		CommentToken comment = fat.getComment();
-		
+		TypeToken tt = t;//keep track of the original type
+		//if it's a block type token (i.e. it was a defined type) then replace with the actual type
 		if(t instanceof BlockTypeToken) {
 			DefinedTypeToken dtt = lookupType(t.getName()); 
+			
 			t = dtt;
 			comment = comment == null ? dtt.getComment() : comment.combine(dtt.getComment());
 		}
@@ -468,14 +470,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		if(t instanceof ArrayToken) {
 //			ArrayToken at = (ArrayToken)t;
-			result = new ArrayField(FieldName.fromCamel(fieldName), c);
+			result = new ArrayField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
 		} else if(t instanceof BlockToken) {
-			result = new BlockField(FieldName.fromCamel(fieldName), c);
+			result = new BlockField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
 		} else if(t instanceof EnumToken) {
 			EnumToken et = (EnumToken)t;
 			
 			
-			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), lookupBaseType(et.getBaseType()), getComment(et.getComment()));
+			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getBaseType()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 				
 				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue(), getComment(nvt.getComment()));
@@ -483,7 +485,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			result = ef;
 		} else if(t instanceof CompoundToken) {
-			CompoundField cf = new CompoundField(FieldName.fromCamel(fieldName), c);
+			CompoundField cf = new CompoundField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
 			result = cf;
 		
 			
