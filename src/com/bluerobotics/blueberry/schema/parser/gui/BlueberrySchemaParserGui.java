@@ -55,6 +55,8 @@ public class BlueberrySchemaParserGui implements Constants {
 		JFrame f = new JFrame();
 		f.setIconImage(BLUEBERRY_LOGO);
 		m_frame = f;
+		f.setUndecorated(true);
+
 		Container cp = f.getContentPane();
 		cp.setLayout(new BorderLayout());
 	

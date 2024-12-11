@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * 
  */
-public class CompoundField extends BaseField implements ParentField, DefinedField {
+public class CompoundField extends BaseField implements ParentField {
 	private final ArrayList<BaseField> m_baseTypes = new ArrayList<BaseField>();
 	private boolean m_dontFill = false;
 	private final FieldName m_typeName;
@@ -39,7 +39,7 @@ public class CompoundField extends BaseField implements ParentField, DefinedFiel
 	}
 
 	@Override
-	public void add(Field f) {
+	public void add(AbstractField f) {
 		if(f.getBitCount() >= 32) {
 			throw new RuntimeException("You can't add this to a compound word!");
 		} else if(f instanceof BoolField) {
@@ -54,7 +54,7 @@ public class CompoundField extends BaseField implements ParentField, DefinedFiel
 		boolean result = false;
 		BoolFieldField bff = null;
 		
-		for(Field ft2 : getBaseFields()) {
+		for(AbstractField ft2 : getBaseFields()) {
 			if(ft2 instanceof BoolFieldField) {
 				BoolFieldField bff2 = (BoolFieldField)ft2;
 				if(!bff2.isFull()){

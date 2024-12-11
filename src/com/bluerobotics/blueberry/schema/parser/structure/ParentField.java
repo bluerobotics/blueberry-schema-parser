@@ -27,9 +27,9 @@ import java.util.List;
 /**
  * 
  */
-public interface ParentField {
+public interface ParentField extends Field, DefinedField {
 
-	public  void add(Field f);
+	public  void add(AbstractField f);
 	public List<BaseField> getBaseFields();
 	
 	default void add(ArrayList<BaseField> fs, BaseField f) {
@@ -43,10 +43,10 @@ public interface ParentField {
 		}
 	}
 
-	default void addSubWord(ArrayList<BaseField> fs, Field f) {
+	default void addSubWord(ArrayList<BaseField> fs, AbstractField f) {
 		//first scan for an existing compound word that has room
 		CompoundField cf = null;
-		for(Field ft : fs) {
+		for(AbstractField ft : fs) {
 			if(ft instanceof CompoundField) {
 				CompoundField cft = (CompoundField)ft;
 				if(cft.getName() == null && cft.getRoom() >= f.getBitCount()) {
@@ -67,7 +67,7 @@ public interface ParentField {
 	default void addBool(ArrayList<BaseField> fs, BoolField f) {
 		BoolFieldField bff = null;
 		boolean success = false;
-		for(Field ft : fs) {
+		for(AbstractField ft : fs) {
 			if(ft instanceof CompoundField && ft.getName() == null) {
 				CompoundField cft = (CompoundField)ft;
 				success = cft.addBool(f);
@@ -87,7 +87,7 @@ public interface ParentField {
 	}
 	default int getBitCount(ArrayList<BaseField> fs) {
 		int result = 0;
-		for(Field f : fs) {
+		for(AbstractField f : fs) {
 			result += f.getBitCount();
 		}
 		return result;

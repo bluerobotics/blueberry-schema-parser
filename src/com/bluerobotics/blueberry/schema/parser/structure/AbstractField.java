@@ -21,41 +21,70 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-/**
- * 
- */
-public class BaseField extends AbstractField {
-	private int m_index = -1;
-	public BaseField(FieldName name, Type type, String comment) {
-		super(name, type, comment);
-	}
-
-	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
+public abstract class AbstractField implements Field {
+	private final FieldName m_name;
+	private final Type m_type;
+	private final String m_comment;
 	
+	protected AbstractField(FieldName name, Type type, String comment) {
+		m_name = name;
+		m_type = checkType(type);
+		m_comment = comment;
+	}
+	@Override
+	public Type getType() {
+		return m_type;
+	}
+	@Override
+	public FieldName getName() {
+		return m_name;
+	}
+	@Override
+	public String getComment() {
+		return m_comment;
+	}
+	@Override
+	public int getBitCount() {
+		return m_type.getBitCount();
+	}
+	/**
+	 * checks the type to see if it's compatible with this field
+	 * @param t the type to check
+	 * @return the same type
+	 * @throws RuntimeException if the type is not compatible
+	 */
+	abstract Type checkType(Type t) throws RuntimeException;
+	
+	public String toString() {
+		return getClass().getSimpleName()+"("+m_name+")";
+	}
+	
+	public boolean isInt() {
+		boolean result = false;
+		switch(getType()) {
+		case ARRAY:
+			break;
+		case BLOCK:
+			break;
+		case BOOL:
+			break;
+		case BOOLFIELD:
+			break;
+		case COMPOUND:
+			break;
 		case FLOAT32:
+			break;
 		case INT16:
 		case INT32:
 		case INT8:
 		case UINT16:
 		case UINT32:
 		case UINT8:
-		case BOOLFIELD:
+			result = true;
 			break;
-		case ARRAY:
-		case BLOCK:
-		case BOOL:
-		case COMPOUND:
-			throw new RuntimeException("Field must only contain base types.");
-				
+		
 		}
-		return t;
+		return result;
 	}
-	public void setIndex(int bi) {
-		m_index = bi;
-	}
-	public int getIndex() {
-		return m_index;
-	}
+	
 }

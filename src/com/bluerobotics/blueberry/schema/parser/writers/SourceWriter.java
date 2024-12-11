@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 
 /**
@@ -73,30 +73,78 @@ public abstract class SourceWriter {
 		
 	
 	}
-	protected void append(String s) {
+	protected void add(String s) {
 		m_buffer.append(s);
 	}
 	protected void clear() {
 		m_buffer = new StringBuffer();
 	}
-	protected void appendNewLine(){
-		append("\n");
-		appendIndent();
+	protected void addNewLine(){
+		add("\n");
+		addIndent();
 	}
-	protected void appendIndent(){
-		append(" ".repeat(m_indent*INDENT_SPACE_NUM));
+	protected void addIndent(){
+		add(" ".repeat(m_indent*INDENT_SPACE_NUM));
 
 	}
 	protected StringBuffer getBuffer() {
 		return m_buffer;
 	}
-	protected void scanThroughBaseFields(BlockField top, BiConsumer<BaseField, ParentField> consumer) {
-		for(BlockField bf : top.getBlockFields()) {
-			scanThroughBaseFields((BlockField)bf, consumer);
+	protected void addLine(String s) {
+		addIndent();
+		add(s);
+		addNewLine();
+	}
+	protected void addLineComment(String c) {
+		addLine("//"+c);
+	}
+	
+	protected void addDocComment(String cs) {
+		addBlockComment(true, cs);
+	}
+	protected void addBlockComment(String cs) {
+		addBlockComment(false, cs);
+	}
+	/**
+	 * Adds some block comments
+	 * @param docNotBlock
+	 * @param c
+	 */
+	private void addBlockComment(boolean docNotBlock, String c) {
+		
+			
+		String[] ss = c.split("\\R");
+		int n = ss.length - 1;
+		String startToken = docNotBlock ? "/**" : "/*";
+		if(!c.isBlank()){
+			for(int i = 0; i <= n; ++i) {
+				if(i == 0) {
+					addIndent();
+					add(startToken);
+					
+				}
+				addNewLine();
+				add(" * "+ss[i]);
+				if(i == n) {
+					addNewLine();
+					add(" */");
+					addNewLine();
+				}
+			}
 		}
-		for(BaseField f : top.getAllBaseFields()) {
-			consumer.accept(f, top);
+	}
+	
+	protected void addSectionDivider(String title) {
+		String[] ss = title.split("\\R");
+		addNewLine();
+		addLineComment("*************************************************************************************");
+		if(!title.isBlank()) {
+			for(String s : ss) {
+				addLineComment(s);
+			}
+			addLineComment("*************************************************************************************");
 		}
+		addNewLine();
 	}
 
 }

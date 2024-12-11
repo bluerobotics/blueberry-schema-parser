@@ -23,11 +23,12 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * 
  */
-public class BlockField extends Field implements ParentField, DefinedField {
+public class BlockField extends AbstractField implements ParentField {
 	private final ArrayList<BaseField> m_headerFields = new ArrayList<BaseField>();
 	private final ArrayList<BaseField> m_baseFields = new ArrayList<BaseField>();
 	private final ArrayList<BlockField> m_blockFields = new ArrayList<BlockField>();
@@ -44,7 +45,7 @@ public class BlockField extends Field implements ParentField, DefinedField {
 
 	}
 	@Override
-	public void add(Field f) {
+	public void add(AbstractField f) {
 		if(f == null) {
 			return;
 		}
@@ -120,6 +121,14 @@ public class BlockField extends Field implements ParentField, DefinedField {
 	@Override
 	public FieldName getTypeName() {
 		return m_typeName;
+	}
+	public void scanThroughBaseFields(BiConsumer<BaseField, ParentField> consumer) {
+		for(BlockField bf : getBlockFields()) {
+			((BlockField)bf).scanThroughBaseFields(consumer);
+		}
+		for(BaseField f : getAllBaseFields()) {
+			consumer.accept(f, this);
+		}
 	}
 	
 	

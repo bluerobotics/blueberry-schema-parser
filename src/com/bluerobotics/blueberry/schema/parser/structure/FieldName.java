@@ -65,22 +65,8 @@ public class FieldName {
 		result.add(s.substring(j).toLowerCase());
 		return result.toArray(new String[result.size()]);
 	}
-	public static String camelToSnake(String s, boolean upperNotLower) {
-		String result = "";
-		boolean firstTime = true;
-		for(String w : breakUpCamel(s)) {
-			if(!firstTime) {
-				result += "_";
-			}
-			firstTime = false;
-			result += w;
-		}
-		if(upperNotLower) {
-			result = result.toUpperCase();
-		}
-		return result;
-	}
-	public String toSnake(boolean upperNotLower) {
+	
+	private String toSnake(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
 		for(String w : name) {
@@ -95,7 +81,7 @@ public class FieldName {
 		}
 		return result;
 	}
-	public String toCamel(boolean upperNotLower) {
+	private String toCamel(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
 		for(String s : name) {
@@ -173,6 +159,20 @@ public class FieldName {
 			}
 		}
 		return result;
+	}
+
+	public String toLowerCamel() {
+		return toCamel(false);
+	}
+	
+	public String toUpperCamel() {
+		return toCamel(true);
+	}
+	public String toLowerSnake() {
+		return toSnake(false);
+	}
+	public String toUpperSnake() {
+		return toSnake(true);
 	}
 	
 	

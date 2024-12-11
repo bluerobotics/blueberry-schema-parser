@@ -32,7 +32,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
@@ -362,7 +362,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
 		TypeToken tt = t.getType();
-		Field f = null;
+		AbstractField f = null;
 		if(tt instanceof BlockTypeToken) {
 			BlockTypeToken btt = (BlockTypeToken)tt;
 			DefinedTypeToken type = lookupType(tt.getName());
@@ -447,7 +447,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param fat
 	 * @return
 	 */
-	private Field makeField(FieldAllocationToken fat) {
+	private AbstractField makeField(FieldAllocationToken fat) {
 //		f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
 		
 		TypeToken t = fat.getType();
@@ -463,7 +463,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		
 		
-		Field result = null;
+		AbstractField result = null;
 		
 		String c = getComment(comment);
 		

@@ -31,7 +31,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 
 /**
@@ -49,7 +49,7 @@ public class TestWriter extends SourceWriter {
 	public void write(BlockField bf, String... headers) {
 		write(0, bf);
 	}
-	private void start(Field f) {
+	private void start(AbstractField f) {
 		w("(");
 		
 		if(f instanceof BaseField) {
@@ -62,7 +62,7 @@ public class TestWriter extends SourceWriter {
 		w(f.getType().name());
 		if(f.getName() != null) {
 			w(" ");
-			w(f.getName().toCamel(true));
+			w(f.getName().toUpperCamel());
 		}
 //		w(" ");
 	}
@@ -88,7 +88,7 @@ public class TestWriter extends SourceWriter {
 //		eol(--i);
 		
 	}
-	private void write(int i, Field f) {
+	private void write(int i, AbstractField f) {
 		if(f instanceof CompoundField) {
 			write(i, (CompoundField)f);
 //		} else if(f instanceof EnumField) {
@@ -106,7 +106,7 @@ public class TestWriter extends SourceWriter {
 	
 	private void write(int i, List<BaseField> fs) {
 		boolean firstTime = true;
-		for(Field f : fs) {
+		for(AbstractField f : fs) {
 			if(!firstTime) {
 				eol(i);
 			}

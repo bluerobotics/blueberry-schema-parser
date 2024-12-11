@@ -29,38 +29,27 @@ import java.util.List;
  */
 public class FieldUtils {
 	public void padExtraSpaceInCompoundFields(BlockField bf) {
-		//first check header
-		for(Field f : bf.getHeaderFields()) {
-			packCompoundField(f);	
-		}
-		for(Field f : bf.getBaseFields()) {
-			packCompoundField(f);
-		}
-		for(BlockField bf2 : bf.getBlockFields()) {
-			padExtraSpaceInCompoundFields(bf2);
-		}
-	}
-	protected void packCompoundField(Field f) {
-		if(f instanceof CompoundField) {
-			CompoundField cf = (CompoundField)f;
-			
-			int r = cf.getRoom();
-			if(r == 8) {
-				cf.add(new BaseField(null, Type.UINT8, null));
-			} else if(r == 16) {
-				cf.add(new BaseField(null, Type.UINT16, null));
-			} else if(r == 24) {
-				cf.add(new BaseField(null, Type.UINT8, null));
-				cf.add(new BaseField(null, Type.UINT16, null));
-	
+		bf.scanThroughBaseFields((f,p) -> {
+			if(f instanceof CompoundField) {
+				CompoundField cf = (CompoundField)f;
+				int r = cf.getRoom();
+				if(r == 8) {
+					cf.add(new BaseField(null, Type.UINT8, null));
+				} else if(r == 16) {
+					cf.add(new BaseField(null, Type.UINT16, null));
+				} else if(r == 24) {
+					cf.add(new BaseField(null, Type.UINT8, null));
+					cf.add(new BaseField(null, Type.UINT16, null));
+		
+				}
 			}
-		}
+		});
 	}
 	/**
 	 * traverse header and base fields of blocks to number them
 	 * @param bf
 	 */
-	public void computeIndeces(Field f, int i) {
+	public void computeIndeces(AbstractField f, int i) {
 		if(f instanceof BlockField) {
 			BlockField bf = (BlockField)f;
 			i = 0;

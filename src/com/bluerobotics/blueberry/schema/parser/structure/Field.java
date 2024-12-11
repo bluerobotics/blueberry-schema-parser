@@ -21,66 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.structure;
 
-public abstract class Field {
-	private final FieldName m_name;
-	private final Type m_type;
-	private final String m_comment;
-	
-	protected Field(FieldName name, Type type, String comment) {
-		m_name = name;
-		m_type = checkType(type);
-		m_comment = comment;
-	}
-	public Type getType() {
-		return m_type;
-	}
-	public FieldName getName() {
-		return m_name;
-	}
-	public String getComment() {
-		return m_comment;
-	}
-	public int getBitCount() {
-		return m_type.getBitCount();
-	}
-	/**
-	 * checks the type to see if it's compatible with this field
-	 * @param t the type to check
-	 * @return the same type
-	 * @throws RuntimeException if the type is not compatible
-	 */
-	abstract Type checkType(Type t) throws RuntimeException;
-	
-	public String toString() {
-		return getClass().getSimpleName()+"("+m_name+")";
-	}
-	
-	public boolean isInt() {
-		boolean result = false;
-		switch(getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			break;
-		case BOOLFIELD:
-			break;
-		case COMPOUND:
-			break;
-		case FLOAT32:
-			break;
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			result = true;
-			break;
-		
-		}
-		return result;
-	}
-	
+public interface Field {
+
+	Type getType();
+
+	FieldName getName();
+
+	String getComment();
+
+	int getBitCount();
+
 }
