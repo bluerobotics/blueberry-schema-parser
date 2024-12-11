@@ -115,7 +115,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				add(comp);
 				setFloatable(false);
 				
-				addItem(m_actions, ActionInfos.PARSE_SCHEMA);
+//				addItem(m_actions, ActionInfos.PARSE_SCHEMA);
 				addItem(m_actions, ActionInfos.GENERATE_C);
 				addItem(m_actions, ActionInfos.GENERATE_JAVA);
 

@@ -79,9 +79,9 @@ public abstract class SourceWriter {
 	protected void clear() {
 		m_buffer = new StringBuffer();
 	}
-	protected void addNewLine(){
+	protected void addLine(){
 		add("\n");
-		addIndent();
+		
 	}
 	protected void addIndent(){
 		add(" ".repeat(m_indent*INDENT_SPACE_NUM));
@@ -93,7 +93,7 @@ public abstract class SourceWriter {
 	protected void addLine(String s) {
 		addIndent();
 		add(s);
-		addNewLine();
+		addLine();
 	}
 	protected void addLineComment(String c) {
 		addLine("//"+c);
@@ -123,12 +123,12 @@ public abstract class SourceWriter {
 					add(startToken);
 					
 				}
-				addNewLine();
+				addLine();
 				add(" * "+ss[i]);
 				if(i == n) {
-					addNewLine();
+					addLine();
 					add(" */");
-					addNewLine();
+					addLine();
 				}
 			}
 		}
@@ -136,7 +136,7 @@ public abstract class SourceWriter {
 	
 	protected void addSectionDivider(String title) {
 		String[] ss = title.split("\\R");
-		addNewLine();
+		addLine();
 		addLineComment("*************************************************************************************");
 		if(!title.isBlank()) {
 			for(String s : ss) {
@@ -144,7 +144,7 @@ public abstract class SourceWriter {
 			}
 			addLineComment("*************************************************************************************");
 		}
-		addNewLine();
+		addLine();
 	}
 
 }
