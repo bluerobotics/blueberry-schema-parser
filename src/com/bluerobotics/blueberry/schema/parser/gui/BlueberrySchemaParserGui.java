@@ -16,10 +16,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.stream.Stream;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -36,6 +38,7 @@ import com.starfishmedical.settings.SettingsTableCellEditor;
 import com.starfishmedical.settings.SettingsTableCellRenderer;
 import com.starfishmedical.settings.SettingsTableModel;
 import com.starfishmedical.sfdq.actions.ActionManager;
+import com.starfishmedical.sfdq.gui.FrameResizer;
 import com.starfishmedical.sfdq.gui.ToolBar;
 import com.starfishmedical.utils.ResourceTools;
 import com.starfishmedical.utils.UtilMethods;
@@ -58,6 +61,13 @@ public class BlueberrySchemaParserGui implements Constants {
 		f.setUndecorated(true);
 
 		Container cp = f.getContentPane();
+		JPanel p = new JPanel();
+		p.setBorder(BorderFactory.createLineBorder(COLOR_LOGO_LILAC, 3));
+//		p.setBorder(BorderFactory.createRaisedBevelBorder());
+		FrameResizer resizer = new FrameResizer(p, m_frame);
+		cp.add(p);
+		cp = p;
+		
 		cp.setLayout(new BorderLayout());
 	
 		
@@ -131,8 +141,8 @@ public class BlueberrySchemaParserGui implements Constants {
 			}
 		};
 		
-		
-		f.add(toolbar, BorderLayout.NORTH);
+		resizer.addMoveComponent(toolbar);
+		cp.add(toolbar, BorderLayout.NORTH);
 		JTable setTable = new JTable(new SettingsTableModel(m_settings, Key.values()));
 	
 		setTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);

@@ -43,7 +43,6 @@ import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 import com.bluerobotics.blueberry.schema.parser.structure.Type;
 
 public class CWriter extends SourceWriter {
-	private final FieldUtils m_fu = new FieldUtils(); 
 
 	public CWriter(File dir) {
 		super(dir);
@@ -73,6 +72,7 @@ public class CWriter extends SourceWriter {
 		
 		addSectionDivider("Types");
 		writeEnums(top);
+		addLine("typedef BlueberryBlock BB;");
 //		writeCompounds(top);
 		
 		addSectionDivider("Function Prototypes");
@@ -103,7 +103,7 @@ public class CWriter extends SourceWriter {
 		writeDefines(top);
 		
 		addSectionDivider("Types");
-	
+		
 
 		
 		addSectionDivider("Function Prototypes");
@@ -196,39 +196,55 @@ public class CWriter extends SourceWriter {
 		}
 	}
 	
-	private String makeFieldIndexName(BaseField f, BlockField p) {
-		return f.getName().addPrefix(p.getName()).addSuffix("index").toUpperSnake();
+	private String makeFieldIndexName(BaseField f, BlockField p, boolean bitOrIndex) {
+		String s = bitOrIndex ? "bit" : "index";
+		return f.getName().addPrefix(p.getName()).addSuffix(s).toUpperSnake();
 	}
 
 	private void writeDefines(BlockField top) {
 		top.scanThroughBaseFields((f, p) -> {
 			if(f.getName() != null) {
-				boolean multiLine = f.getComment().split("\\R").length > 1 ;
-				String c = "";
-				if(multiLine) {
-					addBlockComment(f.getComment());
-				} else {
-					String s = f.getComment();
-					if(!s.isBlank()) {
-						c = "    //"+f.getComment();
-					}
+				
+				String name = makeFieldIndexName(f, top, false);
+				writeDefine(name, ""+f.getIndex(),f);
+				
+			} else if(f instanceof BoolFieldField) {
+				BoolFieldField bff = (BoolFieldField)f;
+				for(BoolField bf : bff.getBoolFields()) {
+					String name = makeFieldIndexName(bf, top, false);
+					writeDefine(name, ""+bff.getIndex(),f);
+					name = makeFieldIndexName(bf, top, true);
+					writeDefine(name, ""+bf.getIndex(),f);
 				}
-				String name = makeFieldIndexName(f, top);
-				writeDefine(name, ""+f.getIndex(),c);
+				
 			}
 		});	
 	}
 
-	
+
 	
 
-	private void writeDefine(String name, String value, String comment) {
+	private void writeDefine(String name, String value, BaseField commentField) {
+		String comment = commentField != null ? commentField.getComment() : "";
+		if(comment == null) {
+			comment = "";
+		}
+		boolean multiLine = comment.split("\\R").length > 1 ;
+		String c = "";
+		if(multiLine) {
+			addBlockComment(comment);
+		} else {
+			String s = comment;
+			if(!s.isBlank()) {
+				c = "    //"+comment;
+			}
+		}
 		addIndent();
 		add("#define ");
 		add(name);
 		add(" (" + value + ")");
-		if(!comment.isEmpty()) {
-			add(comment);
+		if(!c.isEmpty()) {
+			add(c);
 		}
 		addLine();
 		
@@ -239,6 +255,7 @@ public class CWriter extends SourceWriter {
 		top.scanThroughBaseFields((f, p) -> {
 			if(f instanceof BoolFieldField) {
 				addBoolGetterPrototype((BoolFieldField)f, top, protoNotDeclaration);
+			
 			} else if(f instanceof CompoundField) {
 				addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
 			} else {
@@ -258,11 +275,16 @@ public class CWriter extends SourceWriter {
 		
 	}
 
-	private void addBoolGetterPrototype(BoolFieldField f, BlockField top, boolean protoNotDeclaration) {
+	private void addBoolGetterPrototype(BoolFieldField f, BlockField top,  boolean protoNotDeclaration) {
 		for(BoolField b : f.getBoolFields()) {
-			addBaseGetSetter(b, top, true, true);
-			addBaseGetSetter(b, top, false, true);
-
+			addBaseGetSetter(b, top, true, protoNotDeclaration);
+			if(!protoNotDeclaration) {
+				addBoolGetSetContents(b,top, f, true);
+			}
+			addBaseGetSetter(b, top, false, protoNotDeclaration);
+			if(!protoNotDeclaration) {
+				addBoolGetSetContents(b,top, f, false);
+			}
 		}
 		
 		
@@ -273,8 +295,8 @@ public class CWriter extends SourceWriter {
 			String gs = getterNotSetter ? "get" : "set";
 			String c = f.getName().toLowerCamel()+" field of the " + p.getName().toLowerCamel() + " " + p.getTypeName().toUpperCamel()+ "\n"+f.getComment();
 			String rt = getBaseType(f.getType());
-			String function = f.getName().addPrefix(p.getName()).addSuffix("field").toUpperCamel();
-			String paramType = "BlueberryBlock*";
+			String function = f.getName().addPrefix(p.getName()).toUpperCamel();
+			String paramType = "BB*";
 			String paramName = p.getName().toLowerCamel();
 			addDocComment( gs + "s the " + c);
 			
@@ -292,17 +314,42 @@ public class CWriter extends SourceWriter {
 	private void addBaseGetSetContents(BaseField f, ParentField p, boolean getterNotSetter) {
 		String rt = getBaseType(f.getType());
 		String paramName = p.getName().toLowerCamel();
+		String dn = makeFieldIndexName(f, (BlockField)p, true);
+
 		indent();
 	
 		if(getterNotSetter) {
 			
 			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get").toLowerCamel();
-			String dn = makeFieldIndexName(f, (BlockField)p);
 			addLine("return " + functionName + "(" + paramName + ", " + dn +  ");");
 		} else {
 			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set").toLowerCamel();
-			String dn = makeFieldIndexName(f, (BlockField)p);
 			addLine(functionName + "(" + paramName + ", " + dn + ", " + f.getName().toLowerCamel() + ");");
+			
+			
+		}
+		outdent();	
+		addLine();
+		addLine("}");
+	
+			
+			
+		
+	}
+	private void addBoolGetSetContents(BaseField f, ParentField p, BoolFieldField bff, boolean getterNotSetter) {
+		String paramName = p.getName().toLowerCamel();
+		String dn = makeFieldIndexName(f, (BlockField)p, true);
+		String dbn = makeFieldIndexName(f, (BlockField)p, false);
+		indent();
+	
+		if(getterNotSetter) {
+			
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get").toLowerCamel();
+			
+			addLine("return " + functionName + "(" + paramName + ", " + dn + ", " + dbn + ");");
+		} else {
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set").toLowerCamel();
+			addLine(functionName + "(" + paramName + ", " + dn + ", " + dbn + ", " + f.getName().toLowerCamel() + ");");
 			
 			
 		}

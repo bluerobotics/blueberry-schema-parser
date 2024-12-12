@@ -100,6 +100,9 @@ public class FieldName {
 		return result;
 	}
 	public FieldName addSuffix(String s) {
+		if(s.isBlank()) {
+			return this;
+		}
 		String[] ss = new String[name.length + 1];
 		int n  = name.length;
 		for(int i = 0; i < n; ++i) {
@@ -109,6 +112,9 @@ public class FieldName {
 		return new FieldName(ss);
 	}
 	public FieldName addPrefix(String s) {
+		if(s.isBlank()) {
+			return this;
+		}
 		String[] ss = new String[name.length + 1];
 		int n  = name.length;
 		for(int i = 1; i <= n; ++i) {
