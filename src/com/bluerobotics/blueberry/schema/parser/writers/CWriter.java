@@ -65,6 +65,8 @@ public class CWriter extends SourceWriter {
 		
 		
 		addSectionDivider("Includes");
+		addLine("#include <stdbool.h");
+		addLine("#include <stdint.h");
 	
 		addSectionDivider("Defines");
 		
@@ -94,6 +96,8 @@ public class CWriter extends SourceWriter {
 		
 		
 		addSectionDivider("Includes");
+		addLine("#include <stdbool.h");
+		addLine("#include <stdint.h");
 	
 		addSectionDivider("Defines");
 		writeDefines(top);
