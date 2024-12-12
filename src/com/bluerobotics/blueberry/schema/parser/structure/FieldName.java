@@ -105,7 +105,7 @@ public class FieldName {
 		for(int i = 0; i < n; ++i) {
 			ss[i] = name[i];
 		}
-		ss[n] = s;
+		ss[n] = s.toLowerCase();
 		return new FieldName(ss);
 	}
 	public FieldName addPrefix(String s) {
@@ -114,7 +114,7 @@ public class FieldName {
 		for(int i = 1; i <= n; ++i) {
 			ss[i] = name[i - 1];
 		}
-		ss[0] = s;
+		ss[0] = s.toLowerCase();
 		return new FieldName(ss);
 	}
 	public FieldName addSuffix(FieldName f) {

@@ -243,7 +243,13 @@ public class CWriter extends SourceWriter {
 				addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
 			} else {
 				addBaseGetSetter(f,p, true, protoNotDeclaration);
+				if(!protoNotDeclaration) {
+					addBaseGetSetContents(f,p, true);
+				}
 				addBaseGetSetter(f,p, false, protoNotDeclaration);
+				if(!protoNotDeclaration) {
+					addBaseGetSetContents(f,p, false);
+				}
 			}
 		});
 	}
@@ -275,31 +281,38 @@ public class CWriter extends SourceWriter {
 			
 			
 			String s = getterNotSetter ? rt : "void";
-			s += " " + gs + function + "(" + paramType + " " + paramName + ", " + rt + " " + f.getName().toLowerCamel() + ")";
+			s += " " + gs + function + "(" + paramType + " " + paramName;
+			s += getterNotSetter ? ")" : ", " + rt + " " + f.getName().toLowerCamel() + ")";
 			s += protoNotDeclaration ? ";" : "{";
 			addLine(s);
 
-			if(protoNotDeclaration) {
-				addLine();
-			} else {
-				indent();
-			//it's the declaration now so do all the stuff.
-				if(getterNotSetter) {
-				} else {
-					
-					addLine(rt + " result = 0;");
-					
-					
-					addLine("return result;");
-				}
-				outdent();	
-				addLine();
-				addLine("}");
-		
-				
-				
-			}
+			
 		}
+	}
+	private void addBaseGetSetContents(BaseField f, ParentField p, boolean getterNotSetter) {
+		String rt = getBaseType(f.getType());
+		String paramName = p.getName().toLowerCamel();
+		indent();
+	
+		if(getterNotSetter) {
+			
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get").toLowerCamel();
+			String dn = makeFieldIndexName(f, (BlockField)p);
+			addLine("return " + functionName + "(" + paramName + ", " + dn +  ");");
+		} else {
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set").toLowerCamel();
+			String dn = makeFieldIndexName(f, (BlockField)p);
+			addLine(functionName + "(" + paramName + ", " + dn + ", " + f.getName().toLowerCamel() + ");");
+			
+			
+		}
+		outdent();	
+		addLine();
+		addLine("}");
+	
+			
+			
+		
 	}
 	
 	
