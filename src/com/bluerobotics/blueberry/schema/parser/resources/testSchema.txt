@@ -29,13 +29,12 @@ THE SOFTWARE.
 define Packet block {
 	uint32 key //this should be set when this defined block is used below.
 	uint16 length  //the length of the packet in words
-	uint16 blocks //this is an index to the block fields section of the packet
 	/* a CRC-32 for packet error detection
 	 * this is computed on all words of the packet
 	 * this is only necessary to check if the transport method
 	 * does not have error detection mechanism
 	 */
-	uint32 crc
+	uint16 crc
 }
 /* 
  * This is the top level hierarchy of a BR packet
@@ -47,16 +46,16 @@ Packet brPacket(key = 0x45554c42) {
 	define Payload block {
 		uint16 key
 		uint8 length //the length of the payload in 4-byte words
-		uint8 blocks //this is an index to the block fields section of the packet
+		uint8 repeats //this will always be zero for a block
 	}
 	
 	/*
 	 * This is the header for an array
 	 */
 	define Array array {
-		uint8 key //a unique identifier of this block
+		uint16 key //a unique identifier of this block
 		uint8 length //the length of one unit of this block
-		uint8 repeats //this indicates the number units of this block
+		uint8 repeats //this indicates the number units of this block. This will always be >= 1. If the array is empty then it won't be included in the block
 	}
 
 	/* this section conveys the ID of the device

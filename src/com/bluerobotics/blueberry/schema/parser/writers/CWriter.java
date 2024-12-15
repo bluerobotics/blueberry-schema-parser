@@ -171,7 +171,7 @@ public class CWriter extends SourceWriter {
 		});	
 		for(EnumField ef : es) {
 			addDocComment(ef.getComment());
-			add("typedef enum {");
+			addLine("typedef enum {");
 			
 			indent();
 			for(NameValue nv : ef.getNameValues()) {
@@ -303,7 +303,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			String s = getterNotSetter ? rt : "void";
-			s += " " + gs + function + "(" + paramType + " " + paramName;
+			s += " " + gs + "Bb" + function + "(" + paramType + " " + paramName;
 			s += getterNotSetter ? ")" : ", " + rt + " " + f.getName().toLowerCamel() + ")";
 			s += protoNotDeclaration ? ";" : "{";
 			addLine(s);
