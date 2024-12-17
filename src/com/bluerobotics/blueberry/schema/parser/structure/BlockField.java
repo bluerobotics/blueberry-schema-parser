@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * 
@@ -122,12 +123,43 @@ public class BlockField extends AbstractField implements ParentField {
 	public FieldName getTypeName() {
 		return m_typeName;
 	}
-	public void scanThroughBaseFields(BiConsumer<BaseField, ParentField> consumer) {
+	public void scanThroughBaseFields(BiConsumer<BaseField, ParentField> consumer, boolean includeHeader) {
 		for(BlockField bf : getBlockFields()) {
-			((BlockField)bf).scanThroughBaseFields(consumer);
+			bf.scanThroughBaseFields(consumer, includeHeader);
 		}
-		for(BaseField f : getAllBaseFields()) {
+		if(includeHeader) {
+			for(BaseField f : getHeaderFields()) {
+				consumer.accept(f, this);
+				if(f instanceof ParentField) {
+					for(BaseField bf : ((ParentField)f).getBaseFields()) {
+						consumer.accept(bf,this);
+					}
+				}	
+				
+			}
+		}
+		for(BaseField f : getBaseFields()) {
 			consumer.accept(f, this);
+		}
+		
+	}
+	public void scanThroughHeaderFields(BiConsumer<BaseField, ParentField> consumer) {
+		for(BlockField bf : getBlockFields()) {
+			bf.scanThroughHeaderFields(consumer);
+		}
+		for(BaseField f : getHeaderFields()) {
+			consumer.accept(f, this);
+			if(f instanceof ParentField) {
+				for(BaseField bf : ((ParentField)f).getBaseFields()) {
+					consumer.accept(bf,this);
+				}
+			}
+		}
+	}
+	public void scanThroughBlockFields(Consumer<BlockField> consumer) {
+		consumer.accept(this);
+		for(BlockField bf : getBlockFields()) {
+			bf.scanThroughBlockFields(consumer);
 		}
 	}
 	

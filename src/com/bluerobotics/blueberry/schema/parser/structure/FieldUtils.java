@@ -43,7 +43,7 @@ public class FieldUtils {
 		
 				}
 			}
-		});
+		}, true);
 	}
 	/**
 	 * traverse header and base fields of blocks to number them

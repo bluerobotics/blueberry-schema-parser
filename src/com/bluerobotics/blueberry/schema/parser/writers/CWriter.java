@@ -78,6 +78,9 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Function Prototypes");
 		addBaseFields(top, true);
 		
+		addBlockFunctions(top, true);
+		
+		
 		
 		
 		writeToFile(top.getName().toUpperCamel(),"h");
@@ -100,6 +103,7 @@ public class CWriter extends SourceWriter {
 		addLine("#include <stdint.h");
 	
 		addSectionDivider("Defines");
+//		writeHeaderDefines(top);
 		writeDefines(top);
 		
 		addSectionDivider("Types");
@@ -110,6 +114,8 @@ public class CWriter extends SourceWriter {
 	
 		addSectionDivider("Source");
 		addBaseFields(top, false);
+		
+		addBlockFunctions(top, false);
 		
 		
 		writeToFile(top.getName().toUpperCamel(),"c");
@@ -168,7 +174,7 @@ public class CWriter extends SourceWriter {
 					es.add(e);
 				}
 			}
-		});	
+		}, true);	
 		for(EnumField ef : es) {
 			addDocComment(ef.getComment());
 			addLine("typedef enum {");
@@ -218,7 +224,38 @@ public class CWriter extends SourceWriter {
 				}
 				
 			}
-		});	
+		}, false);	
+	}
+	private void writeHeaderDefines(BlockField top) {
+		ArrayList<BlockField> fs = new ArrayList<BlockField>();
+		//first find all blockfields with unique types
+		top.scanThroughBlockFields((bf) -> {
+			boolean found = false;
+			for(BlockField bft : fs) {
+				if(bft.getTypeName().equals(bf.getTypeName())) {
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				fs.add(bf);
+			}
+		});
+		
+		//now make defines for their names
+		for(BlockField bf : fs) {
+			bf.scanThroughHeaderFields((f, p) -> {
+				if(f.getName() != null) {
+					String name = f.getName().addPrefix(bf.getTypeName()).addSuffix("index").toUpperSnake();
+					writeDefine(name, ""+f.getIndex(),f);
+				}
+			});
+		}
+		
+		
+		
+		
+		
 	}
 
 
@@ -268,7 +305,7 @@ public class CWriter extends SourceWriter {
 					addBaseGetSetContents(f,p, false);
 				}
 			}
-		});
+		}, false);
 	}
 	private void addCompoundGetterPrototype(CompoundField f, BlockField top, boolean protoNotDeclaration) {
 		// TODO Auto-generated method stub
@@ -320,10 +357,10 @@ public class CWriter extends SourceWriter {
 	
 		if(getterNotSetter) {
 			
-			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get").toLowerCamel();
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
 			addLine("return " + functionName + "(" + paramName + ", " + dn +  ");");
 		} else {
-			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set").toLowerCamel();
+			String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("set").toLowerCamel();
 			addLine(functionName + "(" + paramName + ", " + dn + ", " + f.getName().toLowerCamel() + ");");
 			
 			
@@ -360,6 +397,54 @@ public class CWriter extends SourceWriter {
 			
 			
 		
+	}
+	
+	private void addBlockFunctions(BlockField top, boolean protoNotDeclaration) {
+		ArrayList<BlockField> fields = new ArrayList<BlockField>();
+		//first scan for all blockfields with unique type names
+		top.scanThroughBlockFields(bf -> {
+			if(bf != top) {
+				boolean found = false;
+				for(BlockField f : fields) {
+					
+					if(f.getTypeName().equals(bf.getTypeName())) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					fields.add(bf);
+				}
+			}
+		});
+		
+		//now build the functions using the first block.
+		if(fields.size() > 0) {
+			BlockField bf = fields.get(0);
+			FieldName tn = bf.getTypeName();
+			FieldName getterName = tn.addPrefix("next").addPrefix("get");
+			FieldName setterName = tn.addPrefix("next").addPrefix("set");
+			String f = "BbBlock " + getterName.toLowerCamel()+"(Bb* buf, BbBlock block)";
+			addBlockComment("computes the index of the next block given the previous one.");
+
+			if(protoNotDeclaration) {
+				addLine(f + ";");
+			} else {
+				addLine(f + "{");
+				indent();
+				addLine();
+				
+				
+				
+				outdent();
+				addLine("}");
+			}
+			
+			
+			
+			
+			
+		}
 	}
 	
 	
