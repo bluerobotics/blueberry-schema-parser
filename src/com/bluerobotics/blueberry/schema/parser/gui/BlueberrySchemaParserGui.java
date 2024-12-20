@@ -113,7 +113,9 @@ public class BlueberrySchemaParserGui implements Constants {
 			//add initializer to abstract class
 			{
 				JButton comp = new JButton("<html><p>"+ APP_NAME + "</p>"+VERSION+"</p></html>");
-				comp.setIcon(new ImageIcon(BLUEBERRY_LOGO.getScaledInstance(-1, 48, Image.SCALE_SMOOTH)));
+				comp.setIcon(new ImageIcon(BLUEBERRY_LOGO.getScaledInstance(-1, 49, Image.SCALE_SMOOTH)));
+//				comp.setIcon(BLUEBERRY_ICON);
+//				comp.setIcon(UtilMethods.makeIcon(BLUEBERRY_LOGO, 48));
 				comp.setRequestFocusEnabled(false);//this stops buttons from taking focus
 				comp.setBackground(Color.BLUE);//don't know why this works, but it keeps the rollover from showing a weird gradient
 				comp.setBorder(new EmptyBorder(5,5,5,5));

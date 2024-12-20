@@ -25,6 +25,9 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
 import com.starfishmedical.utils.ResourceTools;
 
 public interface Constants {
@@ -34,6 +37,7 @@ public interface Constants {
 	public static final File HOME_DIR = new File(System.getProperty("user.dir"));
 	public static final String RESOURCE_PATH = "com/bluerobotics/blueberry/schema/parser/resources/";
 	public static final BufferedImage BLUEBERRY_LOGO = ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo.png");
+	public static final Icon BLUEBERRY_ICON = new ImageIcon(ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo66x48.png"));
 	public static final Color COLOR_LOGO_DARK_GREEN = new Color(0x43994f);
 	public static final Color COLOR_LOGO_LIGHT_GREEN = new Color(0x4eb277);
 	public static final Color COLOR_LOGO_BLUE = new Color(0x4a99d3);

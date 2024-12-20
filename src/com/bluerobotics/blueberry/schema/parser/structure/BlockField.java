@@ -130,8 +130,8 @@ public class BlockField extends AbstractField implements ParentField {
 		if(includeHeader) {
 			for(BaseField f : getHeaderFields()) {
 				consumer.accept(f, this);
-				if(f instanceof ParentField) {
-					for(BaseField bf : ((ParentField)f).getBaseFields()) {
+				if(f instanceof CompoundField) {
+					for(BaseField bf : ((CompoundField)f).getBaseFields()) {
 						consumer.accept(bf,this);
 					}
 				}	
@@ -140,12 +140,19 @@ public class BlockField extends AbstractField implements ParentField {
 		}
 		for(BaseField f : getBaseFields()) {
 			consumer.accept(f, this);
+			if(f instanceof CompoundField) {
+				for(BaseField bf : ((CompoundField)f).getBaseFields()) {
+					consumer.accept(bf,this);
+				}
+			}	
 		}
 		
 	}
-	public void scanThroughHeaderFields(BiConsumer<BaseField, ParentField> consumer) {
-		for(BlockField bf : getBlockFields()) {
-			bf.scanThroughHeaderFields(consumer);
+	public void scanThroughHeaderFields(BiConsumer<BaseField, ParentField> consumer, boolean recurse) {
+		if(recurse) {
+			for(BlockField bf : getBlockFields()) {
+				bf.scanThroughHeaderFields(consumer, recurse);
+			}
 		}
 		for(BaseField f : getHeaderFields()) {
 			consumer.accept(f, this);
