@@ -552,7 +552,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				addLine(f + "{");
 				indent();
-				addLine();
+//				addLine();
 				//build the function name
 				String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 

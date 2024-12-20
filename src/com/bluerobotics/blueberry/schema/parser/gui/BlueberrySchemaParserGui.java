@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import com.bluerobotics.blueberry.schema.parser.app.BlueberrySchemaParser;
@@ -113,7 +114,10 @@ public class BlueberrySchemaParserGui implements Constants {
 			//add initializer to abstract class
 			{
 				JButton comp = new JButton("<html><p>"+ APP_NAME + "</p>"+VERSION+"</p></html>");
-				comp.setIcon(new ImageIcon(BLUEBERRY_LOGO.getScaledInstance(-1, 49, Image.SCALE_SMOOTH)));
+//				comp.setIcon(new ImageIcon(BLUEBERRY_LOGO.getScaledInstance(-1, 49, Image.SCALE_SMOOTH)));
+				comp.setIcon(UtilMethods.makeIcon(BLUEBERRY_LOGO, -1, 48));
+				comp.setAlignmentY(0.5f);
+				comp.setVerticalAlignment(SwingConstants.CENTER);
 //				comp.setIcon(BLUEBERRY_ICON);
 //				comp.setIcon(UtilMethods.makeIcon(BLUEBERRY_LOGO, 48));
 				comp.setRequestFocusEnabled(false);//this stops buttons from taking focus
@@ -185,7 +189,17 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.PARSE_SCHEMA, e -> parse());
 		m_actions.addListener(ActionInfos.GENERATE_C, e -> generateC());
 		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
-
+		
+		
+		
+		
+		m_actions.getAction(ActionInfos.EXIT).setIcon(EXIT_ICON);
+		m_actions.getAction(ActionInfos.MINIMIZE).setIcon(MINIMIZE_ICON);
+		m_actions.getAction(ActionInfos.NORMALIZE).setIcon(NORMALIZE_ICON);
+		
+		m_actions.getAction(ActionInfos.MAXIMIZE).setIcon(MAXIMIZE_ICON);
+		m_actions.getAction(ActionInfos.GENERATE_C).setIcon(GENERATE_C_ICON);
+		m_actions.getAction(ActionInfos.GENERATE_JAVA).setIcon(GENERATE_JAVA_ICON);
 	}
 
 	private void generateJava() {
