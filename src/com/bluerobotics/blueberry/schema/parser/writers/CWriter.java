@@ -72,7 +72,7 @@ public class CWriter extends SourceWriter {
 		
 		addSectionDivider("Types");
 		writeEnums(top);
-		addLine("typedef BlueberryBlock BB;");
+		addLine("typedef BlueberryBlock Bb;");
 //		writeCompounds(top);
 		
 		addSectionDivider("Function Prototypes");
@@ -331,7 +331,7 @@ public class CWriter extends SourceWriter {
 					
 					//do getter
 					addDocComment("get "+comment);
-					addLine(fType + " get"+functionRootName+"(BB* "+bName+")"+fend);
+					addLine(fType + " get"+functionRootName+"(Bb* "+bName+")"+fend);
 					if(!protoNotDeclaration) {
 						indent();
 						FieldName fName = FieldName.fromCamel("getBb");
@@ -344,7 +344,7 @@ public class CWriter extends SourceWriter {
 					//do setter
 					addDocComment("set "+comment);
 
-					addLine("void set"+functionRootName+"(BB* "+bName+", " + fType.toLowerCase() + " " + f.getName().toLowerCamel()+ ")"+fend);
+					addLine("void set"+functionRootName+"(Bb* "+bName+", " + fType.toLowerCase() + " " + f.getName().toLowerCamel()+ ")"+fend);
 					if(!protoNotDeclaration) {
 						indent();
 						FieldName fName = FieldName.fromCamel("setBb");
@@ -431,7 +431,7 @@ public class CWriter extends SourceWriter {
 			String c = f.getName().toLowerCamel()+" field of the " + p.getName().toLowerCamel() + " " + p.getTypeName().toUpperCamel()+ "\n"+f.getComment();
 			String rt = getBaseType(f.getType());
 			String function = f.getName().addPrefix(p.getName()).toUpperCamel();
-			String paramType = "BB*";
+			String paramType = "Bb*";
 			String paramName = p.getName().toLowerCamel();
 			addDocComment( gs + "s the " + c);
 			

@@ -40,7 +40,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
  */
 public abstract class SourceWriter {
 	protected final File m_directory;
-	private static final int INDENT_SPACE_NUM = 4;
+	private static final String INDENT_STRING = "\t";
 	
 
 	protected StringBuffer m_buffer = new StringBuffer();
@@ -84,7 +84,7 @@ public abstract class SourceWriter {
 		
 	}
 	protected void addIndent(){
-		add(" ".repeat(m_indent*INDENT_SPACE_NUM));
+		add(INDENT_STRING.repeat(m_indent));
 
 	}
 	protected StringBuffer getBuffer() {
