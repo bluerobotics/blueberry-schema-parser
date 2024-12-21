@@ -122,12 +122,15 @@ public class CWriter extends SourceWriter {
 		addBaseFieldGettersAndSetters(top, false);
 		
 		addBlockFunctionGetters(top, false);
+		addBlockFunctionAdder(top, false);
 		
 		
 		writeToFile(top.getName().toUpperCamel(),"c");
 	
 	}
 	
+
+
 //	private void writeCompounds(BlockField top) {
 //		//first make a list of all unique enums
 //		ArrayList<CompoundField> cs = new ArrayList<CompoundField>();
@@ -497,6 +500,89 @@ public class CWriter extends SourceWriter {
 		
 	}
 	
+	private void addBlockFunctionAdder(BlockField top, boolean protoNotDeclaration) {
+		ArrayList<BlockField> fields = new ArrayList<BlockField>();
+		//first scan for all blockfields with unique type names
+		top.scanThroughBlockFields(bf -> {
+			if(bf != top) {
+				boolean found = false;
+				for(BlockField f : fields) {
+					
+					if(f.getTypeName().equals(bf.getTypeName())) {
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					fields.add(bf);
+				}
+			}
+		});
+		
+		//now build the functions using the first block.
+		if(fields.size() > 0) {
+			BlockField bf = fields.get(0);
+			FieldName tn = bf.getTypeName();
+			FieldName functionName = tn.addPrefix("next").addPrefix("add");
+			String f = "BbBlock " + functionName.toLowerCamel()+"(Bb* buf, BbBlock block)";
+			addDocComment("computes the index of the next new block given the previous one.");
+			BaseField lf = null;
+			for(BaseField bft : bf.getHeaderFields()) {
+				if(bft instanceof CompoundField) {
+					CompoundField cf = (CompoundField)bft;
+					for(BaseField bf2 : cf.getBaseFields()) {
+						if(bf2.getName() != null && bf2.getName().toLowerCamel().equals("length")) {
+							lf = bf2;
+							break;
+						}
+					}
+				}
+				if(lf != null) {
+					break;
+				} else if(bft.getName() != null && bft.getName().toLowerCamel().equals("length")) {
+					lf = bft;
+					break;
+				}
+			}
+			
+			if(lf == null || lf.getName() == null) {
+				throw new RuntimeException("No length field found!");
+			}
+
+			if(protoNotDeclaration) {
+				addLine(f + ";");
+			} else {
+				addLine(f + "{");
+				indent();
+//				addLine();
+				//build the function name
+//				BbBlock addPayload(Bb* buf, BbBlock prevPayload){
+				
+				//Packet packet = buf->start;
+				//uint16_t pLen = getUint16(buf, PACKET_LENGTH_INDEX); 
+				//Payload 
+				
+				addLine(top.getTypeName().toUpperCamel()+" p = buff->start;");
+				addLine();
+
+				
+				
+				String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
+//				String ldn = 
+				addLine(getBaseType(lf.getType()) + " len " + lgn + "(buf,  block);");//this gets the block length
+				
+				addLine("return bbWrap(buf, block + len);");
+				outdent();
+				addLine("}");
+			}
+			
+			
+			
+			
+			
+		}
+	}
+	
 	private void addBlockFunctionGetters(BlockField top, boolean protoNotDeclaration) {
 		ArrayList<BlockField> fields = new ArrayList<BlockField>();
 		//first scan for all blockfields with unique type names
@@ -523,7 +609,7 @@ public class CWriter extends SourceWriter {
 			FieldName getterName = tn.addPrefix("next").addPrefix("get");
 			FieldName setterName = tn.addPrefix("next").addPrefix("set");
 			String f = "BbBlock " + getterName.toLowerCamel()+"(Bb* buf, BbBlock block)";
-			addBlockComment("computes the index of the next block given the previous one.");
+			addDocComment("computes the index of the next block given the previous one.");
 			BaseField lf = null;
 			for(BaseField bft : bf.getHeaderFields()) {
 				if(bft instanceof CompoundField) {
@@ -610,6 +696,9 @@ public class CWriter extends SourceWriter {
 		}
 		return rt;
 	}
+	
+	
+	
 	
 
 }
