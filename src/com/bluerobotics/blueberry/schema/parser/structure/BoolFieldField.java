@@ -73,4 +73,20 @@ public class BoolFieldField extends BaseField {
 		return m_bools;
 	}
 
+
+	@Override
+	public boolean equals(Object obj) {
+		boolean result =  super.equals(obj);
+		if(result) {
+			BoolFieldField bff = (BoolFieldField)obj;
+			for(int i = 0; i < m_bools.size(); ++i) {
+				if(!m_bools.get(i).equals(bff.m_bools.get(i))) {
+					result = false;
+				}
+			}
+		}
+		return result;
+	}
+	
+
 }

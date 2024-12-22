@@ -107,7 +107,22 @@ public class CompoundField extends BaseField implements ParentField {
 	}
 	
 	
-	
+	@Override
+	public boolean equals(Object obj) {
+		boolean result =  super.equals(obj);
+		if(result) {
+			CompoundField cf = (CompoundField)obj;
+			for(int i = 0; i < m_baseTypes.size(); ++i) {
+				if(!m_baseTypes.get(i).equals(cf.m_baseTypes.get(i))) {
+					result = false;
+				}
+			}
+			if(!cf.getTypeName().equals(getTypeName())) {
+				result = false;
+			}
+		}
+		return result;
+	}
 	
 
 }

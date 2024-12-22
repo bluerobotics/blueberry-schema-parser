@@ -30,5 +30,6 @@ public interface Field {
 	String getComment();
 
 	int getBitCount();
-
+	FieldName getParentName();
+	void setParentName(FieldName p);
 }

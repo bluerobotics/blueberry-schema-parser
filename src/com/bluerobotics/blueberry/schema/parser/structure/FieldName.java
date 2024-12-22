@@ -28,8 +28,12 @@ import java.util.ArrayList;
  */
 public class FieldName {
 	private final String[] name;
-	private FieldName(String[] n) {
-		name = n;
+	public FieldName(String... ss) {
+		int n = ss.length;
+		name = new String[n];
+		for(int i = 0; i < n; ++i) {
+			name[i] = ss[i].trim().toLowerCase();
+		}
 	}
 	
 	public static FieldName fromCamel(String n) {

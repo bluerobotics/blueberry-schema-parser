@@ -41,7 +41,7 @@ public interface Constants {
 	public static final BufferedImage BLUEBERRY_LOGO = ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo.png");
 	public static final Icon BLUEBERRY_ICON = new ImageIcon(ResourceTools.loadImage(RESOURCE_PATH + "Project Blueberry Logo66x48.png"));
 	public static final Font ICON_FONT = ResourceTools.loadFont(RESOURCE_PATH + "MaterialSymbolsRounded-VariableFont_FILL,GRAD,opsz,wght.ttf", 18.0f, Font.BOLD);
-	public static final Font UI_FONT = ResourceTools.loadFont(RESOURCE_PATH + "OpenSans-Regular.ttf", 18.0f);
+	public static final Font UI_FONT = ResourceTools.loadFont(RESOURCE_PATH + "Roboto-Regular.ttf", 18.0f);
 	public static final Color COLOR_LOGO_DARK_GREEN = new Color(0x43994f);
 	public static final Color COLOR_LOGO_LIGHT_GREEN = new Color(0x4eb277);
 	public static final Color COLOR_LOGO_BLUE = new Color(0x4a99d3);
@@ -52,8 +52,8 @@ public interface Constants {
 	public static final Icon MINIMIZE_ICON =      UtilMethods.makeIconFromFont(ICON_FONT, "\ue931", COLOR_LOGO_BLUE, -1, 32);
 	public static final Icon NORMALIZE_ICON =     UtilMethods.makeIconFromFont(ICON_FONT, "\ue15b", COLOR_LOGO_BLUE, -1, 32); 
 	public static final Icon MAXIMIZE_ICON =      UtilMethods.makeIconFromFont(ICON_FONT, "\ue930", COLOR_LOGO_BLUE, -1, 32); 
-	public static final Icon GENERATE_C_ICON =    UtilMethods.makeIconFromFont(UI_FONT,        "C", COLOR_LOGO_BLUE, -1, 32);
-	public static final Icon GENERATE_JAVA_ICON = UtilMethods.makeIconFromFont(UI_FONT,        "J", COLOR_LOGO_BLUE, -1, 32);
+	public static final Icon GENERATE_C_ICON =    UtilMethods.makeIconFromFont(UI_FONT,        "C", COLOR_LOGO_BLUE, 32, 32);
+	public static final Icon GENERATE_JAVA_ICON = UtilMethods.makeIconFromFont(UI_FONT,        "J", COLOR_LOGO_BLUE, 32, 32);
 	
 
 }

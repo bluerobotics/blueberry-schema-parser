@@ -526,7 +526,7 @@ public class CWriter extends SourceWriter {
 			FieldName functionName = tn.addPrefix("next").addPrefix("add");
 			String f = "BbBlock " + functionName.toLowerCamel()+"(Bb* buf, BbBlock block)";
 			addDocComment("computes the index of the next new block given the previous one.");
-			BaseField lf = null;
+			BaseField lf = null; //length field
 			for(BaseField bft : bf.getHeaderFields()) {
 				if(bft instanceof CompoundField) {
 					CompoundField cf = (CompoundField)bft;
@@ -563,7 +563,8 @@ public class CWriter extends SourceWriter {
 				//Payload 
 				
 				addLine(top.getTypeName().toUpperCamel()+" p = buff->start;");
-				addLine();
+				String lenType = getBaseType(lf.getType());
+//				addLine(lenType + " pLen = "+new FieldName("get",lenType).toLowerCamel()+"(buf, ");
 
 				
 				

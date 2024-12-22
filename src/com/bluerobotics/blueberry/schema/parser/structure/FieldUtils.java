@@ -93,5 +93,81 @@ public class FieldUtils {
 		return result;
 		
 	}
+	/**
+	 * traverses the hierarchy and fills in the parents of all the fields
+	 * @param top
+	 */
+	public void computeParents(BlockField top) {
+		//recurse
+		for(BlockField bf : top.getBlockFields()) {
+			computeParents(bf);
+		}
+		//do header fields
+		setParents(top.getTypeName(), top.getHeaderFields());
+		//now base fields
+		setParents(top.getName(), top.getBaseFields());
+	}
+	private void setParents(FieldName p, List<BaseField> fs) {
+		for(BaseField f : fs) {
+			if(f instanceof CompoundField) {
+				CompoundField cf = (CompoundField)f;
+				cf.setParentName(p);
+				setParents(p, cf.getBaseFields());
+			} else if(f instanceof BoolFieldField) {
+				BoolFieldField bff = (BoolFieldField)f;
+				bff.setParentName(p);
+				for(BoolField b : bff.getBoolFields()) {
+					b.setParentName(p);
+				}
+			} else {
+				f.setParentName(p);
+			}
+		}
+	}
+	/**
+	 * replaces duplicate header fields with the first instance of it
+	 * @param top
+	 * @param uniques
+	 */
+	public void removeDuplicates(BlockField top, List<BaseField> uniques) {
+		if(uniques == null) {
+			uniques = new ArrayList<BaseField>();
+		}
+		for(BlockField bf : top.getBlockFields()) {
+			removeDuplicates(bf, uniques);
+		}
+		checkAndReplaceField(top.getHeaderFields(), uniques);
+		
+	}
+	private void checkAndReplaceField(List<BaseField> fs, List<BaseField> uniques) {
+		for(int i = 0; i < fs.size(); ++i) {
+			BaseField f = fs.get(i);
+			BaseField found = null;
+			if(f instanceof CompoundField) {
+				CompoundField cf = (CompoundField)f;
+				
+				checkAndReplaceField(cf.getBaseFields(), uniques);
+			} else if(f instanceof BoolFieldField) {
+				BoolFieldField bff = (BoolFieldField)f;
+				ArrayList<BaseField> bfs = new ArrayList<BaseField>();
+				for(BoolField bf : bff.getBoolFields()) {
+					bfs.add(bf);
+				}
+				checkAndReplaceField(bfs, uniques);
+			}
+			
+			for(BaseField bft : uniques) {
+				if(bft.equals(f)) {
+					found = bft;
+				}
+			}
+			if(found != null) {
+				fs.set(i, found);
+			} else {
+				uniques.add(f);
+			}
+		}
+	}
+	
 }
 

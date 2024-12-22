@@ -175,6 +175,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			FieldUtils fu = new FieldUtils();
 			fu.padExtraSpaceInCompoundFields(m_topLevelField);
 			fu.computeIndeces(m_topLevelField, 0);
+			fu.computeParents(m_topLevelField);
+			fu.removeDuplicates(m_topLevelField, null);
 			
 			
 			

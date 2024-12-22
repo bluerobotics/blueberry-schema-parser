@@ -71,5 +71,20 @@ public class EnumField extends BaseField implements DefinedField {
 	public List<NameValue> getNameValues(){
 		return m_nameValues;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		boolean result =  super.equals(obj);
+		if(result) {
+			EnumField ef = (EnumField)obj;
+			
+			if(!ef.getTypeName().equals(getTypeName())) {
+				result = false;
+			}
+		}
+		return result;
+	}
+	
+	
 	
 }

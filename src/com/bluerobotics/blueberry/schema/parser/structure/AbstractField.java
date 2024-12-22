@@ -25,6 +25,7 @@ public abstract class AbstractField implements Field {
 	private final FieldName m_name;
 	private final Type m_type;
 	private final String m_comment;
+	private FieldName m_parentName = null;
 	
 	protected AbstractField(FieldName name, Type type, String comment) {
 		m_name = name;
@@ -86,5 +87,30 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
+	@Override
+	public FieldName getParentName() {
+		return m_parentName;
+	}
+	@Override
+	public void setParentName(FieldName p) {
+		m_parentName = p;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		boolean result = false;
+		if(obj.getClass().equals(getClass())) {
+			Field f = (Field)obj;
+			if(f.getType() == getType()) {
+				if(f.getParentName().equals(getParentName())) {
+					if(f.getName() != null && f.getName().equals(getName())){
+						result = true;
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
+	
 	
 }
