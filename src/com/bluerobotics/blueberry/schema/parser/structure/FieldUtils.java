@@ -100,19 +100,22 @@ public class FieldUtils {
 	public void computeParents(BlockField top) {
 		//recurse
 		for(BlockField bf : top.getBlockFields()) {
+			setParent(top.getName(), bf);
 			computeParents(bf);
 		}
 		//do header fields
-		setParents(top.getTypeName(), top.getHeaderFields());
+		top.getHeaderFields().forEach(bf -> setParent(top.getTypeName(), bf));
+//		setParents(top.getTypeName(), top.getHeaderFields());
 		//now base fields
-		setParents(top.getName(), top.getBaseFields());
+		top.getBaseFields().forEach(bf -> setParent(top.getName(), bf));
+//		setParents(top.getName(), top.getBaseFields());
 	}
-	private void setParents(FieldName p, List<BaseField> fs) {
-		for(BaseField f : fs) {
+	private void setParent(FieldName p, Field f) {
 			if(f instanceof CompoundField) {
 				CompoundField cf = (CompoundField)f;
 				cf.setParentName(p);
-				setParents(p, cf.getBaseFields());
+				cf.getBaseFields().forEach(bf -> setParent(p, bf));
+//				setParents(p, cf.getBaseFields());
 			} else if(f instanceof BoolFieldField) {
 				BoolFieldField bff = (BoolFieldField)f;
 				bff.setParentName(p);
@@ -122,7 +125,7 @@ public class FieldUtils {
 			} else {
 				f.setParentName(p);
 			}
-		}
+		
 	}
 	/**
 	 * replaces duplicate header fields with the first instance of it

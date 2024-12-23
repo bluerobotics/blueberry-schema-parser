@@ -37,6 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
@@ -213,12 +214,19 @@ public class CWriter extends SourceWriter {
 	
 	private String makeFieldIndexName(BaseField f, BlockField p, boolean bitOrIndex) {
 		String s = bitOrIndex ? "bit" : "index";
-		return f.getName().addPrefix(p.getName()).addSuffix(s).toUpperSnake();
+		FieldName fn = f.getName().addPrefix(p.getName()).addSuffix(s);
+		if(p instanceof ArrayField) {
+			fn.addPrefix(p.getParentName());
+			
+		}
+		String result = fn.toUpperSnake();
+		return result;
 	}
 
 	private void writeDefines(BlockField top) {
 		top.scanThroughBaseFields((f, p) -> {
 			BlockField bf = top;
+			
 			if(p instanceof BlockField) {
 				bf = (BlockField)p;
 			}
@@ -245,39 +253,40 @@ public class CWriter extends SourceWriter {
 		}, false);	
 	}
 	private void writeHeaderDefines(BlockField top) {
-		ArrayList<BlockField> fs = new ArrayList<BlockField>();
-		//first find all blockfields with unique types
-		top.scanThroughBlockFields((bf) -> {
-			boolean found = false;
-			for(BlockField bft : fs) {
-				if(bft.getTypeName().equals(bf.getTypeName())) {
-					found = true;
-					break;
+	
+		//first scan through header fields and get all unique ones
+		ArrayList<BaseField> hfs = new ArrayList<BaseField>();
+		top.scanThroughHeaderFields((bf, pf) -> {
+			if(bf.getName() != null) {
+				boolean found = false;
+				for(BaseField f : hfs) {
+					if(f.getName().equals(bf.getName())) {
+						if(f.getParentName().equals(bf.getParentName())) {
+							found = true;
+						}
+					}
+				}
+				if(!found) {
+					hfs.add(bf);
 				}
 			}
-			if(!found) {
-				fs.add(bf);
-			}
-		});
+		}, true);
 		
-		//now make defines for their names
-		for(BlockField bf : fs) {
-			bf.scanThroughHeaderFields((f, p) -> {
-				if(f.getName() != null) {
-					String name = f.getName().addPrefix(bf.getTypeName()).addSuffix("index").toUpperSnake();
-					writeDefine(name, ""+f.getIndex(),f);
-				}
-			}, false);
-		}
-		
-		
-		
-		
+		//now write defines
+		hfs.forEach(bf -> writeDefine(bf));
 		
 	}
 
 
 	
+
+	private void writeDefine(BaseField bf) {
+		
+		if(bf.getName() != null && bf.getParentName() != null) {
+			String name = bf.getName().addPrefix(bf.getParentName()).addSuffix("index").toUpperSnake();
+			writeDefine(name, ""+bf.getIndex(),bf);
+		}
+	}
 
 	private void writeDefine(String name, String value, BaseField commentField) {
 		String comment = commentField != null ? commentField.getComment() : "";

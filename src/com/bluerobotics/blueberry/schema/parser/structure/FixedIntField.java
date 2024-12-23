@@ -25,6 +25,18 @@ package com.bluerobotics.blueberry.schema.parser.structure;
  * 
  */
 public class FixedIntField extends BaseField {
+	@Override
+	public boolean equals(Object obj) {
+		boolean result = super.equals(obj);
+		if(result) {
+			FixedIntField fif = (FixedIntField)obj;
+			if(fif.getValue() != getValue()) {
+				result = false;
+			}
+		}
+		return result;
+	}
+
 	private final long m_value;
 
 	public FixedIntField(BaseField f, long value) {
