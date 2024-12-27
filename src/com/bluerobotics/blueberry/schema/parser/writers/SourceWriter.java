@@ -27,12 +27,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.structure.Field;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
+import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 
 /**
@@ -145,6 +152,50 @@ public abstract class SourceWriter {
 			addLineComment("*************************************************************************************");
 		}
 		addLine();
+	}
+	/**
+	 * creates a fully qualified field name that can be used to make function names and constants for indexing
+	 * @param bf - the field in question
+	 * @return a field name that consists of the field name plus names of it's parent(s)
+	 */
+	protected FieldName makeBaseFieldNameRoot(BaseField bf) {
+		FieldName result = null;
+		if(bf instanceof FixedIntField) {
+			//these get treated differently
+			Field p = bf.getContainingWord().getParent();
+			FieldName parent = p.getName();
+			if(p instanceof ArrayField) {
+				parent = parent.addPrefix(p.getParent().getName());
+			}
+			result = bf.getName().addPrefix(parent);
+		} else {
+			Field p = bf.getContainingWord().getParent();
+			result = bf.getCorrectParentName().addSuffix(bf.getName());
+			if(p instanceof ArrayField) {
+				result = result.addPrefix(p.getParent().getName());
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * recurses through all the block hierarchy and collects all fixed int fields called "key"
+	 * @param top
+	 * @return
+	 */
+	protected List<FixedIntField> getBlockKeys(BlockField top){
+		ArrayList<FixedIntField> result = new ArrayList<FixedIntField>();
+		
+		top.scanThroughHeaderFields(f -> {
+			if(f instanceof FixedIntField && f.getName().toLowerCamel().equals("key")) {
+				result.add((FixedIntField)f);
+			}
+		}, true);
+		
+		Collections.sort(result, (f1, f2) -> {
+			return (int)(f1.getValue() - f2.getValue());
+		});
+		return result;
 	}
 
 }

@@ -25,7 +25,8 @@ public abstract class AbstractField implements Field {
 	private final FieldName m_name;
 	private final Type m_type;
 	private final String m_comment;
-	private FieldName m_parentName = null;
+	private Field m_parent = null;
+	private boolean m_inHeader = false;
 	
 	protected AbstractField(FieldName name, Type type, String comment) {
 		m_name = name;
@@ -88,20 +89,20 @@ public abstract class AbstractField implements Field {
 		return result;
 	}
 	@Override
-	public FieldName getParentName() {
-		return m_parentName;
+	public Field getParent() {
+		return m_parent;
 	}
 	@Override
-	public void setParentName(FieldName p) {
-		m_parentName = p;
+	public void setParent(Field p) {
+		m_parent = p;
 	}
 	@Override
 	public boolean equals(Object obj) {
 		boolean result = false;
-		if(obj.getClass().equals(getClass())) {
+		if(obj != null && obj.getClass().equals(getClass())) {
 			Field f = (Field)obj;
 			if(f.getType() == getType()) {
-				if(f.getParentName().equals(getParentName())) {
+				if(f.getParent() != null && f.getParent().equals(getParent())) {
 					if(f.getName() != null && f.getName().equals(getName())){
 						result = true;
 					}
@@ -110,7 +111,47 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
+	@Override
+	public void setInHeader(boolean b) {
+		m_inHeader = b;
+	}
+	@Override
+	public boolean isInHeader() {
+		return m_inHeader;
+	}
+
+	@Override
+	public Field getContainingWord() {
+		Field bf = this;
+		Field f = bf;
+		if(bf instanceof BoolField) {
+			f = bf.getParent().getParent();
+		} else if(bf.getBitCount() < 32) {
+			f = bf.getParent();
+		}
+		if(f == null) {
+			System.out.println("CWriter.getCorrectedParent");
+		}
+		return f;
 	
+		
+	}
+	public FieldName getCorrectParentName() {
+		FieldName result = null;
+		Field f = getContainingWord();
+		Field p = f.getParent();
+		BlockField bf = null;
+		if(p != null) {
+			bf = (BlockField)p;
+		}
+		
+		if(f.isInHeader() && bf != null) {
+			result = bf.getTypeName();
+		} else if(bf != null) {
+			result = bf.getName();
+		}
+		return result;
+	}
 	
 	
 }

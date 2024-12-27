@@ -124,13 +124,9 @@ Packet brPacket(key = 0x45554c42) {
 		Array values {
 			float32 value
 		}
-		Array timeConstants {
-			float32 seconds
-		}
-		Array gains {
+		Array config {
+			float32 timeConstantSeconds
 			float32 gain
-		}
-		Array offsets {
 			float32 offset
 		}
 	}

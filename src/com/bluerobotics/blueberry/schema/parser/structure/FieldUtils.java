@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class FieldUtils {
 	public void padExtraSpaceInCompoundFields(BlockField bf) {
-		bf.scanThroughBaseFields((f,p) -> {
+		bf.scanThroughBaseFields((f) -> {
 			if(f instanceof CompoundField) {
 				CompoundField cf = (CompoundField)f;
 				int r = cf.getRoom();
@@ -100,30 +100,30 @@ public class FieldUtils {
 	public void computeParents(BlockField top) {
 		//recurse
 		for(BlockField bf : top.getBlockFields()) {
-			setParent(top.getName(), bf);
+			setParent(top, bf);
 			computeParents(bf);
 		}
 		//do header fields
-		top.getHeaderFields().forEach(bf -> setParent(top.getTypeName(), bf));
+		top.getHeaderFields().forEach(bf -> setParent(top, bf));
 //		setParents(top.getTypeName(), top.getHeaderFields());
 		//now base fields
-		top.getBaseFields().forEach(bf -> setParent(top.getName(), bf));
+		top.getBaseFields().forEach(bf -> setParent(top, bf));
 //		setParents(top.getName(), top.getBaseFields());
 	}
-	private void setParent(FieldName p, Field f) {
+	private void setParent(Field p, Field f) {
 			if(f instanceof CompoundField) {
 				CompoundField cf = (CompoundField)f;
-				cf.setParentName(p);
+				cf.setParent(p);
 				cf.getBaseFields().forEach(bf -> setParent(p, bf));
 //				setParents(p, cf.getBaseFields());
 			} else if(f instanceof BoolFieldField) {
 				BoolFieldField bff = (BoolFieldField)f;
-				bff.setParentName(p);
+				bff.setParent(p);
 				for(BoolField b : bff.getBoolFields()) {
-					b.setParentName(p);
+					b.setParent(p);
 				}
 			} else {
-				f.setParentName(p);
+				f.setParent(p);
 			}
 		
 	}

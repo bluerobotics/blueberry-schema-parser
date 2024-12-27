@@ -52,8 +52,11 @@ public class BlockField extends AbstractField implements ParentField {
 		}
 		if(f instanceof BlockField) {
 			m_blockFields.add((BlockField)f);
+			f.setParent(this);
+			f.setInHeader(false);
 		} else if(f instanceof BaseField){
 			add(m_baseFields, (BaseField)f);
+			f.setInHeader(false);
 		} else {
 			throw new RuntimeException("Field is not block or base, it's "+f.getType());
 		}
@@ -89,10 +92,14 @@ public class BlockField extends AbstractField implements ParentField {
 			return;
 		}
 		add(m_headerFields, f);
+		f.setInHeader(true);
+		//the next line is to ensure all the header fields got set properly
+		m_headerFields.forEach(hf -> hf.setInHeader(true));
 		
 		
 		
 	}
+	
 	public List<BaseField> getHeaderFields(){
 		return m_headerFields;
 	}
@@ -123,42 +130,59 @@ public class BlockField extends AbstractField implements ParentField {
 	public FieldName getTypeName() {
 		return m_typeName;
 	}
-	public void scanThroughBaseFields(BiConsumer<BaseField, ParentField> consumer, boolean includeHeader) {
+	public void scanThroughBaseFields(Consumer<BaseField> consumer, boolean includeHeader) {
 		for(BlockField bf : getBlockFields()) {
 			bf.scanThroughBaseFields(consumer, includeHeader);
 		}
 		if(includeHeader) {
 			for(BaseField f : getHeaderFields()) {
-				consumer.accept(f, this);
+				consumer.accept(f);
 				if(f instanceof CompoundField) {
 					for(BaseField bf : ((CompoundField)f).getBaseFields()) {
-						consumer.accept(bf,this);
-					}
-				}	
+						if(bf instanceof BoolFieldField) {
+							for(BoolField bool : ((BoolFieldField)bf).getBoolFields()) {
+								consumer.accept(bool);
+							
+							}
+						} else {
+							consumer.accept(bf);
+						}
+					
+				
+					}	
+				}
 				
 			}
 		}
 		for(BaseField f : getBaseFields()) {
-			consumer.accept(f, this);
+			consumer.accept(f);
 			if(f instanceof CompoundField) {
 				for(BaseField bf : ((CompoundField)f).getBaseFields()) {
-					consumer.accept(bf,this);
+					if(bf instanceof BoolFieldField) {
+						for(BoolField bool : ((BoolFieldField)bf).getBoolFields()) {
+							consumer.accept(bool);
+						}
+						
+					} else {
+						consumer.accept(bf);
+					}
 				}
-			}	
+			
+			}
 		}
 		
 	}
-	public void scanThroughHeaderFields(BiConsumer<BaseField, ParentField> consumer, boolean recurse) {
+	public void scanThroughHeaderFields(Consumer<BaseField> consumer, boolean recurse) {
 		if(recurse) {
 			for(BlockField bf : getBlockFields()) {
 				bf.scanThroughHeaderFields(consumer, recurse);
 			}
 		}
 		for(BaseField f : getHeaderFields()) {
-			consumer.accept(f, this);
+			consumer.accept(f);
 			if(f instanceof ParentField) {
 				for(BaseField bf : ((ParentField)f).getBaseFields()) {
-					consumer.accept(bf,this);
+					consumer.accept(bf);
 				}
 			}
 		}
@@ -170,6 +194,77 @@ public class BlockField extends AbstractField implements ParentField {
 		}
 	}
 	
+	public static BlockField getBlockParent(Field ft) {
+	
+		Field f = ft;
+		while(!(f instanceof BlockField) && f != null) {
+			f = f.getParent();
+		}
+		BlockField result = null;
+		if(f != null) {
+			result = (BlockField)f;
+		}
+		return result;
+		
+	}
+	
+	public List<BaseField> getNamedBaseFields(){
+		ArrayList<BaseField> result = new ArrayList<BaseField>();
+		for(BaseField f : getBaseFields()) {
+			if(f instanceof CompoundField) {
+				CompoundField cf = (CompoundField)f;
+				for(BaseField f2 : cf.getBaseFields()) {
+					if(f2 instanceof BoolFieldField) {
+						BoolFieldField bff = (BoolFieldField)f2;
+						result.addAll(bff.getBoolFields());
+					}
+				}
+			} else if(f.getName() != null){
+				result.add(f);
+			}
+		}
+		return result;
+	}
+	public List<BaseField> getNamedHeaderFields(){
+		ArrayList<BaseField> result = new ArrayList<BaseField>();
+		for(BaseField f : getHeaderFields()) {
+			if(f instanceof CompoundField) {
+				CompoundField cf = (CompoundField)f;
+				for(BaseField f2 : cf.getBaseFields()) {
+					if(f2 instanceof BoolFieldField) {
+						BoolFieldField bff = (BoolFieldField)f2;
+						result.addAll(bff.getBoolFields());
+					} else {
+						if(f2.getName() != null) {
+							result.add(f2);
+						}
+					}
+				}
+			} else if(f.getName() != null){
+				result.add(f);
+			}
+		}
+		return result;
+	}
+
+	
+	public BaseField getHeaderField(String name) {
+		BaseField result = null;
+		for(BaseField f : getNamedHeaderFields()) {
+			if(f.getName().toLowerCamel().equals(name.toLowerCase())) {
+				result = f;
+				break;
+			}
+		}
+		
+		return result;
+	}
+	public int getHeaderWordCount() {
+		return getHeaderFields().size();
+	}
+	public int getBaseWordCount() {
+		return getBaseFields().size();
+	}
 	
 	
 

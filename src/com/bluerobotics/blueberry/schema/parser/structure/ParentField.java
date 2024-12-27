@@ -40,6 +40,7 @@ public interface ParentField extends Field, DefinedField {
 	
 		} else {
 			fs.add(f);
+			f.setParent(this);
 		}
 	}
 
@@ -59,6 +60,7 @@ public interface ParentField extends Field, DefinedField {
 			//there is no existing cf with room
 			cf = new CompoundField(null, null, null);
 			fs.add(cf);
+			cf.setParent(this);
 		}
 		cf.add(f);
 		

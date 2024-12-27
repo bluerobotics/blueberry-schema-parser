@@ -28,7 +28,7 @@ import java.util.List;
  * 
  */
 public class CompoundField extends BaseField implements ParentField {
-	private final ArrayList<BaseField> m_baseTypes = new ArrayList<BaseField>();
+	private final ArrayList<BaseField> m_baseFieldss = new ArrayList<BaseField>();
 	private boolean m_dontFill = false;
 	private final FieldName m_typeName;
 
@@ -47,7 +47,9 @@ public class CompoundField extends BaseField implements ParentField {
 				throw new RuntimeException("Could not add field "+f.getName());
 			}
 		} else {
-			m_baseTypes.add((BaseField)f);
+			m_baseFieldss.add((BaseField)f);
+			f.setParent(this);
+			f.setInHeader(isInHeader());
 		}
 	}
 	protected boolean addBool(BoolField f) {
@@ -66,6 +68,8 @@ public class CompoundField extends BaseField implements ParentField {
 		if(bff == null && getRoom() >= 8) {
 			bff = new BoolFieldField();
 			add(bff);
+			bff.setParent(this);
+			bff.setInHeader(isInHeader());
 		}
 		if(bff != null) {
 			bff.add(f);
@@ -84,7 +88,7 @@ public class CompoundField extends BaseField implements ParentField {
 	}
 	
 	public int getRoom() {
-		int result = 32 - getBitCount(m_baseTypes);
+		int result = 32 - getBitCount(m_baseFieldss);
 		if(m_dontFill) {
 			result = 0;
 		}
@@ -93,7 +97,7 @@ public class CompoundField extends BaseField implements ParentField {
 	}
 	@Override
 	public List<BaseField> getBaseFields(){
-		return m_baseTypes;
+		return m_baseFieldss;
 	}
 
 	@Override
@@ -112,8 +116,8 @@ public class CompoundField extends BaseField implements ParentField {
 		boolean result =  super.equals(obj);
 		if(result) {
 			CompoundField cf = (CompoundField)obj;
-			for(int i = 0; i < m_baseTypes.size(); ++i) {
-				if(!m_baseTypes.get(i).equals(cf.m_baseTypes.get(i))) {
+			for(int i = 0; i < m_baseFieldss.size(); ++i) {
+				if(!m_baseFieldss.get(i).equals(cf.m_baseFieldss.get(i))) {
 					result = false;
 				}
 			}
@@ -122,6 +126,17 @@ public class CompoundField extends BaseField implements ParentField {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public void setParent(Field p) {
+		super.setParent(p);
+		getBaseFields().forEach(bf -> bf.setParent(p));
+	}
+	@Override
+	public void setInHeader(boolean b) {
+		super.setInHeader(b);
+		m_baseFieldss.forEach(f -> f.setInHeader(b));
 	}
 	
 

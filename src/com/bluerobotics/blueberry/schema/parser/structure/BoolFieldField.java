@@ -37,6 +37,8 @@ public class BoolFieldField extends BaseField {
 	public void add(BoolField t) {
 		if(!isFull()) {
 			m_bools.add(t);
+			t.setParent(this);
+			t.setInHeader(isInHeader());
 		} else {
 			throw new RuntimeException("Cannot add more than 8 bits to this byte!");
 		}
@@ -87,6 +89,17 @@ public class BoolFieldField extends BaseField {
 		}
 		return result;
 	}
+
+
+	@Override
+	public void setInHeader(boolean b) {
+		super.setInHeader(b);
+		m_bools.forEach(bool -> bool.setInHeader(b));
+	}
+
+
+	
+	
 	
 
 }
