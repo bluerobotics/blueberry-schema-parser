@@ -90,6 +90,8 @@ public class CWriter extends SourceWriter {
 		addBlockFunctionGetters(top, true);
 		
 		addBlockAdders(top, true);
+		
+		addArrayAdders(top, true);
 
 		
 		
@@ -138,6 +140,8 @@ public class CWriter extends SourceWriter {
 //		addBlockFunctionAdder(top, false);
 		
 		addBlockAdders(top, false);
+		
+		addArrayAdders(top, false);
 		
 		
 		writeToFile(top.getName().toUpperCamel(),"c");
@@ -667,15 +671,117 @@ public class CWriter extends SourceWriter {
 	
 	private void addBlockAdders(BlockField top, boolean protoNotDeclaration) {
 		//first get all blocks that we want to make adders for
-		List<BlockField> bfs = top.getBlockFields();
+		List<BlockField> bfs = top.getAllBlockFields();
 		
 		for(BlockField bf : bfs) {
 			addBlockAdder(bf, true, protoNotDeclaration);
 		}
 	}
+	private void addArrayAdders(BlockField top, boolean protoNotDeclaration) {
+		List<ArrayField> afs = top.getAllArrayFields();
+		for(ArrayField af : afs) {
+			addArrayAdder(af, protoNotDeclaration);
+		}
+	}
 	
 	
 	
+	private void addArrayAdder(ArrayField bf, boolean protoNotDeclaration) {
+		String blockName = bf.getName().toUpperCamel();
+		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
+		String functionName = "add"+blockName;
+		List<BaseField> fs = bf.getNamedBaseFields();
+		String paramList = "";
+		
+		
+		for(BaseField f : fs) {
+			paramList += ", "+getBaseType(f)+" "+f.getName().toLowerCamel();
+		}
+		
+		addDocComment(comment);
+		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock previousBlock"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
+		if(!protoNotDeclaration) {
+			indent();
+			
+			//now fill in the details
+			BaseField lf = bf.getHeaderField("length");
+			BaseField keyField = bf.getHeaderField("key");
+			
+			FieldName tn = bf.getTypeName();
+			
+			int blockLen = bf.getHeaderWordCount() + bf.getBaseWordCount();
+
+			if(lf == null) {
+				throw new RuntimeException("No length field found!");
+			}
+			if(keyField == null) {
+				throw new RuntimeException("No key field found!");
+			}
+			
+			String keyValue = makeBaseFieldNameRoot(keyField).toUpperSnake();
+			String keyIndex = makeBaseFieldNameRoot(keyField).addSuffix("INDEX").toUpperSnake();
+			String keyFuncName = FieldName.fromCamel("setBb").addSuffix(keyField.getType().name()).toLowerCamel();
+			
+			String lenValue = ""+blockLen;
+			String lenIndex = makeBaseFieldNameRoot(lf).addSuffix("INDEX").toUpperSnake();
+			String lenFuncName = FieldName.fromCamel("setBb").addSuffix(lf.getType().name()).toLowerCamel();
+			
+			
+			
+			//first setup index
+			addLineComment("Compute index of new block");
+			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
+			String lenType = getBaseType(lf);
+
+			
+			
+			String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
+			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  previousBlock);");//this gets the block length
+			addLine("BbBlock result = bbWrap(buf, block + len);");
+			
+			
+		
+			
+			
+			//first do the header stuff
+			addLine();
+			addLineComment("Add header fields");
+			//write the key
+			addLine(keyFuncName+"(buf, result, "+keyIndex+", "+keyValue+");");
+			//write the length
+			addLine(lenFuncName+"(buf, result, "+lenIndex+", "+lenValue+"); //sorry about the magic number. :(");
+			
+			
+			//then do the params 
+		
+			addLine();
+			addLineComment("Add base fields");
+			
+			for(BaseField f : fs) {
+
+				if(f instanceof BoolField) {
+					addBoolSetterGuts(f);
+				} else {
+					addBaseSetterGuts(f);
+				}
+			}
+				
+				
+			
+			
+			
+			//update the block length
+			
+			
+			//return the new block index
+			addLine("return result");
+			
+			
+			outdent();
+			addLine("}");
+		}
+	}
+
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout, boolean protoNotDeclaration) {
 		String blockName = bf.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();

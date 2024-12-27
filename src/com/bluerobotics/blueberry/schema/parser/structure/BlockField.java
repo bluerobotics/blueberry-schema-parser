@@ -106,6 +106,26 @@ public class BlockField extends AbstractField implements ParentField {
 	public List<BlockField> getBlockFields(){
 		return m_blockFields;
 	}
+	public List<BlockField> getAllBlockFields(){
+		ArrayList<BlockField> result = new ArrayList<BlockField>();
+		for(BlockField bf : getBlockFields()) {
+			if(!(bf instanceof ArrayField)) {
+				result.add(bf);
+			}
+			result.addAll(bf.getAllBlockFields());
+		}
+		return result;
+	}
+	public List<ArrayField> getAllArrayFields(){
+		ArrayList<ArrayField> result = new ArrayList<ArrayField>();
+		for(BlockField bf : getBlockFields()) {
+			if(bf instanceof ArrayField) {
+				result.add((ArrayField)bf);
+			}
+			result.addAll(bf.getAllArrayFields());
+		}
+		return result;
+	}
 	@Override
 	public List<BaseField> getBaseFields(){
 		return m_baseFields;
