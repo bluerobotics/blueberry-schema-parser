@@ -328,25 +328,34 @@ public class CWriter extends SourceWriter {
 	}
 
 	private void addBaseFieldGetters(BlockField top, boolean protoNotDeclaration) {
-		top.scanThroughBaseFields((f) -> {
-			if(f instanceof BoolField) {
-				addBoolGetter((BoolField)f, protoNotDeclaration);
-			
-			} else if(f instanceof CompoundField) {
-				addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
-			} else {
-				addBaseGetter(f, protoNotDeclaration);
-				if(!protoNotDeclaration) {
-					if(f.getName() != null) {
-						indent();
-						addBaseGetterGuts(f);
-						outdent();
-						addLine("}");
+		ArrayList<BlockField> bfs = new ArrayList<BlockField>();
+		top.scanThroughBlockFields(bf -> {
+			if(!(bf instanceof ArrayField)) {
+				bfs.add(bf);
+			}
+		});
+		for(BlockField bf : bfs) {
+			for(BaseField f : bf.getNamedBaseFields()) {
+				if(f instanceof BoolField) {
+					addBoolGetter((BoolField)f, protoNotDeclaration);
+				
+				} else if(f instanceof CompoundField) {
+					addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
+				} else {
+					addBaseGetter(f, protoNotDeclaration);
+					if(!protoNotDeclaration) {
+						if(f.getName() != null) {
+							indent();
+							addBaseGetterGuts(f);
+							outdent();
+							addLine("}");
 
+						}
 					}
 				}
 			}
-		}, false);
+		}
+	
 	}
 	private void addCompoundGetterPrototype(CompoundField f, BlockField top, boolean protoNotDeclaration) {
 		// TODO Auto-generated method stub
