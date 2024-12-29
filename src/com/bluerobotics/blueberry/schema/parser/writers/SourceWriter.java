@@ -158,7 +158,7 @@ public abstract class SourceWriter {
 	 * @param bf - the field in question
 	 * @return a field name that consists of the field name plus names of it's parent(s)
 	 */
-	protected FieldName makeBaseFieldNameRoot(BaseField bf) {
+	protected FieldName makeBaseFieldNameRoot(Field bf) {
 		FieldName result = null;
 		if(bf instanceof FixedIntField) {
 			//these get treated differently

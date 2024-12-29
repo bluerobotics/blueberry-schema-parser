@@ -30,10 +30,7 @@ public class FieldName {
 	private final String[] name;
 	public FieldName(String... ss) {
 		int n = ss.length;
-		name = new String[n];
-		for(int i = 0; i < n; ++i) {
-			name[i] = ss[i].trim().toLowerCase();
-		}
+		name = ss;
 	}
 	
 	public static FieldName fromCamel(String n) {
@@ -103,29 +100,11 @@ public class FieldName {
 		}
 		return result;
 	}
-	public FieldName addSuffix(String s) {
-		if(s.isBlank()) {
-			return this;
-		}
-		String[] ss = new String[name.length + 1];
-		int n  = name.length;
-		for(int i = 0; i < n; ++i) {
-			ss[i] = name[i];
-		}
-		ss[n] = s.toLowerCase();
-		return new FieldName(ss);
+	public FieldName addSuffix(String... ss) {
+		return addSuffix(new FieldName(ss));
 	}
-	public FieldName addPrefix(String s) {
-		if(s.isBlank()) {
-			return this;
-		}
-		String[] ss = new String[name.length + 1];
-		int n  = name.length;
-		for(int i = 1; i <= n; ++i) {
-			ss[i] = name[i - 1];
-		}
-		ss[0] = s.toLowerCase();
-		return new FieldName(ss);
+	public FieldName addPrefix(String... ss) {
+		return addPrefix(new FieldName(ss));
 	}
 	public FieldName addSuffix(FieldName f) {
 		int m = name.length;
