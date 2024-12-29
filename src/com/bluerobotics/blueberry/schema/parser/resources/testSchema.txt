@@ -66,7 +66,7 @@ Packet brPacket(key = 0x45554c42) {
 	 * A bus controller does not need to send an ID payload.
 	 * A packet without one shall still be processed by a peripheral
 	 */
-	Payload idPayload(key = 0x0001) {
+	Payload idPayload(key = 0x0000) {
 		uint32 id
 	}
 	/**
@@ -74,7 +74,7 @@ Packet brPacket(key = 0x45554c42) {
 	 * the controller can specify the probability and timeframe that the peripherals will respond
 	 * the peripherals will respond with an idPayload
 	 */
-	Payload whosTherePayload {
+	Payload whosTherePayload(key = 0x0002) {
 		float32 probability //the probability that the peripheral will respond. 1.0 is 100% probability, 0.0 is zero.
 		float32 time //the time in seconds within which the device should respond.
 	}
@@ -83,7 +83,7 @@ Packet brPacket(key = 0x45554c42) {
 	 * A payload for a peripheral to convey its details to the controller.
 	 * A controller requests a version payload by sending an empty one.
 	 */
-	Payload versionPayload(key = 0x0002) {
+	Payload versionPayload(key = 0x0001) {
 	
 		uint32 fw //this is the version of the firmware
 	

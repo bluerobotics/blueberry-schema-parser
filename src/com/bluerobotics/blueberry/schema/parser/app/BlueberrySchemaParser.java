@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.app;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
@@ -160,8 +161,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			fillInMissingEnumValues();
 			checkForDuplicateEnumValues();
-			fillInMissingKeyValues(m_topLevelToken);
-			checkForDuplicateKeyValues(m_topLevelToken);
+			List<NestedFieldAllocationToken> blocks = listAllBlocks(m_topLevelToken, null);
+			fillInMissingKeyValues(blocks);
+			checkForDuplicateKeyValues(blocks);
 			checkKeyValuesForSize(m_topLevelToken);
 			
 			if(m_tokens.size() > 0) {
@@ -234,75 +236,102 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param nfat
 	 * @throws SchemaParserException
 	 */
-	private void checkForDuplicateKeyValues(NestedFieldAllocationToken nfat) throws SchemaParserException {
+	private void checkForDuplicateKeyValues(List<NestedFieldAllocationToken> blocks) throws SchemaParserException {
+		for(NestedFieldAllocationToken nfat : blocks) {
+			BlockTypeToken btt = (BlockTypeToken)nfat.getType();
+			DefinedTypeToken dtt = lookupType(btt.getName());
+			if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
+				NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+				long v = nvt.getValue();
+				//now check all other fields 
+
+				for(NestedFieldAllocationToken nfat2 : blocks) {
+					BlockTypeToken btt2 = (BlockTypeToken)nfat.getType();
+					NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
+					if(nvt2 != nvt) { //don't check against itself
+						if(nvt2.getValue() == v) {
+							throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
+						}
+						
+					}
+					
+				}
+			}
+			
+		}
+	
+	}
+	private List<NestedFieldAllocationToken> listAllBlocks(NestedFieldAllocationToken nfat, List<NestedFieldAllocationToken> blocks) {
+		if(blocks == null) {
+			blocks = new ArrayList<NestedFieldAllocationToken>();
+		}
 		for(FieldAllocationToken fat : nfat.getFields()) {
 			if(fat instanceof NestedFieldAllocationToken) {
 				//recurse
-				fillInMissingKeyValues((NestedFieldAllocationToken)fat);
+				listAllBlocks((NestedFieldAllocationToken)fat, blocks);
 				//now check this one
 				BlockTypeToken btt = (BlockTypeToken)fat.getType();//this should always be of this type for an nfat - I think
 				DefinedTypeToken dtt = lookupType(btt.getName());
 				if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
-					NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
-					long v = nvt.getValue();
-					//now check all other fields 
-	
-					for(FieldAllocationToken fat2 : nfat.getFields()) {
-						if(fat instanceof NestedFieldAllocationToken) {
-							BlockTypeToken btt2 = (BlockTypeToken)fat2.getType();//this should always be of this type for an nfat - I think
-							NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
-
-							if(nvt2 != nvt) {
-								if(nvt2.getValue() == v) {
-									throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
-								}
-								
-							}
-						}
-					}
+					blocks.add((NestedFieldAllocationToken)fat);
 				}
 			}
 		}
-	
+		Collections.sort(blocks, (n1, n2) -> {
+			BlockTypeToken b1 = (BlockTypeToken)n1.getType();
+			BlockTypeToken b2 = (BlockTypeToken)n2.getType();
+			NameValueToken nvt1 = b1.getValue(KEY_FIELD_NAME);
+			NameValueToken nvt2 = b2.getValue(KEY_FIELD_NAME);
+			int result = -1;
+			if(nvt1 != null && nvt2 != null) {
+				result = (int)(nvt1.getValue() - nvt2.getValue());
+			}
+			return result;
+		});
+		return blocks;
 	}
 	/**
 	 * traverse the hierarchy and check every defined type to be sure they have a key value set
 	 * @param m_topLevelToken2
 	 */
-	private void fillInMissingKeyValues(NestedFieldAllocationToken nfat) {
-		for(FieldAllocationToken fat : nfat.getFields()) {
-			if(fat instanceof NestedFieldAllocationToken) {
-				//recurse
-				fillInMissingKeyValues((NestedFieldAllocationToken)fat);
-				//now check this one
-				BlockTypeToken btt = (BlockTypeToken)fat.getType();//this should always be of this type for an nfat - I think
-				DefinedTypeToken dtt = lookupType(btt.getName());
-				if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
-					NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
-					if(nvt == null) {
-						//this doesn't have one.
-						//cycle through its siblings to determine a good value
-						long v = 0;
-						for(FieldAllocationToken fat2 : nfat.getFields()) {
-							if(fat instanceof NestedFieldAllocationToken) {
-								BlockTypeToken btt2 = (BlockTypeToken)fat2.getType();//this should always be of this type for an nfat - I think
-								NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
-	
-								if(nvt2 != null) {
-									if(nvt2.getValue() == v) {
-										++v;
-									}
-									
-								}
-							}
-						}
-						//v should now be a good value
-						btt.add(new NameValueToken(KEY_FIELD_NAME, v));
-					}
-					
-				}
-			}
+	private void fillInMissingKeyValues(List<NestedFieldAllocationToken> blocks) {
+		ArrayList<Long> values = new ArrayList<Long>();
+		
+		//first scan for existing values
+		for(NestedFieldAllocationToken nfat : blocks) {
+			BlockTypeToken btt = (BlockTypeToken)nfat.getType();
+			DefinedTypeToken dtt = lookupType(btt.getName());
+			NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+			if(nvt != null) {
+				long vt = nvt.getValue();
+				values.add(vt);
+			}	
+			
 		}
+		long v = 0;
+		Collections.sort(values);
+		//now scan for non-set ones
+		for(NestedFieldAllocationToken nfat : blocks) {
+			BlockTypeToken btt = (BlockTypeToken)nfat.getType();
+			DefinedTypeToken dtt = lookupType(btt.getName());
+			NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+			if(nvt == null) {
+				//get next value
+				for(Long vn : values) {
+					if(vn == v) {
+						++v;
+					} else {
+						break;
+					}
+				}
+				btt.add(new NameValueToken(KEY_FIELD_NAME, v));
+				++v;
+			}	
+			
+		}
+		
+		
+		
 	}
 
 
