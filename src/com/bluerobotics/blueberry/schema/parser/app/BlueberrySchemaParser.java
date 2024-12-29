@@ -240,24 +240,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(NestedFieldAllocationToken nfat : blocks) {
 			BlockTypeToken btt = (BlockTypeToken)nfat.getType();
 			DefinedTypeToken dtt = lookupType(btt.getName());
-			if(dtt instanceof BlockToken) {//only do this for block tokens (and array tokens)
-				NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
-				long v = nvt.getValue();
-				//now check all other fields 
+			NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
+			long v = nvt.getValue();
+			//now check all other fields 
 
-				for(NestedFieldAllocationToken nfat2 : blocks) {
-					BlockTypeToken btt2 = (BlockTypeToken)nfat.getType();
+			for(NestedFieldAllocationToken nfat2 : blocks) {
+				if(nfat2 != nfat) {//don't check against itself
+					BlockTypeToken btt2 = (BlockTypeToken)nfat2.getType();
 					NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
-					if(nvt2 != nvt) { //don't check against itself
-						if(nvt2.getValue() == v) {
-							throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
-						}
-						
+					long v2 = nvt2.getValue();
+					if(v2 == v) {
+						throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
 					}
-					
 				}
 			}
-			
 		}
 	
 	}
