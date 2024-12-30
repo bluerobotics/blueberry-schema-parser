@@ -74,10 +74,12 @@ public class CWriter extends SourceWriter {
 	
 		addSectionDivider("Defines");
 		
-		addBlockKeyDefines(top);
+//		addBlockKeyDefines(top);
 		
 		
 		addSectionDivider("Types");
+		addBlockKeyEnum(top);
+		
 		writeEnums(top);
 		addLine("typedef BlueberryBlock Bb;");
 //		writeCompounds(top);
@@ -184,13 +186,13 @@ public class CWriter extends SourceWriter {
 				} else {
 					c = "";
 				}
-				addLine(nv.getName().toUpperSnake() + " = " + nv.getValue() + c);
+				addLine(nv.getName().toUpperSnake() + " = " + WriterUtils.formatAsHex(nv.getValue()) + c);
 				
 				
 			}
 			outdent();
 			
-			addLine("} "+ef.getTypeName().toUpperCamel());
+			addLine("} "+ef.getTypeName().toUpperCamel()+";");
 			
 			addLine();
 
@@ -672,7 +674,18 @@ public class CWriter extends SourceWriter {
 			writeDefine(name, ""+key.getValue(), key);
 		}
 	}
-	
+	private void addBlockKeyEnum(BlockField top) {
+		List<FixedIntField> keys = getBlockKeys(top);
+		addLine("typedef enum {");
+		indent();
+		for(FixedIntField key : keys) {
+			String name = makeBaseFieldNameRoot(key).toUpperSnake();
+			addLine(name + " = "+WriterUtils.formatAsHex(key.getValue())+",");
+		}
+		outdent();
+		addLine("} BlockKeys;");
+		addLine();
+	}
 	private void addBlockAdders(BlockField top, boolean protoNotDeclaration) {
 		//first get all blocks that we want to make adders for
 		List<BlockField> bfs = top.getAllBlockFields();
