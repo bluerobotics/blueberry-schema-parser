@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 
 /**
@@ -42,15 +43,18 @@ public class JavaWriter extends SourceWriter {
 
 	@Override
 	public void write(BlockField top, String... headers) {
-		writeKeyEnum(top, headers);
-		writeFieldIndexEnum(top, headers);
-		writeBitIndexEnum(top, headers);
+		FieldName pkg = FieldName.fromDot("com.bluerobotics.blueberry").addSuffix(top.getName().toLowerCase());
+		writeKeyEnum(top, pkg, headers);
+		writeFieldIndexEnum(top, pkg, headers);
+		writeBitIndexEnum(top, pkg, headers);
 		
 	}
 
-	private void writeBitIndexEnum(BlockField top, String[] headers) {
+	private void writeBitIndexEnum(BlockField top, FieldName pkg, String[] headers) {
 		String className = top.getName().addSuffix("bit","index").toUpperCamel();
 		startFile(headers);
+		addLine("package " + pkg.toDot()+";");
+		
 		//make a list of all the fields
 		List<BoolField> fs = new ArrayList<BoolField>();
 		//first header fields
@@ -98,12 +102,14 @@ public class JavaWriter extends SourceWriter {
 		addLine("};");
 		
 		addLine();
-		writeToFile(className,"java");	
+		writeToFile(pkg.toPath()+className,"java");	
 	}
 
-	private void writeFieldIndexEnum(BlockField top, String[] headers) {
+	private void writeFieldIndexEnum(BlockField top, FieldName pkg, String[] headers) {
 		String className = top.getName().addSuffix("field","index").toUpperCamel();
 		startFile(headers);
+		addLine("package " + pkg.toDot()+";");
+
 		//make a list of all the fields
 		List<BaseField> fs = new ArrayList<BaseField>();
 		//first header fields
@@ -164,12 +170,14 @@ public class JavaWriter extends SourceWriter {
 		addLine("};");
 		
 		addLine();
-		writeToFile(className,"java");
+		writeToFile(pkg.toPath()+className,"java");	
 	}
 
-	private void writeKeyEnum(BlockField top, String... headers) {
+	private void writeKeyEnum(BlockField top, FieldName pkg, String... headers) {
 		String className = top.getName().addSuffix("block","keys").toUpperCamel();
 		startFile(headers);
+		addLine("package " + pkg.toDot()+";");
+
 		
 		List<FixedIntField> keys = getBlockKeys(top);
 		addDocComment("An enum of all the block keys for the "+top.getName()+" schema.");
@@ -196,7 +204,7 @@ public class JavaWriter extends SourceWriter {
 		outdent();
 		addLine("};");
 		addLine();
-		writeToFile(className,"java");
+		writeToFile(pkg.toPath()+className,"java");	
 	}
 
 }

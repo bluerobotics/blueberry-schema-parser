@@ -32,12 +32,17 @@ public class FieldName {
 		int n = ss.length;
 		name = ss;
 	}
-	
+	public static FieldName fromDot(String n) {
+		return new FieldName(breakUpDot(n));
+	}
 	public static FieldName fromCamel(String n) {
 		return new FieldName(breakUpCamel(n));
 	}
 	public static FieldName fromSnake(String n) {
 		return new FieldName(breakUpSnake(n));
+	}
+	private static String[] breakUpDot(String s) {
+		return s.toLowerCase().split("\\.");
 	}
 	private static String[] breakUpSnake(String s) {
 		return s.toLowerCase().split("_");
@@ -160,9 +165,43 @@ public class FieldName {
 	public String toLowerSnake() {
 		return toSnake(false);
 	}
+	
 	public String toUpperSnake() {
 		return toSnake(true);
 	}
+	public String toLowerCase() {
+		String result = "";
+		for(String w : name) {
+			result += w;
+		}
+		
+		return result;
+	}
+	public String toDot() {
+		String result = "";
+		boolean firstTime = true;
+		for(String w : name) {
+			if(!firstTime) {
+				result += ".";
+			}
+			firstTime = false;
+			result += w;
+		}
+		
+		return result;
+	}
+	public String toPath() {
+		String result = "";
+		for(String w : name) {
+				
+			
+			result += w;
+			result += "/";
+		}
+		
+		return result;
+	}
+
 	
 	
 
