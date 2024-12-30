@@ -33,6 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.app.Constants;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
+import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
 import com.starfishmedical.settings.Settings;
 import com.starfishmedical.settings.SettingsDialog;
 import com.starfishmedical.settings.SettingsTableCellEditor;
@@ -206,18 +207,22 @@ public class BlueberrySchemaParserGui implements Constants {
 		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 		m_text.append("Generating Java code in \"" + dir+"\"\n");
 		
-
-//		JavaWriter jw = new JavaWriter(dir);
-//		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
-		m_text.append("Done");
-	}
-	private void generateC() {
 		if(m_parser.getTopLevelField() == null) {
 			parse();
 		}
+		
+		JavaWriter jw = new JavaWriter(dir);
+		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		m_text.append("Done");
+	}
+	private void generateC() {
 		File dir = m_settings.getFile(Key.C_DIRECTORY);
 		m_text.append("Generating C code in \"" + dir+"\"\n");
 		
+		if(m_parser.getTopLevelField() == null) {
+			parse();
+		}
+
 		
 		CWriter cw = new CWriter(dir);
 		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
