@@ -55,6 +55,11 @@ public class JavaWriter extends SourceWriter {
 		startFile(headers);
 		addLine("package " + pkg.toDot()+";");
 		
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
+		addLine();
+
+		
 		//make a list of all the fields
 		List<BoolField> fs = new ArrayList<BoolField>();
 		//first header fields
@@ -80,7 +85,7 @@ public class JavaWriter extends SourceWriter {
 		addLine(";");
 		addLine("private int index;");
 		addLine("private int bitIndex;");
-		addLine("private BlockKeys(int i, int bi){");
+		addLine("private "+className+"(int i, int bi){");
 		indent();
 		addLine("index = i;");
 		addLine("bitIndex = bi;");
@@ -93,9 +98,9 @@ public class JavaWriter extends SourceWriter {
 		outdent();
 		addLine("}");
 		addLine("@Override");
-		addLine("public int gteBitIndex(){");
+		addLine("public int getBitIndex(){");
 		indent();
-		addLine("return bitIndex");
+		addLine("return bitIndex;");
 		outdent();
 		addLine("}");
 		outdent();
@@ -109,6 +114,10 @@ public class JavaWriter extends SourceWriter {
 		String className = top.getName().addSuffix("field","index").toUpperCamel();
 		startFile(headers);
 		addLine("package " + pkg.toDot()+";");
+		
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+		addLine();
 
 		//make a list of all the fields
 		List<BaseField> fs = new ArrayList<BaseField>();
@@ -155,7 +164,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		addLine(";");
 		addLine("private int index;");
-		addLine("private BlockKeys(int i){");
+		addLine("private "+className+"(int i){");
 		indent();
 		addLine("index = i;");
 		outdent();
@@ -190,7 +199,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		addLine(";");
 		addLine("private int value;");
-		addLine("private BlockKeys(int i){");
+		addLine("private "+className+"(int i){");
 		indent();
 		addLine("value = i;");
 		outdent();
