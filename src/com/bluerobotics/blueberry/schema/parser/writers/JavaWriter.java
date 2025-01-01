@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 
@@ -36,6 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
  * 
  */
 public class JavaWriter extends SourceWriter {
+	private FieldName m_packageName;
 
 	public JavaWriter(File dir) {
 		super(dir);
@@ -43,21 +45,74 @@ public class JavaWriter extends SourceWriter {
 
 	@Override
 	public void write(BlockField top, String... headers) {
-		FieldName pkg = FieldName.fromDot("com.bluerobotics.blueberry").addSuffix(top.getName().toLowerCase());
-		writeKeyEnum(top, pkg, headers);
-		writeFieldIndexEnum(top, pkg, headers);
-		writeBitIndexEnum(top, pkg, headers);
+		m_packageName = FieldName.fromDot("com.bluerobotics.blueberry").addSuffix(top.getName().toLowerCase());
+		String interfaceName = top.getName().addSuffix("constants").toUpperCamel();
+		startFile(headers);
+		addLine("public interface "+interfaceName+" {");
+		indent();
+		
+		writeConsants(top);
+		writeKeyEnum(top);
+		writeFieldIndexEnum(top);
+		writeBitIndexEnum(top);
+		outdent();
+		addLine("}");
+		writeToFile(m_packageName.toPath() + interfaceName,"java");	
+		
+		
+		String className = top.getName().toUpperCamel();
+		startFile(headers);
+		addLine("public class "+className+" extends Packet implements "+interfaceName+"{");
+		indent();
+		
+		writePacketMethods(top);
+
+		outdent();
+		addLine("}");
+		writeToFile(m_packageName.toPath() + className,"java");	
 		
 	}
+	
+	
 
-	private void writeBitIndexEnum(BlockField top, FieldName pkg, String[] headers) {
-		String className = top.getName().addSuffix("bit","index").toUpperCamel();
-		startFile(headers);
-		addLine("package " + pkg.toDot()+";");
+	private void writePacketMethods(BlockField top) {
+		//first get length, preamble and crc fields
+		BaseField preamble = top.getHeaderField("preamble");
+		BaseField length = top.getHeaderField("length");
+		BaseField crc = top.getHeaderField("crc");
+	}
+
+	private void writeConsants(BlockField top) {
+		ArrayList<FixedIntField> fifs = new ArrayList<FixedIntField>();
+		
+		top.scanThroughHeaderFields(f -> {
+			if(f instanceof FixedIntField && !f.getName().toLowerCamel().equals("key")) {
+				fifs.add((FixedIntField)f);
+			}
+		}, true);
+		for(FixedIntField fif : fifs) {
+			
+			String name = makeBaseFieldNameRoot(fif).addSuffix("VALUE").toUpperSnake();
+			addDocComment(fif.getComment());
+			addLine("public static final int "+name+" = "+WriterUtils.formatAsHex(fif.getValue())+";");
+		}
+	}
+
+	@Override
+	protected void startFile(String... hs) {
+		// TODO Auto-generated method stub
+		super.startFile(hs);
+		addLine("package " + m_packageName.toDot()+";");
 		
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
 		addLine();
+	}
+
+	private void writeBitIndexEnum(BlockField top) {
+		String className = top.getName().addSuffix("bit","index").toUpperCamel();
+		
 
 		
 		//make a list of all the fields
@@ -103,27 +158,29 @@ public class JavaWriter extends SourceWriter {
 		addLine("return bitIndex;");
 		outdent();
 		addLine("}");
+		addLine("@Override");
+		addLine("public int getBits(){");
+		indent();
+		addLine("return 1;");
+		outdent();
+		addLine("}");
 		outdent();
 		addLine("};");
 		
 		addLine();
-		writeToFile(pkg.toPath()+className,"java");	
 	}
 
-	private void writeFieldIndexEnum(BlockField top, FieldName pkg, String[] headers) {
+	private void writeFieldIndexEnum(BlockField top) {
 		String className = top.getName().addSuffix("field","index").toUpperCamel();
-		startFile(headers);
-		addLine("package " + pkg.toDot()+";");
+	
 		
-		addLine();
-		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
-		addLine();
+		
 
 		//make a list of all the fields
 		List<BaseField> fs = new ArrayList<BaseField>();
 		//first header fields
 		top.scanThroughHeaderFields(bf -> {
-			if(bf.getName() != null) {
+			if(bf.getName() != null && !(bf instanceof CompoundField) && !(bf instanceof BoolField)) {
 				boolean found = false;
 				for(BaseField f : fs) {
 					if(f.getName().equals(bf.getName())) {
@@ -140,9 +197,9 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//now base fields
-		top.scanThroughBaseFields((f) -> {
-			if(f.getName() != null) {
-				fs.add(f);
+		top.scanThroughBaseFields((bf) -> {
+			if(bf.getName() != null && !(bf instanceof CompoundField) && !(bf instanceof BoolField)) {
+				fs.add(bf);
 			}
 		}, false);	
 		
@@ -160,13 +217,15 @@ public class JavaWriter extends SourceWriter {
 			} else {
 				i = f.getIndex();
 			}
-			addLine(name + "("+i+"),");
+			addLine(name + "("+i+", " +f.getBitCount()+"),");
 		}
 		addLine(";");
 		addLine("private int index;");
-		addLine("private "+className+"(int i){");
+		addLine("private int bits;");
+		addLine("private "+className+"(int i, int b){");
 		indent();
 		addLine("index = i;");
+		addLine("bits = b;");
 		outdent();
 		addLine("}");
 		addLine("@Override");
@@ -175,17 +234,22 @@ public class JavaWriter extends SourceWriter {
 		addLine("return index;");
 		outdent();
 		addLine("}");
+		addLine("@Override");
+		addLine("public int getBits(){");
+		indent();
+		addLine("return bits;");
+		outdent();
+		addLine("}");
 		outdent();
 		addLine("};");
 		
 		addLine();
-		writeToFile(pkg.toPath()+className,"java");	
+		
 	}
 
-	private void writeKeyEnum(BlockField top, FieldName pkg, String... headers) {
+	private void writeKeyEnum(BlockField top) {
 		String className = top.getName().addSuffix("block","keys").toUpperCamel();
-		startFile(headers);
-		addLine("package " + pkg.toDot()+";");
+	
 
 		
 		List<FixedIntField> keys = getBlockKeys(top);
@@ -213,7 +277,7 @@ public class JavaWriter extends SourceWriter {
 		outdent();
 		addLine("};");
 		addLine();
-		writeToFile(pkg.toPath()+className,"java");	
+		
 	}
 
 }

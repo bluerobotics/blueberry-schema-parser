@@ -27,9 +27,9 @@ THE SOFTWARE.
  * Define the packet header
  */
 define Packet block {
-	uint32 key //this should be set when this defined block is used below.
+	uint32 preamble //A packet must start with this exact value
 	uint16 length  //the length of the packet in words
-	/* a CRC-32 for packet error detection
+	/* a CRC-16 CCITT(0xffff) for packet error detection
 	 * this is computed on all words of the packet
 	 * this is only necessary to check if the transport method
 	 * does not have error detection mechanism
@@ -39,7 +39,7 @@ define Packet block {
 /* 
  * This is the top level hierarchy of a BR packet
  */
-Packet brPacket(key = 0x45554c42) {
+Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * Now the payload header
 	 */

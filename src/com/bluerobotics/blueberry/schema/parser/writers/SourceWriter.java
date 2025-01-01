@@ -211,7 +211,7 @@ public abstract class SourceWriter {
 		Field p = key.getContainingWord().getParent();
 		FieldName pn = p.getName();
 		if(p instanceof ArrayField) {
-			pn.addPrefix(p.getParent().getName());
+			pn = pn.addPrefix(p.getParent().getName());
 		}
 		
 		String name = key.getName().addPrefix(pn).toUpperSnake();
