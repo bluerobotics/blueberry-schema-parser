@@ -688,6 +688,7 @@ public class CWriter extends SourceWriter {
 		
 		for(BlockField bf : bfs) {
 			addBlockAdder(bf, true, protoNotDeclaration);
+			addBlockAdder(bf, false, protoNotDeclaration);
 		}
 	}
 	private void addArrayAdders(BlockField top, boolean protoNotDeclaration) {

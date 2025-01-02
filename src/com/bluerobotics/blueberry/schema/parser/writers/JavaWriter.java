@@ -42,6 +42,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_bitIndexEnumName;
 	private String m_fieldIndexEnumName;
 	private String m_packetClassName;
+	private String m_keyEnumName;
 
 	public JavaWriter(File dir) {
 		super(dir);
@@ -54,6 +55,8 @@ public class JavaWriter extends SourceWriter {
 		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
 		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
 		m_packetClassName = top.getName().toUpperCamel();
+		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
+
 
 
 		writeConstantsFile(top, headers);
@@ -124,11 +127,85 @@ public class JavaWriter extends SourceWriter {
 		outdent();
 		addLine("}");
 		
+		addLine();
+		addLine("@Override");
+		addLine("public void setPublishedByteLength(int length){");
+		indent();
+		
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+".getIndex(), ("+lookupType(length)+")length);");
+		outdent();
+		addLine("}");
+		
+		
+		
+		addBlockMethods(top);
 		
 
 		outdent();
 		addLine("}");
 		writeToFile(m_packageName.toPath() + m_packetClassName,"java");	
+	}
+
+	private void addBlockMethods(BlockField top) {
+		List<BlockField> bfs = top.getAllBlockFields();
+		
+		for(BlockField bf : bfs) {
+			if(bf != top) {//ignore top level
+				addBlockAdder(bf, true);
+				addBlockAdder(bf, false);
+			}
+		}
+	}
+	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout) {
+		String blockName = bf.getName().toUpperCamel();
+		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
+		String functionName = "add"+blockName;
+		List<BaseField> fs = bf.getNamedBaseFields();
+		FixedIntField keyF = (FixedIntField)bf.getHeaderField("key");
+		BaseField lengthF = bf.getHeaderField("length");
+		BaseField repeatsF = bf.getHeaderField("repeats");
+		String paramList = "";
+		if(withParamsNotWithout && fs.size() == 0) {
+			//don't do anything if this block does not have parameters but we're doing the version with params
+			return;
+		}
+		if(withParamsNotWithout) {
+			boolean firstTime = true;
+			for(BaseField f : fs) {
+				paramList += (firstTime ? "" : ", ")+lookupType(f)+" "+f.getName().toLowerCamel();
+				firstTime = false;
+			}
+		}
+		addDocComment(comment);
+		addLine("void "+functionName+"("+paramList+"){");
+		indent();
+		
+		//add method to set key
+		String keyType = lookupType(keyF);
+		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
+		String keyValue = makeKeyName(keyF);
+		String keyFuncName = FieldName.fromCamel("put").addSuffix(keyType).toLowerCamel();
+	
+		addLine(keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", "+m_keyEnumName+"."+keyValue+".getValue());");
+		
+
+		//add method to set length
+		String lengthType = lookupType(lengthF);
+		int lengthValue = withParamsNotWithout ? fs.size() + 1 : 1;
+		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
+		String lengthFuncName = FieldName.fromCamel("put").addSuffix(lengthType).toLowerCamel();
+		//add key
+		addLine(lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", "+lengthValue+");");
+		
+		
+		
+		
+		
+		outdent();
+		addLine("}");
+		
+		
+		
 	}
 
 	private void writeConstantsFile(BlockField top, String[] headers) {
@@ -352,13 +429,9 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeKeyEnum(BlockField top) {
-		String className = top.getName().addSuffix("block","keys").toUpperCamel();
-	
-
-		
 		List<FixedIntField> keys = getBlockKeys(top);
 		addDocComment("An enum of all the block keys for the "+top.getName()+" schema.");
-		addLine("public enum "+className+" {");
+		addLine("public enum "+m_keyEnumName+" {");
 		indent();
 		for(FixedIntField key : keys) {
 			String name = makeKeyName(key);
@@ -367,7 +440,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		addLine(";");
 		addLine("private int value;");
-		addLine("private "+className+"(int i){");
+		addLine("private "+m_keyEnumName+"(int i){");
 		indent();
 		addLine("value = i;");
 		outdent();
