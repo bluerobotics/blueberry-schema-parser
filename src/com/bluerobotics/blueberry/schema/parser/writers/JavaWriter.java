@@ -38,6 +38,10 @@ import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
  */
 public class JavaWriter extends SourceWriter {
 	private FieldName m_packageName;
+	private String m_constantsName;
+	private String m_bitIndexEnumName;
+	private String m_fieldIndexEnumName;
+	private String m_packetClassName;
 
 	public JavaWriter(File dir) {
 		super(dir);
@@ -46,9 +50,95 @@ public class JavaWriter extends SourceWriter {
 	@Override
 	public void write(BlockField top, String... headers) {
 		m_packageName = FieldName.fromDot("com.bluerobotics.blueberry").addSuffix(top.getName().toLowerCase());
-		String interfaceName = top.getName().addSuffix("constants").toUpperCamel();
+		m_constantsName = top.getName().addSuffix("constants").toUpperCamel();
+		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
+		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
+		m_packetClassName = top.getName().toUpperCamel();
+
+
+		writeConstantsFile(top, headers);
+		writePacketClass(top, headers);
+		
+		
+	}
+	
+	
+
+	private void writePacketClass(BlockField top, String[] headers) {
 		startFile(headers);
-		addLine("public interface "+interfaceName+" {");
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
+		addLine();
+
+
+		
+		addLine("public class "+m_packetClassName+" extends BlueberryPacket implements "+m_constantsName+"{");
+		indent();
+		
+		addLine("public "+m_packetClassName + "(int size){");
+		indent();
+		addLine("super(size);");
+		outdent();
+		addLine("}");
+		
+		
+		//first get length, preamble and crc fields
+		BaseField preamble = top.getHeaderField("preamble");
+		BaseField length = top.getHeaderField("length");
+		BaseField crc = top.getHeaderField("crc");
+		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getPublishedCrc(){");
+		indent();
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+".getIndex());");
+
+		outdent();
+		addLine("}");
+		
+		addLine();
+		addLine("@Override");
+		addLine("public void setPublishedCrc(int crc){");
+		indent();
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+".getIndex(), ("+lookupType(crc)+")crc);");
+
+		outdent();
+		addLine("}");
+	
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getStartWord(){");
+		indent();
+		addLine("return "+preambleConstantName+";");
+		outdent();
+		addLine("}");
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getPublishedByteLength(){");
+		indent();
+		
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+".getIndex());");
+		outdent();
+		addLine("}");
+		
+		
+
+		outdent();
+		addLine("}");
+		writeToFile(m_packageName.toPath() + m_packetClassName,"java");	
+	}
+
+	private void writeConstantsFile(BlockField top, String[] headers) {
+		startFile(headers);
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+		addLine();
+		
+		addLine("public interface "+m_constantsName+" {");
 		indent();
 		
 		writeConsants(top);
@@ -57,31 +147,53 @@ public class JavaWriter extends SourceWriter {
 		writeBitIndexEnum(top);
 		outdent();
 		addLine("}");
-		writeToFile(m_packageName.toPath() + interfaceName,"java");	
+		writeToFile(m_packageName.toPath() + m_constantsName,"java");	
 		
 		
-		String className = top.getName().toUpperCamel();
-		startFile(headers);
-		addLine("public class "+className+" extends Packet implements "+interfaceName+"{");
-		indent();
-		
-		writePacketMethods(top);
 
-		outdent();
-		addLine("}");
-		writeToFile(m_packageName.toPath() + className,"java");	
-		
-	}
-	
-	
-
-	private void writePacketMethods(BlockField top) {
-		//first get length, preamble and crc fields
-		BaseField preamble = top.getHeaderField("preamble");
-		BaseField length = top.getHeaderField("length");
-		BaseField crc = top.getHeaderField("crc");
 	}
 
+	private String lookupType(BaseField f) {
+		String result = "";
+		switch(f.getType()) {
+		case ARRAY:
+			break;
+		case BLOCK:
+			break;
+		case BOOL:
+			result = "boolean";
+			break;
+		case BOOLFIELD:
+			result = "byte";
+			break;
+		case COMPOUND:
+			result = "int";
+			break;
+		case FLOAT32:
+			result = "float";
+			break;
+		case INT16:
+			result = "short";
+			break;
+		case INT32:
+			result = "int";
+			break;
+		case INT8:
+			result = "byte";
+			break;
+		case UINT16:
+			result = "short";
+			break;
+		case UINT32:
+			result = "int";
+			break;
+		case UINT8:
+			result = "byte";
+			break;
+	
+		}
+		return result;
+	}
 	private void writeConsants(BlockField top) {
 		ArrayList<FixedIntField> fifs = new ArrayList<FixedIntField>();
 		
@@ -104,14 +216,11 @@ public class JavaWriter extends SourceWriter {
 		super.startFile(hs);
 		addLine("package " + m_packageName.toDot()+";");
 		
-		addLine();
-		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
-		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
-		addLine();
+
 	}
 
 	private void writeBitIndexEnum(BlockField top) {
-		String className = top.getName().addSuffix("bit","index").toUpperCamel();
+		
 		
 
 		
@@ -126,7 +235,7 @@ public class JavaWriter extends SourceWriter {
 		
 		//now generate the enum details
 		addDocComment("An enum of all the field indeces for the "+top.getName()+" schema.");
-		addLine("public enum "+className+" implements BitIndex {");
+		addLine("public enum "+m_bitIndexEnumName+" implements BitIndex {");
 		indent();
 		for(BoolField f : fs) {
 			String name = makeBaseFieldNameRoot(f).toUpperSnake();
@@ -140,7 +249,7 @@ public class JavaWriter extends SourceWriter {
 		addLine(";");
 		addLine("private int index;");
 		addLine("private int bitIndex;");
-		addLine("private "+className+"(int i, int bi){");
+		addLine("private "+m_bitIndexEnumName+"(int i, int bi){");
 		indent();
 		addLine("index = i;");
 		addLine("bitIndex = bi;");
@@ -171,11 +280,6 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeFieldIndexEnum(BlockField top) {
-		String className = top.getName().addSuffix("field","index").toUpperCamel();
-	
-		
-		
-
 		//make a list of all the fields
 		List<BaseField> fs = new ArrayList<BaseField>();
 		//first header fields
@@ -206,7 +310,7 @@ public class JavaWriter extends SourceWriter {
 		
 		//now generate the enum details
 		addDocComment("An enum of all the field indeces for the "+top.getName()+" schema.");
-		addLine("public enum "+className+" implements FieldIndex {");
+		addLine("public enum "+m_fieldIndexEnumName+" implements FieldIndex {");
 		indent();
 		for(BaseField f : fs) {
 			String name = makeBaseFieldNameRoot(f).toUpperSnake();
@@ -222,7 +326,7 @@ public class JavaWriter extends SourceWriter {
 		addLine(";");
 		addLine("private int index;");
 		addLine("private int bits;");
-		addLine("private "+className+"(int i, int b){");
+		addLine("private "+m_fieldIndexEnumName+"(int i, int b){");
 		indent();
 		addLine("index = i;");
 		addLine("bits = b;");
