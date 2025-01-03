@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
@@ -95,7 +96,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("public int getPublishedCrc(){");
 		indent();
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+".getIndex());");
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+");");
 
 		outdent();
 		addLine("}");
@@ -104,7 +105,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("public void setPublishedCrc(int crc){");
 		indent();
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+".getIndex(), ("+lookupType(crc)+")crc);");
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+", ("+lookupType(crc)+")crc);");
 
 		outdent();
 		addLine("}");
@@ -120,19 +121,19 @@ public class JavaWriter extends SourceWriter {
 		
 		addLine();
 		addLine("@Override");
-		addLine("public int getPublishedByteLength(){");
+		addLine("public int getPublishedWordLength(){");
 		indent();
 		
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+".getIndex());");
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+");");
 		outdent();
 		addLine("}");
 		
 		addLine();
 		addLine("@Override");
-		addLine("public void setPublishedByteLength(int length){");
+		addLine("public void setPublishedWordLength(int length){");
 		indent();
 		
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+".getIndex(), ("+lookupType(length)+")length);");
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+", ("+lookupType(length)+")length);");
 		outdent();
 		addLine("}");
 		
@@ -140,11 +141,22 @@ public class JavaWriter extends SourceWriter {
 		
 		addBlockMethods(top);
 		
+		addArrayMethods(top);
+		
 
 		outdent();
 		addLine("}");
 		writeToFile(m_packageName.toPath() + m_packetClassName,"java");	
 	}
+
+	private void addArrayMethods(BlockField top) {
+		List<ArrayField> afs = top.getAllArrayFields();
+		for(ArrayField af : afs) {
+			addArrayAdder(af);
+		}
+	}
+
+	
 
 	private void addBlockMethods(BlockField top) {
 		List<BlockField> bfs = top.getAllBlockFields();
@@ -155,6 +167,64 @@ public class JavaWriter extends SourceWriter {
 				addBlockAdder(bf, false);
 			}
 		}
+	}
+	
+	private void addArrayAdder(ArrayField af) {
+		String blockName = af.getName().toUpperCamel();
+		String comment = "Adds a new "+blockName+" to the specified packet.\n"+af.getComment();
+		String functionName = "add"+blockName;
+		List<BaseField> fs = af.getNamedBaseFields();
+		FixedIntField keyF = (FixedIntField)af.getHeaderField("key");
+		BaseField lengthF = af.getHeaderField("length");
+		BaseField repeatsF = af.getHeaderField("repeats");
+		String paramList = "";
+		
+		
+		boolean firstTime = true;
+		for(BaseField f : fs) {
+			paramList += (firstTime ? "" : ", ")+lookupType(f)+" "+f.getName().toLowerCamel();
+			firstTime = false;
+		}
+		
+		addDocComment(comment);
+		addLine("void "+functionName+"("+paramList+"){");
+		indent();
+		
+		//add method to set key
+		String keyType = lookupType(keyF);
+		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
+		String keyValue = makeKeyName(keyF);
+		String keyFuncName = FieldName.fromCamel("put").addSuffix(keyType).toLowerCamel();
+	
+		addLine(keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", "+m_keyEnumName+"."+keyValue+".getValue());");
+		
+
+		//add method to set length
+		String lengthType = lookupType(lengthF);
+		int lengthValue = fs.size() + 1;
+		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
+		String lengthFuncName = FieldName.fromCamel("put").addSuffix(lengthType).toLowerCamel();
+		//add key
+		addLine(lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", "+lengthValue+");");
+		
+		for(BaseField f : fs) {
+			boolean bit = f instanceof BoolField;
+			
+			String fType = bit ? "bool" : lookupType(f);
+			String fValue = f.getName().toLowerCamel();
+			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
+			String fFuncName = FieldName.fromCamel("put").addSuffix(fType).toLowerCamel();
+			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
+			addLine(fFuncName+"("+enumName+"."+fIndex+", "+fValue+");");
+		}
+		
+		
+		addLine("addWords("+lengthValue+");");
+		
+		
+		
+		outdent();
+		addLine("}");
 	}
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout) {
 		String blockName = bf.getName().toUpperCamel();
@@ -196,8 +266,20 @@ public class JavaWriter extends SourceWriter {
 		String lengthFuncName = FieldName.fromCamel("put").addSuffix(lengthType).toLowerCamel();
 		//add key
 		addLine(lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", "+lengthValue+");");
+		if(withParamsNotWithout) {
+			for(BaseField f : fs) {
+				boolean bit = f instanceof BoolField;
+				
+				String fType = bit ? "bool" : lookupType(f);
+				String fValue = f.getName().toLowerCamel();
+				String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
+				String fFuncName = FieldName.fromCamel("put").addSuffix(fType).toLowerCamel();
+				String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
+				addLine(fFuncName+"("+enumName+"."+fIndex+", "+fValue+");");
+			}
+		}
 		
-		
+		addLine("addWords("+lengthValue+");");
 		
 		
 		
