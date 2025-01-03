@@ -42,7 +42,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_constantsName;
 	private String m_bitIndexEnumName;
 	private String m_fieldIndexEnumName;
-	private String m_packetClassName;
+	private String m_packetBuilderName;
 	private String m_keyEnumName;
 
 	public JavaWriter(File dir) {
@@ -55,20 +55,20 @@ public class JavaWriter extends SourceWriter {
 		m_constantsName = top.getName().addSuffix("constants").toUpperCamel();
 		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
 		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
-		m_packetClassName = top.getName().toUpperCamel();
+		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
 
 
 
 		writeConstantsFile(top, headers);
-		writePacketClass(top, headers);
+		writePacketBuilder(top, headers);
 		
 		
 	}
 	
 	
 
-	private void writePacketClass(BlockField top, String[] headers) {
+	private void writePacketBuilder(BlockField top, String[] headers) {
 		startFile(headers);
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
@@ -76,10 +76,10 @@ public class JavaWriter extends SourceWriter {
 
 
 		
-		addLine("public class "+m_packetClassName+" extends BlueberryPacket implements "+m_constantsName+"{");
+		addLine("public class "+m_packetBuilderName+" extends BlueberryPacket implements "+m_constantsName+"{");
 		indent();
 		
-		addLine("public "+m_packetClassName + "(int size){");
+		addLine("public "+m_packetBuilderName + "(int size){");
 		indent();
 		addLine("super(size);");
 		outdent();
@@ -146,7 +146,87 @@ public class JavaWriter extends SourceWriter {
 
 		outdent();
 		addLine("}");
-		writeToFile(m_packageName.toPath() + m_packetClassName,"java");	
+		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");	
+	}
+	private void writePacketClass(BlockField top, String[] headers) {
+		startFile(headers);
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
+		addLine();
+
+
+		
+		addLine("public class "+m_packetBuilderName+" extends BlueberryPacket implements "+m_constantsName+"{");
+		indent();
+		
+		addLine("public "+m_packetBuilderName + "(int size){");
+		indent();
+		addLine("super(size);");
+		outdent();
+		addLine("}");
+		
+		
+		//first get length, preamble and crc fields
+		BaseField preamble = top.getHeaderField("preamble");
+		BaseField length = top.getHeaderField("length");
+		BaseField crc = top.getHeaderField("crc");
+		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getPublishedCrc(){");
+		indent();
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+");");
+
+		outdent();
+		addLine("}");
+		
+		addLine();
+		addLine("@Override");
+		addLine("public void setPublishedCrc(int crc){");
+		indent();
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+", ("+lookupType(crc)+")crc);");
+
+		outdent();
+		addLine("}");
+	
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getStartWord(){");
+		indent();
+		addLine("return "+preambleConstantName+";");
+		outdent();
+		addLine("}");
+		
+		addLine();
+		addLine("@Override");
+		addLine("public int getPublishedWordLength(){");
+		indent();
+		
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+");");
+		outdent();
+		addLine("}");
+		
+		addLine();
+		addLine("@Override");
+		addLine("public void setPublishedWordLength(int length){");
+		indent();
+		
+		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+", ("+lookupType(length)+")length);");
+		outdent();
+		addLine("}");
+		
+		
+		
+		addBlockMethods(top);
+		
+		addArrayMethods(top);
+		
+
+		outdent();
+		addLine("}");
+		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");	
 	}
 
 	private void addArrayMethods(BlockField top) {

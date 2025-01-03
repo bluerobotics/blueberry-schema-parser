@@ -30,7 +30,7 @@ define Packet block {
 	uint32 preamble //A packet must start with this exact value
 	uint16 length  //the length of the packet in words
 	/* a CRC-16 CCITT(0xffff) for packet error detection
-	 * this is computed on all words of the packet
+	 * this is computed on all words of the packet beyond the header
 	 * this is only necessary to check if the transport method
 	 * does not have error detection mechanism
 	 */
