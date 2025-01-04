@@ -66,6 +66,10 @@ public abstract class SourceWriter {
 	protected void outdent() {
 		--m_indent;
 	}
+	protected void closeBrace() {
+		outdent();
+		addLine("}");
+	}
 	protected void writeToFile(String name, String extension) {
 		File f = new File(m_directory, name+"."+extension);
 		File p = f.getParentFile();

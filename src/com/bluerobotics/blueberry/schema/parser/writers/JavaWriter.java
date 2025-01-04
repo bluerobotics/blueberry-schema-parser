@@ -43,6 +43,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_bitIndexEnumName;
 	private String m_fieldIndexEnumName;
 	private String m_packetBuilderName;
+	private String m_packetDecoderName;
 	private String m_keyEnumName;
 
 	public JavaWriter(File dir) {
@@ -56,6 +57,7 @@ public class JavaWriter extends SourceWriter {
 		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
 		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
 		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
+		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
 
 
@@ -71,12 +73,12 @@ public class JavaWriter extends SourceWriter {
 	private void writePacketBuilder(BlockField top, String[] headers) {
 		startFile(headers);
 		addLine();
-		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
 		addLine();
 
 
 		
-		addLine("public class "+m_packetBuilderName+" extends BlueberryPacket implements "+m_constantsName+"{");
+		addLine("public class "+m_packetBuilderName+" extends BlueberryPacketBuilder implements "+m_constantsName+"{");
 		indent();
 		
 		addLine("public "+m_packetBuilderName + "(int size){");
@@ -87,55 +89,24 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//first get length, preamble and crc fields
-		BaseField preamble = top.getHeaderField("preamble");
+		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
 		BaseField length = top.getHeaderField("length");
 		BaseField crc = top.getHeaderField("crc");
 		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		String preambleIndexName = makeBaseFieldNameRoot(preamble).toUpperSnake();
 		
-		addLine();
-		addLine("@Override");
-		addLine("public int getPublishedCrc(){");
-		indent();
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+");");
-
-		outdent();
-		addLine("}");
-		
-		addLine();
-		addLine("@Override");
-		addLine("public void setPublishedCrc(int crc){");
-		indent();
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+", ("+lookupType(crc)+")crc);");
-
-		outdent();
-		addLine("}");
 	
-		
-		addLine();
-		addLine("@Override");
-		addLine("public int getStartWord(){");
-		indent();
-		addLine("return "+preambleConstantName+";");
-		outdent();
-		addLine("}");
-		
-		addLine();
-		addLine("@Override");
-		addLine("public int getPublishedWordLength(){");
+	
+	
+		addLine("public void finish(){");
 		indent();
 		
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+");");
-		outdent();
-		addLine("}");
+		String preambleSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
 		
-		addLine();
-		addLine("@Override");
-		addLine("public void setPublishedWordLength(int length){");
-		indent();
 		
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+", ("+lookupType(length)+")length);");
-		outdent();
-		addLine("}");
+		addLine("getTopLevelBlock()."+preambleSetter+"("+m_fieldIndexEnumName+"."+preambleIndexName+", 0, "+preambleConstantName+");");
+		
+		closeBrace();
 		
 		
 		
@@ -148,6 +119,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("}");
 		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");	
 	}
+
 	private void writePacketClass(BlockField top, String[] headers) {
 		startFile(headers);
 		addLine();
@@ -156,10 +128,10 @@ public class JavaWriter extends SourceWriter {
 
 
 		
-		addLine("public class "+m_packetBuilderName+" extends BlueberryPacket implements "+m_constantsName+"{");
+		addLine("public class "+m_packetDecoderName+" extends BlueberryPacket implements "+m_constantsName+"{");
 		indent();
 		
-		addLine("public "+m_packetBuilderName + "(int size){");
+		addLine("public "+m_packetDecoderName + "(int size){");
 		indent();
 		addLine("super(size);");
 		outdent();
@@ -176,7 +148,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("public int getPublishedCrc(){");
 		indent();
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+");");
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+");");
 
 		outdent();
 		addLine("}");
@@ -185,7 +157,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("public void setPublishedCrc(int crc){");
 		indent();
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+", ("+lookupType(crc)+")crc);");
+		addLine(FieldName.fromCamel("put").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake()+", ("+lookupTypeForFuncName(crc)+")crc);");
 
 		outdent();
 		addLine("}");
@@ -196,26 +168,23 @@ public class JavaWriter extends SourceWriter {
 		addLine("public int getStartWord(){");
 		indent();
 		addLine("return "+preambleConstantName+";");
-		outdent();
-		addLine("}");
+		closeBrace();
 		
 		addLine();
 		addLine("@Override");
 		addLine("public int getPublishedWordLength(){");
 		indent();
 		
-		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+");");
-		outdent();
-		addLine("}");
+		addLine("return "+FieldName.fromCamel("get").addSuffix(lookupTypeForFuncName(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+");");
+		closeBrace();
 		
 		addLine();
 		addLine("@Override");
 		addLine("public void setPublishedWordLength(int length){");
 		indent();
 		
-		addLine(FieldName.fromCamel("put").addSuffix(lookupType(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+", ("+lookupType(length)+")length);");
-		outdent();
-		addLine("}");
+		addLine(FieldName.fromCamel("put").addSuffix(lookupTypeForFuncName(length)).toLowerCamel()+"("+m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake()+", ("+lookupTypeForFuncName(length)+")length);");
+		closeBrace();
 		
 		
 		
@@ -224,9 +193,8 @@ public class JavaWriter extends SourceWriter {
 		addArrayMethods(top);
 		
 
-		outdent();
-		addLine("}");
-		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");	
+		closeBrace();
+		writeToFile(m_packageName.toPath() + m_packetDecoderName,"java");	
 	}
 
 	private void addArrayMethods(BlockField top) {
@@ -252,7 +220,7 @@ public class JavaWriter extends SourceWriter {
 	private void addArrayAdder(ArrayField af) {
 		String blockName = af.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the specified packet.\n"+af.getComment();
-		String functionName = "add"+blockName;
+		String functionName = "add"+af.getParent().getName().toUpperCamel() +blockName;
 		List<BaseField> fs = af.getNamedBaseFields();
 		FixedIntField keyF = (FixedIntField)af.getHeaderField("key");
 		BaseField lengthF = af.getHeaderField("length");
@@ -262,7 +230,7 @@ public class JavaWriter extends SourceWriter {
 		
 		boolean firstTime = true;
 		for(BaseField f : fs) {
-			paramList += (firstTime ? "" : ", ")+lookupType(f)+" "+f.getName().toLowerCamel();
+			paramList += (firstTime ? "" : ", ")+lookupTypeForJavaVars(f)+"[] "+f.getName().toLowerCamel();
 			firstTime = false;
 		}
 		
@@ -270,41 +238,51 @@ public class JavaWriter extends SourceWriter {
 		addLine("void "+functionName+"("+paramList+"){");
 		indent();
 		
+		addLine("int n = "+fs.get(0).getName().toLowerCamel()+".length;");
+		
+		
 		//add method to set key
-		String keyType = lookupType(keyF);
+		String keyType = lookupTypeForFuncName(keyF);
 		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
 		String keyValue = makeKeyName(keyF);
-		String keyFuncName = FieldName.fromCamel("put").addSuffix(keyType).toLowerCamel();
+		String keyFuncName = FieldName.fromCamel("write").addSuffix(keyType).toLowerCamel();
 	
-		addLine(keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", "+m_keyEnumName+"."+keyValue+".getValue());");
+		addLine("getCurrentBlock()."+keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", 0, "+m_keyEnumName+"."+keyValue+".getValue());");
 		
 
 		//add method to set length
-		String lengthType = lookupType(lengthF);
-		int lengthValue = fs.size() + 1;
+		String lengthType = lookupTypeForFuncName(lengthF);
+		int lengthValue = fs.size();
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
-		String lengthFuncName = FieldName.fromCamel("put").addSuffix(lengthType).toLowerCamel();
+		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
 		//add key
-		addLine(lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", "+lengthValue+");");
+		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, 1 + ("+lengthValue+" * n));");
 		
+		//add method to set repeat
+		String repeatsType = lookupTypeForFuncName(repeatsF);
+		String repeatsValue ="n";
+		String repeatsIndex = makeBaseFieldNameRoot(repeatsF).toUpperSnake();
+		String repeatsFuncName = FieldName.fromCamel("write").addSuffix(repeatsType).toLowerCamel();
+		//add key
+		addLine("getCurrentBlock()."+repeatsFuncName+"("+m_fieldIndexEnumName+"."+repeatsIndex+", 0, "+repeatsValue+");");
+		addLine("for(int i = 0; i < n; ++i){");
+		indent();
 		for(BaseField f : fs) {
 			boolean bit = f instanceof BoolField;
 			
-			String fType = bit ? "bool" : lookupType(f);
+			String fType = bit ? "bool" : lookupTypeForFuncName(f);
 			String fValue = f.getName().toLowerCamel();
 			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
-			String fFuncName = FieldName.fromCamel("put").addSuffix(fType).toLowerCamel();
+			String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
-			addLine(fFuncName+"("+enumName+"."+fIndex+", "+fValue+");");
+			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", "+fs.size()+" * i, "+fValue+"[i]);");
 		}
+		closeBrace();
+		addLine("advanceBlock("+lengthValue+");");
 		
 		
-		addLine("addWords("+lengthValue+");");
 		
-		
-		
-		outdent();
-		addLine("}");
+		closeBrace();
 	}
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout) {
 		String blockName = bf.getName().toUpperCamel();
@@ -322,49 +300,54 @@ public class JavaWriter extends SourceWriter {
 		if(withParamsNotWithout) {
 			boolean firstTime = true;
 			for(BaseField f : fs) {
-				paramList += (firstTime ? "" : ", ")+lookupType(f)+" "+f.getName().toLowerCamel();
+				paramList += (firstTime ? "" : ", ")+lookupTypeForJavaVars(f)+" "+f.getName().toLowerCamel();
 				firstTime = false;
 			}
 		}
 		addDocComment(comment);
 		addLine("void "+functionName+"("+paramList+"){");
 		indent();
+	
 		
 		//add method to set key
-		String keyType = lookupType(keyF);
+		String keyType = lookupTypeForFuncName(keyF);
 		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
 		String keyValue = makeKeyName(keyF);
-		String keyFuncName = FieldName.fromCamel("put").addSuffix(keyType).toLowerCamel();
+		String keyFuncName = FieldName.fromCamel("write").addSuffix(keyType).toLowerCamel();
 	
-		addLine(keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", "+m_keyEnumName+"."+keyValue+".getValue());");
+		addLine("getCurrentBlock()."+keyFuncName+"("+m_fieldIndexEnumName+"."+keyIndex+", 0, "+m_keyEnumName+"."+keyValue+".getValue());");
 		
 
 		//add method to set length
-		String lengthType = lookupType(lengthF);
+		String lengthType = lookupTypeForFuncName(lengthF);
 		int lengthValue = withParamsNotWithout ? fs.size() + 1 : 1;
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
-		String lengthFuncName = FieldName.fromCamel("put").addSuffix(lengthType).toLowerCamel();
+		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
 		//add key
-		addLine(lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", "+lengthValue+");");
+		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, "+lengthValue+");");
+		
+	
+		
+		
+		
 		if(withParamsNotWithout) {
 			for(BaseField f : fs) {
 				boolean bit = f instanceof BoolField;
 				
-				String fType = bit ? "bool" : lookupType(f);
+				String fType = bit ? "bool" : lookupTypeForFuncName(f);
 				String fValue = f.getName().toLowerCamel();
 				String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
-				String fFuncName = FieldName.fromCamel("put").addSuffix(fType).toLowerCamel();
+				String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 				String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
-				addLine(fFuncName+"("+enumName+"."+fIndex+", "+fValue+");");
+				addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", 0, "+fValue+");");
 			}
 		}
 		
-		addLine("addWords("+lengthValue+");");
+		addLine("advanceBlock("+lengthValue+");");
 		
 		
 		
-		outdent();
-		addLine("}");
+		closeBrace();
 		
 		
 		
@@ -384,15 +367,14 @@ public class JavaWriter extends SourceWriter {
 		writeKeyEnum(top);
 		writeFieldIndexEnum(top);
 		writeBitIndexEnum(top);
-		outdent();
-		addLine("}");
+		closeBrace();
 		writeToFile(m_packageName.toPath() + m_constantsName,"java");	
 		
 		
 
 	}
 
-	private String lookupType(BaseField f) {
+	private String lookupTypeForFuncName(BaseField f) {
 		String result = "";
 		switch(f.getType()) {
 		case ARRAY:
@@ -400,7 +382,7 @@ public class JavaWriter extends SourceWriter {
 		case BLOCK:
 			break;
 		case BOOL:
-			result = "boolean";
+			result = "bool";
 			break;
 		case BOOLFIELD:
 			result = "byte";
@@ -428,6 +410,47 @@ public class JavaWriter extends SourceWriter {
 			break;
 		case UINT8:
 			result = "byte";
+			break;
+	
+		}
+		return result;
+	}
+	private String lookupTypeForJavaVars(BaseField f) {
+		String result = "";
+		switch(f.getType()) {
+		case ARRAY:
+			break;
+		case BLOCK:
+			break;
+		case BOOL:
+			result = "boolean";
+			break;
+		case BOOLFIELD:
+			result = "int";
+			break;
+		case COMPOUND:
+			result = "int";
+			break;
+		case FLOAT32:
+			result = "float";
+			break;
+		case INT16:
+			result = "int";
+			break;
+		case INT32:
+			result = "int";
+			break;
+		case INT8:
+			result = "int";
+			break;
+		case UINT16:
+			result = "int";
+			break;
+		case UINT32:
+			result = "int";
+			break;
+		case UINT8:
+			result = "int";
 			break;
 	
 		}
@@ -492,28 +515,26 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("index = i;");
 		addLine("bitIndex = bi;");
-		outdent();
-		addLine("}");
+		closeBrace();
+		
 		addLine("@Override");
 		addLine("public int getIndex(){");
 		indent();
 		addLine("return index;");
-		outdent();
-		addLine("}");
+		closeBrace();
+		
 		addLine("@Override");
 		addLine("public int getBitIndex(){");
 		indent();
 		addLine("return bitIndex;");
-		outdent();
-		addLine("}");
+		closeBrace();
+		
 		addLine("@Override");
 		addLine("public int getBits(){");
 		indent();
 		addLine("return 1;");
-		outdent();
-		addLine("}");
-		outdent();
-		addLine("};");
+		closeBrace();
+		closeBrace();
 		
 		addLine();
 	}
@@ -569,22 +590,20 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("index = i;");
 		addLine("bits = b;");
-		outdent();
-		addLine("}");
+		closeBrace();
+		
 		addLine("@Override");
 		addLine("public int getIndex(){");
 		indent();
 		addLine("return index;");
-		outdent();
-		addLine("}");
+		closeBrace();
+		
 		addLine("@Override");
 		addLine("public int getBits(){");
 		indent();
 		addLine("return bits;");
-		outdent();
-		addLine("}");
-		outdent();
-		addLine("};");
+		closeBrace();
+		closeBrace();
 		
 		addLine();
 		
@@ -605,16 +624,13 @@ public class JavaWriter extends SourceWriter {
 		addLine("private "+m_keyEnumName+"(int i){");
 		indent();
 		addLine("value = i;");
-		outdent();
-		addLine("}");
+		closeBrace();
 	
 		addLine("public int getValue(){");
 		indent();
 		addLine("return value;");
-		outdent();
-		addLine("}");
-		outdent();
-		addLine("};");
+		closeBrace();
+		closeBrace();
 		addLine();
 		
 	}
