@@ -92,8 +92,7 @@ public class JavaWriter extends SourceWriter {
 		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
 		BaseField length = top.getHeaderField("length");
 		BaseField crc = top.getHeaderField("crc");
-		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
-		String preambleIndexName = makeBaseFieldNameRoot(preamble).toUpperSnake();
+	
 		
 	
 	
@@ -101,10 +100,26 @@ public class JavaWriter extends SourceWriter {
 		addLine("public void finish(){");
 		indent();
 		
+		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		String preambleIndexName = makeBaseFieldNameRoot(preamble).toUpperSnake();
 		String preambleSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
 		
 		
 		addLine("getTopLevelBlock()."+preambleSetter+"("+m_fieldIndexEnumName+"."+preambleIndexName+", 0, "+preambleConstantName+");");
+		
+//		String lengthConstantName = makeBaseFieldNameRoot(length).addSuffix("VALUE").toUpperSnake();
+		String lengthIndexName = makeBaseFieldNameRoot(length).toUpperSnake();
+		String lengthSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthVal = "getCurrentBlock().getCurrentByteIndex()/4";
+		
+		addLine("getTopLevelBlock()."+lengthSetter+"("+m_fieldIndexEnumName+"."+lengthIndexName+", 0, "+lengthVal+");");
+		
+//		String crcConstantName = makeBaseFieldNameRoot(crc).addSuffix("VALUE").toUpperSnake();
+		String crcIndexName = makeBaseFieldNameRoot(crc).toUpperSnake();
+		String crcSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel();
+		String crcVal = "getPacket().computeCrc("+top.getHeaderWordCount()+")";
+		
+		addLine("getTopLevelBlock()."+crcSetter+"("+m_fieldIndexEnumName+"."+crcIndexName+", 0, "+crcVal+");");
 		
 		closeBrace();
 		
