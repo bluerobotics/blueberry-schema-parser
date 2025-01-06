@@ -85,8 +85,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("public "+m_packetBuilderName + "(int size){");
 		indent();
 		addLine("super(size);");
-		outdent();
-		addLine("}");
+		closeBrace();
 		
 		
 		//first get length, preamble and crc fields
@@ -135,8 +134,7 @@ public class JavaWriter extends SourceWriter {
 		addArrayMethods(top);
 		
 
-		outdent();
-		addLine("}");
+		closeBrace();
 		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");	
 	}
 
@@ -155,6 +153,96 @@ public class JavaWriter extends SourceWriter {
 	}
 	
 	private void addArrayParser(ArrayField af, String[] headers) {
+		//first get length, preamble and crc fields
+		FixedIntField key = (FixedIntField)af.getHeaderField("key");
+		BaseField repeats = af.getHeaderField("repeats");
+		BaseField length = af.getHeaderField("length");
+		String className = af.getName().addSuffix("parser").toUpperCamel();
+		String keyEnumName = m_keyEnumName+"."+makeKeyName(key)+".getValue()";
+		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
+		String keyGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
+		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+		String repeatsGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(repeats)).toLowerCamel();
+		String repeatsIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(repeats).toUpperSnake();
+		String repeatsGetter = repeatsGetterName+"("+repeatsIndexName+", 0)";
+		String lengthGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
+		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
+	
+		int headerLength = af.getHeaderWordCount();
+
+		
+		
+		startFile(headers);
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBlockParser;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBlock;");
+
+		addLine();
+
+
+		
+		addLine("public class "+className+" extends BlueberryBlockParser implements "+m_constantsName+"{");
+		indent();
+		addLine();
+		addLine("private final int repeats;");
+		addLine("private final int length;");
+		addLine("private final int unit;");
+		addLine("private static final int HEADER_LENGTH = "+headerLength+";");
+
+		addLine();
+
+		//write constructor
+		addLine("public "+className + "(BlueberryBlock bb){");
+		indent();
+		addLine("super(bb);");
+		addLine("repeats = "+repeatsGetter+";");
+		addLine("length = "+lengthGetter+";");
+		addLine("unit = (length - HEADER_LENGTH)/repeats;");
+
+		closeBrace();
+
+		addLine();
+		//write checkKey method
+		addLine("@Override");
+		addLine("protected boolean checkKey(){");
+		indent();
+		addLine("return "+keyGetter+" == "+keyEnumName+";");
+		closeBrace();
+
+		addLine();
+		
+		
+		//now add methods to read fields
+		for(BaseField f : af.getNamedBaseFields()) {
+			boolean bool = f instanceof BoolField;
+			
+			String fieldFuncName = makeBaseFieldNameRoot(f).addPrefix("get").toLowerCamel();
+			String fieldFuncReturnType = lookupTypeForJavaVars(f);
+			String fieldGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(f)).toLowerCamel();
+			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
+			String fieldIndexName = fieldIndexEnum+"."+makeBaseFieldNameRoot(f).toUpperSnake(); 
+			String fieldGetter = fieldGetterName + "("+fieldIndexName+", 0)";
+			addDocComment(f.getComment());
+			addLine("public "+fieldFuncReturnType+"[] "+fieldFuncName+"(){");
+			indent();
+			addLine(fieldFuncReturnType + "[] result = new "+fieldFuncReturnType+"[repeats];");
+			addLine("for(int i = 0; i < repeats; ++i){");
+			indent();
+			addLine("result[i] = "+fieldGetterName+"("+fieldIndexName+", i * unit);");
+			closeBrace();
+			
+			addLine("return result;");
+			closeBrace();
+
+			addLine();
+		}
+
+		
+
+
+		closeBrace();
+		writeToFile(m_packageName.toPath() + className,"java");	
 	}
 	private void addBlockParser(BlockField bf, String[] headers) {
 		//first get length, preamble and crc fields
@@ -183,16 +271,14 @@ public class JavaWriter extends SourceWriter {
 		addLine("public "+className + "(BlueberryBlock bb){");
 		indent();
 		addLine("super(bb);");
-		outdent();
-		addLine("}");
+		closeBrace();
 		addLine();
 		//write checkKey method
 		addLine("@Override");
-		addLine("public boolean checkKey(){");
+		addLine("protected boolean checkKey(){");
 		indent();
 		addLine("return "+keyGetter+" == "+keyEnumName+";");
-		outdent();
-		addLine("}");
+		closeBrace();
 		addLine();
 		
 		
@@ -206,12 +292,12 @@ public class JavaWriter extends SourceWriter {
 			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
 			String fieldIndexName = fieldIndexEnum+"."+makeBaseFieldNameRoot(f).toUpperSnake(); 
 			String fieldGetter = fieldGetterName + "("+fieldIndexName+", 0)";
-			
+			addDocComment(f.getComment());
+
 			addLine("public "+fieldFuncReturnType+" "+fieldFuncName+"(){");
 			indent();
 			addLine("return "+fieldGetter+";");
-			outdent();
-			addLine("}");
+			closeBrace();
 			addLine();
 		}
 
