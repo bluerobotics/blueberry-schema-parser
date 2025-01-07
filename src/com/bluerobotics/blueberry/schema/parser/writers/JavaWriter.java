@@ -44,6 +44,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_fieldIndexEnumName;
 	private String m_packetBuilderName;
 	private String m_packetDecoderName;
+	private String m_parserInterfaceName;
 	private String m_keyEnumName;
 
 	public JavaWriter(File dir) {
@@ -59,17 +60,52 @@ public class JavaWriter extends SourceWriter {
 		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
 		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
+		m_parserInterfaceName = top.getName().addSuffix("parser").toUpperCamel();
 
 
 
 		writeConstantsFile(top, headers);
 		writePacketBuilder(top, headers);
 		writeBlockParsers(top, headers);
+		writeParserInterface(top, headers);
 		
 		
 	}
 	
 	
+
+	private void writeParserInterface(BlockField top, String[] headers) {
+		startFile(headers);
+		addLine();
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
+//		addLine();
+
+
+		addDocComment("An interface for parsing all the types of blocks in the "+top.getName()+" schema.");
+		addLine("public interface "+m_parserInterfaceName+" {");
+		indent();
+
+	
+		List<ArrayField> afs = top.getAllArrayFields();
+		for(ArrayField af : afs) {
+			writeInterfaceMethod(af);
+		}
+
+		List<BlockField> bfs = top.getAllBlockFields();
+		
+		for(BlockField bf : bfs) {
+			writeInterfaceMethod(bf);
+		}
+		
+		closeBrace();
+		writeToFile(m_packageName.toPath() + m_parserInterfaceName,"java");			
+	}
+
+	private void writeInterfaceMethod(BlockField bf) {
+		String className = bf.getName().addSuffix("parser").toUpperCamel();
+		addDocComment("parse the "+className+" block.\n"+bf.getComment());
+		addLine("public void parse("+className+" p);");
+	}
 
 	private void writePacketBuilder(BlockField top, String[] headers) {
 		startFile(headers);
@@ -209,7 +245,14 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("return "+keyGetter+" == "+keyEnumName+";");
 		closeBrace();
-
+		addLine();
+		
+		//write getLength method
+		addLine("@Override");
+		addLine("public int getLength(){");
+		indent();
+		addLine("return length;");
+		closeBrace();
 		addLine();
 		
 		
@@ -253,6 +296,9 @@ public class JavaWriter extends SourceWriter {
 		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
 		String keyGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
 		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+		String lengthGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
+		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
 		
 		
 		startFile(headers);
@@ -267,10 +313,14 @@ public class JavaWriter extends SourceWriter {
 		addLine("public class "+className+" extends BlueberryBlockParser implements "+m_constantsName+"{");
 		indent();
 		addLine();
+		addLine("private final int length;");
+
+		
 		//write constructor
 		addLine("public "+className + "(BlueberryBlock bb){");
 		indent();
 		addLine("super(bb);");
+		addLine("length = "+lengthGetter+";");
 		closeBrace();
 		addLine();
 		//write checkKey method
@@ -278,6 +328,14 @@ public class JavaWriter extends SourceWriter {
 		addLine("protected boolean checkKey(){");
 		indent();
 		addLine("return "+keyGetter+" == "+keyEnumName+";");
+		closeBrace();
+		addLine();
+		
+		//write getLength method
+		addLine("@Override");
+		addLine("public int getLength(){");
+		indent();
+		addLine("return length;");
 		closeBrace();
 		addLine();
 		
