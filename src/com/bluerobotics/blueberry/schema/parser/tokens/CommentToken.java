@@ -50,6 +50,9 @@ public class CommentToken extends AbstractToken {
 		return result;
 	}
 	public CommentToken combine(CommentToken ct) {
+		if(ct == null) {
+			return this;
+		}
 		String cs = "";
 		boolean firstTime = true;
 		for(String s : m_comment) {

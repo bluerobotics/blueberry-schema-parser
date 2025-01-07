@@ -100,8 +100,8 @@ public class JavaWriter extends SourceWriter {
 		addLine("advanceBlock("+top.getHeaderWordCount()+");");
 		closeBrace();
 	
-	
-		addLine("public void finish(){");
+		addLine("@Override");	
+		addLine("protected void finish(){");
 		indent();
 		
 		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
@@ -330,13 +330,15 @@ public class JavaWriter extends SourceWriter {
 	
 	private void addArrayAdder(ArrayField af) {
 		String blockName = af.getName().toUpperCamel();
-		String comment = "Adds a new "+blockName+" to the specified packet.\n"+af.getComment();
-		String functionName = "add"+af.getParent().getName().toUpperCamel() +blockName;
+		String comment = "Adds a new "+blockName+" to the packet under construction.\n"+af.getComment();
+		String functionName = "add"+blockName;
 		List<BaseField> fs = af.getNamedBaseFields();
 		FixedIntField keyF = (FixedIntField)af.getHeaderField("key");
 		BaseField lengthF = af.getHeaderField("length");
 		BaseField repeatsF = af.getHeaderField("repeats");
 		String paramList = "";
+		
+		int headerLength = af.getHeaderWordCount();
 		
 		
 		boolean firstTime = true;
@@ -367,7 +369,7 @@ public class JavaWriter extends SourceWriter {
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
 		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
 		//add key
-		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, 1 + ("+lengthValue+" * n));");
+		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, "+headerLength+" + ("+lengthValue+" * n));");
 		
 		//add method to set repeat
 		String repeatsType = lookupTypeForFuncName(repeatsF);
@@ -378,6 +380,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("getCurrentBlock()."+repeatsFuncName+"("+m_fieldIndexEnumName+"."+repeatsIndex+", 0, "+repeatsValue+");");
 		addLine("for(int i = 0; i < n; ++i){");
 		indent();
+		addLine("int arrayOffsetForThisCycle = "+headerLength+" + ("+fs.size()+" * i);");
 		for(BaseField f : fs) {
 			boolean bit = f instanceof BoolField;
 			
@@ -386,10 +389,10 @@ public class JavaWriter extends SourceWriter {
 			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
 			String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
-			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", "+fs.size()+" * i, "+fValue+"[i]);");
+			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", arrayOffsetForThisCycle, "+fValue+"[i]);");
 		}
 		closeBrace();
-		addLine("advanceBlock("+lengthValue+");");
+		addLine("advanceBlock("+headerLength + " + ("+ lengthValue+" * n));");
 		
 		
 		
@@ -397,7 +400,7 @@ public class JavaWriter extends SourceWriter {
 	}
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout) {
 		String blockName = bf.getName().toUpperCamel();
-		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
+		String comment = "Adds a new "+blockName+" to the packet under construction.\n"+bf.getComment();
 		String functionName = "add"+blockName;
 		List<BaseField> fs = bf.getNamedBaseFields();
 		FixedIntField keyF = (FixedIntField)bf.getHeaderField("key");

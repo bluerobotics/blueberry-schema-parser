@@ -185,9 +185,9 @@ public abstract class SourceWriter {
 		} else {
 			Field p = bf.getContainingWord().getParent();
 			result = bf.getCorrectParentName().addSuffix(bf.getName());
-			if(p instanceof ArrayField) {
-				result = result.addPrefix(p.getParent().getName());
-			}
+//			if(p instanceof ArrayField) {
+//				result = result.addPrefix(p.getParent().getName());
+//			}
 		}
 		return result;
 	}

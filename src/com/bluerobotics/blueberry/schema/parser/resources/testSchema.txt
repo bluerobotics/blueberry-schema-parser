@@ -120,15 +120,14 @@ Packet brPacket(preamble = 0x45554c42) {
      * the controller can send this with configuration parameters
      * the peripheral can send this with adc values and/or config parameters
 	 */
-	Payload adcPayload(key = 0x0003) {
-		Array values {
-			float32 value
-		}
-		Array config {
-			float32 timeConstantSeconds
-			float32 gain
-			float32 offset
-		}
+	Array adcValuesArray {
+		float32 value
 	}
+	Array adcConfigArray {
+		float32 timeConstantSeconds
+		float32 gain
+		float32 offset
+	}
+	
 }
 
