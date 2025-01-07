@@ -54,6 +54,8 @@ public interface Constants {
 	public static final Icon MAXIMIZE_ICON =      UtilMethods.makeIconFromFont(ICON_FONT, "\ue930", COLOR_LOGO_BLUE, -1, 32); 
 	public static final Icon GENERATE_C_ICON =    UtilMethods.makeIconFromFont(UI_FONT,        "C", COLOR_LOGO_BLUE, 32, 32);
 	public static final Icon GENERATE_JAVA_ICON = UtilMethods.makeIconFromFont(UI_FONT,        "J", COLOR_LOGO_BLUE, 32, 32);
+	public static final Icon WASHING_MACHINE_ICON = UtilMethods.makeIconFromFont(ICON_FONT,"\ue54a", COLOR_LOGO_BLUE, -1, 32);
+	public static final Icon SOAP_ICON =            UtilMethods.makeIconFromFont(ICON_FONT, "\uf1b2", COLOR_LOGO_BLUE, -1, 32);
 	
 
 }

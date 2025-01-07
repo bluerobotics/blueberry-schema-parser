@@ -135,6 +135,7 @@ public class BlueberrySchemaParserGui implements Constants {
 //				addItem(m_actions, ActionInfos.PARSE_SCHEMA);
 				addItem(m_actions, ActionInfos.GENERATE_C);
 				addItem(m_actions, ActionInfos.GENERATE_JAVA);
+				addItem(m_actions, ActionInfos.CLEAN_SCHEMA);
 
 				addSeparator(new Dimension(20,20));
 //				addItem( m_actions, ActionInfos.HELP);
@@ -201,6 +202,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.getAction(ActionInfos.MAXIMIZE).setIcon(MAXIMIZE_ICON);
 		m_actions.getAction(ActionInfos.GENERATE_C).setIcon(GENERATE_C_ICON);
 		m_actions.getAction(ActionInfos.GENERATE_JAVA).setIcon(GENERATE_JAVA_ICON);
+		m_actions.getAction(ActionInfos.CLEAN_SCHEMA).setIcon(SOAP_ICON);
 	}
 
 	private void generateJava() {

@@ -35,6 +35,7 @@ public enum ActionInfos implements ActionInfo {
 	PARSE_SCHEMA("Parse", "parse.png", "Parse the chosen schema file.", KeyEvent.VK_UNDEFINED, "ctrl alt P"),
 	GENERATE_C("Generete C", "generateC.png", "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
 	GENERATE_JAVA("Generete Java", "generateJ.png", "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
+	CLEAN_SCHEMA("Clean Schema", "", "Generate a cleaned up version of the schema.", KeyEvent.VK_UNDEFINED, ""),
 	HELP("Help", "help.png", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
 	EXIT("Exit", "exit.png", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
 	MINIMIZE("Minimize", "minimizeWindow.png", "Hide the app window.", KeyEvent.VK_UNDEFINED, ""),
