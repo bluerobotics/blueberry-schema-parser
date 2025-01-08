@@ -148,7 +148,6 @@ public abstract class SourceWriter {
 					addLine(" * "+ss[i]);
 					if(i == n) {
 						addLine(" */");
-						addLine();
 					}
 				}
 			}

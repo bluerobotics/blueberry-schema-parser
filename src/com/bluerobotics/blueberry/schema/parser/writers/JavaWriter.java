@@ -100,11 +100,13 @@ public class JavaWriter extends SourceWriter {
 		
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketConsumerManager;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBlock;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
 
 
 		addDocComment("A class to digest packets and pass blocks to appropriate consumers for the "+top.getName()+" schema.");
-		addLine("public class "+m_consumerManagerName+" extends BlueberryPacketConsumerManager implements "+m_constantsName+" {");
+		addLine("public class "+m_consumerManagerName+" extends BlueberryPacketConsumerManager<"+m_consumerInterfaceName+"> implements "+m_constantsName+" {");
 		indent();
+//		addLine("private "+m_consumerInterfaceName+" m_consumer = null;");
 
 		addLine("public "+m_consumerManagerName+"("+m_consumerInterfaceName+" ci){");
 		indent();
@@ -117,7 +119,14 @@ public class JavaWriter extends SourceWriter {
 			String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
 			String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
 			String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
-			addLine("add("+keyEnumName+", bb -> {return new "+className+"(bb);});");
+			addLine("add("+keyEnumName+", bb -> {");
+			indent();
+			addLine(className+" c = new "+className+"(bb);");
+			addLine("getParserConsumer().consume(c);");
+			
+			outdent();
+			addLine("});");
+			
 		}
 		closeBrace();
 
@@ -136,17 +145,39 @@ public class JavaWriter extends SourceWriter {
 		
 		addDocComment("A method for reading the key value from a block.");
 		addLine("@Override");
-		addLine("protected int getKey(BlueberryBlock bb){");
+		addLine("protected int getBlockKey(BlueberryBlock bb){");
 		indent();
 		addLine("return "+keyGetter+";");	
 		closeBrace();
 		
 		addDocComment("A method for reading the length value from a block.");
 		addLine("@Override");
-		addLine("protected int getLength(BlueberryBlock bb){");
+		addLine("protected int getBlockLength(BlueberryBlock bb){");
 		indent();
 		addLine("return "+lengthGetter+";");	
 		closeBrace();
+		
+		
+		int packetHeaderLength = top.getHeaderWordCount();
+		
+		addDocComment("A method to get the first block of the packet, after the packet header.");
+		addLine("@Override");
+		addLine("protected BlueberryBlock getFirstBlock(BlueberryPacket p){");
+		indent();
+		addLine("return p.getTopLevelBlock().getNextBlock("+packetHeaderLength+"); //this is the packet header length");	
+		closeBrace();
+		
+//		addDocComment("A method to get the consumer interface that is used to process parsed blocks.");
+//		addLine("protected "+m_consumerInterfaceName+" getConsumer(){");
+//		indent();
+//		addLine("return m_consumer;");	
+//		closeBrace();
+//		
+//		addDocComment("A method to set the consumer interface that is used to process parsed blocks.");
+//		addLine("protected void setConsumer("+m_consumerInterfaceName+" c){");
+//		indent();
+//		addLine("m_consumer = c;");	
+//		closeBrace();
 		
 		
 		closeBrace();
