@@ -44,8 +44,9 @@ public class JavaWriter extends SourceWriter {
 	private String m_fieldIndexEnumName;
 	private String m_packetBuilderName;
 	private String m_packetDecoderName;
-	private String m_parserInterfaceName;
+	private String m_consumerInterfaceName;
 	private String m_keyEnumName;
+	private String m_consumerManagerName;
 
 	public JavaWriter(File dir) {
 		super(dir);
@@ -60,19 +61,97 @@ public class JavaWriter extends SourceWriter {
 		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
 		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
-		m_parserInterfaceName = top.getName().addSuffix("parser").toUpperCamel();
-
+		m_consumerInterfaceName = top.getName().addSuffix("consumer").toUpperCamel();
+		m_consumerManagerName = top.getName().addSuffix("consumer","manager").toUpperCamel();
 
 
 		writeConstantsFile(top, headers);
 		writePacketBuilder(top, headers);
 		writeBlockParsers(top, headers);
 		writeParserInterface(top, headers);
+		writeConsumerManager(top, headers);
 		
 		
 	}
 	
-	
+	private List<BlockField> getListOfAllBlocksAndArrays(BlockField top){
+		ArrayList<BlockField> result = new ArrayList<BlockField>();
+		
+
+		List<BlockField> bfs = top.getAllBlockFields();
+		
+		for(BlockField bf : bfs) {
+			result.add(bf);
+		}
+		List<ArrayField> afs = top.getAllArrayFields();
+		for(ArrayField af : afs) {
+			result.add(af);
+		}
+		
+		return result;
+	}
+
+	private void writeConsumerManager(BlockField top, String[] headers) {
+		startFile(headers);
+		addLine();
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
+//		addLine();
+
+		
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketConsumerManager;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBlock;");
+
+
+		addDocComment("A class to digest packets and pass blocks to appropriate consumers for the "+top.getName()+" schema.");
+		addLine("public class "+m_consumerManagerName+" extends BlueberryPacketConsumerManager implements "+m_constantsName+" {");
+		indent();
+
+		addLine("public "+m_consumerManagerName+"("+m_consumerInterfaceName+" ci){");
+		indent();
+		addLine("super();");
+		
+		for(BlockField bf : getListOfAllBlocksAndArrays(top)) {
+			String className = bf.getName().addSuffix("parser").toUpperCamel();
+			FixedIntField key = (FixedIntField)bf.getHeaderField("key");
+			String keyEnumName = m_keyEnumName+"."+makeKeyName(key)+".getValue()";
+			String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
+			String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
+			String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+			addLine("add("+keyEnumName+", bb -> {return new "+className+"(bb);});");
+		}
+		closeBrace();
+
+		
+		
+		BlockField bf = getListOfAllBlocksAndArrays(top).get(0);
+		FixedIntField key = (FixedIntField)bf.getHeaderField("key");
+		BaseField length = bf.getHeaderField("length");
+		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
+		String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
+		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
+		String lengthGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
+		
+		
+		addDocComment("A method for reading the key value from a block.");
+		addLine("@Override");
+		addLine("protected int getKey(BlueberryBlock bb){");
+		indent();
+		addLine("return "+keyGetter+";");	
+		closeBrace();
+		
+		addDocComment("A method for reading the length value from a block.");
+		addLine("@Override");
+		addLine("protected int getLength(BlueberryBlock bb){");
+		indent();
+		addLine("return "+lengthGetter+";");	
+		closeBrace();
+		
+		
+		closeBrace();
+		writeToFile(m_packageName.toPath() + m_consumerManagerName,"java");	
+	}
 
 	private void writeParserInterface(BlockField top, String[] headers) {
 		startFile(headers);
@@ -81,30 +160,22 @@ public class JavaWriter extends SourceWriter {
 //		addLine();
 
 
-		addDocComment("An interface for parsing all the types of blocks in the "+top.getName()+" schema.");
-		addLine("public interface "+m_parserInterfaceName+" {");
+		addDocComment("An interface for consuming all the types of parsed blocks in the "+top.getName()+" schema.");
+		addLine("public interface "+m_consumerInterfaceName+" {");
 		indent();
 
-	
-		List<ArrayField> afs = top.getAllArrayFields();
-		for(ArrayField af : afs) {
-			writeInterfaceMethod(af);
-		}
-
-		List<BlockField> bfs = top.getAllBlockFields();
-		
-		for(BlockField bf : bfs) {
-			writeInterfaceMethod(bf);
+		for(BlockField bf : getListOfAllBlocksAndArrays(top)) {
+			 writeInterfaceMethod(bf);
 		}
 		
 		closeBrace();
-		writeToFile(m_packageName.toPath() + m_parserInterfaceName,"java");			
+		writeToFile(m_packageName.toPath() + m_consumerInterfaceName,"java");			
 	}
 
 	private void writeInterfaceMethod(BlockField bf) {
 		String className = bf.getName().addSuffix("parser").toUpperCamel();
-		addDocComment("parse the "+className+" block.\n"+bf.getComment());
-		addLine("public void parse("+className+" p);");
+		addDocComment("consume the "+className+" block.\n"+bf.getComment());
+		addLine("public void consume("+className+" p);");
 	}
 
 	private void writePacketBuilder(BlockField top, String[] headers) {
