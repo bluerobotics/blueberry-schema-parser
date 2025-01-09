@@ -47,6 +47,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_consumerInterfaceName;
 	private String m_keyEnumName;
 	private String m_consumerManagerName;
+	private String m_packetRecieverName;
 
 	public JavaWriter(File dir) {
 		super(dir);
@@ -63,6 +64,7 @@ public class JavaWriter extends SourceWriter {
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
 		m_consumerInterfaceName = top.getName().addSuffix("consumer").toUpperCamel();
 		m_consumerManagerName = top.getName().addSuffix("consumer","manager").toUpperCamel();
+		m_packetRecieverName = top.getName().addSuffix("Receiver").toUpperCamel();
 
 
 		writeConstantsFile(top, headers);
@@ -70,10 +72,80 @@ public class JavaWriter extends SourceWriter {
 		writeBlockParsers(top, headers);
 		writeParserInterface(top, headers);
 		writeConsumerManager(top, headers);
+		writePacketReceiver(top, headers);
 		
 		
 	}
 	
+	private void writePacketReceiver(BlockField top, String[] headers) {
+		startFile(headers);
+		addLine();
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
+//		addLine();
+
+		
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryReceiver;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
+
+
+		addDocComment("A class to receive packets, byte by byte and pass them on when they've passed the header, length and crc checks of the "+top.getName()+" schema.");
+		addLine("public class "+m_packetRecieverName+" extends BlueberryReceiver implements "+m_constantsName+" {");
+		indent();
+
+	
+
+		
+		
+		BlockField bf = getListOfAllBlocksAndArrays(top).get(0);
+		FixedIntField key = (FixedIntField)bf.getHeaderField("key");
+		BaseField length = bf.getHeaderField("length");
+		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
+		String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
+		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
+		String lengthGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
+		
+		BaseField crc = top.getHeaderField("crc");
+		String crcIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake();
+		String crcGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel();
+		String crcGetter = crcGetterName+"("+crcIndexName+", 0)";
+		
+		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
+		String preambleIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(preamble).toUpperSnake();
+		String preambleGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
+		String preambleGetter = preambleGetterName+"("+preambleIndexName+", 0)";
+		String preambleConst = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		
+		
+		
+		addLine("@Override");
+		addLine("protected boolean checkCrc(){");
+		indent();
+		addLine("return "+crcGetter+" == getPacket().computeCrc("+crcIndexName+".getIndex());");	
+		closeBrace();
+		
+		addLine("@Override");
+		addLine("protected boolean checkStartWord(int i){");
+		indent();
+		addLine("return checkStartWord(i, "+preambleGetter+", "+preambleConst+");");	
+		closeBrace();
+		
+		
+		int packetHeaderLength = top.getHeaderWordCount();
+		
+		addLine("@Override");
+		addLine("protected boolean noBytesNeeded(int i){");
+		indent();
+		addLine("return "+lengthGetter+" == ((BlueberryPacket)getPacket()).getWordLength();");	
+		closeBrace();
+	
+		
+		
+		closeBrace();
+		writeToFile(m_packageName.toPath() + m_packetRecieverName,"java");	
+	}
+
 	private List<BlockField> getListOfAllBlocksAndArrays(BlockField top){
 		ArrayList<BlockField> result = new ArrayList<BlockField>();
 		
@@ -110,7 +182,7 @@ public class JavaWriter extends SourceWriter {
 
 		addLine("public "+m_consumerManagerName+"("+m_consumerInterfaceName+" ci){");
 		indent();
-		addLine("super();");
+		addLine("super(ci);");
 		
 		for(BlockField bf : getListOfAllBlocksAndArrays(top)) {
 			String className = bf.getName().addSuffix("parser").toUpperCamel();
