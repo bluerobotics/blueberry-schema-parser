@@ -311,7 +311,7 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 	
 		addLine("@Override");	
-		addLine("protected void finish(){");
+		addLine("public void finish(){");
 		indent();
 		
 		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
@@ -421,11 +421,11 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 		addLine();
 		
-		//write getLength method
+		//write isEmpty method
 		addLine("@Override");
-		addLine("public int getLength(){");
+		addLine("public boolean isEmpty(){");
 		indent();
-		addLine("return length;");
+		addLine("return length <= "+headerLength+";");
 		closeBrace();
 		addLine();
 		
@@ -473,6 +473,8 @@ public class JavaWriter extends SourceWriter {
 		String lengthGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
 		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
 		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
+		int headerLength = bf.getHeaderWordCount();
+
 		
 		
 		startFile(headers);
@@ -505,11 +507,11 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 		addLine();
 		
-		//write getLength method
+		//write isEmpty method
 		addLine("@Override");
-		addLine("public int getLength(){");
+		addLine("public boolean isEmpty(){");
 		indent();
-		addLine("return length;");
+		addLine("return length <= "+headerLength+";");
 		closeBrace();
 		addLine();
 		
@@ -580,7 +582,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		
 		addDocComment(comment);
-		addLine("void "+functionName+"("+paramList+"){");
+		addLine("public void "+functionName+"("+paramList+"){");
 		indent();
 		
 		addLine("int n = "+fs.get(0).getName().toLowerCamel()+".length;");
@@ -651,7 +653,7 @@ public class JavaWriter extends SourceWriter {
 			}
 		}
 		addDocComment(comment);
-		addLine("void "+functionName+"("+paramList+"){");
+		addLine("public void "+functionName+"("+paramList+"){");
 		indent();
 	
 		
