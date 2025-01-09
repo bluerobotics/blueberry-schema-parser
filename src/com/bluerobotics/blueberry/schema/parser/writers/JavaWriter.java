@@ -135,7 +135,7 @@ public class JavaWriter extends SourceWriter {
 		int packetHeaderLength = top.getHeaderWordCount();
 		
 		addLine("@Override");
-		addLine("protected boolean noBytesNeeded(int i){");
+		addLine("protected boolean isNoBytesNeeded(int i){");
 		indent();
 		addLine("return "+lengthGetter+" == ((BlueberryPacket)getPacket()).getWordLength();");	
 		closeBrace();
