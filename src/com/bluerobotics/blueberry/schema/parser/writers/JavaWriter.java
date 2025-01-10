@@ -117,8 +117,7 @@ public class JavaWriter extends SourceWriter {
 		String preambleGetterName = "b."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
 		String preambleGetter = preambleGetterName+"("+preambleIndexName+", 0)";
 		String preambleConst = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
-		
-		
+		int packetHeaderLength = top.getHeaderWordCount();
 		
 		addLine("@Override");
 		addLine("protected boolean checkCrc(){");
@@ -126,7 +125,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
 		addLine("BlueberryBlock b = p.getTopLevelBlock();");
 		addLine("int published = "+crcGetter+";");
-		addLine("int computed = p.computeCrc("+crcIndexName+".getIndex());");
+		addLine("int computed = p.computeCrc("+packetHeaderLength+");");
 		addLine("return published == computed;");	
 		closeBrace();
 		
@@ -141,7 +140,7 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 		
 		
-		int packetHeaderLength = top.getHeaderWordCount();
+	
 		
 		addLine("@Override");
 		addLine("protected boolean isNoBytesNeeded(int i){");
