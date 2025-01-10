@@ -24,7 +24,8 @@ THE SOFTWARE.
  */
 
 /*
- * Define the packet header
+ * Define the packet header.
+ * This occurs at the start of all packets
  */
 define Packet block {
 	uint32 preamble //A packet must start with this exact value
@@ -42,6 +43,8 @@ define Packet block {
 Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * Now the payload header
+	 * every block within a packet needs to follow this form.
+	 * Note that the structure is the same as an array, but the repeats field is not used
 	 */
 	define Payload block {
 		uint16 key

@@ -53,9 +53,12 @@ public abstract class SourceWriter {
 	protected StringBuffer m_buffer = new StringBuffer();
 	protected int m_indent = 0;
 	public SourceWriter(File dir) {
-		if(!dir.isDirectory()) {
+		if(!dir.exists()) {
+			dir.mkdir();
+			m_directory = dir;
+		} else if(!dir.isDirectory()) {
 			throw new RuntimeException("Specified file location is not a directory!");
-		}
+		} else 
 		m_directory = dir;
 	}
 	public abstract void write(BlockField bf, String... headers);

@@ -124,7 +124,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
 		addLine("BlueberryBlock b = p.getTopLevelBlock();");
-		addLine("int published = "+crcGetter+";");
+		addLine("int published = 0xffff & "+crcGetter+";");
 		addLine("int computed = p.computeCrc("+packetHeaderLength+");");
 		addLine("return published == computed;");	
 		closeBrace();
@@ -626,7 +626,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("getCurrentBlock()."+repeatsFuncName+"("+m_fieldIndexEnumName+"."+repeatsIndex+", 0, "+repeatsValue+");");
 		addLine("for(int i = 0; i < n; ++i){");
 		indent();
-		addLine("int arrayOffsetForThisCycle = "+headerLength+" + ("+fs.size()+" * i);");
+		addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i);");
 		for(BaseField f : fs) {
 			boolean bit = f instanceof BoolField;
 			
