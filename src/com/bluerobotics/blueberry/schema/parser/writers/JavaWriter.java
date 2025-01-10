@@ -148,8 +148,8 @@ public class JavaWriter extends SourceWriter {
 		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
 		addLine("BlueberryBlock b = p.getTopLevelBlock();");
 		addLine("int published = "+lengthGetter+";");
-		addLine("int actual = p.getWordLength();");
-		addLine("return published == actual;");	
+		addLine("int actual = i/4;");
+		addLine("return published != 0 && published == actual;");	
 		closeBrace();
 	
 		
@@ -336,7 +336,7 @@ public class JavaWriter extends SourceWriter {
 //		String lengthConstantName = makeBaseFieldNameRoot(length).addSuffix("VALUE").toUpperSnake();
 		String lengthIndexName = makeBaseFieldNameRoot(length).toUpperSnake();
 		String lengthSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
-		String lengthVal = "getCurrentBlock().getCurrentWordIndex()";
+		String lengthVal = "getPacket().getWordLength()";//"getCurrentBlock().getCurrentWordIndex()";
 		
 		addLine("getTopLevelBlock()."+lengthSetter+"("+m_fieldIndexEnumName+"."+lengthIndexName+", 0, "+lengthVal+");");
 		
