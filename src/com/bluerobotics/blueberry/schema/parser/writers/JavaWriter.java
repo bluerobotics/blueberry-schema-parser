@@ -86,6 +86,7 @@ public class JavaWriter extends SourceWriter {
 		
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryReceiver;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacket;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBlock;");
 
 
 		addDocComment("A class to receive packets, byte by byte and pass them on when they've passed the header, length and crc checks of the "+top.getName()+" schema.");
@@ -96,24 +97,24 @@ public class JavaWriter extends SourceWriter {
 
 		
 		
-		BlockField bf = getListOfAllBlocksAndArrays(top).get(0);
-		FixedIntField key = (FixedIntField)bf.getHeaderField("key");
-		BaseField length = bf.getHeaderField("length");
-		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
-		String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
-		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
+//		BlockField bf = getListOfAllBlocksAndArrays(top).get(0);
+//		FixedIntField key = (FixedIntField)top.getHeaderField("key");
+		BaseField length = top.getHeaderField("length");
+//		String keyIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(key).toUpperSnake();
+//		String keyGetterName = "bb."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(key)).toLowerCamel();
+//		String keyGetter = keyGetterName+"("+keyIndexName+", 0)";
 		String lengthIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(length).toUpperSnake();
-		String lengthGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
+		String lengthGetterName = "b."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(length)).toLowerCamel();
 		String lengthGetter = lengthGetterName+"("+lengthIndexName+", 0)";
 		
 		BaseField crc = top.getHeaderField("crc");
 		String crcIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(crc).toUpperSnake();
-		String crcGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel();
+		String crcGetterName = "b."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel();
 		String crcGetter = crcGetterName+"("+crcIndexName+", 0)";
 		
 		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
 		String preambleIndexName = m_fieldIndexEnumName+"."+makeBaseFieldNameRoot(preamble).toUpperSnake();
-		String preambleGetterName = "((BlueberryPacket)getPacket()).getTopLevelBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
+		String preambleGetterName = "b."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(preamble)).toLowerCamel();
 		String preambleGetter = preambleGetterName+"("+preambleIndexName+", 0)";
 		String preambleConst = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
 		
@@ -122,13 +123,21 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("protected boolean checkCrc(){");
 		indent();
-		addLine("return "+crcGetter+" == getPacket().computeCrc("+crcIndexName+".getIndex());");	
+		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
+		addLine("BlueberryBlock b = p.getTopLevelBlock();");
+		addLine("int published = "+crcGetter+";");
+		addLine("int computed = p.computeCrc("+crcIndexName+".getIndex());");
+		addLine("return published == computed;");	
 		closeBrace();
 		
 		addLine("@Override");
 		addLine("protected boolean checkStartWord(int i){");
 		indent();
-		addLine("return checkStartWord(i, "+preambleGetter+", "+preambleConst+");");	
+		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
+		addLine("BlueberryBlock b = p.getTopLevelBlock();");
+		addLine("int published = "+preambleGetter+";");
+		addLine("int constant = "+preambleConst+";");
+		addLine("return checkStartWord(i, published, constant);");	
 		closeBrace();
 		
 		
@@ -137,7 +146,11 @@ public class JavaWriter extends SourceWriter {
 		addLine("@Override");
 		addLine("protected boolean isNoBytesNeeded(int i){");
 		indent();
-		addLine("return "+lengthGetter+" == ((BlueberryPacket)getPacket()).getWordLength();");	
+		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
+		addLine("BlueberryBlock b = p.getTopLevelBlock();");
+		addLine("int published = "+lengthGetter+";");
+		addLine("int actual = p.getWordLength();");
+		addLine("return published == actual;");	
 		closeBrace();
 	
 		
