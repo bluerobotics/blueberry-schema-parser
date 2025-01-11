@@ -68,8 +68,8 @@ public class CWriter extends SourceWriter {
 		
 		
 		addSectionDivider("Includes");
-		addLine("#include <stdbool.h");
-		addLine("#include <stdint.h");
+		addLine("#include <stdbool.h>");
+		addLine("#include <stdint.h>");
 	
 		addSectionDivider("Defines");
 		
@@ -88,6 +88,8 @@ public class CWriter extends SourceWriter {
 
 		addBaseFieldGetters(top, true);
 		
+		addPacketHeaderAdder(top, true);
+		
 		addBlockFunctionGetters(top, true);
 		
 		addBlockAdders(top, true);
@@ -98,7 +100,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		
-		writeToFile(top.getName().toUpperCamel(),"h");
+		writeToFile(top.getName().toLowerCamel(),"h");
 	
 	}
 
@@ -110,8 +112,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		addSectionDivider("Includes");
-		addLine("#include <stdbool.h");
-		addLine("#include <stdint.h");
+		addLine("#include <"+top.getName().toLowerCamel()+".h>");
 	
 		addSectionDivider("Defines");
 		writeHeaderDefines(top);
@@ -131,6 +132,8 @@ public class CWriter extends SourceWriter {
 		addHeaderFieldGetters(top,false);
 		addBaseFieldGetters(top, false);
 		
+		addPacketHeaderAdder(top, false);
+		
 		addBlockFunctionGetters(top, false);
 //		addBlockFunctionAdder(top, false);
 		
@@ -140,12 +143,14 @@ public class CWriter extends SourceWriter {
 		addArrayGetters(top, false);
 		
 		
-		writeToFile(top.getName().toUpperCamel(),"c");
+		writeToFile(top.getName().toLowerCamel(),"c");
 	
 	}
 	
 
 	
+	
+
 	private void writeEnums(BlockField top) {
 		//first make a list of all unique enums
 		ArrayList<EnumField> es = new ArrayList<EnumField>();
@@ -179,7 +184,7 @@ public class CWriter extends SourceWriter {
 				} else {
 					c = "";
 				}
-				addLine(nv.getName().toUpperSnake() + " = " + WriterUtils.formatAsHex(nv.getValue()) + c);
+				addLine(makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue())+", " + c);
 				
 				
 			}
@@ -192,7 +197,9 @@ public class CWriter extends SourceWriter {
 		}
 	}
 	
-
+	private String makeEnumName(EnumField ef, NameValue nv) {
+		return nv.getName().addSuffix(ef.getTypeName()).toUpperSnake();
+	}
 
 	private void writeBaseFieldDefines(BlockField top) {
 		top.scanThroughBaseFields((f) -> {
@@ -701,7 +708,7 @@ public class CWriter extends SourceWriter {
 	
 	
 	private void addArrayAdder(ArrayField bf, boolean protoNotDeclaration) {
-		String blockName = makeBaseFieldNameRoot(bf).toUpperCamel();
+		String blockName =  bf.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
 		String functionName = "addBb"+blockName;
 		List<BaseField> fs = bf.getNamedBaseFields();
@@ -800,7 +807,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result");
+			addLine("return result;");
 			
 			
 			outdent();
@@ -896,12 +903,17 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result");
+			addLine("return result;");
 			
 			
 			outdent();
 			addLine("}");
 		}
+	}
+	private void addPacketHeaderAdder(BlockField top, boolean protoNotDeclaration) {
+		String blockName = top.getName().toUpperCamel();
+		String comment = "Adds a new "+blockName+" to the buffer.\n"+top.getComment();
+		String functionName = "addBb"+blockName;		
 	}
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout, boolean protoNotDeclaration) {
 		String blockName = bf.getName().toUpperCamel();
@@ -1001,7 +1013,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result");
+			addLine("return result;");
 			
 			
 			outdent();
