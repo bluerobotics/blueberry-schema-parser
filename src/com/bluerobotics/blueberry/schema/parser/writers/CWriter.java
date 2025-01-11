@@ -116,7 +116,7 @@ public class CWriter extends SourceWriter {
 		addLine("#include <"+top.getName().toLowerCamel()+".h>");
 	
 		addSectionDivider("Defines");
-		writePacketHeaderDefine(top);
+		writeBlockValueDefine(top);
 		writeHeaderDefines(top);
 		addLine();
 		addLine();
@@ -153,14 +153,21 @@ public class CWriter extends SourceWriter {
 	
 	
 
-	private void writePacketHeaderDefine(BlockField top) {
-		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
-
-		String preambleVal = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
-		String c = preamble.getComment();
-		addBlockComment(c);
-		addLine("#define "+preambleVal+" ("+WriterUtils.formatAsHex(preamble.getValue())+")");
-
+	private void writeBlockValueDefine(BlockField top) {
+		
+		top.scanThroughHeaderFields(f -> {
+			if(f instanceof FixedIntField) {
+				FixedIntField fif = (FixedIntField)f;
+				FieldName parent = fif.getContainingWord().getParent().getName();
+				
+				String fifVal = parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
+				String c = fif.getComment();
+				addBlockComment(c);
+				addLine("#define "+fifVal+" ("+WriterUtils.formatAsHex(fif.getValue())+")");
+			}
+			
+		}, true);
+		
 	}
 
 	private void writeEnums(BlockField top) {
@@ -549,7 +556,7 @@ public class CWriter extends SourceWriter {
 				
 				String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 
-				addLine(getBaseType(lf) + " len " + lgn + "(buf,  block);");//this gets the block length
+				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block);");//this gets the block length
 				
 				addLine("return bbWrap(buf, block + len);");
 				outdent();
@@ -622,7 +629,7 @@ public class CWriter extends SourceWriter {
 				//build the function name
 				String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 
-				addLine(getBaseType(lf) + " len " + lgn + "(buf,  block);");//this gets the block length
+				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block);");//this gets the block length
 				addLine("return bbWrap(buf, block + len);");
 				outdent();
 				addLine("}");
@@ -969,7 +976,7 @@ public class CWriter extends SourceWriter {
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout, boolean protoNotDeclaration) {
 		String blockName = bf.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
-		String functionName = "addBb"+blockName;
+		String functionName = "add"+(withParamsNotWithout ? "" : "Empty")+"Bb"+blockName;
 		List<BaseField> fs = bf.getNamedBaseFields();
 		String paramList = "";
 		if(withParamsNotWithout && fs.size() == 0) {
