@@ -101,7 +101,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		
-		writeToFile(top.getName().toLowerCamel(),"h");
+		writeToFile("inc/"+top.getName().toLowerCamel(),"h");
 	
 	}
 
@@ -145,7 +145,7 @@ public class CWriter extends SourceWriter {
 		addArrayGetters(top, false);
 		
 		
-		writeToFile(top.getName().toLowerCamel(),"c");
+		writeToFile("src/"+top.getName().toLowerCamel(),"c");
 	
 	}
 	
