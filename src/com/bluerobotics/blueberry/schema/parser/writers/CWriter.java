@@ -70,6 +70,7 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Includes");
 		addLine("#include <stdbool.h>");
 		addLine("#include <stdint.h>");
+		addLine("#include <blueberry-transcoder.h>");
 	
 		addSectionDivider("Defines");
 		
@@ -80,7 +81,7 @@ public class CWriter extends SourceWriter {
 		addBlockKeyEnum(top);
 		
 		writeEnums(top);
-		addLine("typedef BlueberryBlock Bb;");
+//		addLine("typedef BlueberryBlock Bb;");
 //		writeCompounds(top);
 		
 		addSectionDivider("Function Prototypes");
@@ -88,7 +89,7 @@ public class CWriter extends SourceWriter {
 
 		addBaseFieldGetters(top, true);
 		
-		addPacketHeaderAdder(top, true);
+		addPacketStartFinish(top, true);
 		
 		addBlockFunctionGetters(top, true);
 		
@@ -115,6 +116,7 @@ public class CWriter extends SourceWriter {
 		addLine("#include <"+top.getName().toLowerCamel()+".h>");
 	
 		addSectionDivider("Defines");
+		writePacketHeaderDefine(top);
 		writeHeaderDefines(top);
 		addLine();
 		addLine();
@@ -132,7 +134,7 @@ public class CWriter extends SourceWriter {
 		addHeaderFieldGetters(top,false);
 		addBaseFieldGetters(top, false);
 		
-		addPacketHeaderAdder(top, false);
+		addPacketStartFinish(top, false);
 		
 		addBlockFunctionGetters(top, false);
 //		addBlockFunctionAdder(top, false);
@@ -150,6 +152,16 @@ public class CWriter extends SourceWriter {
 
 	
 	
+
+	private void writePacketHeaderDefine(BlockField top) {
+		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
+
+		String preambleVal = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+		String c = preamble.getComment();
+		addBlockComment(c);
+		addLine("#define "+preambleVal+" ("+WriterUtils.formatAsHex(preamble.getValue())+")");
+
+	}
 
 	private void writeEnums(BlockField top) {
 		//first make a list of all unique enums
@@ -910,10 +922,49 @@ public class CWriter extends SourceWriter {
 			addLine("}");
 		}
 	}
-	private void addPacketHeaderAdder(BlockField top, boolean protoNotDeclaration) {
+	private void addPacketStartFinish(BlockField top, boolean protoNotDeclaration) {
 		String blockName = top.getName().toUpperCamel();
-		String comment = "Adds a new "+blockName+" to the buffer.\n"+top.getComment();
-		String functionName = "addBb"+blockName;		
+		List<BaseField> fs = top.getHeaderFields();
+		String topLineEnd = protoNotDeclaration ? ";" : "{";
+		int headerLength = top.getHeaderWordCount();
+		
+		addDocComment("Add packet header.\nThis only adds a placeholder - make sure you finish the packet."+top.getComment());
+		addLine("BbBlock start"+blockName+"(Bb* buf)"+topLineEnd);
+		if(!protoNotDeclaration) {
+			indent();
+			addLine("return buf->start + "+headerLength*4+";");
+			
+			
+			closeBrace();
+		}
+		addDocComment("Add packet header.\nThis only adds a placeholder - make sure you finish the packet."+top.getComment());
+		addLine("void finish"+blockName+"(Bb* buf, BbBlock bb)"+topLineEnd);
+		if(!protoNotDeclaration) {
+			indent();
+			
+			FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
+			BaseField length = top.getHeaderField("length");
+			BaseField crc = top.getHeaderField("crc");
+			
+			String preambleIndex = makeBaseFieldNameRoot(preamble).addSuffix("INDEX").toUpperSnake();
+			String lengthIndex = makeBaseFieldNameRoot(length).addSuffix("INDEX").toUpperSnake();
+			String crcIndex = makeBaseFieldNameRoot(crc).addSuffix("INDEX").toUpperSnake();
+			
+			String preambleSetter = FieldName.fromCamel("set").addSuffix(preamble.getType().name()).toLowerCamel();
+			String lengthSetter = FieldName.fromCamel("set").addSuffix(length.getType().name()).toLowerCamel();
+			String crcSetter = FieldName.fromCamel("set").addSuffix(crc.getType().name()).toLowerCamel();
+
+			String preambleVal = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+			String lengthVal = "(buf->start - bb)>>2";
+			String crcVal = "computeCrc(buf, bb)";
+			
+			addLine(preambleSetter+"("+preambleVal+");");
+			addLine(lengthSetter+"("+lengthVal+");");
+			addLine(crcSetter+"("+crcVal+");");
+			
+			
+			closeBrace();
+		}
 	}
 	private void addBlockAdder(BlockField bf, boolean withParamsNotWithout, boolean protoNotDeclaration) {
 		String blockName = bf.getName().toUpperCamel();
