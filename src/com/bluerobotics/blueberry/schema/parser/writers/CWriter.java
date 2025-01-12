@@ -21,16 +21,11 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
-import javax.naming.NameAlreadyBoundException;
-
+import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
 import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
@@ -39,12 +34,8 @@ import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
 import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.structure.Field;
-import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
-import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
-import com.bluerobotics.blueberry.schema.parser.structure.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
-import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
 import com.bluerobotics.blueberry.schema.parser.structure.Type;
 
 public class CWriter extends SourceWriter {
@@ -86,6 +77,7 @@ public class CWriter extends SourceWriter {
 		
 		addSectionDivider("Function Prototypes");
 		addHeaderFieldGetters(top,true);
+		
 
 		addBaseFieldGetters(top, true);
 		
@@ -128,10 +120,12 @@ public class CWriter extends SourceWriter {
 		
 		addSectionDivider("Function Prototypes");
 //		addBlockFunctionAdder(top, true);
+		
 	
 		addSectionDivider("Source");
 		
 		addHeaderFieldGetters(top,false);
+		
 		addBaseFieldGetters(top, false);
 		
 		addPacketStartFinish(top, false);
@@ -150,7 +144,11 @@ public class CWriter extends SourceWriter {
 	}
 	
 
-	
+	private String makeBlockValueDefine(FixedIntField fif) {
+		FieldName parent = fif.getContainingWord().getParent().getName();
+		
+		return parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
+	}
 	
 
 	private void writeBlockValueDefine(BlockField top) {
@@ -158,12 +156,9 @@ public class CWriter extends SourceWriter {
 		top.scanThroughHeaderFields(f -> {
 			if(f instanceof FixedIntField) {
 				FixedIntField fif = (FixedIntField)f;
-				FieldName parent = fif.getContainingWord().getParent().getName();
-				
-				String fifVal = parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
-				String c = fif.getComment();
-				addBlockComment(c);
-				addLine("#define "+fifVal+" ("+WriterUtils.formatAsHex(fif.getValue())+")");
+
+				addBlockComment(fif.getComment());
+				addLine("#define "+makeBlockValueDefine(fif)+" ("+WriterUtils.formatAsHex(fif.getValue())+")");
 			}
 			
 		}, true);
@@ -327,7 +322,7 @@ public class CWriter extends SourceWriter {
 							indent();
 							String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 							addBaseGetterGuts(f, dn, "return ");
-							outdent();
+							closeBrace();
 						}
 					}
 				}
@@ -335,25 +330,24 @@ public class CWriter extends SourceWriter {
 		}
 		
 		
-		top.scanThroughHeaderFields(f -> {
-			if(f instanceof BoolField) {
-				addBoolGetter((BoolField)f, protoNotDeclaration);
-			
-			} else if(f instanceof CompoundField) {
-				addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
-			} else {
-				addBaseGetter(f, protoNotDeclaration);
-				if(!protoNotDeclaration) {
-					if(f.getName() != null) {
-						indent();
-						String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
-						addBaseGetterGuts(f, dn, "return ");
-						outdent();
-						addLine("}");
-					}
-				}
-			}
-		}, false);
+//		top.scanThroughHeaderFields(f -> {
+//			if(f instanceof BoolField) {
+//				addBoolGetter((BoolField)f, protoNotDeclaration);
+//			
+//			} else if(f instanceof CompoundField) {
+//				addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
+//			} else {
+//				addBaseGetter(f, protoNotDeclaration);
+//				if(!protoNotDeclaration) {
+//					if(f.getName() != null) {
+//						indent();
+//						String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
+//						addBaseGetterGuts(f, dn, "return ");
+//						closeBrace();
+//					}
+//				}
+//			}
+//		}, false);
 	}
 
 	private void addBaseFieldGetters(BlockField top, boolean protoNotDeclaration) {
@@ -415,15 +409,14 @@ public class CWriter extends SourceWriter {
 			String c = f.getName().toLowerCamel()+" field of the " + f.getCorrectParentName().toLowerCamel() + " " + f.getCorrectParentName().toUpperCamel()+ "\n"+f.getComment();
 			String rt = getBaseType(f);
 			String function = makeBaseFieldNameRoot(f).toUpperCamel();
-			String paramType = "BbBlock";
-			String paramName = f.getCorrectParentName().toLowerCamel();
+			
 			addDocComment( gs + "s the " + c);
 			
 			
 			
 			String s = rt;
-			s += " " + gs + "Bb" + function + "(Bb* buf, " + paramType + " " + paramName;
-			s += ")";
+			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock)";
+	
 			s += protoNotDeclaration ? ";" : "{";
 			addLine(s);
 
@@ -444,7 +437,7 @@ public class CWriter extends SourceWriter {
 		String paramName = f.getCorrectParentName().toLowerCamel();
 
 		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("set").toLowerCamel();
-		addLine(functionName + "(buf, " + paramName + ", " + index + ", " + value + ");");
+		addLine(functionName + "(buf, currentBlock, " + index + ", " + value + ");");
 	}
 //	private void addBaseGetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
@@ -458,7 +451,7 @@ public class CWriter extends SourceWriter {
 	
 			
 		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
-		addLine(start + functionName + "(buf, " + paramName + ", " + index +  ");");
+		addLine(start + functionName + "(buf, currentBlock , " + index +  ");");
 		
 		
 		
@@ -470,9 +463,9 @@ public class CWriter extends SourceWriter {
 //	}
 	private void addBoolSetterGuts(BaseField f, String index, String value) {
 		String paramName = f.getCorrectParentName().toLowerCamel();
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set").toLowerCamel();
+		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set","bb").toLowerCamel();
 		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();
-		addLine(functionName + "(buf, " + paramName + ", " + index + ", " + dbn + ", " + value + ");");
+		addLine(functionName + "(buf, currentBlock, " + index + ", " + dbn + ", " + value + ");");
 	}
 //	private void addBoolGetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
@@ -481,8 +474,8 @@ public class CWriter extends SourceWriter {
 	private void addBoolGetterGuts(BaseField f, String index, String start) {
 		String paramName = f.getCorrectParentName().toLowerCamel();
 		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();	
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get").toLowerCamel();
-		addLine(start + functionName + "(buf, " + paramName + ", " + index + ", " + dbn + ");");
+		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get", "bb").toLowerCamel();
+		addLine(start + functionName + "(buf, currentBlock , " + index + ", " + dbn + ");");
 
 	}
 	
@@ -597,24 +590,9 @@ public class CWriter extends SourceWriter {
 			FieldName setterName = tn.addPrefix("set","Bb", "next");
 			String f = "BbBlock " + getterName.toLowerCamel()+"(Bb* buf, BbBlock block)";
 			addDocComment("computes the index of the next block given the previous one.");
-			BaseField lf = null;
-			for(BaseField bft : bf.getHeaderFields()) {
-				if(bft instanceof CompoundField) {
-					CompoundField cf = (CompoundField)bft;
-					for(BaseField bf2 : cf.getBaseFields()) {
-						if(bf2.getName() != null && bf2.getName().toLowerCamel().equals("length")) {
-							lf = bf2;
-							break;
-						}
-					}
-				}
-				if(lf != null) {
-					break;
-				} else if(bft.getName() != null && bft.getName().toLowerCamel().equals("length")) {
-					lf = bft;
-					break;
-				}
-			}
+			BaseField lf = bf.getHeaderField("length");
+			
+							
 			
 			if(lf == null || lf.getName() == null) {
 				throw new RuntimeException("No length field found!");
@@ -627,7 +605,7 @@ public class CWriter extends SourceWriter {
 				indent();
 //				addLine();
 				//build the function name
-				String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
+				String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 
 				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block);");//this gets the block length
 				addLine("return bbWrap(buf, block + len);");
@@ -739,13 +717,13 @@ public class CWriter extends SourceWriter {
 		}
 		
 		addDocComment(comment);
-		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock previousBlock, uint32_t n"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
+		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock currentBlock, uint32_t n"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
 		if(!protoNotDeclaration) {
 			indent();
 			
 			//now fill in the details
 			BaseField lf = bf.getHeaderField("length");
-			BaseField keyField = bf.getHeaderField("key");
+			FixedIntField keyField = (FixedIntField)bf.getHeaderField("key");
 			
 			FieldName tn = bf.getTypeName();
 			
@@ -758,7 +736,7 @@ public class CWriter extends SourceWriter {
 				throw new RuntimeException("No key field found!");
 			}
 			
-			String keyValue = makeBaseFieldNameRoot(keyField).toUpperSnake();
+			String keyValue = makeBlockValueDefine(keyField);
 			String keyIndex = makeBaseFieldNameRoot(keyField).addSuffix("INDEX").toUpperSnake();
 			String keyFuncName = FieldName.fromCamel("setBb").addSuffix(keyField.getType().name()).toLowerCamel();
 			
@@ -770,14 +748,14 @@ public class CWriter extends SourceWriter {
 			
 			//first setup index
 			addLineComment("Compute index of new block");
-			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
+//			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
 			String lenType = getBaseType(lf);
 
 			
 			
-			String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
-			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  previousBlock);");//this gets the block length
-			addLine("BbBlock result = bbWrap(buf, block + len);");
+			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
+			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
+			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
 			
 			
 		
@@ -787,9 +765,9 @@ public class CWriter extends SourceWriter {
 			addLine();
 			addLineComment("Add header fields");
 			//write the key
-			addLine(keyFuncName+"(buf, result, "+keyIndex+", "+keyValue+");");
+			addLine(keyFuncName+"(buf, currentBlock, "+keyIndex+", "+keyValue+");");
 			//write the length
-			addLine(lenFuncName+"(buf, result, "+lenIndex+", "+lenValue+"); //sorry about the magic number. :(");
+			addLine(lenFuncName+"(buf, currentBlock, "+lenIndex+", "+lenValue+"); //sorry about the magic number. :(");
 			
 			
 			//then do the params 
@@ -840,7 +818,7 @@ public class CWriter extends SourceWriter {
 		}
 	}
 	private void addArrayGetter(ArrayField bf, boolean protoNotDeclaration) {
-		String blockName = makeBaseFieldNameRoot(bf).toUpperCamel();
+		String blockName = bf.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
 		String functionName = "getBb"+blockName;
 		List<BaseField> fs = bf.getNamedBaseFields();
@@ -852,7 +830,7 @@ public class CWriter extends SourceWriter {
 		}
 		
 		addDocComment(comment);
-		addLine("void "+functionName+"(Bb* buf, BbBlock array, uint32_t n"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
+		addLine("void "+functionName+"(Bb* buf, BbBlock currentBlock, uint32_t n"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
 		if(!protoNotDeclaration) {
 			indent();
 			
@@ -922,7 +900,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result;");
+//			addLine("return result;");
 			
 			
 			outdent();
@@ -957,17 +935,17 @@ public class CWriter extends SourceWriter {
 			String lengthIndex = makeBaseFieldNameRoot(length).addSuffix("INDEX").toUpperSnake();
 			String crcIndex = makeBaseFieldNameRoot(crc).addSuffix("INDEX").toUpperSnake();
 			
-			String preambleSetter = FieldName.fromCamel("set").addSuffix(preamble.getType().name()).toLowerCamel();
-			String lengthSetter = FieldName.fromCamel("set").addSuffix(length.getType().name()).toLowerCamel();
-			String crcSetter = FieldName.fromCamel("set").addSuffix(crc.getType().name()).toLowerCamel();
+			String preambleSetter = FieldName.fromCamel("setBb").addSuffix(preamble.getType().name()).toLowerCamel();
+			String lengthSetter = FieldName.fromCamel("setBb").addSuffix(length.getType().name()).toLowerCamel();
+			String crcSetter = FieldName.fromCamel("setBb").addSuffix(crc.getType().name()).toLowerCamel();
 
-			String preambleVal = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
+			String preambleVal = makeBlockValueDefine(preamble);
 			String lengthVal = "(buf->start - bb)>>2";
 			String crcVal = "computeCrc(buf, bb)";
 			
-			addLine(preambleSetter+"("+preambleVal+");");
-			addLine(lengthSetter+"("+lengthVal+");");
-			addLine(crcSetter+"("+crcVal+");");
+			addLine(preambleSetter+"(buf, bb, "+preambleIndex+", "+preambleVal+");");
+			addLine(lengthSetter+"(buf, bb, "+lengthIndex+", "+lengthVal+");");
+			addLine(crcSetter+"(buf, bb, "+crcIndex+", "+crcVal+");");
 			
 			
 			closeBrace();
@@ -989,13 +967,13 @@ public class CWriter extends SourceWriter {
 			}
 		}
 		addDocComment(comment);
-		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock previousBlock"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
+		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock currentBlock"+paramList+")"+(protoNotDeclaration ? ";" : "{"));
 		if(!protoNotDeclaration) {
 			indent();
 			
 			//now fill in the details
 			BaseField lf = bf.getHeaderField("length");
-			BaseField keyField = bf.getHeaderField("key");
+			FixedIntField keyField = (FixedIntField)bf.getHeaderField("key");
 			
 			FieldName tn = bf.getTypeName();
 			
@@ -1008,7 +986,7 @@ public class CWriter extends SourceWriter {
 				throw new RuntimeException("No key field found!");
 			}
 			
-			String keyValue = makeBaseFieldNameRoot(keyField).toUpperSnake();
+			String keyValue = makeBlockValueDefine(keyField);
 			String keyIndex = makeBaseFieldNameRoot(keyField).addSuffix("INDEX").toUpperSnake();
 			String keyFuncName = FieldName.fromCamel("setBb").addSuffix(keyField.getType().name()).toLowerCamel();
 			
@@ -1020,14 +998,14 @@ public class CWriter extends SourceWriter {
 			
 			//first setup index
 			addLineComment("Compute index of new block");
-			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
+//			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
 			String lenType = getBaseType(lf);
 
 			
 			
-			String lgn = tn.addPrefix("get").addSuffix(lf.getName()).toLowerCamel();
-			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  previousBlock);");//this gets the block length
-			addLine("BbBlock result = bbWrap(buf, block + len);");
+			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
+			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
+			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
 			
 			
 		
@@ -1037,9 +1015,9 @@ public class CWriter extends SourceWriter {
 			addLine();
 			addLineComment("Add header fields");
 			//write the key
-			addLine(keyFuncName+"(buf, result, "+keyIndex+", "+keyValue+");");
+			addLine(keyFuncName+"(buf, currentBlock, "+keyIndex+", "+keyValue+");");
 			//write the length
-			addLine(lenFuncName+"(buf, result, "+lenIndex+", "+lenValue+"); //sorry about the magic number. :(");
+			addLine(lenFuncName+"(buf, currentBlock, "+lenIndex+", "+lenValue+"); //sorry about the magic number. :(");
 			
 			
 			//then do the params if we're doing params
