@@ -323,7 +323,7 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 	
 		addLine("@Override");	
-		addLine("public void finish(){");
+		addLine("public void finish(boolean computeCrc){");
 		indent();
 		
 		String preambleConstantName = makeBaseFieldNameRoot(preamble).addSuffix("VALUE").toUpperSnake();
@@ -343,7 +343,7 @@ public class JavaWriter extends SourceWriter {
 //		String crcConstantName = makeBaseFieldNameRoot(crc).addSuffix("VALUE").toUpperSnake();
 		String crcIndexName = makeBaseFieldNameRoot(crc).toUpperSnake();
 		String crcSetter = FieldName.fromCamel("write").addSuffix(lookupTypeForFuncName(crc)).toLowerCamel();
-		String crcVal = "getPacket().computeCrc("+top.getHeaderWordCount()+")";
+		String crcVal = "computeCrc ? getPacket().computeCrc("+top.getHeaderWordCount()+") : -1";
 		
 		addLine("getTopLevelBlock()."+crcSetter+"("+m_fieldIndexEnumName+"."+crcIndexName+", 0, "+crcVal+");");
 		
@@ -596,8 +596,8 @@ public class JavaWriter extends SourceWriter {
 		addDocComment(comment);
 		addLine("public void "+functionName+"("+paramList+"){");
 		indent();
-		
-		addLine("int n = "+fs.get(0).getName().toLowerCamel()+".length;");
+		String firstArray = fs.get(0).getName().toLowerCamel();
+		addLine("int n = "+firstArray+" == null ? 0 : "+firstArray+".length;");
 		
 		
 		//add method to set key
