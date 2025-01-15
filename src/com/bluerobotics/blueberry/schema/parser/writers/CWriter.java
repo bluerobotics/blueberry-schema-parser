@@ -64,7 +64,7 @@ public class CWriter extends SourceWriter {
 		addLine("#include <blueberry-transcoder.h>");
 	
 		addSectionDivider("Defines");
-		
+		writeBlockValueDefine(top);
 //		addBlockKeyDefines(top);
 		
 		
@@ -108,7 +108,7 @@ public class CWriter extends SourceWriter {
 		addLine("#include <"+top.getName().toLowerCamel()+".h>");
 	
 		addSectionDivider("Defines");
-		writeBlockValueDefine(top);
+		
 		writeHeaderDefines(top);
 		addLine();
 		addLine();
