@@ -559,7 +559,7 @@ public class CWriter extends SourceWriter {
 //				String ldn = 
 				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block);");//this gets the block length
 				
-				addLine("return bbWrap(buf, block + len);");
+				addLine("return block + len;");
 				outdent();
 				addLine("}");
 			}
@@ -615,8 +615,8 @@ public class CWriter extends SourceWriter {
 				//build the function name
 				String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 
-				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block);");//this gets the block length
-				addLine("return bbWrap(buf, block + len);");
+				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block) * 4; //get length in words and convert to length in bytes");//this gets the block length
+				addLine("return block + len;");
 				outdent();
 				addLine("}");
 			}
@@ -1005,19 +1005,19 @@ public class CWriter extends SourceWriter {
 			
 			
 			
-			//first setup index
-			addLineComment("Compute index of new block");
-//			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
-			String lenType = getBaseType(lf);
-
+//			//first setup index
+//			addLineComment("Compute index of new block");
+////			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
+//			String lenType = getBaseType(lf);
+//
+//			
+//			
+//			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
+//			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
+//			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
 			
 			
-			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
-			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
-			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
 			
-			
-		
 			
 			
 			//first do the header stuff
@@ -1058,7 +1058,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result;");
+			addLine("return currentBlock + "+(blockLen * 4)+"; //and another magic number. It's the same one as above but in bytes instead of words");
 			
 			
 			outdent();

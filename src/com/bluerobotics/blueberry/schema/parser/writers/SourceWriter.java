@@ -176,21 +176,8 @@ public abstract class SourceWriter {
 	 */
 	protected FieldName makeBaseFieldNameRoot(Field bf) {
 		FieldName result = null;
-		if(bf instanceof FixedIntField) {
-			//these get treated differently
-			Field p = bf.getContainingWord().getParent();
-			FieldName parent = bf.getCorrectParentName();
-//			if(p instanceof ArrayField) {
-//				parent = parent.addPrefix(p.getParent().getName());
-//			}
-			result = bf.getName().addPrefix(parent);
-		} else {
-			Field p = bf.getContainingWord().getParent();
-			result = bf.getCorrectParentName().addSuffix(bf.getName());
-//			if(p instanceof ArrayField) {
-//				result = result.addPrefix(p.getParent().getName());
-//			}
-		}
+		result = bf.getCorrectParentName().addSuffix(bf.getName());
+		
 		return result;
 	}
 	
@@ -216,9 +203,9 @@ public abstract class SourceWriter {
 	protected String makeKeyName(FixedIntField key) {
 		Field p = key.getContainingWord().getParent();
 		FieldName pn = p.getName();
-		if(p instanceof ArrayField) {
-			pn = pn.addPrefix(p.getParent().getName());
-		}
+//		if(p instanceof ArrayField) {
+//			pn = pn.addPrefix(p.getParent().getName());
+//		}
 		
 		String name = key.getName().addPrefix(pn).toUpperSnake();
 		return name;
