@@ -71,6 +71,8 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Types");
 		addBlockKeyEnum(top);
 		
+		addFirstBlockDefine(top);
+		
 		writeEnums(top);
 //		addLine("typedef BlueberryBlock Bb;");
 //		writeCompounds(top);
@@ -99,6 +101,12 @@ public class CWriter extends SourceWriter {
 
 
 	
+	private void addFirstBlockDefine(BlockField top) {
+		String n = top.getName().addSuffix("first","block","index").toUpperSnake();
+		addBlockComment("This defines the starting position of the first block after the packet header");
+		addLine("#define "+n+" ("+top.getHeaderWordCount()*4+")");
+	}
+
 	private void makeSourceFile(BlockField top, String... hs) {
 		startFile(hs);
 	
@@ -941,7 +949,8 @@ public class CWriter extends SourceWriter {
 
 			String preambleVal = makeBlockValueDefine(preamble);
 			String lengthVal = "(buf->start - bb)>>2";
-			String crcVal = "computeCrc(buf, bb)";
+			String start = top.getName().addSuffix("first","block","index").toUpperSnake();
+			String crcVal = "computeCrc(buf, "+start+", bb)";
 			
 			addLine(preambleSetter+"(buf, bb, "+preambleIndex+", "+preambleVal+");");
 			addLine(lengthSetter+"(buf, bb, "+lengthIndex+", "+lengthVal+");");
