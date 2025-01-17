@@ -237,6 +237,9 @@ public class BlockField extends AbstractField implements ParentField {
 					if(f2 instanceof BoolFieldField) {
 						BoolFieldField bff = (BoolFieldField)f2;
 						result.addAll(bff.getBoolFields());
+					} else if(f2.getName() != null){
+						
+						result.add(f2);
 					}
 				}
 			} else if(f.getName() != null){
