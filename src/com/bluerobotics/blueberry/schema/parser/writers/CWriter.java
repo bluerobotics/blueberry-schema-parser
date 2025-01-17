@@ -917,7 +917,7 @@ public class CWriter extends SourceWriter {
 		addLine("BbBlock start"+blockName+"(Bb* buf)"+topLineEnd);
 		if(!protoNotDeclaration) {
 			indent();
-			addLine("return buf->start + "+headerLength*4+";");
+			addLine("return "+headerLength*4+";");
 			
 			
 			closeBrace();

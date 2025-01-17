@@ -132,5 +132,10 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 offset
 	}
 	
+	Payload TimePayload {
+		uint32 hostTime //time in milliseconds from program start according to the bus controller
+		uint32 localTime //time in milliseconds from program start according to sender of this packet
+	}
+	
 }
 
