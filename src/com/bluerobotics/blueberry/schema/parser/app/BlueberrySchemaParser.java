@@ -958,12 +958,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				Token equalsT = m_tokens.get(i);//equals
 				Token numberT = m_tokens.get(vi);//number
 				Token nameT = m_tokens.get(ni);//name
-				Token commentT= null;//comment
+				
 				CommentToken ct = null;
 				if(cti >= 0) {
 					Token t = m_tokens.get(cti);
 					if(t instanceof CommentToken) {
-						commentT = (CommentToken)t;
+						ct = (CommentToken)t;
 					}
 				}
 				
@@ -972,7 +972,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					NumberToken nt = (NumberToken)numberT;
 					SingleWordToken swt = (SingleWordToken)nameT;
 					NameValueToken nvt = new NameValueToken(swt, nt, ct);
-					if(commentT != null) {
+					if(ct != null) {
 						m_tokens.set(cti, nvt);//put the new thing in the place of the comment
 						m_tokens.remove(numberT);//remove the number
 						m_tokens.remove(equalsT);//remove the equals

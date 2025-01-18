@@ -755,7 +755,13 @@ public class JavaWriter extends SourceWriter {
 		addLine("public enum "+name+" {");
 		indent();
 		for(NameValue nv : nvs) {
-			addLine(nv.getName().toUpperSnake()+"("+nv.getValueAsHex()+"),");
+			String c = nv.getComment();
+			if(!c.isBlank()) {
+				c = "//"+c;
+			} else {
+				c = "";
+			}
+			addLine(nv.getName().toUpperSnake()+"("+nv.getValueAsHex()+"),"+c);
 		}
 		addLine(";");
 		addLine("private int value;");

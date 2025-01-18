@@ -97,7 +97,7 @@ Packet brPacket(preamble = 0x45554c42) {
 				SFDQ      	= 0x0000
 				BLUE_SERVO	= 0x0001
 				LUMEN       = 0x0002
-				NUCLEO     	= 0x0003
+				NUCLEO     	= 0x0003 //the ST family of development PCBs
 				BLUE_ESC
 			}
 			HwType hwType
