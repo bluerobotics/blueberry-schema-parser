@@ -31,6 +31,8 @@ import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
 import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
+import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
 import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
 
@@ -727,11 +729,46 @@ public class JavaWriter extends SourceWriter {
 		writeKeyEnum(top);
 		writeFieldIndexEnum(top);
 		writeBitIndexEnum(top);
+		writeOtherEnums(top);
 		closeBrace();
 		writeToFile(m_packageName.toPath() + m_constantsName,"java");	
 		
 		
 
+	}
+
+	private void writeOtherEnums(BlockField top) {
+		top.scanThroughBaseFields(f -> {
+			if(f instanceof EnumField && f.getName() != null) {
+				writeEnum((EnumField)f);
+			}
+		}, true);
+	}
+
+	private void writeEnum(EnumField f) {
+		List<NameValue> nvs = f.getNameValues();
+		
+		String comment = f.getComment();
+		String name = f.getName().addSuffix("enum").toUpperCamel();
+		
+		addDocComment(comment);
+		addLine("public enum "+name+" {");
+		indent();
+		for(NameValue nv : nvs) {
+			addLine(nv.getName().toUpperSnake()+"("+nv.getValueAsHex()+"),");
+		}
+		addLine(";");
+		addLine("private int value;");
+		addLine("private "+name+"(int v){");
+		indent();
+		addLine("value = v;");
+		closeBrace();
+		addLine("public int getValue(){");
+		indent();
+		addLine("return value;");
+		closeBrace();
+		closeBrace();
+		
 	}
 
 	private String lookupTypeForFuncName(BaseField f) {

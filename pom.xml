@@ -6,8 +6,8 @@
   <name>Blueberry Schema Parser</name>
   <description>An application to digest a BlueBerry protocol schema and generate code stubs for various languages.</description>
   <properties>
-  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-</properties>
+  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>

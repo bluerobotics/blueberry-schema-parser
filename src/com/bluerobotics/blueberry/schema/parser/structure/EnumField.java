@@ -24,6 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.structure;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
+
 /**
  * 
  */
@@ -50,6 +52,9 @@ public class EnumField extends BaseField implements DefinedField {
 		
 		public String toString() {
 			return getClass().getSimpleName() + "(" + name + " = " + value + ")"; 
+		}
+		public String getValueAsHex() {
+			return WriterUtils.formatAsHex(getValue());
 		}
 	}
 	private final FieldName m_typeName;
@@ -84,6 +89,7 @@ public class EnumField extends BaseField implements DefinedField {
 		}
 		return result;
 	}
+	
 	
 	
 	
