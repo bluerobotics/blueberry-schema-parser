@@ -147,8 +147,8 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("BlueberryPacket p = (BlueberryPacket)getPacket();");
 		addLine("BlueberryBlock b = p.getTopLevelBlock();");
-		addLine("int published = "+lengthGetter+";");
-		addLine("int actual = i/4;");
+		addLine("int published = "+lengthGetter+" * 4;");
+		addLine("int actual = i;");
 		addLine("return published != 0 && published == actual;");	
 		closeBrace();
 	

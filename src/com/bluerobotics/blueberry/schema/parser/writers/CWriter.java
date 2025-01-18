@@ -762,8 +762,8 @@ public class CWriter extends SourceWriter {
 			
 			
 			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
-			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
-			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
+//			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
+//			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
 			
 			
 		
@@ -812,7 +812,7 @@ public class CWriter extends SourceWriter {
 			
 			
 			//return the new block index
-			addLine("return result;");
+			addLine("return currentBlock + "+bf.getHeaderWordCount()*4+"+(n * "+bf.getBaseWordCount()*4+");//another couple magic numbers: header length plus n * base fields length");
 			
 			
 			outdent();
@@ -948,13 +948,13 @@ public class CWriter extends SourceWriter {
 			String crcSetter = FieldName.fromCamel("setBb").addSuffix(crc.getType().name()).toLowerCamel();
 
 			String preambleVal = makeBlockValueDefine(preamble);
-			String lengthVal = "(buf->start - bb)>>2";
+			String lengthVal = "bb>>2";//(buf->start - bb)>>2";
 			String start = top.getName().addSuffix("first","block","index").toUpperSnake();
 			String crcVal = "computeCrc(buf, "+start+", bb)";
 			
-			addLine(preambleSetter+"(buf, bb, "+preambleIndex+", "+preambleVal+");");
-			addLine(lengthSetter+"(buf, bb, "+lengthIndex+", "+lengthVal+");");
-			addLine(crcSetter+"(buf, bb, "+crcIndex+", "+crcVal+");");
+			addLine(preambleSetter+"(buf, 0, "+preambleIndex+", "+preambleVal+");");
+			addLine(lengthSetter+"(buf, 0, "+lengthIndex+", "+lengthVal+");");
+			addLine(crcSetter+"(buf, 0, "+crcIndex+", "+crcVal+");");
 			
 			
 			closeBrace();
