@@ -45,7 +45,7 @@ public class JavaWriter extends SourceWriter {
 	private String m_bitIndexEnumName;
 	private String m_fieldIndexEnumName;
 	private String m_packetBuilderName;
-	private String m_packetDecoderName;
+//	private String m_packetDecoderName;
 	private String m_consumerInterfaceName;
 	private String m_keyEnumName;
 	private String m_consumerManagerName;
@@ -62,7 +62,7 @@ public class JavaWriter extends SourceWriter {
 		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
 		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
 		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
-		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
+//		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
 		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
 		m_consumerInterfaceName = top.getName().addSuffix("consumer").toUpperCamel();
 		m_consumerManagerName = top.getName().addSuffix("consumer","manager").toUpperCamel();
@@ -454,6 +454,9 @@ public class JavaWriter extends SourceWriter {
 			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
 			String fieldIndexName = fieldIndexEnum+"."+makeBaseFieldNameRoot(f).toUpperSnake(); 
 			String fieldGetter = fieldGetterName + "("+fieldIndexName+", 0)";
+			if(f instanceof EnumField) {
+				fieldGetter = fieldFuncReturnType+".lookup("+fieldGetter+")";
+			}
 			addDocComment(f.getComment());
 			addLine("public "+fieldFuncReturnType+"[] "+fieldFuncName+"(){");
 			indent();
@@ -540,6 +543,9 @@ public class JavaWriter extends SourceWriter {
 			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
 			String fieldIndexName = fieldIndexEnum+"."+makeBaseFieldNameRoot(f).toUpperSnake(); 
 			String fieldGetter = fieldGetterName + "("+fieldIndexName+", 0)";
+			if(f instanceof EnumField) {
+				fieldGetter = fieldFuncReturnType+".lookup("+fieldGetter+")";
+			}
 			addDocComment(f.getComment());
 
 			addLine("public "+fieldFuncReturnType+" "+fieldFuncName+"(){");
@@ -634,6 +640,9 @@ public class JavaWriter extends SourceWriter {
 			
 			String fType = bit ? "bool" : lookupTypeForFuncName(f);
 			String fValue = f.getName().toLowerCamel();
+			if(f instanceof EnumField) {
+				fValue += ".getValue()";
+			}
 			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
 			String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
@@ -698,6 +707,9 @@ public class JavaWriter extends SourceWriter {
 				
 				String fType = bit ? "bool" : lookupTypeForFuncName(f);
 				String fValue = f.getName().toLowerCamel();
+				if(f instanceof EnumField) {
+					fValue += ".getValue()";
+				}
 				String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
 				String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 				String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
@@ -720,6 +732,7 @@ public class JavaWriter extends SourceWriter {
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.EnumLookup;");
 		addLine();
 		
 		addLine("public interface "+m_constantsName+" {");
@@ -749,7 +762,7 @@ public class JavaWriter extends SourceWriter {
 		List<NameValue> nvs = f.getNameValues();
 		
 		String comment = f.getComment();
-		String name = f.getName().addSuffix("enum").toUpperCamel();
+		String name = makeEnumTypeName(f);
 		
 		addDocComment(comment);
 		addLine("public enum "+name+" {");
@@ -764,6 +777,7 @@ public class JavaWriter extends SourceWriter {
 			addLine(nv.getName().toUpperSnake()+"("+nv.getValueAsHex()+"),"+c);
 		}
 		addLine(";");
+		addLine("private static EnumLookup<"+name+"> m_lookup = new EnumLookup<"+name+">();");
 		addLine("private int value;");
 		addLine("private "+name+"(int v){");
 		indent();
@@ -773,8 +787,19 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("return value;");
 		closeBrace();
+		addLine("public static "+name+" lookup(int i){");
+		indent();
+		addLine("if(m_lookup.size() == 0) {");
+		indent();
+		addLine("for("+name+" e : values()) {");
+		indent();
+		addLine("m_lookup.add(e.getValue(), e);");
 		closeBrace();
-		
+		closeBrace();
+		addLine("return m_lookup.lookup(i);");
+		closeBrace();
+		closeBrace();
+
 	}
 
 	private String lookupTypeForFuncName(BaseField f) {
@@ -820,45 +845,53 @@ public class JavaWriter extends SourceWriter {
 	}
 	private String lookupTypeForJavaVars(BaseField f) {
 		String result = "";
-		switch(f.getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			result = "boolean";
-			break;
-		case BOOLFIELD:
-			result = "int";
-			break;
-		case COMPOUND:
-			result = "int";
-			break;
-		case FLOAT32:
-			result = "double";
-			break;
-		case INT16:
-			result = "int";
-			break;
-		case INT32:
-			result = "int";
-			break;
-		case INT8:
-			result = "int";
-			break;
-		case UINT16:
-			result = "int";
-			break;
-		case UINT32:
-			result = "int";
-			break;
-		case UINT8:
-			result = "int";
-			break;
-	
+		if(f instanceof EnumField) {
+			result = makeEnumTypeName((EnumField)f);
+		} else {
+			switch(f.getType()) {
+			case ARRAY:
+				break;
+			case BLOCK:
+				break;
+			case BOOL:
+				result = "boolean";
+				break;
+			case BOOLFIELD:
+				result = "int";
+				break;
+			case COMPOUND:
+				result = "int";
+				break;
+			case FLOAT32:
+				result = "double";
+				break;
+			case INT16:
+				result = "int";
+				break;
+			case INT32:
+				result = "int";
+				break;
+			case INT8:
+				result = "int";
+				break;
+			case UINT16:
+				result = "int";
+				break;
+			case UINT32:
+				result = "int";
+				break;
+			case UINT8:
+				result = "int";
+				break;
+		
+			}
 		}
 		return result;
 	}
+	private String makeEnumTypeName(EnumField f) {
+		return f.getName().addSuffix("enum").toUpperCamel();
+	}
+
 	private void writeConsants(BlockField top) {
 		ArrayList<FixedIntField> fifs = new ArrayList<FixedIntField>();
 		
