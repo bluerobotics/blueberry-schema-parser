@@ -90,7 +90,7 @@ public class CWriter extends SourceWriter {
 		addBlockAdders(top, true);
 		
 		addArrayAdders(top, true);
-		addArrayGetters(top, true);
+//		addArrayGetters(top, true);
 		
 		
 		
@@ -144,7 +144,7 @@ public class CWriter extends SourceWriter {
 		addBlockAdders(top, false);
 		
 		addArrayAdders(top, false);
-		addArrayGetters(top, false);
+//		addArrayGetters(top, false);
 		
 		
 		writeToFile("src/"+top.getName().toLowerCamel(),"c");
@@ -361,9 +361,9 @@ public class CWriter extends SourceWriter {
 	private void addBaseFieldGetters(BlockField top, boolean protoNotDeclaration) {
 		ArrayList<BlockField> bfs = new ArrayList<BlockField>();
 		top.scanThroughBlockFields(bf -> {
-			if(!(bf instanceof ArrayField)) {
+//			if(!(bf instanceof ArrayField)) {
 				bfs.add(bf);
-			}
+//			}
 		});
 		for(BlockField bf : bfs) {
 			for(BaseField f : bf.getNamedBaseFields()) {
@@ -418,12 +418,18 @@ public class CWriter extends SourceWriter {
 			String rt = getBaseType(f);
 			String function = makeBaseFieldNameRoot(f).toUpperCamel();
 			
+			boolean array = false;
+			if((f.getContainingWord().getParent()) instanceof ArrayField) {
+				array = true;
+			}
+			
 			addDocComment( gs + "s the " + c);
 			
 			
 			
 			String s = rt;
-			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock)";
+			String arrayParam = array ? ", uint32_t i" : "";
+			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock"+arrayParam+")";
 	
 			s += protoNotDeclaration ? ";" : "{";
 			addLine(s);
@@ -455,6 +461,17 @@ public class CWriter extends SourceWriter {
 		String rt = getBaseType(f);
 		String paramName = f.getCorrectParentName().toLowerCamel();
 
+		ArrayField af = null;
+
+		String arrayParms = "";
+		String arrayComment = "";
+		Field p = f.getContainingWord().getParent();
+		if(p instanceof ArrayField) {
+			af = (ArrayField)p;
+			arrayParms = " + (i * "+af.getBaseWordCount()*4+")";
+			arrayComment = " //magic number represents the number of bytes in each array rep";
+		}
+
 	
 	
 			
@@ -462,7 +479,7 @@ public class CWriter extends SourceWriter {
 		if(f instanceof EnumField) {
 			functionName = "("+rt+")" + functionName;
 		}
-		addLine(start + functionName + "(buf, currentBlock , " + index +  ");");
+		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");"+arrayComment);
 		
 		
 		
