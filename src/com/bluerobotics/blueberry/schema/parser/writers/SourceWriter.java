@@ -124,10 +124,10 @@ public abstract class SourceWriter {
 		addLine("//"+c);
 	}
 	
-	protected void addDocComment(String cs) {
+	protected void addDocComment(String... cs) {
 		addBlockComment(true, cs);
 	}
-	protected void addBlockComment(String cs) {
+	protected void addBlockComment(String... cs) {
 		addBlockComment(false, cs);
 	}
 	/**
@@ -135,8 +135,13 @@ public abstract class SourceWriter {
 	 * @param docNotBlock
 	 * @param c
 	 */
-	private void addBlockComment(boolean docNotBlock, String c) {
-		
+	private void addBlockComment(boolean docNotBlock, String... cs) {
+		String c = "";
+		for(String ct : cs) {
+			if(!ct.isBlank()) {
+				c += ct + "\n";
+			}
+		}
 		if(!c.isBlank()) {
 
 			String[] ss = c.split("\\R");

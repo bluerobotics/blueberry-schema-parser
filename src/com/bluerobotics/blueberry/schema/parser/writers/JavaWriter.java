@@ -299,6 +299,7 @@ public class JavaWriter extends SourceWriter {
 		startFile(headers);
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
+		addLine("import java.util.function.Function;");
 		addLine();
 
 
@@ -443,6 +444,12 @@ public class JavaWriter extends SourceWriter {
 		closeBrace();
 		addLine();
 		
+		addDocComment("Gets the number of elements in the array field.");
+		addLine("public int getRepeats(){");
+		indent();
+		addLine("return repeats;");
+		closeBrace();
+		addLine();
 		
 		//now add methods to read fields
 		for(BaseField f : af.getNamedBaseFields()) {
@@ -457,18 +464,15 @@ public class JavaWriter extends SourceWriter {
 			if(f instanceof EnumField) {
 				fieldGetter = fieldFuncReturnType+".lookup("+fieldGetter+")";
 			}
-			addDocComment(f.getComment());
-			addLine("public "+fieldFuncReturnType+"[] "+fieldFuncName+"(){");
+			addDocComment("Gets the "+makeBaseFieldNameRoot(f)+" field of the "+af.getName().toLowerCamel()+" Block",f.getComment(), "@param i - the index of the desired element. This must be less than the repeats value of this block.");
+			addLine("public "+fieldFuncReturnType+" "+fieldFuncName+"(int i){");
 			indent();
-			addLine(fieldFuncReturnType + "[] result = new "+fieldFuncReturnType+"[repeats];");
-			addLine("for(int i = 0; i < repeats; ++i){");
+			addLine("if(i >= repeats || i < 0) {");
 			indent();
-			addLine("result[i] = "+fieldGetterName+"("+fieldIndexName+", i * unit);");
+			addLine("throw new RuntimeException(\"Index out of bounds!\");");
 			closeBrace();
-			
-			addLine("return result;");
+			addLine("return "+fieldGetterName+"("+fieldIndexName+", i * unit);");
 			closeBrace();
-
 			addLine();
 		}
 
@@ -594,18 +598,18 @@ public class JavaWriter extends SourceWriter {
 		
 		int headerLength = af.getHeaderWordCount();
 		
-		
-		boolean firstTime = true;
+		String paramComments = "@param n - the number of elements\n";
 		for(BaseField f : fs) {
-			paramList += (firstTime ? "" : ", ")+lookupTypeForJavaVars(f)+"[] "+f.getName().toLowerCamel();
-			firstTime = false;
+			String fName = f.getName().addSuffix("Function").toLowerCamel();
+			paramList += ", "+"Function<Integer, "+lookupObjectTypeForJavaVars(f)+"> "+fName;
+			paramComments += "@param "+fName+" - a function that returns the array element given an integer index\n";
 		}
 		
-		addDocComment(comment);
-		addLine("public void "+functionName+"("+paramList+"){");
+		addDocComment(comment, "This assumes parameters defined with a functional interface ", paramComments);
+		addLine("public void "+functionName+"(int n"+paramList+"){");
 		indent();
 		String firstArray = fs.get(0).getName().toLowerCamel();
-		addLine("int n = "+firstArray+" == null ? 0 : "+firstArray+".length;");
+//		addLine("int n = "+firstArray+" == null ? 0 : "+firstArray+".length;");
 		
 		
 		//add method to set key
@@ -634,19 +638,19 @@ public class JavaWriter extends SourceWriter {
 		addLine("getCurrentBlock()."+repeatsFuncName+"("+m_fieldIndexEnumName+"."+repeatsIndex+", 0, "+repeatsValue+");");
 		addLine("for(int i = 0; i < n; ++i){");
 		indent();
-		addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i);");
+		addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i * 4); //the 4 is to convert from words to bytes");
 		for(BaseField f : fs) {
 			boolean bit = f instanceof BoolField;
 			
 			String fType = bit ? "bool" : lookupTypeForFuncName(f);
-			String fValue = f.getName().toLowerCamel();
+			String fValue = f.getName().addSuffix("Function").toLowerCamel();
 			if(f instanceof EnumField) {
 				fValue += ".getValue()";
 			}
 			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
 			String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
 			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
-			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", arrayOffsetForThisCycle, "+fValue+"[i]);");
+			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", arrayOffsetForThisCycle, "+fValue+".apply(i));");
 		}
 		closeBrace();
 		addLine("advanceBlock("+headerLength + " + ("+ lengthValue+" * n));");
@@ -668,14 +672,17 @@ public class JavaWriter extends SourceWriter {
 			//don't do anything if this block does not have parameters but we're doing the version with params
 			return;
 		}
+		String paramComment = "";
 		if(withParamsNotWithout) {
 			boolean firstTime = true;
 			for(BaseField f : fs) {
-				paramList += (firstTime ? "" : ", ")+lookupTypeForJavaVars(f)+" "+f.getName().toLowerCamel();
+				String fName = f.getName().toLowerCamel();
+				paramList += (firstTime ? "" : ", ")+lookupTypeForJavaVars(f)+" "+fName;
 				firstTime = false;
+				paramComment += "@param "+fName+" - "+f.getComment()+"\n";
 			}
 		}
-		addDocComment(comment);
+		addDocComment(comment, paramComment);
 		addLine("public void "+functionName+"("+paramList+"){");
 		indent();
 	
@@ -840,6 +847,43 @@ public class JavaWriter extends SourceWriter {
 			result = "byte";
 			break;
 	
+		}
+		return result;
+	}
+	/**
+	 * looks up an object type to represent the type of the specified base field
+	 * This will not return a primitive type, instead it looks up the equivalent class type
+	 * @param f
+	 * @return
+	 */
+	private String lookupObjectTypeForJavaVars(BaseField f){
+		String result = "";
+		if(f instanceof EnumField) {
+			result = makeEnumTypeName((EnumField)f);
+		} else {
+			switch(f.getType()) {
+			case ARRAY:
+				break;
+			case BLOCK:
+				break;
+			case BOOL:
+				result = "Boolean";
+				break;
+			case FLOAT32:
+				result = "Double";
+				break;
+			case BOOLFIELD:
+			case COMPOUND:
+			case INT16:
+			case INT32:
+			case INT8:
+			case UINT16:
+			case UINT32:
+			case UINT8:
+				result = "Integer";
+				break;
+		
+			}
 		}
 		return result;
 	}

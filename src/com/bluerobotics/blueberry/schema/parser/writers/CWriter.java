@@ -419,16 +419,25 @@ public class CWriter extends SourceWriter {
 			String function = makeBaseFieldNameRoot(f).toUpperCamel();
 			
 			boolean array = false;
+			
+			String arrayComment = "";
 			if((f.getContainingWord().getParent()) instanceof ArrayField) {
 				array = true;
+				arrayComment = "@param i - index of array item to get\n"+
+								"@param bytesPerRepeat - number of bytes in each array repeated element";
+				
 			}
 			
-			addDocComment( gs + "s the " + c);
+			addDocComment( gs + "s the " + c + "\n"+
+					"@param buf - the buffer containing the packet\n" +
+					"@param currentBlock - the index of the block we're interested in\n"+
+					arrayComment
+					);
 			
 			
 			
 			String s = rt;
-			String arrayParam = array ? ", uint32_t i" : "";
+			String arrayParam = array ? ", uint32_t i, uint32_t bytesPerRepeat" : "";
 			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock"+arrayParam+")";
 	
 			s += protoNotDeclaration ? ";" : "{";
@@ -469,7 +478,7 @@ public class CWriter extends SourceWriter {
 		if(p instanceof ArrayField) {
 			af = (ArrayField)p;
 		
-			arrayParms = " + (i * "+af.getBaseWordCount()*4+")";
+			arrayParms = " + (i * bytesPerRepeat)";
 		
 			
 			arrayComment = " //magic number represents the number of bytes in each array rep";
@@ -482,7 +491,7 @@ public class CWriter extends SourceWriter {
 		if(f instanceof EnumField) {
 			functionName = "("+rt+")" + functionName;
 		}
-		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");"+arrayComment);
+		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");");
 		
 		
 		
