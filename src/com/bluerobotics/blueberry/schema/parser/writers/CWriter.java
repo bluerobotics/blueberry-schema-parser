@@ -459,6 +459,9 @@ public class CWriter extends SourceWriter {
 	
 			
 		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
+		if(f instanceof EnumField) {
+			functionName = "("+rt+")" + functionName;
+		}
 		addLine(start + functionName + "(buf, currentBlock , " + index +  ");");
 		
 		
@@ -630,48 +633,58 @@ public class CWriter extends SourceWriter {
 	
 	
 	private String getBaseType(BaseField f) {
-		Type t = f.getType();
 		String rt = "";
-		switch(t) {
-		case COMPOUND:
-		case ARRAY:
-		case BLOCK:
-			break;
-		case BOOL:
-			rt = "bool";
-			break;
-		case BOOLFIELD:
-			rt = "uint8_t";
-			break;
-		case FLOAT32:
-			rt = "float";
-			break;
-		case INT16:
-			rt = "int16_t";
-			break;
-		case INT32:
-			rt = "int32_t";
-			break;
-		case INT8:
-			rt = "int8_t";
-			break;
-		case UINT16:
-			rt = "uint16_t";
-			break;
-		case UINT32:
-			rt = "uint32_t";
-			break;
-		case UINT8:
-			rt = "uint8_t";
-			break;
-		default:
-			break;
-		
+	
+		Type t = f.getType();
+		if(f instanceof EnumField) {
+			rt = getEnumTypeName(f);
+		} else {
+	
+			switch(t) {
+			case COMPOUND:
+			case ARRAY:
+			case BLOCK:
+				break;
+			case BOOL:
+				rt = "bool";
+				break;
+			case BOOLFIELD:
+				rt = "uint8_t";
+				break;
+			case FLOAT32:
+				rt = "float";
+				break;
+			case INT16:
+				rt = "int16_t";
+				break;
+			case INT32:
+				rt = "int32_t";
+				break;
+			case INT8:
+				rt = "int8_t";
+				break;
+			case UINT16:
+				rt = "uint16_t";
+				break;
+			case UINT32:
+				rt = "uint32_t";
+				break;
+			case UINT8:
+				rt = "uint8_t";
+				break;
+			default:
+				break;
+			
+			}
 		}
 		return rt;
 	}
 	
 	
+	private String getEnumTypeName(BaseField f) {
+		return f.getName().toUpperCamel();
+	}
+
 	private void addBlockKeyDefines(BlockField top) {
 		List<FixedIntField> keys = getBlockKeys(top);
 		
