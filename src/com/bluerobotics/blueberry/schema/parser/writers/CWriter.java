@@ -80,6 +80,7 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Function Prototypes");
 		addHeaderFieldGetters(top,true);
 		
+		addUnitsPerRepeatGetter(top, true);
 
 		addBaseFieldGetters(top, true);
 		
@@ -130,6 +131,9 @@ public class CWriter extends SourceWriter {
 		
 		addHeaderFieldGetters(top,false);
 		
+		addUnitsPerRepeatGetter(top, false);
+
+		
 		addBaseFieldGetters(top, false);
 		
 		addPacketStartFinish(top, false);
@@ -150,7 +154,28 @@ public class CWriter extends SourceWriter {
 	}
 	
 
+	
 
+	private void addUnitsPerRepeatGetter(BlockField top, boolean proto) {
+		//grab the first array field found
+		ArrayField af = getArrayFields(top).get(0);
+		
+		int hl = af.getHeaderWordCount();
+		FieldName tn = af.getTypeName();
+		
+		addDocComment("get the number of bytes per array element.\nThis is needed for array value getters.");
+		addLine("uint32_t getBb"+tn.toUpperCamel()+"BytesPerRepeat(Bb* buf, BbBlock currentBlock)"+(proto ? ";" : "{"));
+		if(!proto) {
+			indent();
+		
+//			BaseField lField = af.getHeaderField("length");
+			addLine("uint32_t length = getBb"+tn.toUpperCamel()+"Length(buf, currentBlock);");
+			addLine("uint32_t repeats = getBb"+tn.toUpperCamel()+"Repeats(buf, currentBlock);");
+			addLine("return (length - " + (hl * 4) + ") / repeats;");
+			closeBrace();
+		}
+		
+	}
 
 	private String makeBlockValueDefine(FixedIntField fif) {
 		FieldName parent = fif.getContainingWord().getParent().getName();
@@ -324,12 +349,12 @@ public class CWriter extends SourceWriter {
 		for(BlockField bf : bfs) {
 			bf.scanThroughHeaderFields(f -> {
 				if(f.getName() != null) {
-					addBaseGetter(f, protoNotDeclaration);
+					addBaseGetter(f, protoNotDeclaration, false);
 					if(!protoNotDeclaration) {
 						if(f.getName() != null) {
 							indent();
 							String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
-							addBaseGetterGuts(f, dn, "return ");
+							addBaseGetterGuts(f, dn, "return ", false);
 							closeBrace();
 						}
 					}
@@ -373,12 +398,12 @@ public class CWriter extends SourceWriter {
 				} else if(f instanceof CompoundField) {
 					addCompoundGetterPrototype((CompoundField)f, top, protoNotDeclaration);
 				} else {
-					addBaseGetter(f, protoNotDeclaration);
+					addBaseGetter(f, protoNotDeclaration, true);
 					if(!protoNotDeclaration) {
 						if(f.getName() != null) {
 							indent();
 							String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
-							addBaseGetterGuts(f, dn, "return ");
+							addBaseGetterGuts(f, dn, "return ", true);
 							outdent();
 							addLine("}");
 
@@ -396,7 +421,7 @@ public class CWriter extends SourceWriter {
 
 	private void addBoolGetter(BoolField b, boolean protoNotDeclaration) {
 		
-		addBaseGetter(b, protoNotDeclaration);
+		addBaseGetter(b, protoNotDeclaration, true);
 		if(!protoNotDeclaration) {
 			indent();
 			String dn = makeBaseFieldNameRoot(b).addSuffix("INDEX").toUpperSnake();
@@ -410,7 +435,7 @@ public class CWriter extends SourceWriter {
 		
 	}
 
-	private void addBaseGetter(BaseField f, boolean protoNotDeclaration) {
+	private void addBaseGetter(BaseField f, boolean protoNotDeclaration, boolean addBytesPerRepeat) {
 		if(f.getName() != null) {
 
 			String gs = "get";
@@ -421,7 +446,7 @@ public class CWriter extends SourceWriter {
 			boolean array = false;
 			
 			String arrayComment = "";
-			if((f.getContainingWord().getParent()) instanceof ArrayField) {
+			if(addBytesPerRepeat && (f.getContainingWord().getParent()) instanceof ArrayField) {
 				array = true;
 				arrayComment = "@param i - index of array item to get\n"+
 								"@param bytesPerRepeat - number of bytes in each array repeated element";
@@ -466,7 +491,7 @@ public class CWriter extends SourceWriter {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 //		addBaseGetterGuts(f, dn);
 //	}
-	private void addBaseGetterGuts(BaseField f, String index, String start) {
+	private void addBaseGetterGuts(BaseField f, String index, String start, boolean doArrayStuff) {
 		String rt = getBaseType(f);
 		String paramName = f.getCorrectParentName().toLowerCamel();
 
@@ -475,7 +500,7 @@ public class CWriter extends SourceWriter {
 		String arrayParms = "";
 		String arrayComment = "";
 		Field p = f.getContainingWord().getParent();
-		if(p instanceof ArrayField) {
+		if(p instanceof ArrayField & doArrayStuff) {
 			af = (ArrayField)p;
 		
 			arrayParms = " + (i * bytesPerRepeat)";
@@ -821,7 +846,7 @@ public class CWriter extends SourceWriter {
 
 					addBoolGetterGuts(f, dn, value);
 				} else {
-					addBaseGetterGuts(f, dn, value);
+					addBaseGetterGuts(f, dn, value, true);
 				}
 			}
 			outdent();

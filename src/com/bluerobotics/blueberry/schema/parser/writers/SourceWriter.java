@@ -185,7 +185,20 @@ public abstract class SourceWriter {
 		
 		return result;
 	}
-	
+	/**
+	 * creates a list of all array fields defined in the schema
+	 * @param top - the top level field in the schema
+	 * @return a list of array fields
+	 */
+	public List<ArrayField> getArrayFields(BlockField top){
+		ArrayList<ArrayField> afs = new ArrayList<ArrayField>();
+		top.scanThroughBlockFields(bf -> {
+			if(bf instanceof ArrayField) {
+				afs.add((ArrayField)bf);
+			}
+		});
+		return afs;
+	}
 	/**
 	 * recurses through all the block hierarchy and collects all fixed int fields called "key"
 	 * @param top
