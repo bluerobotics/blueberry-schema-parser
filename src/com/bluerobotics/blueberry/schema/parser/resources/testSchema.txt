@@ -136,6 +136,34 @@ Packet brPacket(preamble = 0x45554c42) {
 		uint32 hostTime //time in milliseconds from program start according to the bus controller
 		uint32 localTime //time in milliseconds from program start according to sender of this packet
 	}
+	/*
+	 * A payload for configuring a servo
+	 */
+	Payload servoConfigPayload {
+		bool positionNotVelocity //when true causes servo to control its rotational position, otherwise controls rotational velocity
+		float maxPos //maximum target - servo will not allow position to go above this. This is either as a position or a velocity depending on positionNotVelocity
+		float minPos //minimum target - servo will not allow position to go below this. This is either a position or a velocity depending on positionNotVelocity
+		/*
+		 * applies a gain to the servo setpoint and actual. Default values are radians for position and radians per second for velocity.
+		 * Gain multiplies these values. i.e. 57.3 would mean working in degrees instead of radians
+		 */
+		float gain  
+	}
+	/*
+	 * A payload for controlling a servo and also for the response from a servo
+	 */
+	Payload servoPayload {
+		float32 setpoint //this is the target that the servo will attempt to achieve. This is either a rotational position or a speed, depending on configuration
+		float32 actual //the actual measurement from the servo. Ideally this will quickly approach the setpoint. This has no effect in a control payload
+	}
 	
+	/*
+	 * A payload for controlling a lumen and also for the response from a lumen
+	 */
+	Payload lumenPayload {
+		float32 setpoint //this is the light control setpoint for the lumen. It is normalizeed so that a value of 1.0 is full brightness and 0.0 is off
+		float32 actualPower //this is the power being delivered to the LED in Watts. This has no effect in the control payload
+		float32 temperature //this is the temperature of the light. This has no use in the control payload
+	}
 }
 
