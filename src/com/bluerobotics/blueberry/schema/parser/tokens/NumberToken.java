@@ -26,7 +26,6 @@ public class NumberToken extends SingleWordToken {
 			v = parse(swt.getName());
 			success = true;
 		} catch(NumberFormatException e) {
-			
 		}
 		if(success) {
 			result = new NumberToken(swt, v);
@@ -48,7 +47,7 @@ public class NumberToken extends SingleWordToken {
 			result = Long.parseLong(s2, 2, n, 10);
 		} else if(s2.startsWith("0b")) {
 			result = Long.parseLong(s2, 2, n,  2);
-		} else if(s2.startsWith("0")) {
+		} else if(s2.length() > 1 && s2.startsWith("0")) {
 			result = Long.parseLong(s2, 1, n, 8);
 		} else {
 			result = Long.parseLong(s2);

@@ -692,7 +692,7 @@ public class CWriter extends SourceWriter {
 	
 		Type t = f.getType();
 		if(f instanceof EnumField) {
-			rt = getEnumTypeName(f);
+			rt = getEnumTypeName((EnumField)f);
 		} else {
 	
 			switch(t) {
@@ -736,8 +736,8 @@ public class CWriter extends SourceWriter {
 	}
 	
 	
-	private String getEnumTypeName(BaseField f) {
-		return f.getName().toUpperCamel();
+	private String getEnumTypeName(EnumField f) {
+		return f.getTypeName().toUpperCamel();
 	}
 
 	private void addBlockKeyDefines(BlockField top) {

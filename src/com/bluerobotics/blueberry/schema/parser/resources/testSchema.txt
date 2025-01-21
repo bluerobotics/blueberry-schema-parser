@@ -141,29 +141,79 @@ Packet brPacket(preamble = 0x45554c42) {
 	 */
 	Payload servoConfigPayload {
 		bool positionNotVelocity //when true causes servo to control its rotational position, otherwise controls rotational velocity
-		float maxPos //maximum target - servo will not allow position to go above this. This is either as a position or a velocity depending on positionNotVelocity
-		float minPos //minimum target - servo will not allow position to go below this. This is either a position or a velocity depending on positionNotVelocity
+		float32 maxPos //maximum target - servo will not allow position to go above this. This is either as a position or a velocity depending on positionNotVelocity
+		float32 minPos //minimum target - servo will not allow position to go below this. This is either a position or a velocity depending on positionNotVelocity
 		/*
 		 * applies a gain to the servo setpoint and actual. Default values are radians for position and radians per second for velocity.
 		 * Gain multiplies these values. i.e. 57.3 would mean working in degrees instead of radians
 		 */
-		float gain  
+		float32 gain  
 	}
 	/*
 	 * A payload for controlling a servo and also for the response from a servo
 	 */
-	Payload servoPayload {
+	Payload servoControlPayload {
 		float32 setpoint //this is the target that the servo will attempt to achieve. This is either a rotational position or a speed, depending on configuration
-		float32 actual //the actual measurement from the servo. Ideally this will quickly approach the setpoint. This has no effect in a control payload
 	}
+	/*
+	 * A payload for the response from a sero
+	 */
+	 Payload servoResponsePayload {
+	 	float32 actualPosition
+	 	float32 actualVelocity
+	 }
 	
 	/*
-	 * A payload for controlling a lumen and also for the response from a lumen
+	 * A payload for controlling a lumen
+	 * A lumen will response with a lumenResponsePayload
 	 */
-	Payload lumenPayload {
+	Payload lumenControlPayload {
 		float32 setpoint //this is the light control setpoint for the lumen. It is normalizeed so that a value of 1.0 is full brightness and 0.0 is off
-		float32 actualPower //this is the power being delivered to the LED in Watts. This has no effect in the control payload
-		float32 temperature //this is the temperature of the light. This has no use in the control payload
 	}
-}
 
+	/*
+	 * A payload for the response from a lumen
+	 */
+	Payload lumenResponsePayload {
+		float32 actualPower //this is the power being delivered to the LED in Watts. 
+		float32 temperature //this is the temperature of the light.
+	}
+	Payload escControlPayload {
+		float32 setpoint //this is the desired velocity setpoint of the ESC in rad/s
+	}
+	Payload escResponsePayload {
+		float32 actual //this is the actual velocity of the ESC
+		float32 current //this is the total current in Amps
+		float32 volts //this is the measured supply voltage
+	}
+	/**
+	 * A family of payloads for uploading new firmware to a peripheral
+	 * All data arrays must be preceeded by a flashProgramPayload
+	 * The peripheral will respond with a program payload to indicate progress
+	 * 
+	 */
+	Payload flashProgramPayload {
+		define FlashProgramState enum uint8 {
+			IDLE = 0 //this means there is nothing happening and nothing desired to happen
+			UPLOAD = 1 //this means a FW codebase is being transferred to the peripheral
+			THREE = 2 //the first step to trigger either running or programming of the new code
+			TWO = 3 //the second step
+			ONE = 4 //the final step before either running or programming
+			RUN = 5 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
+			PROGRAM = 6 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
+			CHECK_FAIL = 7 //indicates that the peripheral computed an incorrect check code on the data received so far 
+		}
+		FlashProgramState state
+		uint32 version
+		uint32 hash //a check code of the total codebase
+		uint32 address //the address of the first word of the upcoming data, a peripheral will respond with the next available address after all data transferred so far
+		/*
+		 * an array of 32 bit words of data. A series of these payloads sent over time will make up the total new firmware
+		 * each program array must be preceeded by a flash program payload to indicate where to place the array to build the entire new 
+		 */
+		Array flashProgramArray { 
+			uint32 data //little endian data - LSB is the lowest address, comes first
+		}
+	}
+
+}
