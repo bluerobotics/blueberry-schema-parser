@@ -30,7 +30,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.bluerobotics.blueberry.schema.parser.app.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.app.Constants;
-import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;

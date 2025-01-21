@@ -19,60 +19,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.structure;
+package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
  * 
  */
-public class FixedIntField extends BaseField {
-	@Override
-	public boolean equals(Object obj) {
-		boolean result = super.equals(obj);
-		if(result) {
-			FixedIntField fif = (FixedIntField)obj;
-			if(fif.getValue() != getValue()) {
-				result = false;
-			}
-		}
-		return result;
-	}
+public class BoolField extends BaseField {
 
-	private final long m_value;
-
-	public FixedIntField(BaseField f, long value) {
-		super(f.getName(), f.getType(), f.getComment());
-		m_value = value;
+	public BoolField(FieldName name, String comment) {
+		super(name, Type.BOOL, comment);
 	}
 	@Override
 	Type checkType(Type t) throws RuntimeException {
 		switch(t) {
-	
 		
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			break;
-		case ARRAY:
-		case BLOCK:
+		
 		case BOOL:
-		case COMPOUND:
-		case FLOAT32:
-		case BOOLFIELD:
-
-			throw new RuntimeException("Field must only contain base types.");
-		
-
-				
+			break;
+		default:
+			throw new RuntimeException("Field must only contain bitfield types.");
+	
 		}
 		return t;
 	}
 	
-	public long getValue() {
-		return m_value;
-	}
 	
 
 }

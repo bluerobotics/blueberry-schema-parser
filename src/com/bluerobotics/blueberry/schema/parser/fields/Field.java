@@ -19,30 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.structure;
+package com.bluerobotics.blueberry.schema.parser.fields;
 
-/**
- * 
- */
-public class BoolField extends BaseField {
+public interface Field {
 
-	public BoolField(FieldName name, String comment) {
-		super(name, Type.BOOL, comment);
-	}
-	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-		
-		
-		case BOOL:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain bitfield types.");
-	
-		}
-		return t;
-	}
-	
-	
+	Type getType();
 
+	FieldName getName();
+
+	String getComment();
+
+	int getBitCount();
+	Field getParent();
+	void setParent(Field p);
+	void setInHeader(boolean b);
+	boolean isInHeader();
+	/**
+	 * return the 4 byte word that contains this field
+	 * if this is a 4 byte word then returns itself
+	 * @return
+	 */
+	Field getContainingWord();
+	FieldName getCorrectParentName();
 }

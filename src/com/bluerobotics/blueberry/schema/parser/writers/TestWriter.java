@@ -25,14 +25,14 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
-import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
-import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
-import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
-import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
-import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
-import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
-import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
+import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 
 /**
  * A class to test writing something useful from the computed schema packet format

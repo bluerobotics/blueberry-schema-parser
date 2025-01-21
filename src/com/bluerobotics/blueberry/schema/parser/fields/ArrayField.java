@@ -19,26 +19,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.structure;
+package com.bluerobotics.blueberry.schema.parser.fields;
 
-public interface Field {
+/**
+ * 
+ */
+public class ArrayField extends BlockField {
 
-	Type getType();
+	public ArrayField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, Type.ARRAY, comment);
 
-	FieldName getName();
+	}
 
-	String getComment();
+	@Override
+	Type checkType(Type t) throws RuntimeException {
+		if(t != Type.ARRAY) {
+			throw new RuntimeException("Type must be Array");
+		}
+		return t;
+	}
+	
 
-	int getBitCount();
-	Field getParent();
-	void setParent(Field p);
-	void setInHeader(boolean b);
-	boolean isInHeader();
-	/**
-	 * return the 4 byte word that contains this field
-	 * if this is a 4 byte word then returns itself
-	 * @return
-	 */
-	Field getContainingWord();
-	FieldName getCorrectParentName();
 }

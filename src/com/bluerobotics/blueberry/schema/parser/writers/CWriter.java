@@ -25,18 +25,18 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
-import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
-import com.bluerobotics.blueberry.schema.parser.structure.BoolField;
-import com.bluerobotics.blueberry.schema.parser.structure.BoolFieldField;
-import com.bluerobotics.blueberry.schema.parser.structure.CompoundField;
-import com.bluerobotics.blueberry.schema.parser.structure.EnumField;
-import com.bluerobotics.blueberry.schema.parser.structure.EnumField.NameValue;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
-import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
-import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
-import com.bluerobotics.blueberry.schema.parser.structure.Type;
+import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
+import com.bluerobotics.blueberry.schema.parser.fields.Type;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 
 public class CWriter extends SourceWriter {
 

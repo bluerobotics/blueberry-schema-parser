@@ -19,11 +19,43 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.structure;
+package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
  * 
  */
-public interface DefinedField {
-	public FieldName getTypeName();
+public class BaseField extends AbstractField {
+	private int m_index = -1;
+	public BaseField(FieldName name, Type type, String comment) {
+		super(name, type, comment);
+	}
+
+	@Override
+	Type checkType(Type t) throws RuntimeException {
+		switch(t) {
+	
+		case FLOAT32:
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+		case BOOLFIELD:
+			break;
+		case ARRAY:
+		case BLOCK:
+		case BOOL:
+		case COMPOUND:
+			throw new RuntimeException("Field must only contain base types.");
+				
+		}
+		return t;
+	}
+	public void setIndex(int bi) {
+		m_index = bi;
+	}
+	public int getIndex() {
+		return m_index;
+	}
 }

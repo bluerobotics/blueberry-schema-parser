@@ -33,14 +33,14 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.bluerobotics.blueberry.schema.parser.structure.BaseField;
-import com.bluerobotics.blueberry.schema.parser.structure.BlockField;
-import com.bluerobotics.blueberry.schema.parser.structure.Field;
-import com.bluerobotics.blueberry.schema.parser.structure.FieldName;
-import com.bluerobotics.blueberry.schema.parser.structure.FixedIntField;
-import com.bluerobotics.blueberry.schema.parser.structure.AbstractField;
-import com.bluerobotics.blueberry.schema.parser.structure.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.structure.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
+import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 
 /**
  * 
