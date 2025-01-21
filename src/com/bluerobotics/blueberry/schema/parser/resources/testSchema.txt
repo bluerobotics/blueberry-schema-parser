@@ -215,5 +215,13 @@ Packet brPacket(preamble = 0x45554c42) {
 			uint32 data //little endian data - LSB is the lowest address, comes first
 		}
 	}
+	/*
+	 * Conveys an arbitrary array of floats to or from a peripheral.
+	 * The meaning of this data is known to the firmware but is not specified.
+	 * Primarily used for debugging and development 
+	 */
+	Array appDataArray {
+		float32 data
+	}
 
 }

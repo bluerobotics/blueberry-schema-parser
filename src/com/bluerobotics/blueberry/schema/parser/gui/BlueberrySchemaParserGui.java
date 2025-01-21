@@ -36,6 +36,7 @@ import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
 import com.starfishmedical.settings.Settings;
 import com.starfishmedical.settings.SettingsDialog;
+import com.starfishmedical.settings.SettingsKey;
 import com.starfishmedical.settings.SettingsTableCellEditor;
 import com.starfishmedical.settings.SettingsTableCellRenderer;
 import com.starfishmedical.settings.SettingsTableModel;
@@ -151,7 +152,9 @@ public class BlueberrySchemaParserGui implements Constants {
 		
 		resizer.addMoveComponent(toolbar);
 		cp.add(toolbar, BorderLayout.NORTH);
-		JTable setTable = new JTable(new SettingsTableModel(m_settings, Key.values()));
+		Key[] keys = new Key[] {Key.JAVA_DIRECTORY, Key.C_DIRECTORY, Key.SCHEMA_FILE_PATH };
+		
+		JTable setTable = new JTable(new SettingsTableModel(m_settings, keys));
 	
 		setTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 		setTable.setRowHeight((int)(setTable.getFont().getSize()*1.5));
