@@ -246,7 +246,7 @@ public class CWriter extends SourceWriter {
 	}
 	
 	private String makeEnumName(EnumField ef, NameValue nv) {
-		return nv.getName().addSuffix(ef.getTypeName()).toUpperSnake();
+		return nv.getName().addPrefix(ef.getTypeName()).toUpperSnake();
 	}
 
 	private void writeBaseFieldDefines(BlockField top) {
