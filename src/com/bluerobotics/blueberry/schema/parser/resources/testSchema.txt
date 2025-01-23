@@ -98,9 +98,9 @@ Packet brPacket(preamble = 0x45554c42) {
 				BLUE_SERVO	= 0x0001
 				LUMEN       = 0x0002
 				NUCLEO     	= 0x0003 //the ST family of development PCBs
-				BLUE_ESC
+				BLUE_ESC	= 0x0004
 			}
-			HwType hwType
+			
 			define McuType enum uint8 {
 				UNDEFINED = 0xff
 				STM32F446 = 0x01
@@ -108,15 +108,14 @@ Packet brPacket(preamble = 0x45554c42) {
 				STM32H573 = 0x03
 				STM32G071 = 0x04
 			}
+			HwType hwType
+			uint8 hwRev
 			McuType mcuType
-			uint8 revision
-			//bool testBit1 //this causes it to fail because there's not enough room
+			
 			
 		
 		}
 		HwDef hwDef //this allocates a field of the hardware definition compound type
-		bool testBit2
-		bool testBit3
 	}
 	/*
      * a payload for conveying ADC values and configuring the adc
