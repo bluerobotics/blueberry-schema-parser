@@ -455,7 +455,7 @@ public class JavaWriter extends SourceWriter {
 		for(BaseField f : af.getNamedBaseFields()) {
 			boolean bool = f instanceof BoolField;
 			
-			String fieldFuncName = makeBaseFieldNameRoot(f).addPrefix("get").toLowerCamel();
+			String fieldFuncName = f.getName().addPrefix("get").toLowerCamel();
 			String fieldFuncReturnType = lookupTypeForJavaVars(f);
 			String fieldGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(f)).toLowerCamel();
 			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
@@ -541,7 +541,7 @@ public class JavaWriter extends SourceWriter {
 		for(BaseField f : bf.getNamedBaseFields()) {
 			boolean bool = f instanceof BoolField;
 			
-			String fieldFuncName = makeBaseFieldNameRoot(f).addPrefix("get").toLowerCamel();
+			String fieldFuncName = f.getName().addPrefix("get").toLowerCamel();
 			String fieldFuncReturnType = lookupTypeForJavaVars(f);
 			String fieldGetterName = "getBlock()."+FieldName.fromCamel("read").addSuffix(lookupTypeForFuncName(f)).toLowerCamel();
 			String fieldIndexEnum = bool ? m_bitIndexEnumName : m_fieldIndexEnumName;
