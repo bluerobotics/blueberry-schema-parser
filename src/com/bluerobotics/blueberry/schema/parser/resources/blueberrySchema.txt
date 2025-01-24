@@ -222,5 +222,74 @@ Packet brPacket(preamble = 0x45554c42) {
 	Array appDataArray {
 		float32 data
 	}
+	/*
+	 * Feedback module setpoints are defined as trajectory waypoints
+	 * They are defined by a value and a rate of value change at a specific time in the future
+	 * Many setpoints can be queued to for a piecewise continuous path for the controller to follow
+	 * The feedback module will compute a cubic equation to traverse from one waypoint to another 
+	 */
+	Payload feedbackTrajectoryPayload {
+		uint8 channel //the feedback channel that this payload is to update the trajectories of
+		float32 setpoint //the target value that the feedback controller should achieve
+		float32 setpointRate //the target rate of setpoint change that should be achieved when the setpoint is achieved
+		uint32 time //the time by which the setpoint and setpoint rate should be acheived. This is in milliseconds of "host time"
+	}
+	/*
+	 * A payload for a peripheral to indicate the state of its feedback control modules 
+	 */
+	Array feedbackResponseArray {
+		float32 actual
+		float32 setpoint
+	}
+	/*
+	 * This configures a feedback channel
+	 * the peripheral will respond with the same paylaod
+	 * if the payload is sent empty then it only triggers the peripheral to respond with its configuration
+	 * One payload is sent per feedback channel used
+	 * These do not need to be sent regularly
+	 */
+	Payload feedbackConfigPayload {
+		uint8 channel //the channel to configure
+		//A selection of units for the setpoint.
+		//Mostly just to select between angular units and units that do not loop
+		//For now this is not inteded to stray beyond SI
+		define Unit enum uint8 {
+			METRES = 0
+			RADIANS = 1
+			METRES_PER_SECOND = 3
+			RADIANS_PER_SECOND = 4
+		}
+		Unit unit
+		bool enable //enable this channel
+		float32 minInput
+		float32 maxInput
+		float32 minOutput
+		float32 maxOutput
+		/*
+		 * Defines where the feedback controller should get its input from
+		 */
+		define PlumbingType enum uint8 {
+			UNCONFIGURED = 0
+			OPEN_LOOP = 1
+			TX_APP_DATA = 2
+			RX_APP_DATA = 3
+			STREAM = 4
+		}
+	
+		PlumbingType inputType
+		PlumbingType outputType
+		uint8 inputChannel
+		uint8 outputChannel
+		float32 c0
+		float32 c1
+		float32 c2
+		float32 d1
+		float32 d2
+	}
+	
+		
+			
+			
+			
 
 }
