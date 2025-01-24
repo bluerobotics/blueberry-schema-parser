@@ -166,14 +166,14 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * A payload for controlling a lumen
 	 * A lumen will response with a lumenResponsePayload
 	 */
-	Payload lumenControlPayload {
+	Payload lightControlPayload {
 		float32 setpoint //this is the light control setpoint for the lumen. It is normalizeed so that a value of 1.0 is full brightness and 0.0 is off
 	}
 
 	/*
 	 * A payload for the response from a lumen
 	 */
-	Payload lumenResponsePayload {
+	Payload lightResponsePayload {
 		float32 actualPower //this is the power being delivered to the LED in Watts. 
 		float32 temperature //this is the temperature of the light.
 	}
