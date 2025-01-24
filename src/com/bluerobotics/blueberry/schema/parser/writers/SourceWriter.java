@@ -43,7 +43,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 
 /**
- * 
+ * This class provides useful functionality for generating source files, without any specific language implementation
  */
 public abstract class SourceWriter {
 	protected final File m_directory;

@@ -71,7 +71,8 @@ import com.bluerobotics.blueberry.schema.parser.writers.TestWriter;
 import com.starfishmedical.utils.ResourceTools;
 
 /**
- * 
+ * This class implements the token parsing algorithm
+ * This reads the schema file, tokenizes and then builds a data structure of fields to represent the schema 
  */
 public class BlueberrySchemaParser implements Constants, TokenConstants {
 	
@@ -84,6 +85,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
 	/**
+	 * This main method probably should be pruned.
+	 * It was initially intended to be the CLI but that doens't make sense to be here any more.
 	 * @param args
 	 */
 	public static void main(String[] args) {

@@ -38,6 +38,9 @@ import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.Type;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 
+/**
+ * This class implements the autogeneration of C code based on a parsed field structure
+ */
 public class CWriter extends SourceWriter {
 
 	public CWriter(File dir) {

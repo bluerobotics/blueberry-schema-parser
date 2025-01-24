@@ -37,7 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 
 /**
- * 
+ * Autogenerates Java code stubs based on a parsed field structure
  */
 public class JavaWriter extends SourceWriter {
 	private FieldName m_packageName;

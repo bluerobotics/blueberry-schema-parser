@@ -46,7 +46,9 @@ import com.starfishmedical.sfdq.gui.ToolBar;
 import com.starfishmedical.utils.ResourceTools;
 import com.starfishmedical.utils.UtilMethods;
 
-
+/**
+ * This is a main GUI class. It starts up a simple dialog for running the parser
+ */
 public class BlueberrySchemaParserGui implements Constants {
 	private final Settings m_settings;
 	private final JFrame m_frame;
@@ -55,7 +57,10 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextArea m_text = new JTextArea();
-
+	/**
+	 * Constructs the GUI, maps actions
+	 * @param s - a settings object for persistence
+	 */
 	public BlueberrySchemaParserGui(Settings s) {
 		m_settings = s;
 		JFrame f = new JFrame();
