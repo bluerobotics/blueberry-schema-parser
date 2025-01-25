@@ -211,7 +211,7 @@ public class CWriter extends SourceWriter {
 				boolean found = false;
 				//check that this new one isn't the same as an existing one
 				for(EnumField ef : es) {
-					if(ef.getTypeName().equals(e)) {
+					if(ef.getTypeName().equals(e.getTypeName())) {
 						found = true;
 						break;
 					}

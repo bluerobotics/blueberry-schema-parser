@@ -177,11 +177,17 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 actualPower //this is the power being delivered to the LED in Watts. 
 		float32 temperature //this is the temperature of the light.
 	}
+	/*
+	 * this sends a new setpoint to the ESC.
+	 */
 	Payload escControlPayload {
 		float32 setpoint //this is the desired velocity setpoint of the ESC in rad/s
 	}
+	/*
+	 * A response from an ESC reporting on a few things of interest
+	 */
 	Payload escResponsePayload {
-		float32 actual //this is the actual velocity of the ESC
+		float32 actual //this is the actual velocity of the ESC in rad/s
 		float32 current //this is the total current in Amps
 		float32 volts //this is the measured supply voltage
 	}
@@ -278,13 +284,16 @@ Packet brPacket(preamble = 0x45554c42) {
 	
 		PlumbingType inputType
 		PlumbingType outputType
-		uint8 inputChannel
+		uint8 inputChannel //selects the channel to get the input from of the type specified in the inputType field, only if channel number makes sense
 		uint8 outputChannel
 		float32 c0
 		float32 c1
 		float32 c2
 		float32 d1
 		float32 d2
+	}
+	Array thermistorArray {
+		float32 celsius
 	}
 	
 		
