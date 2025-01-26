@@ -569,7 +569,9 @@ public class JavaWriter extends SourceWriter {
 	private void addArrayMethods(BlockField top) {
 		List<ArrayField> afs = top.getAllArrayFields();
 		for(ArrayField af : afs) {
-			addArrayAdder(af);
+			addArrayAdder(af, true);
+			addArrayAdder(af, false);
+
 		}
 	}
 
@@ -586,27 +588,29 @@ public class JavaWriter extends SourceWriter {
 		}
 	}
 	
-	private void addArrayAdder(ArrayField af) {
+	private void addArrayAdder(ArrayField af, boolean withParametersNotEmpty) {
 		String blockName = af.getName().toUpperCamel();
 		String comment = "Adds a new "+blockName+" to the packet under construction.\n"+af.getComment();
-		String functionName = "add"+blockName;
+		String functionName = "add"+(withParametersNotEmpty ? "" : "Empty")+ blockName;
 		List<BaseField> fs = af.getNamedBaseFields();
 		FixedIntField keyF = (FixedIntField)af.getHeaderField("key");
 		BaseField lengthF = af.getHeaderField("length");
 		BaseField repeatsF = af.getHeaderField("repeats");
-		String paramList = "";
+		String paramList = withParametersNotEmpty ? "int n" : "";
 		
 		int headerLength = af.getHeaderWordCount();
-		
-		String paramComments = "@param n - the number of elements\n";
-		for(BaseField f : fs) {
-			String fName = f.getName().addSuffix("Function").toLowerCamel();
-			paramList += ", "+"Function<Integer, "+lookupObjectTypeForJavaVars(f)+"> "+fName;
-			paramComments += "@param "+fName+" - a function that returns the array element given an integer index\n";
+		String paramComments = "";
+		if(withParametersNotEmpty) {
+			paramComments += "@param n - the number of elements\n";
+			for(BaseField f : fs) {
+				String fName = f.getName().addSuffix("Function").toLowerCamel();
+				paramList += ", "+"Function<Integer, "+lookupObjectTypeForJavaVars(f)+"> "+fName;
+				paramComments += "@param "+fName+" - a function that returns the array element given an integer index\n";
+			}
 		}
 		
 		addDocComment(comment, "This assumes parameters defined with a functional interface ", paramComments);
-		addLine("public void "+functionName+"(int n"+paramList+"){");
+		addLine("public void "+functionName+"("+paramList+"){");
 		indent();
 		String firstArray = fs.get(0).getName().toLowerCamel();
 //		addLine("int n = "+firstArray+" == null ? 0 : "+firstArray+".length;");
@@ -623,37 +627,42 @@ public class JavaWriter extends SourceWriter {
 
 		//add method to set length
 		String lengthType = lookupTypeForFuncName(lengthF);
-		int lengthValue = fs.size();
+		int lengthValue = withParametersNotEmpty ? fs.size() : 0;
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
 		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
+		String offset = withParametersNotEmpty ? " + (" + lengthValue+" * n)" : "";
 		//add key
-		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, "+headerLength+" + ("+lengthValue+" * n));");
+		addLine("getCurrentBlock()."+lengthFuncName+"("+m_fieldIndexEnumName+"."+lengthIndex+", 0, "+headerLength+offset+");");
+		
 		
 		//add method to set repeat
 		String repeatsType = lookupTypeForFuncName(repeatsF);
-		String repeatsValue ="n";
+		String repeatsValue = withParametersNotEmpty ? "n" : "0";
 		String repeatsIndex = makeBaseFieldNameRoot(repeatsF).toUpperSnake();
 		String repeatsFuncName = FieldName.fromCamel("write").addSuffix(repeatsType).toLowerCamel();
 		//add key
 		addLine("getCurrentBlock()."+repeatsFuncName+"("+m_fieldIndexEnumName+"."+repeatsIndex+", 0, "+repeatsValue+");");
-		addLine("for(int i = 0; i < n; ++i){");
-		indent();
-		addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i * 4); //the 4 is to convert from words to bytes");
-		for(BaseField f : fs) {
-			boolean bit = f instanceof BoolField;
-			
-			String fType = bit ? "bool" : lookupTypeForFuncName(f);
-			String fValue = f.getName().addSuffix("Function").toLowerCamel();
-			if(f instanceof EnumField) {
-				fValue += ".getValue()";
+		if(withParametersNotEmpty) {
+			addLine("for(int i = 0; i < n; ++i){");
+			indent();
+			addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i * 4); //the 4 is to convert from words to bytes");
+			for(BaseField f : fs) {
+				boolean bit = f instanceof BoolField;
+				
+				String fType = bit ? "bool" : lookupTypeForFuncName(f);
+				String fValue = f.getName().addSuffix("Function").toLowerCamel();
+				if(f instanceof EnumField) {
+					fValue += ".getValue()";
+				}
+				String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
+				String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
+				String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
+				addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", arrayOffsetForThisCycle, "+fValue+".apply(i));");
 			}
-			String fIndex = makeBaseFieldNameRoot(f).toUpperSnake();
-			String fFuncName = FieldName.fromCamel("write").addSuffix(fType).toLowerCamel();
-			String enumName = bit ? m_bitIndexEnumName : m_fieldIndexEnumName;
-			addLine("getCurrentBlock()."+fFuncName+"("+enumName+"."+fIndex+", arrayOffsetForThisCycle, "+fValue+".apply(i));");
+			closeBrace();
 		}
-		closeBrace();
-		addLine("advanceBlock("+headerLength + " + ("+ lengthValue+" * n));");
+		
+		addLine("advanceBlock("+headerLength + offset + ");");
 		
 		
 		
