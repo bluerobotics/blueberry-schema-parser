@@ -234,11 +234,20 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * Many setpoints can be queued to for a piecewise continuous path for the controller to follow
 	 * The feedback module will compute a cubic equation to traverse from one waypoint to another 
 	 */
-	Payload feedbackTrajectoryPayload {
+	Array feedbackTrajectoryArray {
 		uint8 channel //the feedback channel that this payload is to update the trajectories of
 		float32 setpoint //the target value that the feedback controller should achieve
 		float32 setpointRate //the target rate of setpoint change that should be achieved when the setpoint is achieved
 		uint32 time //the time by which the setpoint and setpoint rate should be acheived. This is in milliseconds of "host time"
+	}
+	/*
+	 * A peripheral responds with this when receiving a trajectory array
+	 */
+	Payload feedbackTrajectoryResponsePayload {
+		uint8 channel //the feedback channel that this payload is to update the trajectories of
+		float32 setpoint //the target value that the feedback controller should achieve
+		uint8 queueLength //the number of items in the queue
+		uint32 endTime //the time when the last trajectory in the queue will end
 	}
 	/*
 	 * A payload for a peripheral to indicate the state of its feedback control modules 
@@ -296,7 +305,9 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 celsius
 	}
 	
-		
+	Array thermistorArray {
+		float32 celsius
+	}
 			
 			
 			
