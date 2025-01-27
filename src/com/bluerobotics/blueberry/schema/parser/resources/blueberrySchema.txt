@@ -305,10 +305,7 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 celsius
 	}
 	
-	Array thermistorArray {
-		float32 celsius
-	}
-			
+	
 			
 			
 
