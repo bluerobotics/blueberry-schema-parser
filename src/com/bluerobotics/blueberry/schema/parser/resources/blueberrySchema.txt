@@ -228,7 +228,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * Many setpoints can be queued to for a piecewise continuous path for the controller to follow
 	 * The feedback module will compute a cubic equation to traverse from one waypoint to another 
 	 */
-	Payload feedbackTrajectoryPayload {
+	Array feedbackTrajectoryArray {
 		uint8 channel //the feedback channel that this payload is to update the trajectories of
 		float32 setpoint //the target value that the feedback controller should achieve
 		float32 setpointRate //the target rate of setpoint change that should be achieved when the setpoint is achieved
