@@ -779,6 +779,7 @@ public class JavaWriter extends SourceWriter {
 		
 		String comment = f.getComment();
 		String name = makeEnumTypeName(f);
+		String type = lookupTypeForJavaType(f);
 		
 		addDocComment(comment);
 		addLine("public enum "+name+" {");
@@ -790,7 +791,7 @@ public class JavaWriter extends SourceWriter {
 			} else {
 				c = "";
 			}
-			addLine(nv.getName().toUpperSnake()+"("+nv.getValueAsHex()+"),"+c);
+			addLine(nv.getName().toUpperSnake()+"(("+type+")"+nv.getValueAsHex()+"),"+c);
 		}
 		addLine(";");
 		addLine("private static EnumLookup<"+name+"> m_lookup = new EnumLookup<"+name+">();");
@@ -938,6 +939,49 @@ public class JavaWriter extends SourceWriter {
 				break;
 		
 			}
+		}
+		return result;
+	}
+	private String lookupTypeForJavaType(EnumField f) {
+		String result = "";
+	
+		switch(f.getType()) {
+		case ARRAY:
+			break;
+		case BLOCK:
+			break;
+		case BOOL:
+			result = "boolean";
+			break;
+		case BOOLFIELD:
+			result = "int";
+			break;
+		case COMPOUND:
+			result = "int";
+			break;
+		case FLOAT32:
+			result = "double";
+			break;
+		case INT16:
+			result = "short";
+			break;
+		case INT32:
+			result = "int";
+			break;
+		case INT8:
+			result = "byte";
+			break;
+		case UINT16:
+			result = "short";
+			break;
+		case UINT32:
+			result = "int";
+			break;
+		case UINT8:
+			result = "byte";
+			break;
+		
+			
 		}
 		return result;
 	}
