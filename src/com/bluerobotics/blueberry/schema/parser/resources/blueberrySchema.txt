@@ -243,12 +243,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A peripheral responds with this when receiving a trajectory array
 	 */
-	Payload feedbackTrajectoryResponsePayload {
-		uint8 channel //the feedback channel that this payload is to update the trajectories of
-		float32 setpoint //the target value that the feedback controller should achieve
-		uint8 queueLength //the number of items in the queue
-		uint32 endTime //the time when the last trajectory in the queue will end
-	}
+	
 	/*
 	 * A payload for a peripheral to indicate the state of its feedback control modules 
 	 */
@@ -256,6 +251,8 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 actual
 		float32 setpoint
 		float32 output
+		uint8 queueLength //the number of items in the queue
+		uint32 endTime //the time when the last trajectory in the queue will end
 	}
 	/*
 	 * This configures a feedback channel
