@@ -255,6 +255,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	Array feedbackResponseArray {
 		float32 actual
 		float32 setpoint
+		float32 output
 	}
 	/*
 	 * This configures a feedback channel
