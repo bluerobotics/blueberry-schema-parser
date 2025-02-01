@@ -767,11 +767,25 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeOtherEnums(BlockField top) {
+		List<EnumField> enums = new ArrayList<EnumField>();
 		top.scanThroughBaseFields(f -> {
 			if(f instanceof EnumField && f.getName() != null) {
-				writeEnum((EnumField)f);
+				boolean found = false;
+				EnumField ef = (EnumField)f;
+				for(EnumField eft : enums) {
+					if(eft.getTypeName().equals(ef.getTypeName())){
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					enums.add(ef);
+				}
 			}
 		}, true);
+		enums.forEach(f -> {
+			writeEnum(f);
+		});
 	}
 
 	private void writeEnum(EnumField f) {
@@ -986,7 +1000,7 @@ public class JavaWriter extends SourceWriter {
 		return result;
 	}
 	private String makeEnumTypeName(EnumField f) {
-		return f.getName().addSuffix("enum").toUpperCamel();
+		return f.getTypeName().addSuffix("enum").toUpperCamel();
 	}
 
 	private void writeConsants(BlockField top) {
