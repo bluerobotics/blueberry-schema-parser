@@ -200,18 +200,21 @@ Packet brPacket(preamble = 0x45554c42) {
 	Payload flashProgramPayload {
 		define FlashProgramState enum uint8 {
 			IDLE = 0 //this means there is nothing happening and nothing desired to happen
-			UPLOAD = 1 //this means a FW codebase is being transferred to the peripheral
-			THREE = 2 //the first step to trigger either running or programming of the new code
-			TWO = 3 //the second step
-			ONE = 4 //the final step before either running or programming
-			RUN = 5 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
-			PROGRAM = 6 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
-			CHECK_FAIL = 7 //indicates that the peripheral computed an incorrect check code on the data received so far 
+			BUSY = 1 //this is primarily for the peripheral to indicate that it can't do anything new until it finishes whatever it's doing
+			UPLOAD = 2 //this means a FW codebase is being transferred to the peripheral
+			UPLOAD_COMPLETE = 3 //this means there is nothing more to transfer. This also means that the image - if validated - should be properly finalized by the peripheral
+			IMAGE_OK = 4 //indicates that an image is on the peripheral that passed CRC and is complete
+			THREE = 5 //the first step to trigger either running or programming of the new code
+			TWO = 6 //the second step
+			ONE = 7 //the final step before either running or programming
+			RUN = 8 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
+			PROGRAM = 9 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
+			CHECK_FAIL = 10 //indicates that the peripheral computed an incorrect check code on the data received so far
 		}
 		FlashProgramState state
 		uint32 version
-		uint32 hash //a check code of the total codebase
-		uint32 address //the address of the first word of the upcoming data, a peripheral will respond with the next available address after all data transferred so far
+		uint32 crc //a crc of the words sent so far. This is an ethernet CRC-32
+		uint32 length //the number of words transferred so far, a peripheral will respond with the number of sequential words that have passed CRC check
 		/*
 		 * an array of 32 bit words of data. A series of these payloads sent over time will make up the total new firmware
 		 * each program array must be preceeded by a flash program payload to indicate where to place the array to build the entire new 
