@@ -202,14 +202,15 @@ Packet brPacket(preamble = 0x45554c42) {
 			IDLE = 0 //this means there is nothing happening and nothing desired to happen
 			BUSY = 1 //this is primarily for the peripheral to indicate that it can't do anything new until it finishes whatever it's doing
 			UPLOAD = 2 //this means a FW codebase is being transferred to the peripheral
-			UPLOAD_COMPLETE = 3 //this means there is nothing more to transfer. This also means that the image - if validated - should be properly finalized by the peripheral
-			IMAGE_OK = 4 //indicates that an image is on the peripheral that passed CRC and is complete
-			THREE = 5 //the first step to trigger either running or programming of the new code
-			TWO = 6 //the second step
-			ONE = 7 //the final step before either running or programming
-			RUN = 8 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
-			PROGRAM = 9 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
-			CHECK_FAIL = 10 //indicates that the peripheral computed an incorrect check code on the data received so far
+			UPLOAD_BAD = 3 //this means the peripheral doesn't like the latest tranche of data
+			UPLOAD_COMPLETE = 4 //this means there is nothing more to transfer. This also means that the image - if validated - should be properly finalized by the peripheral
+			IMAGE_OK = 5 //indicates that an image is on the peripheral that passed CRC and is complete
+			THREE = 6 //the first step to trigger either running or programming of the new code
+			TWO = 7 //the second step
+			ONE = 8 //the final step before either running or programming
+			RUN = 9 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
+			PROGRAM = 10 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
+			CHECK_FAIL = 11 //indicates that the peripheral computed an incorrect check code on the data received so far
 		}
 		FlashProgramState state
 		uint32 version
