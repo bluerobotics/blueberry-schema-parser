@@ -645,7 +645,7 @@ public class JavaWriter extends SourceWriter {
 		if(withParametersNotEmpty) {
 			addLine("for(int i = 0; i < n; ++i){");
 			indent();
-			addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i * 4); //the 4 is to convert from words to bytes");
+			addLine("int arrayOffsetForThisCycle = ("+fs.size()+" * i);");
 			for(BaseField f : fs) {
 				boolean bit = f instanceof BoolField;
 				
