@@ -215,8 +215,9 @@ Packet brPacket(preamble = 0x45554c42) {
 		FlashProgramState state
 		uint32 version
 		uint32 crc //a crc of the words sent so far. This is an ethernet CRC-32
-		uint32 length //the number of words transferred so far, a peripheral will respond with the number of sequential words that have passed CRC check
-		uint32 totalLength //the total number of words that will be transferred. When length equals total length then the transfer is complete
+		uint32 start //the number of words transferred so far, and the start index of the next array of data. Peripherals will indicate the total words that have passed CRC here.
+		uint32 end //the number of words that will have been transferred after the following array. This is also the index of the first element of the array after this one. Peripherals will indicate the total number of words received here.
+		uint32 length //the total number of words that will be transferred. When length equals total length then the transfer is complete
 		/*
 		 * an array of 32 bit words of data. A series of these payloads sent over time will make up the total new firmware
 		 * each program array must be preceeded by a flash program payload to indicate where to place the array to build the entire new 

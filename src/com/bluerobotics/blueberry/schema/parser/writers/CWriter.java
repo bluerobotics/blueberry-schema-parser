@@ -676,7 +676,7 @@ public class CWriter extends SourceWriter {
 				//build the function name
 				String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
 //				String ldn = 
-				addLine(getBaseType(lf) + " len = " + lgn + "(buf,  block) * 4; //get length in words and convert to length in bytes");//this gets the block length
+				addLine("uint32_t" + " len = ((uint32_t)" + lgn + "(buf,  block)) * 4; //get length in words and convert to length in bytes");//this gets the block length
 				addLine("return block + len;");
 				outdent();
 				addLine("}");
