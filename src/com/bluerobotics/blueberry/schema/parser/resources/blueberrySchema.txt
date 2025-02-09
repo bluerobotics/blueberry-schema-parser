@@ -209,7 +209,7 @@ Packet brPacket(preamble = 0x45554c42) {
 			TWO = 7 //the second step
 			ONE = 8 //the final step before either running or programming
 			RUN = 9 //triggers the peripheral to run a newly uploaded codebase. Must be preceeded by THREE, TWO, ONE
-			PROGRAM = 10 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
+			OVERWRITE = 10 //triggers the peripheral to copy a newly uploaded codebase into its base memory. Must be preceeded by THREE, TWO, ONE
 			CHECK_FAIL = 11 //indicates that the peripheral computed an incorrect check code on the data received so far
 		}
 		FlashProgramState state
