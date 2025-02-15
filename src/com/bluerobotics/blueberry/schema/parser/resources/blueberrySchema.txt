@@ -214,7 +214,8 @@ Packet brPacket(preamble = 0x45554c42) {
 			UPLOAD_BAD_RESPONSE    =  9  //peripheral detected an error in the data - controller should stand by and wait for it to resolve. Peripheral will clear the bad sector and respond with an uploading response when ready
 			WILL_RUN_RESPONSE      = 10  //peripheral responds with this for 5 packet cycles, then reboots
 			RUNNING_RESPONSE       = 11  //peripheral is running upper flash image
-			OVERWRITING_RESPONSE   = 12  //peripheral respons with this for 5 packet cyles, then reboots.
+			OVERWRITING_RESPONSE   = 12  //peripheral response with this for 5 packet cyles, then reboots.
+			CLEARING_RESPONSE      = 13  //peripheral says that it's busy clearing
 			
 			
 		}
