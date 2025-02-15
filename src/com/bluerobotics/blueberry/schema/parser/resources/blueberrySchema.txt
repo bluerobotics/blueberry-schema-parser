@@ -200,17 +200,23 @@ Packet brPacket(preamble = 0x45554c42) {
 	Payload flashProgramPayload {
 		define FlashProgramState enum uint8 {
 			DO_NOTHING_REQUEST     =  0  //controller doesn't want the peripheral to do anything in particular at this moment
-			IMAGE_GOOD_RESPONSE    =  1  //peripheral has a good image in flash
-			IMAGE_BAD_RESPONSE     =  2  //peripheral has data in flash that does not check out as a correct image
-			IMAGE_CLEAR_RESPONSE   =  3  //peripheral indicates that its upper flash memory is clear and ready for upload
-			UPLOAD_REQUEST         =  4  //controller is sending upload data to the peripheral
-			UPLOADING_RESPONSE     =  5  //peripheral is receiving data.
-			UPLOAD_BAD_RESPONSE    =  6  //peripheral detected an error in the data - controller should stand by and wait for it to resolve. Peripheral will clear the bad sector and respond with an uploading response when ready
-			RUN_REQUEST            =  7  //controller wants peripheral to run the image in flash. Only should work if peripheral has a good image
-			RUNNING_RESPONSE       =  8  //peripheral responds with this for 5 packet cycles, then reboots
-			OVERWRITE_REQUEST      =  9  //controller wants peripheral to overwrite its main code with the new flash image. Image must be good for this to be accepted
-			OVERWRITING_RESPONSE   = 10  //peripheral respons with this for 5 packet cyles, then reboots.
-			CLEAR_REQUEST          = 11  //controller wants peripheral to clear its upper flash memory in preparation for an upload. This will only be complied with if the peripheral is either in image good or image bad state
+
+		
+			UPLOAD_REQUEST         =  1  //controller is sending upload data to the peripheral
+			RUN_REQUEST            =  2  //controller wants peripheral to run the image in flash. Only should work if peripheral has a good image
+			OVERWRITE_REQUEST      =  3  //controller wants peripheral to overwrite its main code with the new flash image. Image must be good for this to be accepted
+			CLEAR_REQUEST          =  4  //controller wants peripheral to clear its upper flash memory in preparation for an upload. This will only be complied with if the peripheral is either in image good or image bad state
+		
+			IMAGE_GOOD_RESPONSE    =  5  //peripheral has a good image in flash
+			IMAGE_BAD_RESPONSE     =  6  //peripheral has data in flash that does not check out as a correct image
+			IMAGE_CLEAR_RESPONSE   =  7  //peripheral indicates that its upper flash memory is clear and ready for upload
+			UPLOADING_RESPONSE     =  8  //peripheral is receiving data.
+			UPLOAD_BAD_RESPONSE    =  9  //peripheral detected an error in the data - controller should stand by and wait for it to resolve. Peripheral will clear the bad sector and respond with an uploading response when ready
+			WILL_RUN_RESPONSE      = 10  //peripheral responds with this for 5 packet cycles, then reboots
+			RUNNING_RESPONSE       = 11  //peripheral is running upper flash image
+			OVERWRITING_RESPONSE   = 12  //peripheral respons with this for 5 packet cyles, then reboots.
+			
+			
 		}
 		FlashProgramState state
 		uint32 version
