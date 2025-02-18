@@ -60,6 +60,14 @@ Packet brPacket(preamble = 0x45554c42) {
 		uint8 length //the length of one unit of this block
 		uint8 repeats //this indicates the number units of this block. This will always be >= 1. If the array is empty then it won't be included in the block
 	}
+	/*
+	 *
+	 */
+	define CompactArray compact {
+		uint16 key //a unique identifier of this block
+		uint8 length //the length of one unit of this block
+		uint8 repeats //this indicates the number units of this block. This will always be >= 1. If the array is empty then it won't be included in the block
+	}
 
 	/* this section conveys the ID of the device
 	 * this a unique identifier
@@ -314,6 +322,9 @@ Packet brPacket(preamble = 0x45554c42) {
 	}
 	Array thermistorArray {
 		float32 celsius
+	}
+	CompactArray ioPortCompactArray {
+		uint16 pins
 	}
 	
 	

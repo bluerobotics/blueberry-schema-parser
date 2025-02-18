@@ -30,6 +30,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.fields.CompactArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
@@ -94,6 +95,8 @@ public class CWriter extends SourceWriter {
 		addBlockAdders(top, true);
 		
 		addArrayAdders(top, true);
+		
+		addCompactArrayAdders(top, true);
 //		addArrayGetters(top, true);
 		
 //		addArrayElementAdders(top, true);
@@ -147,6 +150,8 @@ public class CWriter extends SourceWriter {
 		addBlockAdders(top, false);
 		
 		addArrayAdders(top, false);
+		addCompactArrayAdders(top, false);
+
 //		addArrayGetters(top, false);
 //		addArrayElementAdders(top, true);
 
@@ -1036,8 +1041,100 @@ public class CWriter extends SourceWriter {
 			addArrayElementAdder(af, protoNotDeclaration);
 		}
 	}
+	private void addCompactArrayAdders(BlockField top, boolean protoNotDeclaration) {
+		List<CompactArrayField> afs = top.getAllCompactArrayFields();
+		for(CompactArrayField af : afs) {
+			addCompactArrayAdder(af, protoNotDeclaration);
+			addCompactArrayElementAdder(af, protoNotDeclaration);
+		}
+	}
+	private void addCompactArrayAdder(CompactArrayField bf, boolean protoNotDeclaration) {
+		String blockName =  bf.getName().toUpperCamel();
+		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
+		String functionName = "addBb"+blockName;
+		List<BaseField> fs = bf.getNamedBaseFields();
+		String paramList = "";
+		
+		
 	
-	
+		
+		addDocComment(comment);
+		addLine("BbBlock "+functionName+"(Bb* buf, BbBlock currentBlock, uint32_t n)"+(protoNotDeclaration ? ";" : "{"));
+		if(!protoNotDeclaration) {
+			indent();
+			
+			//now fill in the details
+			BaseField lf = bf.getHeaderField("length");
+			FixedIntField keyField = (FixedIntField)bf.getHeaderField("key");
+			BaseField rf = bf.getHeaderField("repeats");
+			
+			FieldName tn = bf.getTypeName();
+			
+			int blockLen = bf.getHeaderWordCount() + bf.getBaseWordCount();
+
+			if(lf == null) {
+				throw new RuntimeException("No length field found!");
+			}
+			if(keyField == null) {
+				throw new RuntimeException("No key field found!");
+			}
+			
+			String keyValue = makeBlockValueDefine(keyField);
+			String keyIndex = makeBaseFieldNameRoot(keyField).addSuffix("INDEX").toUpperSnake();
+			String keyFuncName = FieldName.fromCamel("setBb").addSuffix(keyField.getType().name()).toLowerCamel();
+			
+			String lenValue = ""+blockLen;
+			String lenIndex = makeBaseFieldNameRoot(lf).addSuffix("INDEX").toUpperSnake();
+			String lenFuncName = FieldName.fromCamel("setBb").addSuffix(lf.getType().name()).toLowerCamel();
+			
+			String repeatValue = "n";
+			String repeatIndex = makeBaseFieldNameRoot(rf).addSuffix("INDEX").toUpperSnake();
+			String repeatFuncName = FieldName.fromCamel("setBb").addSuffix(lf.getType().name()).toLowerCamel();
+			
+			
+			//first setup index
+			addLineComment("Compute index of new block");
+//			addLine(bf.getTypeName().toUpperCamel()+" p = buff->start;");
+			String lenType = getBaseType(lf);
+
+			
+			
+			String lgn = tn.addPrefix("get","bb").addSuffix(lf.getName()).toLowerCamel();
+//			addLine(getBaseType(lf) + " len = " + lgn + "(buf,  currentBlock);");//this gets the block length
+//			addLine("BbBlock result = bbWrap(buf, currentBlock + len);");
+			
+			
+		
+			
+			
+			//first do the header stuff
+			addLine();
+			
+			addLine("uint32_t blockLengthWords = (n * "+bf.getBaseFieldByteLength()+");//this is the byte length of the base fields");
+			addLine("blockLengthWords = (blockLengthWords & 0b11) > 0 ? (blockLengthWords >> 2) + 1 : (blockLengthWords >> 2);//increase by one whole word if the number of bytes is not divisibly by 4");
+			addLine("blockLengthWords += "+bf.getHeaderWordCount()+";//add on the word length of the header");
+			
+			addLineComment("Add header fields");
+			//write the key
+			addLine(keyFuncName+"(buf, currentBlock, "+keyIndex+", "+keyValue+");");
+			//write the length
+			addLine(lenFuncName+"(buf, currentBlock, "+lenIndex+", blockLengthWords);");
+			//write the repeats field
+			addLine(lenFuncName+"(buf, currentBlock, "+repeatIndex+", "+repeatValue+");");
+			
+			
+			
+
+			
+			
+			//return the new block index
+			addLine("return currentBlock + (blockLengthWords * 4);");
+			
+			
+			outdent();
+			addLine("}");
+		}
+	}	
 	
 	private void addArrayAdder(ArrayField bf, boolean protoNotDeclaration) {
 		String blockName =  bf.getName().toUpperCamel();
@@ -1100,8 +1197,11 @@ public class CWriter extends SourceWriter {
 			
 			//first do the header stuff
 			addLine();
-			
+
 			addLine("uint32_t blockOffset = "+bf.getHeaderWordCount()+" + (n * "+bf.getBaseWordCount()+");//a couple magic numbers: header length plus n * base fields length, generated by schema parser");
+
+			
+			
 			addLineComment("Add header fields");
 			//write the key
 			addLine(keyFuncName+"(buf, currentBlock, "+keyIndex+", "+keyValue+");");
@@ -1122,6 +1222,54 @@ public class CWriter extends SourceWriter {
 			outdent();
 			addLine("}");
 		}
+	}
+	private void addCompactArrayElementAdder(CompactArrayField bf, boolean protoNotDeclaration) {
+		
+		List<BaseField> fs = bf.getNamedBaseFields();
+		int bytesPerRepeat = bf.getBaseFieldByteLength();
+		
+		
+		//do this once for each base field
+		for(BaseField f : fs) {
+			String blockName =  bf.getName().toUpperCamel();
+			String comment = "sets an element into the specified "+blockName+" in the specified packet.\n"+bf.getComment();
+			String functionName = bf.getName().addPrefix("set","bb").addSuffix(f.getName()).toLowerCamel();
+			String paramName = f.getName().toLowerCamel();
+			String paramType = getBaseType(f);
+		
+			addDocComment(comment);
+			addLine("void "+functionName+"(Bb* buf, BbBlock currentBlock, uint32_t i, "+paramType+" "+paramName+")"+(protoNotDeclaration ? ";" : "{"));
+			if(!protoNotDeclaration) {
+				indent();
+				
+			
+				
+				//then do the params 
+			
+			
+				String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
+			
+				dn += " + (i * "+bytesPerRepeat+")";
+				
+				
+				String value = paramName;
+
+				if(f instanceof BoolField) {
+					addBoolSetterGuts(f, dn, value);
+				} else {
+					addBaseSetterGuts(f, dn, value);
+				}
+
+				//update the block length
+				
+				
+				//return the new block index
+				
+				
+				closeBrace();
+			}
+		}
+
 	}
 	
 	private void addArrayElementAdder(ArrayField bf, boolean protoNotDeclaration) {

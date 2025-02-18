@@ -43,7 +43,7 @@ public class CompoundField extends BaseField implements ParentField {
 		if(f.getBitCount() >= 32) {
 			throw new RuntimeException("You can't add this to a compound word!");
 		} else if(f instanceof BoolField) {
-			if(!addBool((BoolField)f)) {
+			if(!addBool(this, (BoolField)f)) {
 				throw new RuntimeException("Could not add field "+f.getName());
 			}
 		} else {
@@ -52,31 +52,7 @@ public class CompoundField extends BaseField implements ParentField {
 			f.setInHeader(isInHeader());
 		}
 	}
-	protected boolean addBool(BoolField f) {
-		boolean result = false;
-		BoolFieldField bff = null;
-		
-		for(AbstractField ft2 : getBaseFields()) {
-			if(ft2 instanceof BoolFieldField) {
-				BoolFieldField bff2 = (BoolFieldField)ft2;
-				if(!bff2.isFull()){
-					bff = bff2;
-					break;
-				}
-			}
-		}
-		if(bff == null && getRoom() >= 8) {
-			bff = new BoolFieldField();
-			add(bff);
-			bff.setParent(this);
-			bff.setInHeader(isInHeader());
-		}
-		if(bff != null) {
-			bff.add(f);
-			result = true;
-		}
-		return result;
-	}
+
 	
 
 	@Override

@@ -19,26 +19,45 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.tokens;
+package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
  * 
  */
-public interface TokenConstants {
-	public static final String COMMENT_BLOCK_START = "/*";
-	public static final String COMMENT_BLOCK_END = "*/";
-	public static final String COMMENT_BLOCK_MIDDLE = "*";
-	public static final String LINE_COMMENT_START = "//";
-	public static final String DEFINED_BLOCK_TOKEN = "define";
-	public static final String FIELD_BLOCK_START = "{";
-	public static final String FIELD_BLOCK_END = "}";
-	public static final String COMPOUND_MODIFIER = "compound";
-	public static final String ENUM_MODIFIER = "enum";
-	public static final String BLOCK_MODIFIER = "block";
-	public static final String ARRAY_MODIFIER = "array";
-	public static final String COMPACT_ARRAY_MODIFIER = "compact";
-	public static final String BRACKET_START = "(";
-	public static final String BRACKET_END = ")";
-	public static final String EQUALS = "=";
-	public static final String KEY_FIELD_NAME = "key";
+public class CompactArrayField extends BlockField {
+
+	public CompactArrayField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, Type.ARRAY, comment);
+
+	}
+
+	@Override
+	Type checkType(Type t) throws RuntimeException {
+		if(t != Type.ARRAY) {
+			throw new RuntimeException("Type must be Array");
+		}
+		return t;
+	}
+	
+	@Override
+	public void add(AbstractField f) {
+		if(f instanceof BoolField) {
+			if(!addBool(this, (BoolField)f)) {
+				throw new RuntimeException("Could not add field "+f.getName());
+			}
+		} else {
+			getBaseFields().add((BaseField)f);
+			f.setParent(this);
+			f.setInHeader(false);
+		}
+	}
+	public int getBaseFieldByteLength() {
+		int result = 0;
+		for(BaseField bf : getBaseFields()) {
+			result += bf.getBitCount()/8;
+		}
+		return result;
+	}
+	
+
 }

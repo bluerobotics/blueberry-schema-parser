@@ -43,7 +43,7 @@ public interface ParentField extends Field, DefinedField {
 			f.setParent(this);
 		}
 	}
-
+	
 	default void addSubWord(ArrayList<BaseField> fs, AbstractField f) {
 		//first scan for an existing compound word that has room
 		CompoundField cf = null;
@@ -65,6 +65,46 @@ public interface ParentField extends Field, DefinedField {
 		cf.add(f);
 		
 	}
+	default boolean addBool(ParentField pf, BoolField f) {
+		boolean result = false;
+		BoolFieldField bff = null;
+		
+		for(AbstractField ft2 : pf.getBaseFields()) {
+			if(ft2 instanceof BoolFieldField) {
+				BoolFieldField bff2 = (BoolFieldField)ft2;
+				if(!bff2.isFull()){
+					bff = bff2;
+					break;
+				}
+			}
+		}
+		if(bff == null) {
+			boolean room = false;
+		
+			if(pf instanceof CompoundField) {
+				CompoundField cf = (CompoundField)pf;
+				if(cf.getRoom() >= 8) {
+					room = true;
+				}
+				
+			} else if(pf instanceof CompactArrayField) {
+				room = true;
+			}
+			
+			if(room) {
+				bff = new BoolFieldField();
+				pf.add(bff);
+				bff.setParent(pf);
+				bff.setInHeader(pf.isInHeader());
+			}
+		}
+		if(bff != null) {
+			bff.add(f);
+			result = true;
+		}
+		return result;
+	}
+	
 	
 	default void addBool(ArrayList<BaseField> fs, BoolField f) {
 		BoolFieldField bff = null;
@@ -72,11 +112,17 @@ public interface ParentField extends Field, DefinedField {
 		for(AbstractField ft : fs) {
 			if(ft instanceof CompoundField && ft.getName() == null) {
 				CompoundField cft = (CompoundField)ft;
-				success = cft.addBool(f);
+				success = addBool(cft, f);
 				if(success) {
 					break;
 				}
 				
+			} else if(ft instanceof CompactArrayField) {
+				CompactArrayField caf = (CompactArrayField)ft;
+				success = addBool(caf, f);
+				if(success) {
+					break;
+				}
 			}
 			
 		}

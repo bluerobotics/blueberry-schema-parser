@@ -25,18 +25,19 @@ package com.bluerobotics.blueberry.schema.parser.fields;
  * 
  */
 public enum Type {
-	ARRAY       (Integer.MAX_VALUE),
-	BOOL        (1),
-	INT8        (8),
-	UINT8       (8),
-	BOOLFIELD   (8),
-	INT16       (16),
-	UINT16      (16),
-	INT32       (32),
-	UINT32      (32),
-	FLOAT32     (32),
-	COMPOUND    (32),
-	BLOCK       (Integer.MAX_VALUE),
+	BOOL           (1),
+	INT8           (8),
+	UINT8          (8),
+	BOOLFIELD      (8),
+	INT16          (16),
+	UINT16         (16),
+	INT32          (32),
+	UINT32         (32),
+	FLOAT32        (32),
+	COMPOUND       (32),
+	ARRAY          (Integer.MAX_VALUE),
+	BLOCK          (Integer.MAX_VALUE),
+	COMPACT_ARRAY  (Integer.MAX_VALUE),
 	;
 	
 	

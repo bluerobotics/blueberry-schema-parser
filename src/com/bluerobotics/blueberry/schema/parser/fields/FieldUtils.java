@@ -50,7 +50,18 @@ public class FieldUtils {
 	 * @param bf
 	 */
 	public void computeIndeces(AbstractField f, int i) {
-		if(f instanceof BlockField) {
+		if(f instanceof CompactArrayField) {
+			BlockField bf = (BlockField)f;
+			i = 0;
+			for(BaseField fb : bf.getHeaderFields()) {
+				computeIndeces(fb, i);
+				i += 4;
+			}
+			for(BaseField fb : bf.getBaseFields()) {
+				computeIndeces(fb,i);
+				i += fb.getBitCount()/8;
+			}	
+		} else if(f instanceof BlockField) {
 			BlockField bf = (BlockField)f;
 			i = 0;
 			for(BaseField fb : bf.getHeaderFields()) {

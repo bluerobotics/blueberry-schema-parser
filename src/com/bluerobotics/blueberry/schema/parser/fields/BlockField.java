@@ -109,7 +109,7 @@ public class BlockField extends AbstractField implements ParentField {
 	public List<BlockField> getAllBlockFields(){
 		ArrayList<BlockField> result = new ArrayList<BlockField>();
 		for(BlockField bf : getBlockFields()) {
-			if(!(bf instanceof ArrayField)) {
+			if(!(bf instanceof ArrayField) && !(bf instanceof CompactArrayField)) {
 				result.add(bf);
 			}
 			result.addAll(bf.getAllBlockFields());
@@ -123,6 +123,16 @@ public class BlockField extends AbstractField implements ParentField {
 				result.add((ArrayField)bf);
 			}
 			result.addAll(bf.getAllArrayFields());
+		}
+		return result;
+	}
+	public List<CompactArrayField> getAllCompactArrayFields(){
+		ArrayList<CompactArrayField> result = new ArrayList<CompactArrayField>();
+		for(BlockField bf : getBlockFields()) {
+			if(bf instanceof CompactArrayField) {
+				result.add((CompactArrayField)bf);
+			}
+			result.addAll(bf.getAllCompactArrayFields());
 		}
 		return result;
 	}

@@ -32,6 +32,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.fields.CompactArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
@@ -49,6 +50,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.BraceStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketEndToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BracketStartToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.CompactArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CompoundToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.tokens.DefineToken;
@@ -501,6 +503,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(t instanceof ArrayToken) {
 //			ArrayToken at = (ArrayToken)t;
 			result = new ArrayField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
+		} else if(t instanceof CompactArrayToken) {
+			result = new CompactArrayField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
 		} else if(t instanceof BlockToken) {
 			result = new BlockField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), c);
 		} else if(t instanceof EnumToken) {
@@ -1373,6 +1377,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			break;
 		case ARRAY_MODIFIER:
 			m_tokens.add(new ArrayToken(start, end));
+			break;
+		case COMPACT_ARRAY_MODIFIER:
+			m_tokens.add(new CompactArrayToken(start, end));
 			break;
 		case DEFINED_BLOCK_TOKEN:
 			m_tokens.add(new DefineToken(start, end));

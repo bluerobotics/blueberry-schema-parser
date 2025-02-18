@@ -24,21 +24,8 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public interface TokenConstants {
-	public static final String COMMENT_BLOCK_START = "/*";
-	public static final String COMMENT_BLOCK_END = "*/";
-	public static final String COMMENT_BLOCK_MIDDLE = "*";
-	public static final String LINE_COMMENT_START = "//";
-	public static final String DEFINED_BLOCK_TOKEN = "define";
-	public static final String FIELD_BLOCK_START = "{";
-	public static final String FIELD_BLOCK_END = "}";
-	public static final String COMPOUND_MODIFIER = "compound";
-	public static final String ENUM_MODIFIER = "enum";
-	public static final String BLOCK_MODIFIER = "block";
-	public static final String ARRAY_MODIFIER = "array";
-	public static final String COMPACT_ARRAY_MODIFIER = "compact";
-	public static final String BRACKET_START = "(";
-	public static final String BRACKET_END = ")";
-	public static final String EQUALS = "=";
-	public static final String KEY_FIELD_NAME = "key";
+public class CompactArrayToken extends BlockToken {
+	public CompactArrayToken(Coord start, Coord end) {
+		super(start, end);
+	}
 }
