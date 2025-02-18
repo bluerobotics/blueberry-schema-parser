@@ -34,6 +34,7 @@ import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
+import com.bluerobotics.blueberry.schema.parser.writers.PrettyWriter;
 import com.starfishmedical.settings.Settings;
 import com.starfishmedical.settings.SettingsDialog;
 import com.starfishmedical.settings.SettingsKey;
@@ -199,7 +200,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.PARSE_SCHEMA, e -> parse());
 		m_actions.addListener(ActionInfos.GENERATE_C, e -> generateC());
 		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
-		
+		m_actions.addListener(ActionInfos.CLEAN_SCHEMA, e -> generatePretty());
 		
 		
 		
@@ -228,6 +229,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
+	
 	private void generateC() {
 		File dir = m_settings.getFile(Key.C_DIRECTORY);
 		m_text.append("Generating C code in \"" + dir+"\"\n");
@@ -239,6 +241,19 @@ public class BlueberrySchemaParserGui implements Constants {
 		
 		CWriter cw = new CWriter(dir);
 		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		m_text.append("Done");
+	}
+	private void generatePretty() {
+		File dir = m_settings.getFile(Key.SCHEMA_FILE_PATH);
+		m_text.append("Generating Beautified Schema in \"" + dir+"\"\n");
+		
+		if(m_parser.getTopLevelField() == null) {
+			parse();
+		}
+
+		
+		PrettyWriter pw = new PrettyWriter(dir);
+		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 	private void parse() {
