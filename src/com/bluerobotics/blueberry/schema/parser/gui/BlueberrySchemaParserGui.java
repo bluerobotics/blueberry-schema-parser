@@ -244,7 +244,8 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_text.append("Done");
 	}
 	private void generatePretty() {
-		File dir = m_settings.getFile(Key.SCHEMA_FILE_PATH);
+		URI f = m_settings.getUri(Key.SCHEMA_FILE_PATH);
+		File dir = (new File(f)).getParentFile();
 		m_text.append("Generating Beautified Schema in \"" + dir+"\"\n");
 		
 		if(m_parser.getTopLevelField() == null) {
