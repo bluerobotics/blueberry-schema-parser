@@ -214,16 +214,17 @@ Packet brPacket(preamble = 0x45554c42) {
 			RUN_REQUEST            =  2  //controller wants peripheral to run the image in flash. Only should work if peripheral has a good image
 			OVERWRITE_REQUEST      =  3  //controller wants peripheral to overwrite its main code with the new flash image. Image must be good for this to be accepted
 			CLEAR_REQUEST          =  4  //controller wants peripheral to clear its upper flash memory in preparation for an upload. This will only be complied with if the peripheral is either in image good or image bad state
+			STOP_REQUEST           =  5  //controller wants peripheral to stop running upper flash
 		
-			IMAGE_GOOD_RESPONSE    =  5  //peripheral has a good image in flash
-			IMAGE_BAD_RESPONSE     =  6  //peripheral has data in flash that does not check out as a correct image
-			IMAGE_CLEAR_RESPONSE   =  7  //peripheral indicates that its upper flash memory is clear and ready for upload
-			UPLOADING_RESPONSE     =  8  //peripheral is receiving data.
-			UPLOAD_BAD_RESPONSE    =  9  //peripheral detected an error in the data - controller should stand by and wait for it to resolve. Peripheral will clear the bad sector and respond with an uploading response when ready
-			WILL_RUN_RESPONSE      = 10  //peripheral responds with this for 5 packet cycles, then reboots
-			RUNNING_RESPONSE       = 11  //peripheral is running upper flash image
-			OVERWRITING_RESPONSE   = 12  //peripheral response with this for 5 packet cyles, then reboots.
-			CLEARING_RESPONSE      = 13  //peripheral says that it's busy clearing
+			IMAGE_GOOD_RESPONSE    =  6  //peripheral has a good image in flash
+			IMAGE_BAD_RESPONSE     =  7  //peripheral has data in flash that does not check out as a correct image
+			IMAGE_CLEAR_RESPONSE   =  8  //peripheral indicates that its upper flash memory is clear and ready for upload
+			UPLOADING_RESPONSE     =  9  //peripheral is receiving data.
+			UPLOAD_BAD_RESPONSE    = 10  //peripheral detected an error in the data - controller should stand by and wait for it to resolve. Peripheral will clear the bad sector and respond with an uploading response when ready
+			WILL_RUN_RESPONSE      = 11  //peripheral responds with this for 5 packet cycles, then reboots
+			RUNNING_RESPONSE       = 12  //peripheral is running upper flash image
+			OVERWRITING_RESPONSE   = 13  //peripheral response with this for 5 packet cyles, then reboots.
+			CLEARING_RESPONSE      = 14  //peripheral says that it's busy clearing
 			
 			
 		}
