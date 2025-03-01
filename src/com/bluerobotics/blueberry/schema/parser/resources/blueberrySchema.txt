@@ -327,6 +327,16 @@ Packet brPacket(preamble = 0x45554c42) {
 	CompactArray ioPortCompactArray {
 		uint16 pins
 	}
+	/*
+	 * payload to convey measured acceleration from peripheral
+	 * Peripheral will respond when receiving empty payload from bus controller 
+	 */
+	Payload accelerometerPayload {
+		float32 x //x axis acceleration in m/s^2
+		float32 y //y axis acceleration in m/s^2
+		float32 z //z axis acceleration in m/s^2
+	}
+		
 	
 	
 			
