@@ -547,7 +547,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("super(bb);");
 		addLine("repeats = "+repeatsGetter+";");
 		addLine("length = "+lengthGetter+";");
-		addLine("unit = (length - HEADER_LENGTH)*4/repeats;");
+		addLine("unit = repeats == 0 ? 0 : (length - HEADER_LENGTH)*4/repeats;");
 
 		closeBrace();
 

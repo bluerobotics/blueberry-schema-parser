@@ -337,7 +337,7 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 z //z axis acceleration in m/s^2
 	}
 	
-	Array testQueue {
+	Array testQueueArray {
 		float32 data
 	}
 	/*
