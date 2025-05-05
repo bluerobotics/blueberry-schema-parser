@@ -130,23 +130,23 @@ Packet brPacket(preamble = 0x45554c42) {
      * the controller can send this with configuration parameters
      * the peripheral can send this with adc values and/or config parameters
 	 */
-	Array adcValuesArray {
+	Array adcValuesArray(key = 0x000e) {
 		float32 value
 	}
-	Array adcConfigArray {
+	Array adcConfigArray(key = 0x000d) {
 		float32 timeConstantSeconds
 		float32 gain
 		float32 offset
 	}
 	
-	Payload TimePayload {
+	Payload TimePayload(key = 0x000f) {
 		uint32 hostTime //time in milliseconds from program start according to the bus controller
 		uint32 localTime //time in milliseconds from program start according to sender of this packet
 	}
 	/*
 	 * A payload for configuring a servo
 	 */
-	Payload servoConfigPayload {
+	Payload servoConfigPayload(key = 0x000c) {
 		bool positionNotVelocity //when true causes servo to control its rotational position, otherwise controls rotational velocity
 		float32 maxPos //maximum target - servo will not allow position to go above this. This is either as a position or a velocity depending on positionNotVelocity
 		float32 minPos //minimum target - servo will not allow position to go below this. This is either a position or a velocity depending on positionNotVelocity
@@ -159,13 +159,13 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A payload for controlling a servo and also for the response from a servo
 	 */
-	Payload servoControlPayload {
+	Payload servoControlPayload(key = 0x0010) {
 		float32 setpoint //this is the target that the servo will attempt to achieve. This is either a rotational position or a speed, depending on configuration
 	}
 	/*
 	 * A payload for the response from a sero
 	 */
-	 Payload servoResponsePayload {
+	 Payload servoResponsePayload(key = 0x000b) {
 	 	float32 actualPosition
 	 	float32 actualVelocity
 	 }
@@ -174,27 +174,27 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * A payload for controlling a lumen
 	 * A lumen will response with a lumenResponsePayload
 	 */
-	Payload lightControlPayload {
+	Payload lightControlPayload(key = 0x0011) {
 		float32 setpoint //this is the light control setpoint for the lumen. It is normalizeed so that a value of 1.0 is full brightness and 0.0 is off
 	}
 
 	/*
 	 * A payload for the response from a lumen
 	 */
-	Payload lightResponsePayload {
+	Payload lightResponsePayload(key = 0x000a) {
 		float32 actualPower //this is the power being delivered to the LED in Watts. 
 		float32 temperature //this is the temperature of the light.
 	}
 	/*
 	 * this sends a new setpoint to the ESC.
 	 */
-	Payload escControlPayload {
+	Payload escControlPayload(key = 0x0012) {
 		float32 setpoint //this is the desired velocity setpoint of the ESC in rad/s
 	}
 	/*
 	 * A response from an ESC reporting on a few things of interest
 	 */
-	Payload escResponsePayload {
+	Payload escResponsePayload(key = 0x0009) {
 		float32 actual //this is the actual velocity of the ESC in rad/s
 		float32 current //this is the total current in Amps
 		float32 volts //this is the measured supply voltage
@@ -205,7 +205,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * The peripheral will respond with a program payload to indicate progress
 	 * The state indicates requests from the bus controller or responses from the peripheral
 	 */
-	Payload flashProgramPayload {
+	Payload flashProgramPayload(key = 0x0013) {
 		define FlashProgramState enum uint8 {
 			DO_NOTHING_REQUEST     =  0  //controller doesn't want the peripheral to do anything in particular at this moment
 
@@ -238,7 +238,7 @@ Packet brPacket(preamble = 0x45554c42) {
 		 * an array of 32 bit words of data. A series of these payloads sent over time will make up the total new firmware
 		 * each program array must be preceeded by a flash program payload to indicate where to place the array to build the entire new 
 		 */
-		Array flashProgramArray { 
+		Array flashProgramArray(key = 0x0008) { 
 			uint32 data //little endian data - LSB is the lowest address, comes first
 		}
 	}
@@ -247,7 +247,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * The meaning of this data is known to the firmware but is not specified.
 	 * Primarily used for debugging and development 
 	 */
-	Array appDataArray {
+	Array appDataArray(key = 0x0007) {
 		float32 data
 	}
 	/*
@@ -256,7 +256,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * Many setpoints can be queued to for a piecewise continuous path for the controller to follow
 	 * The feedback module will compute a cubic equation to traverse from one waypoint to another 
 	 */
-	Array feedbackTrajectoryArray {
+	Array feedbackTrajectoryArray(key = 0x0014) {
 		uint8 channel //the feedback channel that this payload is to update the trajectories of
 		float32 setpoint //the target value that the feedback controller should achieve
 		float32 setpointRate //the target rate of setpoint change that should be achieved when the setpoint is achieved
@@ -269,7 +269,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A payload for a peripheral to indicate the state of its feedback control modules 
 	 */
-	Array feedbackResponseArray {
+	Array feedbackResponseArray(key = 0x0006) {
 		float32 actual
 		float32 setpoint
 		float32 output
@@ -283,7 +283,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	 * One payload is sent per feedback channel used
 	 * These do not need to be sent regularly
 	 */
-	Payload feedbackConfigPayload {
+	Payload feedbackConfigPayload(key = 0x0005) {
 		uint8 channel //the channel to configure
 		//A selection of units for the setpoint.
 		//Mostly just to select between angular units and units that do not loop
@@ -321,30 +321,30 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 d1
 		float32 d2
 	}
-	Array thermistorArray {
+	Array thermistorArray(key = 0x0015) {
 		float32 celsius
 	}
-	CompactArray ioPortCompactArray {
+	CompactArray ioPortCompactArray(key = 0x0004) {
 		uint16 pins
 	}
 	/*
 	 * payload to convey measured acceleration from peripheral
 	 * Peripheral will respond when receiving empty payload from bus controller 
 	 */
-	Payload accelerometerPayload {
+	Payload accelerometerPayload(key = 0x0016) {
 		float32 x //x axis acceleration in m/s^2
 		float32 y //y axis acceleration in m/s^2
 		float32 z //z axis acceleration in m/s^2
 	}
 	
-	Array testQueueArray {
+	Array testQueueArray(key = 0x0003) {
 		float32 data
 	}
 	/*
 	 * A payload to convey a single channel worth of oscilloscope data.
 	 * The actual data vector is conveyed by a compact array of bytes
 	 */
-	Payload oscopePayload {
+	Payload oscopePayload(key = 0x0017) {
 		uint8 channel //identifies which scope channel this data is for
 		float32 period //sample time in seconds
 		float32 gain //gain that will convert the byte-sized sample data to real values
@@ -353,7 +353,7 @@ Packet brPacket(preamble = 0x45554c42) {
 		/*
 		 * An array of scope data. This must be preceded by an oscopePayload to convey the channel and channel settings
 		 */
-		CompactArray oscopeDataCompactArray {
+		CompactArray oscopeDataCompactArray(key = 0x0018) {
 			int8 sample
 		}
 		
