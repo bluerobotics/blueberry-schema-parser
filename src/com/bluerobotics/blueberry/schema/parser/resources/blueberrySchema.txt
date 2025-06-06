@@ -107,6 +107,7 @@ Packet brPacket(preamble = 0x45554c42) {
 				LUMEN       = 0x0002
 				NUCLEO     	= 0x0003 //the ST family of development PCBs
 				BLUE_ESC	= 0x0004
+				GIGABOARD   = 0x0005
 			}
 			
 			define McuType enum uint8 {
