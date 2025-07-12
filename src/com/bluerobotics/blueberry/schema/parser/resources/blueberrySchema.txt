@@ -108,6 +108,7 @@ Packet brPacket(preamble = 0x45554c42) {
 				NUCLEO     	= 0x0003 //the ST family of development PCBs
 				BLUE_ESC	= 0x0004
 				GIGABOARD   = 0x0005
+				BLUE_BRIDGE = 0x0006
 			}
 			
 			define McuType enum uint8 {
@@ -358,6 +359,18 @@ Packet brPacket(preamble = 0x45554c42) {
 			int8 sample
 		}
 		
+	}
+	define ModuleId enum uint16 {
+		
+	}
+	/*
+	 * A payload to convey a register config value
+	 */
+	CompactArray regConfigCompactArray(){
+		ModuleId moduleId
+		uint8 registerId
+		uint8 channelId
+		uint32 value
 	}
 		
 	
