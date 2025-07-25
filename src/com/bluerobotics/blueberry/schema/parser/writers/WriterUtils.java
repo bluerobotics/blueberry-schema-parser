@@ -30,6 +30,14 @@ public class WriterUtils {
 	public static String formatAsHex(long v) {
 		return "0x"+ Long.toHexString(v);
 	}
-
+	public static String formatAsHex(long v, int numDigits) {
+		String result = Long.toHexString(v);
+		int n = numDigits - result.length();
+		if(n < 0) {
+			n = 0;
+		}
+		result = "0".repeat(n)+result;
+		return "0x"+ result;
+	}
 		
 }

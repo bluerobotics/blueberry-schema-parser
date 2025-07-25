@@ -93,6 +93,7 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A payload for a peripheral to convey its details to the controller.
 	 * A controller requests a version payload by sending an empty one.
+	 * A controller can request the peripheral to set its hardware type and rev by sending a populated one
 	 */
 	Payload versionPayload(key = 0x0001) {
 	
@@ -360,14 +361,37 @@ Packet brPacket(preamble = 0x45554c42) {
 		}
 		
 	}
-	define ModuleId enum uint16 {
-		
-	}
+//	define ModuleId enum uint16 {
+//		GPIO                      = 0
+//		FEEDBACK_CONTROL          = 1
+//		BRUSHESS_MOTOR            = 2
+//		ADC_MANAGER               = 3
+//		SFDQ_PACKETS              = 4
+//		DAC                       = 5
+//		SOFT_PWM                  = 6
+//		THERMISTORS               = 7
+//		STREAMING_MANAGER         = 8
+//		STEPPER_MOTOR             = 9
+//		ENCODER                   = 10
+//		ADS131A0X                 = 11
+//		AD7172                    = 12
+//		SFM3000                   = 13
+//		SFM3019                   = 14
+//		PORT_EXPANDER_MANAGER     = 15
+//		AMT22                     = 16
+//		AS5048A                   = 17
+//		PAC1710                   = 18
+//		MAX31865                  = 19
+//		HARDWARE_ENCODER          = 20
+//		FASTCODE_MONITOR          = 21
+//		ADS131M0X                 = 22
+//		HSC_PRESSURE_SENSOR       = 23
+//	}
 	/*
 	 * A payload to convey a register config value
 	 */
-	CompactArray regConfigCompactArray(){
-		ModuleId moduleId
+	CompactArray regConfigCompactArray(key = 0x0019){
+		uint16 moduleId
 		uint8 registerId
 		uint8 channelId
 		uint32 value
