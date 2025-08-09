@@ -295,6 +295,7 @@ Packet brPacket(preamble = 0x45554c42) {
 			RADIANS = 1
 			METRES_PER_SECOND = 3
 			RADIANS_PER_SECOND = 4
+			DEGREES = 5
 		}
 		Unit unit
 		bool enable //enable this channel
