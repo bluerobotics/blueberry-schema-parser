@@ -22,23 +22,55 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
- * 
+ *
  */
 public interface TokenConstants {
-	public static final String COMMENT_BLOCK_START = "/*";
+	public static final String ANNOTATION_START = "@";
+	public static final String ARRAY_MODIFIER = "array";
+	public static final String BLOCK_MODIFIER = "block";
+	public static final String BOOLEAN_KEYWORD = "boolean";
+	public static final String BRACE_END = "}";
+	public static final String BRACE_START = "{";
+	public static final String BRACKET_END = ")";
+	public static final String BRACKET_START = "(";
+	public static final String BYTE_KEYWORD = "byte";
+	public static final String CHAR_DELIMITER = "'";
 	public static final String COMMENT_BLOCK_END = "*/";
 	public static final String COMMENT_BLOCK_MIDDLE = "*";
-	public static final String LINE_COMMENT_START = "//";
-	public static final String DEFINED_BLOCK_TOKEN = "define";
-	public static final String FIELD_BLOCK_START = "{";
-	public static final String FIELD_BLOCK_END = "}";
-	public static final String COMPOUND_MODIFIER = "compound";
-	public static final String ENUM_MODIFIER = "enum";
-	public static final String BLOCK_MODIFIER = "block";
-	public static final String ARRAY_MODIFIER = "array";
+	public static final String COMMENT_BLOCK_START = "/*";
 	public static final String COMPACT_ARRAY_MODIFIER = "compact";
-	public static final String BRACKET_START = "(";
-	public static final String BRACKET_END = ")";
+	public static final String COMPOUND_MODIFIER = "compound";
+	public static final String CONST_KEYWORD = "const";
+	public static final String DEFINED_BLOCK_TOKEN = "define";
+	public static final String DOUBLE_KEYWORD = "double";
+	public static final String ENUM_KEYWORD = "enum";
 	public static final String EQUALS = "=";
+	public static final String ESCAPE_DELIMITER = "_";
+	public static final String FLOAT_KEYWORD = "float";
+	public static final String INT_KEYWORD = "int";
+	public static final String INT16_KEYWORD = "int16";
+	public static final String INT32_KEYWORD = "int32";
+	public static final String INT64_KEYWORD = "int64";
+	public static final String INT8_KEYWORD = "int8";
 	public static final String KEY_FIELD_NAME = "key";
+	public static final String LINE_COMMENT_START = "//";
+	public static final String LONG_KEYWORD = "long";
+	public static final String MESSAGE_KEYWORD = "message";
+	public static final String MODULE_KEYWORD = "module";
+	public static final String SEQUENCE_KEYWORD = "sequence";
+	public static final String SHORT_KEYWORD = "short";
+	public static final String SQUARE_BRACKET_END = "]";
+	public static final String SQUARE_BRACKET_START = "[";
+	public static final String STRING_DELIMITER = "\"";
+	public static final String STRING_ESCAPE_DELIMITER = "\\";
+	public static final String STRING_KEYWORD = "string";
+	public static final String STRUCT_KEYWORD = "struct";
+	public static final String TYPEDEF_KEYWORD = "typedef";
+	public static final String UINT16_KEYWORD = "uint16";
+	public static final String UINT32_KEYWORD = "uint32";
+	public static final String UINT64_KEYWORD = "uint64";
+	public static final String UINT8_KEYWORD = "uint8";
+	public static final String UNSIGNED_KEYWORD = "unsigned";
+
+
 }

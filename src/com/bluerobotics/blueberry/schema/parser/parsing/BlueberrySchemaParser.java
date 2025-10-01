@@ -61,6 +61,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationOwner;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.KeywordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NestedFieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
@@ -142,6 +143,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				c = c.trim();
 				c = processBlockComment(c);
 				c = processLineComment(c);
+				c = processStrings(c);
 				c = processNextToken(c);
 				c = processEol(c);
 
@@ -203,6 +205,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
+
 
 	/**
 	 * this is supposed to scan for constant fields and check to be sure they fit in the allocated number of bits
@@ -1353,10 +1356,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	private void addToken(Coord start, Coord end, String s) {
 		switch(s) {
-		case FIELD_BLOCK_START:
+		case BRACE_START:
 			m_tokens.add(new BraceStartToken(start));
 			break;
-		case FIELD_BLOCK_END:
+		case BRACE_END:
 			m_tokens.add(new BraceEndToken(start));
 			break;
 		case BRACKET_START:
@@ -1365,27 +1368,47 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		case BRACKET_END:
 			m_tokens.add(new BracketEndToken(start));
 			break;
+		case SQUARE_BRACKET_START:
+			m_tokens.add(new BracketStartToken(start));
+			break;
+		case SQUARE_BRACKET_END:
+			m_tokens.add(new BracketEndToken(start));
+			break;
 		case EQUALS:
 			m_tokens.add(new EqualsToken(start));
 			break;
-		case COMPOUND_MODIFIER:
-			m_tokens.add(new CompoundToken(start, end, s));
+
+
+		case STRING_DELIMITER:
+			m_tokens.add(new EqualsToken(start));
 			break;
-		case ENUM_MODIFIER:
-			m_tokens.add(new EnumToken(start, end));
+		case BOOLEAN_KEYWORD :
+		case BYTE_KEYWORD    :
+		case CONST_KEYWORD   :
+		case DOUBLE_KEYWORD  :
+		case ENUM_KEYWORD    :
+		case FLOAT_KEYWORD   :
+		case INT_KEYWORD     :
+		case INT16_KEYWORD   :
+		case INT32_KEYWORD   :
+		case INT64_KEYWORD   :
+		case INT8_KEYWORD    :
+		case LONG_KEYWORD    :
+		case MESSAGE_KEYWORD :
+		case MODULE_KEYWORD  :
+		case SEQUENCE_KEYWORD:
+		case SHORT_KEYWORD   :
+		case STRING_KEYWORD  :
+		case STRUCT_KEYWORD  :
+		case TYPEDEF_KEYWORD :
+		case UINT16_KEYWORD  :
+		case UINT32_KEYWORD  :
+		case UINT64_KEYWORD  :
+		case UINT8_KEYWORD   :
+		case UNSIGNED_KEYWORD:
+			m_tokens.add(new KeywordToken(start, end, s));
 			break;
-		case BLOCK_MODIFIER:
-			m_tokens.add(new BlockToken(start, end));
-			break;
-		case ARRAY_MODIFIER:
-			m_tokens.add(new ArrayToken(start, end));
-			break;
-		case COMPACT_ARRAY_MODIFIER:
-			m_tokens.add(new CompactArrayToken(start, end));
-			break;
-		case DEFINED_BLOCK_TOKEN:
-			m_tokens.add(new DefineToken(start, end));
-			break;
+
 		default:
 			BaseTypeToken bte = BaseTypeToken.makeNew(start, end, s);
 			if(bte != null) {
@@ -1417,6 +1440,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		return result;
+	}
+	/**
+	 * if the next coord is a double quotation mark then process a string
+	 * @param c
+	 * @return
+	 */
+	private Coord processStrings(Coord c) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private int getFirstIndexBeforeLine(int line) {
