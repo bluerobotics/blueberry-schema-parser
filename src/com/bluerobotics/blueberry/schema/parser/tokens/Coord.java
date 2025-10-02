@@ -34,7 +34,7 @@ public class Coord implements Comparable<Coord> {
 		line = c.line;
 		index = c.index;
 		m_lines = c.m_lines;
-		
+
 	}
 	/**
 	 * advances to the start of the next line
@@ -62,11 +62,11 @@ public class Coord implements Comparable<Coord> {
 		int n = getString().length();
 		if(j > n) {
 			j = n;
-		
+
 		}
 
 		result = new Coord(line, j, m_lines);
-		
+
 		return result;
 	}
 	/**
@@ -94,7 +94,7 @@ public class Coord implements Comparable<Coord> {
 		Coord result = this;
 		boolean notDone = true;
 		while(notDone || result == null) {
-			if(result.index >= result.getString().length()) {
+			if(result.isAtEnd()) {
 				notDone = false;
 			} else {
 				char ch = result.getString().charAt(result.index);
@@ -111,7 +111,7 @@ public class Coord implements Comparable<Coord> {
 		Coord result = this;
 		boolean notDone = true;
 		while(notDone && result != null) {
-			if(result.index >= result.getString().length()) {
+			if(result.isAtEnd()) {
 				notDone = false;
 			} else {
 				char ch = result.getString().charAt(result.index);
@@ -133,15 +133,15 @@ public class Coord implements Comparable<Coord> {
 	 * @return
 	 */
 	public Coord advanceToNext(char... matches) {
-		
+
 		Coord result = this;
 		if(result.charMatches(matches)){
 			result = result.incrementIndex(1);
 		} else {
 			boolean notDone = true;
 			while(notDone && result != null) {
-				
-				if(result.index >= result.getString().length()) {
+
+				if(result.isAtEnd()) {
 					notDone = false;
 				} else {
 					result = result.incrementIndex(1);
@@ -149,15 +149,15 @@ public class Coord implements Comparable<Coord> {
 						notDone = false;
 						break;
 					}
-					
+
 					if(result.charMatches(matches)) {
 						notDone = false;
 						break;
 					} else {
-						
+
 					}
 				}
-				
+
 			}
 		}
 		return result;
@@ -173,15 +173,59 @@ public class Coord implements Comparable<Coord> {
 		}
 		return matched;
 	}
-	public boolean startsWith(String s) {
-		return getString().substring(index).startsWith(s);
+	/**
+	 * finds the next occurrence of one of the specified strings
+	 * ignores the starting position, even if it matches.
+	 * If not found then returns end of string
+	 * @param ss
+	 * @return the location of the next occurrence
+	 */
+	public Coord findNext(String... ss) {
+		Coord result = incrementIndex(1);
+		boolean notDone = true;
+		while(notDone) {
+
+			if(result.startsWith(ss)) {
+				notDone = false;
+			} else if(result.isAtEnd()) {
+
+				notDone = false;
+			} else {
+				result = result.incrementIndex(1);
+				if(result.getString().length() <= result.index) {
+					notDone = false;
+					result = null;
+				}
+			}
+		}
+		return result;
+	}
+	/**
+	 * checks if this specified location starts with any of the specified strings
+	 * @param ss
+	 * @return true if there's a match
+	 */
+	public boolean startsWith(String... ss) {
+		boolean result = false;
+
+		for(String s : ss) {
+			result = getString().substring(index).startsWith(s);
+			if(result) {
+				break;
+			}
+		}
+		return result;
+
+	}
+	public boolean isAtEnd() {
+		return index >= getString().length();
 	}
 	public Coord indexOf(String s) {
 		return updateIndex(getString().indexOf(s, index));
 	}
 	public boolean contains(String s) {
 		return remainingString().indexOf(s) > -1;
-		
+
 	}
 	public String remainingString() {
 		return getString().substring(index);
@@ -245,5 +289,5 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
-	
+
 }

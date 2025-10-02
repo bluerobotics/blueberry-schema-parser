@@ -149,44 +149,44 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 			}
-			collapseComments();
-			collapseDefines();
-			collapseNumbers();
-			collapseNameValues();
-			collapseEnums();
-			collapseEnumValues();
-			identifyFieldNames();
-			identifyBlockTypeInstances();
-			collapseBlockTypeTokenNameValues();
-			collapseBaseTypeAllocations();
-			collapseNestedFieldAllocations();
-			collapseDefinedTypes();
-			collapseEols();
-			collapseDefinedTypeComments();
-			collapseDefinedTypeFields(0, null);
-			removeTopLevelComments();
-			removeTopLevelField();
-
-			fillInMissingEnumValues();
-			checkForDuplicateEnumValues();
-			List<NestedFieldAllocationToken> blocks = listAllBlocks(m_topLevelToken, null);
-			fillInMissingKeyValues(blocks);
-			checkForDuplicateKeyValues(blocks);
-			checkKeyValuesForSize(m_topLevelToken);
-
-			if(m_tokens.size() > 0) {
-				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
-			}
-
-
-			//now build model of packets
-
-			buildPackets(m_topLevelToken, null);
-			FieldUtils fu = new FieldUtils();
-			fu.padExtraSpaceInCompoundFields(m_topLevelField);
-			fu.computeIndeces(m_topLevelField, 0);
-//			fu.computeParents(m_topLevelField);
-//			fu.removeDuplicates(m_topLevelField, null);
+//			collapseComments();
+//			collapseDefines();
+//			collapseNumbers();
+//			collapseNameValues();
+//			collapseEnums();
+//			collapseEnumValues();
+//			identifyFieldNames();
+//			identifyBlockTypeInstances();
+//			collapseBlockTypeTokenNameValues();
+//			collapseBaseTypeAllocations();
+//			collapseNestedFieldAllocations();
+//			collapseDefinedTypes();
+//			collapseEols();
+//			collapseDefinedTypeComments();
+//			collapseDefinedTypeFields(0, null);
+//			removeTopLevelComments();
+//			removeTopLevelField();
+//
+//			fillInMissingEnumValues();
+//			checkForDuplicateEnumValues();
+//			List<NestedFieldAllocationToken> blocks = listAllBlocks(m_topLevelToken, null);
+//			fillInMissingKeyValues(blocks);
+//			checkForDuplicateKeyValues(blocks);
+//			checkKeyValuesForSize(m_topLevelToken);
+//
+//			if(m_tokens.size() > 0) {
+//				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
+//			}
+//
+//
+//			//now build model of packets
+//
+//			buildPackets(m_topLevelToken, null);
+//			FieldUtils fu = new FieldUtils();
+//			fu.padExtraSpaceInCompoundFields(m_topLevelField);
+//			fu.computeIndeces(m_topLevelField, 0);
+////			fu.computeParents(m_topLevelField);
+////			fu.removeDuplicates(m_topLevelField, null);
 
 
 
@@ -1442,13 +1442,33 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result;
 	}
 	/**
-	 * if the next coord is a double quotation mark then process a string
+	 * if the next coord is a double quotation mark then process a string until the closing quote
+	 * if no valid closing quote is found then consume the remainder of the whole input
 	 * @param c
 	 * @return
 	 */
 	private Coord processStrings(Coord c) {
-		// TODO Auto-generated method stub
-		return null;
+		if(c == null) {
+			return null;
+		}
+
+		Coord result = c.trim();
+		if(result.startsWith(STRING_DELIMITER)) {
+
+			boolean notDone = true;
+			while(notDone) {
+				result = result.findNext(STRING_DELIMITER, STRING_ESCAPE_DELIMITER);
+				if(result.isAtEnd()) {
+					notDone = false;
+				} else if(result.startsWith(STRING_DELIMITER)) {
+					notDone = false;
+				} else {
+					//this must be a escape character then the next character might be a quotation so skip it
+					result = result.incrementIndex(1);
+				}
+			}
+		}
+		return result;
 	}
 
 	private int getFirstIndexBeforeLine(int line) {
