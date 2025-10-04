@@ -21,21 +21,22 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
+
 /**
  *
  */
-public class KeywordToken extends AbstractToken {
-	private final String m_keyword;
-	public KeywordToken(Coord start, Coord end, String s) {
+public class TokenIdentifierToken extends AbstractToken {
+	private final TokenIdentifier m_id;
+	public TokenIdentifierToken(Coord start, Coord end, TokenIdentifier ti) {
 		super(start, end);
-		m_keyword = s;
+		m_id = ti;
 	}
-	public String getKeyword() {
-		return m_keyword;
+	public TokenIdentifier getKeyword() {
+		return m_id;
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"(\""+m_keyword+"\")";
+		return getClass().getSimpleName()+"("+m_id+")";
 	}
-
 
 }

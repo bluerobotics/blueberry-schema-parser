@@ -24,18 +24,18 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  *
  */
-public class KeywordToken extends AbstractToken {
-	private final String m_keyword;
-	public KeywordToken(Coord start, Coord end, String s) {
-		super(start, end);
-		m_keyword = s;
-	}
-	public String getKeyword() {
-		return m_keyword;
+public class StringToken extends AbstractToken {
+	public StringToken(Coord start, Coord end) {
+		super(start,end);
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"(\""+m_keyword+"\")";
+		String s = getStart().fromThisToThatString(getEnd());
+		if(s.length() > 10) {
+			String t = s.substring(0,5);
+			t += "...";
+			t += s.substring(s.length() - 5);
+			s = t;
+		}
+		return getClass().getSimpleName() +"(\""+s+"\")";
 	}
-
-
 }

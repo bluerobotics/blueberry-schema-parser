@@ -12,8 +12,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
@@ -76,10 +78,10 @@ public class BlueberrySchemaParserGui implements Constants {
 		FrameResizer resizer = new FrameResizer(p, m_frame);
 		cp.add(p);
 		cp = p;
-		
+
 		cp.setLayout(new BorderLayout());
-	
-		
+
+
 		int x = s.getInt(Key.APP_POS_X);
 		int y = s.getInt(Key.APP_POS_Y);
 		int w = s.getInt(Key.APP_WIDTH);
@@ -87,7 +89,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		f.setLocation(x, y);
 		f.setSize(w, h);
 		f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		
+
 		f.addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(WindowEvent e) {
@@ -115,7 +117,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		});
 		registerActions();
 
-		
+
 		ToolBar toolbar = new ToolBar() {
 			private static final long serialVersionUID = 1L;
 
@@ -138,7 +140,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				comp.setFocusable(false);
 				add(comp);
 				setFloatable(false);
-				
+
 				addItem(m_actions, ActionInfos.PARSE_SCHEMA);
 				addItem(m_actions, ActionInfos.GENERATE_C);
 				addItem(m_actions, ActionInfos.GENERATE_JAVA);
@@ -146,22 +148,22 @@ public class BlueberrySchemaParserGui implements Constants {
 
 				addSeparator(new Dimension(20,20));
 //				addItem( m_actions, ActionInfos.HELP);
-				
+
 				addGlue();
 				addItem(m_actions, ActionInfos.MINIMIZE);
 				addItem(m_actions, ActionInfos.NORMALIZE);
 				addItem(m_actions, ActionInfos.MAXIMIZE);
 				addItem(m_actions, ActionInfos.EXIT);
-			
+
 			}
 		};
-		
+
 		resizer.addMoveComponent(toolbar);
 		cp.add(toolbar, BorderLayout.NORTH);
-		Key[] keys = new Key[] {Key.JAVA_DIRECTORY, Key.C_DIRECTORY, Key.SCHEMA_FILE_PATH };
-		
+		Key[] keys = new Key[] {Key.SCHEMA_DIRECTORY, Key.JAVA_DIRECTORY, Key.C_DIRECTORY, Key.HEADER_FILE_PATH };
+
 		JTable setTable = new JTable(new SettingsTableModel(m_settings, keys));
-	
+
 		setTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 		setTable.setRowHeight((int)(setTable.getFont().getSize()*1.5));
 		setTable.getColumnModel().getColumn(1).setCellEditor(new SettingsTableCellEditor(m_settings));
@@ -172,8 +174,8 @@ public class BlueberrySchemaParserGui implements Constants {
 		b.add(new JScrollPane(setTable));
 		m_text.setPreferredSize(new Dimension(500,500));
 		b.add(new JScrollPane(m_text));
-		cp.add(b);		
-		
+		cp.add(b);
+
 		f.setVisible(true);
 
 	}
@@ -187,13 +189,13 @@ public class BlueberrySchemaParserGui implements Constants {
 	private void registerActions() {
 		m_actions.registerActions(ActionInfos.values());
 		m_actions.addKeyBindings(m_frame.getRootPane());
-	
+
 		m_actions.addListener(ActionInfos.HELP, e -> {});
 		m_actions.addListener(ActionInfos.EXIT, e -> exit());
 		m_actions.addListener(ActionInfos.MINIMIZE, e -> m_frame.setExtendedState(Frame.ICONIFIED));
 		m_actions.addListener(ActionInfos.NORMALIZE, e -> m_frame.setExtendedState(Frame.NORMAL));
 		m_actions.addListener(ActionInfos.MAXIMIZE, e -> m_frame.setExtendedState(Frame.MAXIMIZED_BOTH));
-		
+
 		m_actions.addListener(ActionInfos.SETTINGS_LOAD, e -> getSettings().loadSettings(getFrame(), Key.DEFAULT_FILE_PATH));
 		m_actions.addListener(ActionInfos.SETTINGS_SAVE, e -> getSettings().saveSettings(getFrame(), Key.DEFAULT_FILE_PATH));
 		m_actions.addListener(ActionInfos.SETTINGS_SHOW, e -> SettingsDialog.showSettingsDialog(getFrame(), getSettings(), Key.values()));
@@ -201,98 +203,111 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.GENERATE_C, e -> generateC());
 		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
 		m_actions.addListener(ActionInfos.CLEAN_SCHEMA, e -> generatePretty());
-		
-		
-		
+
+
+
 		m_actions.getAction(ActionInfos.EXIT).setIcon(EXIT_ICON);
 		m_actions.getAction(ActionInfos.MINIMIZE).setIcon(MINIMIZE_ICON);
 		m_actions.getAction(ActionInfos.NORMALIZE).setIcon(NORMALIZE_ICON);
-		
+
 		m_actions.getAction(ActionInfos.MAXIMIZE).setIcon(MAXIMIZE_ICON);
 		m_actions.getAction(ActionInfos.GENERATE_C).setIcon(GENERATE_C_ICON);
 		m_actions.getAction(ActionInfos.GENERATE_JAVA).setIcon(GENERATE_JAVA_ICON);
 		m_actions.getAction(ActionInfos.CLEAN_SCHEMA).setIcon(SOAP_ICON);
 		m_actions.getAction(ActionInfos.PARSE_SCHEMA).setIcon(CHECK_ICON);
 
-		
+
 	}
 
 	private void generateJava() {
 		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 		m_text.append("Generating Java code in \"" + dir+"\"\n");
-		
-		if(m_parser.getTopLevelField() == null) {
-			parse();
-		}
-		
-		JavaWriter jw = new JavaWriter(dir);
-		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
-		m_text.append("Done");
-	}
-	
-	private void generateC() {
-		File dir = m_settings.getFile(Key.C_DIRECTORY);
-		m_text.append("Generating C code in \"" + dir+"\"\n");
-		
+
 		if(m_parser.getTopLevelField() == null) {
 			parse();
 		}
 
-		
+		JavaWriter jw = new JavaWriter(dir);
+		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		m_text.append("Done");
+	}
+
+	private void generateC() {
+		File dir = m_settings.getFile(Key.C_DIRECTORY);
+		m_text.append("Generating C code in \"" + dir+"\"\n");
+
+		if(m_parser.getTopLevelField() == null) {
+			parse();
+		}
+
+
 		CWriter cw = new CWriter(dir);
 		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 	private void generatePretty() {
-		URI f = m_settings.getUri(Key.SCHEMA_FILE_PATH);
-		File dir = (new File(f)).getParentFile();
+		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
 		m_text.append("Generating Beautified Schema in \"" + dir+"\"\n");
-		
+
 		if(m_parser.getTopLevelField() == null) {
 			parse();
 		}
 
-		
+
 		PrettyWriter pw = new PrettyWriter(dir);
 		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 	private void parse() {
-		
-		URI uri = m_settings.getUri(Key.SCHEMA_FILE_PATH);
-		m_text.append("Parsing \""+uri+"\"\n");
-		BufferedReader br;
-		String[] ss = null;
-		try {
-			br = UtilMethods.getReaderFromFileUri(uri);
-			Stream<String> lines = br.lines();
-			ss = lines.toArray(String[]::new);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			m_text.append(e.toString());
-		}
-		
-		if(ss != null) {
+
+		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
+
+		m_parser.clear();
+		parse(dir, dir);
+	}
+	private void parse(File root, File f) {
+		m_text.append("Parsing \""+f+"\"\n");
+		if(f.isDirectory()) {
+			File[] fs = f.listFiles();
+			for(File cf : fs) {
+				parse(root, cf);
+			}
+		} else if(f.isFile()) {
+			BufferedReader br;
+			String[] ss = null;
 			try {
-				m_parser.parse(ss);
-			} catch (SchemaParserException e) {
+				br = new BufferedReader(new FileReader(f));
+				Stream<String> lines = br.lines();
+				ss = lines.toArray(String[]::new);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				m_text.append(e.toString());
 			}
+
+			if(ss != null) {
+				try {
+					Path p = root.toPath().relativize(f.toPath());
+					m_parser.parse(p.toString(), ss);
+				} catch (SchemaParserException e) {
+					m_text.append(e.toString());
+				}
+			}
+			m_text.append("Done\n");
 		}
-		m_text.append("Done\n");
 	}
+
 	public static void main(String...args){
 		Settings settings = new Settings(BlueberrySchemaParserGui.class);
 		ResourceTools.setFonts();
-		
+
 		BlueberrySchemaParserGui gui = new BlueberrySchemaParserGui(settings);
-	
-	
-	}	
+
+
+	}
 	public void exit() {
-		
+
 		System.exit(0);
-		
-			
+
+
 	}
 }

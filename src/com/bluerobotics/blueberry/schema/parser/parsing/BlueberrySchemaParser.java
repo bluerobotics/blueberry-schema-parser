@@ -67,8 +67,10 @@ import com.bluerobotics.blueberry.schema.parser.tokens.NestedFieldAllocationToke
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.StringToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenIdentifierToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.TypeToken;
 import com.bluerobotics.blueberry.schema.parser.writers.TestWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
@@ -88,37 +90,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private BlockField m_topLevelField = null;
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
-	/**
-	 * This main method probably should be pruned.
-	 * It was initially intended to be the CLI but that doens't make sense to be here any more.
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		String sargs = "[";
-		boolean firstTime = true;
-		for(String s : args) {
-			sargs = sargs + (firstTime ? "" : " ") + s;
-			firstTime = false;
-		}
-		sargs += "]";
-		System.out.println("BlueberrySchemaParser args:"+ sargs);
-		String sf = ResourceTools.loadText(RESOURCE_PATH + "testSchema.txt");
-		BlueberrySchemaParser p = new BlueberrySchemaParser();
-		try {
-			p.parse(sf.split("\\R"));
-		} catch (SchemaParserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		TestWriter tw = new TestWriter(new File(""));
-		tw.write(p.getTopLevelField(), p.getHeader());
-		System.out.println(tw.getOutput());
 
-
-
-
-
-	}
 	public String[] getHeader() {
 		String[] result = new String[m_topLevelComments.size()];
 		for(int i = 0; i < m_topLevelComments.size(); ++i) {
@@ -128,12 +100,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 	}
+	public void clear() {
+		m_tokens.clear();
+		m_defines.clear();
+
+	}
 	/**
 	 * this method performs the parsing of the schema and builds a structure of fields to represent the packet
+	 * @param filePath - a string of the file path of this file
 	 * @param schema - a string containing the schema to parse
 	 * @throws SchemaParserException
 	 */
-	public void parse(String[] schemaLines) throws SchemaParserException {
+	public void parse(String filePath, String[] schemaLines) throws SchemaParserException {
 		//split into lines
 
 		Coord c = new Coord(0,0, schemaLines);
@@ -149,9 +127,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 			}
-//			collapseComments();
+			collapseComments();
 //			collapseDefines();
-//			collapseNumbers();
+			collapseNumbers();
 //			collapseNameValues();
 //			collapseEnums();
 //			collapseEnumValues();
@@ -1014,25 +992,22 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		int i = 0;
 		while(i < m_tokens.size()){
 			//first find next define element
-			i = findToken(i, true, EqualsToken.class);
-
-			if(i > 0 && i < m_tokens.size()) {
-				++i;
+			i = findToken(i, true, SingleWordToken.class);
+			if(i < 0) {
+				break;
+			} else {
 				Token t = (Token)m_tokens.get(i);
 				if(t instanceof SingleWordToken) {
 					SingleWordToken swt = (SingleWordToken)t;
 					NumberToken nt = NumberToken.wrap(swt);
 					if(nt != null) {
+						//if it's not null then it can be parsed as a number
 						m_tokens.set(i, nt);
-					} else {
-						throw new SchemaParserException("Cannot parse \"" + swt.getName()+ "\"as number.", t.getStart());
 					}
-				} else {
-					throw new SchemaParserException("Incorrect token after equals.", t.getStart());
+					++i;
 				}
-			} else {
-				break;
 			}
+
 		}
 	}
 	/**
@@ -1345,7 +1320,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		Coord start = c.trim();
 		//now advance to the next whitespace
-		Coord result = start.advanceToNext(' ','\t','{','}','(',')','=');
+		Coord result = start.advanceToNext(' ','\t','{','}','(',')','=','@',':',';',',');
 		Coord end = result;
 		String s = start.fromThisToThatString(end);
 
@@ -1355,69 +1330,21 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result;
 	}
 	private void addToken(Coord start, Coord end, String s) {
-		switch(s) {
-		case BRACE_START:
-			m_tokens.add(new BraceStartToken(start));
-			break;
-		case BRACE_END:
-			m_tokens.add(new BraceEndToken(start));
-			break;
-		case BRACKET_START:
-			m_tokens.add(new BracketStartToken(start));
-			break;
-		case BRACKET_END:
-			m_tokens.add(new BracketEndToken(start));
-			break;
-		case SQUARE_BRACKET_START:
-			m_tokens.add(new BracketStartToken(start));
-			break;
-		case SQUARE_BRACKET_END:
-			m_tokens.add(new BracketEndToken(start));
-			break;
-		case EQUALS:
-			m_tokens.add(new EqualsToken(start));
-			break;
-
-
-		case STRING_DELIMITER:
-			m_tokens.add(new EqualsToken(start));
-			break;
-		case BOOLEAN_KEYWORD :
-		case BYTE_KEYWORD    :
-		case CONST_KEYWORD   :
-		case DOUBLE_KEYWORD  :
-		case ENUM_KEYWORD    :
-		case FLOAT_KEYWORD   :
-		case INT_KEYWORD     :
-		case INT16_KEYWORD   :
-		case INT32_KEYWORD   :
-		case INT64_KEYWORD   :
-		case INT8_KEYWORD    :
-		case LONG_KEYWORD    :
-		case MESSAGE_KEYWORD :
-		case MODULE_KEYWORD  :
-		case SEQUENCE_KEYWORD:
-		case SHORT_KEYWORD   :
-		case STRING_KEYWORD  :
-		case STRUCT_KEYWORD  :
-		case TYPEDEF_KEYWORD :
-		case UINT16_KEYWORD  :
-		case UINT32_KEYWORD  :
-		case UINT64_KEYWORD  :
-		case UINT8_KEYWORD   :
-		case UNSIGNED_KEYWORD:
-			m_tokens.add(new KeywordToken(start, end, s));
-			break;
-
-		default:
-			BaseTypeToken bte = BaseTypeToken.makeNew(start, end, s);
-			if(bte != null) {
-				m_tokens.add(bte);
-			} else {
-				m_tokens.add(new SingleWordToken(start, end, s));
+		TokenIdentifier tif = null;
+		for(TokenIdentifier ti : TokenIdentifier.values()) {
+			if(ti.id().equals(s)) {
+				tif = ti;
+				break;
 			}
-			break;
 		}
+		if(tif != null) {
+
+			m_tokens.add(new TokenIdentifierToken(start, end, tif));
+		} else {
+			m_tokens.add(new SingleWordToken(start, end, s));
+		}
+
+
 
 
 	}
@@ -1453,20 +1380,28 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		Coord result = c.trim();
-		if(result.startsWith(STRING_DELIMITER)) {
 
+		if(result.startsWith(STRING_DELIMITER)) {
+			Coord start = result.incrementIndex(1);//we don't want to point to the quotation mark
+			Coord end = start;
 			boolean notDone = true;
 			while(notDone) {
 				result = result.findNext(STRING_DELIMITER, STRING_ESCAPE_DELIMITER);
 				if(result.isAtEnd()) {
 					notDone = false;
+					end = result;
 				} else if(result.startsWith(STRING_DELIMITER)) {
+					end = result;
 					notDone = false;
+					result = result.incrementIndex(1);
+
 				} else {
 					//this must be a escape character then the next character might be a quotation so skip it
 					result = result.incrementIndex(1);
 				}
+
 			}
+			m_tokens.add(new StringToken(start, end));
 		}
 		return result;
 	}
