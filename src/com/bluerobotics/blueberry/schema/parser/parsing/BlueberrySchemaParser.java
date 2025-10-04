@@ -40,6 +40,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.Type;
+import com.bluerobotics.blueberry.schema.parser.tokens.AnnotationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
@@ -115,7 +116,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		//split into lines
 
 		Coord c = new Coord(0,0, schemaLines);
-
+		m_tokens.add(AnnotationToken.makeFilePathAnnotationToken(c));
+		m_tokens.add(new TokenIdentifierToken(c, c, TokenIdentifier.BRACKET_START));
+		m_tokens.add(new StringToken(c, c, filePath));
+		m_tokens.add(new TokenIdentifierToken(c, c, TokenIdentifier.BRACKET_END));
+		m_tokens.add(new EolToken(c));
 		try {
 			while(c != null) {
 				c = c.trim();
@@ -130,6 +135,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseComments();
 //			collapseDefines();
 			collapseNumbers();
+			collapseAnnotations();
 //			collapseNameValues();
 //			collapseEnums();
 //			collapseEnumValues();
@@ -183,6 +189,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
+
 
 
 	/**
@@ -1006,6 +1013,36 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					}
 					++i;
 				}
+			}
+
+		}
+	}
+	/**
+	 * scans for annotation starting tokens and makes annotation tokens of the next single word token
+	 */
+	private void collapseAnnotations() {
+		int i = 0;
+		while(i < m_tokens.size()){
+			//first find next define element
+			i = findToken(i, true, TokenIdentifierToken.class);
+			if(i < 0) {
+				break;
+			} else {
+				TokenIdentifierToken t = (TokenIdentifierToken)m_tokens.get(i);
+				if(t.getKeyword() == TokenIdentifier.ANNOTATION_START) {
+					int j = i + 1;
+					if(j < m_tokens.size()) {
+						Token t2 = m_tokens.get(j);
+						if(t2 instanceof SingleWordToken) {
+							SingleWordToken swt = (SingleWordToken)t2;
+							AnnotationToken at = new AnnotationToken(swt);
+							m_tokens.set(i, at);
+							m_tokens.remove(j);
+						}
+					}
+
+				}
+				++i;
 			}
 
 		}

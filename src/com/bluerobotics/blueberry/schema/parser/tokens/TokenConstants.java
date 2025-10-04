@@ -39,7 +39,7 @@ public interface TokenConstants {
 		DOUBLE("double"),
 		ENUM("enum"),
 		EQUALS("="),
-		ESCAPE_DELIMITER("_"),
+//		ESCAPE_DELIMITER("_"),
 		FLOAT("float"),
 		INT("int"),
 		INT16("int16"),
@@ -91,7 +91,7 @@ public interface TokenConstants {
 //	public static final String DOUBLE_KEYWORD = "double";
 //	public static final String ENUM_KEYWORD = "enum";
 //	public static final String EQUALS = "=";
-//	public static final String ESCAPE_DELIMITER = "_";
+	public static final String ESCAPE_DELIMITER = "_";
 //	public static final String FLOAT_KEYWORD = "float";
 //	public static final String INT_KEYWORD = "int";
 //	public static final String INT16_KEYWORD = "int16";

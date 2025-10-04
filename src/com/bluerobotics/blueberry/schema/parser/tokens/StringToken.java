@@ -25,11 +25,16 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
  *
  */
 public class StringToken extends AbstractToken {
-	public StringToken(Coord start, Coord end) {
+	private final String m_string;
+	public StringToken(Coord start, Coord end, String s) {
 		super(start,end);
+		m_string = s;
+	}
+	public StringToken(Coord start, Coord end) {
+		this(start, end, start.fromThisToThatString(end));
 	}
 	public String toString() {
-		String s = getStart().fromThisToThatString(getEnd());
+		String s = m_string;
 		if(s.length() > 10) {
 			String t = s.substring(0,5);
 			t += "...";
