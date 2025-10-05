@@ -21,22 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
-
 /**
  *
  */
-public class TokenIdentifierToken extends AbstractToken {
-	private final TokenIdentifier m_id;
-	public TokenIdentifierToken(Coord start, Coord end, TokenIdentifier ti) {
-		super(start, end);
-		m_id = ti;
-	}
-	public TokenIdentifier getKeyword() {
-		return m_id;
+public class FilePathToken extends StringToken {
+	public FilePathToken(Coord c, String filePath) {
+		super(c, c, filePath);
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"("+m_id+")";
+		return getClass().getSimpleName()+"(" + getString() + ")";
 	}
-
 }

@@ -24,21 +24,21 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 
 /**
- * 
+ *
  */
-public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeToken {
-	private BaseType m_baseType = null;
+public class EnumToken extends IdentifierToken implements TypeToken, DefinedTypeToken {
+	private TokenIdentifier m_baseType = null;
 	private DefineToken m_define = null;
 	private CommentToken m_comment = null;
 
 	private final ArrayList<NameValueToken> m_nameValues = new ArrayList<NameValueToken>();
-	public EnumToken(Coord start, Coord end) {
-		super(start, end);
+	public EnumToken(IdentifierToken it) {
+		super(it.getStart(), it.getEnd(), it.getKeyword());
 	}
-	public BaseType getBaseType() {
+	public TokenIdentifier getBaseType() {
 		return m_baseType;
 	}
 	public String toString() {
@@ -46,20 +46,20 @@ public class EnumToken extends AbstractToken implements TypeToken, DefinedTypeTo
 		s += m_define.getTypeName() + " ";
 		s += " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
 
-		
+
 		for(NameValueToken nv : m_nameValues) {
 			s += nv.getName() + " ";
 		}
 		s += ")";
 		return s;
 	}
-	public void setBaseType(BaseType bt) {
+	public void setBaseType(TokenIdentifier bt) {
 		m_baseType = bt;
 	}
 	public void addNameValue(NameValueToken nvt) {
-		
+
 		m_nameValues.add(nvt);
-		
+
 	}
 	public List<NameValueToken> getNameValueTokens(){
 		return m_nameValues;

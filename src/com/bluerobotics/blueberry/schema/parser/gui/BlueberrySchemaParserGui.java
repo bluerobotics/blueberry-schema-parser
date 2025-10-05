@@ -264,6 +264,11 @@ public class BlueberrySchemaParserGui implements Constants {
 
 		m_parser.clear();
 		parse(dir, dir);
+		try {
+			m_parser.parse();
+		} catch(SchemaParserException e) {
+			m_text.append(e.toString());
+		}
 	}
 	private void parse(File root, File f) {
 		m_text.append("Parsing \""+f+"\"\n");
@@ -287,7 +292,7 @@ public class BlueberrySchemaParserGui implements Constants {
 			if(ss != null) {
 				try {
 					Path p = root.toPath().relativize(f.toPath());
-					m_parser.parse(p.toString(), ss);
+					m_parser.append(p.toString(), ss);
 				} catch (SchemaParserException e) {
 					m_text.append(e.toString());
 				}

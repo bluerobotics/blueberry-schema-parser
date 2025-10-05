@@ -22,7 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
- * 
+ *
  */
 public enum Type {
 	BOOL           (1),
@@ -34,14 +34,19 @@ public enum Type {
 	INT32          (32),
 	UINT32         (32),
 	FLOAT32        (32),
+	INT64		   (64),
+	UINT64         (64),
+	FLOAT64         (64),
 	COMPOUND       (32),
 	ARRAY          (Integer.MAX_VALUE),
 	BLOCK          (Integer.MAX_VALUE),
 	COMPACT_ARRAY  (Integer.MAX_VALUE),
+	SEQUENCE       (Integer.MAX_VALUE),
+	STRING         (Integer.MAX_VALUE),
 	;
-	
-	
-	
+
+
+
 
 
 
@@ -58,7 +63,7 @@ public enum Type {
 	public boolean isBaseType() {
 		return bitNum <= 32;
 	}
-	
-	
-	
+
+
+
 }

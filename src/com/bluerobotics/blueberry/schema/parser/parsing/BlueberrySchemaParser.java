@@ -62,6 +62,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationOwner;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.FilePathToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.KeywordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NestedFieldAllocationToken;
@@ -71,7 +72,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.StringToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
-import com.bluerobotics.blueberry.schema.parser.tokens.TokenIdentifierToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.IdentifierToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.TypeToken;
 import com.bluerobotics.blueberry.schema.parser.writers.TestWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
@@ -112,15 +113,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param schema - a string containing the schema to parse
 	 * @throws SchemaParserException
 	 */
-	public void parse(String filePath, String[] schemaLines) throws SchemaParserException {
+	public void append(String filePath, String[] schemaLines) throws SchemaParserException {
 		//split into lines
 
-		Coord c = new Coord(0,0, schemaLines);
-		m_tokens.add(AnnotationToken.makeFilePathAnnotationToken(c));
-		m_tokens.add(new TokenIdentifierToken(c, c, TokenIdentifier.BRACKET_START));
-		m_tokens.add(new StringToken(c, c, filePath));
-		m_tokens.add(new TokenIdentifierToken(c, c, TokenIdentifier.BRACKET_END));
-		m_tokens.add(new EolToken(c));
+		Coord c = new Coord(filePath, 0,0, schemaLines);
+
+		m_tokens.add(new FilePathToken(c, filePath));
+
 		try {
 			while(c != null) {
 				c = c.trim();
@@ -130,14 +129,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				c = processNextToken(c);
 				c = processEol(c);
 
-
 			}
+		} catch (SchemaParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void parse() throws SchemaParserException {
+		try {
 			collapseComments();
 //			collapseDefines();
 			collapseNumbers();
 			collapseAnnotations();
-//			collapseNameValues();
-//			collapseEnums();
+			collapseNameValues();
+			collapseEnums();
 //			collapseEnumValues();
 //			identifyFieldNames();
 //			identifyBlockTypeInstances();
@@ -501,7 +506,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			EnumToken et = (EnumToken)t;
 
 
-			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getBaseType()), getComment(et.getComment()));
+			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.get(), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 
 				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue(), getComment(nvt.getComment()));
@@ -515,7 +520,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		} else if(t instanceof BaseTypeToken) {
 			BaseTypeToken btt = (BaseTypeToken)t;
-			Type tp = lookupBaseType(btt.getBaseType());
+			Type tp = lookupBaseType(btt.getKeyword());
 			switch(tp) {
 
 			case BOOL:
@@ -548,14 +553,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param bt
 	 * @return
 	 */
-	Type lookupBaseType(BaseType bt) {
+	Type lookupBaseType(TokenIdentifier bt) {
 		Type result = null;
 		switch(bt) {
-		case BOOL:
+		case BOOLEAN:
 			result = Type.BOOL;
 			break;
-		case FLOAT32:
+		case FLOAT:
 			result = Type.FLOAT32;
+			break;
+		case DOUBLE:
+			result = Type.FLOAT64;
 			break;
 		case INT16:
 			result = Type.INT16;
@@ -574,6 +582,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			break;
 		case UINT8:
 			result = Type.UINT8;
+			break;
+		case UINT64:
+			result = Type.UINT64;
+			break;
+		case INT64:
+			result = Type.INT64;
 			break;
 
 
@@ -939,48 +953,47 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 	/**
-	 * now collapse any token sequences of form CommentToken, SingleValueToken, EqualsToken, NumberToken to a NameValueToken
+	 * now collapse any token sequences of form CommentToken, SingleWordToken, IdentifierToken (equals sign), NumberToken to a NameValueToken
 	 * @throws SchemaParserException
 	 */
 	private void collapseNameValues() throws SchemaParserException {
 		int i = 0;
 		while(i < m_tokens.size()){
 			//first find next define element
-			i = findToken(i, true, EqualsToken.class);
+			i = findIdToken(i, true, TokenIdentifier.EQUALS);
 
 			if(i > 0 && i < m_tokens.size()) {
+				int ci = i - 2;//this may point to a comment
 				int ni = i - 1;//this should point to a name
 				int vi = i + 1;//this should point to a number
-				int cti = ni -1;//this should point to a comment, maybe
-				Token equalsT = m_tokens.get(i);//equals
+//				Token equalsT = m_tokens.get(i);//equals
 				Token numberT = m_tokens.get(vi);//number
 				Token nameT = m_tokens.get(ni);//name
-
-				CommentToken ct = null;
-				if(cti >= 0) {
-					Token t = m_tokens.get(cti);
-					if(t instanceof CommentToken) {
-						ct = (CommentToken)t;
-					}
-				}
 
 
 				if(numberT instanceof NumberToken && nameT instanceof SingleWordToken) {
 					NumberToken nt = (NumberToken)numberT;
 					SingleWordToken swt = (SingleWordToken)nameT;
-					NameValueToken nvt = new NameValueToken(swt, nt, ct);
-					if(ct != null) {
-						m_tokens.set(cti, nvt);//put the new thing in the place of the comment
-						m_tokens.remove(numberT);//remove the number
-						m_tokens.remove(equalsT);//remove the equals
-						m_tokens.remove(nameT);//remove the name
-
-					} else {
-						m_tokens.set(ni, nvt);//put the new thing in the place of the name
-						m_tokens.remove(numberT);//remove the number
-						m_tokens.remove(equalsT);//remove the equals
+					CommentToken ct = null;
+					if(ci >= 0) {
+						Token t = m_tokens.get(ci);
+						if(t instanceof CommentToken) {
+							ct = (CommentToken)t;
+						}
 					}
-					++i;
+
+					m_tokens.remove(vi);//remove the value
+					m_tokens.remove(i);//remove the equals
+					if(ct != null) {
+						ni = ci;
+						m_tokens.remove(ci);//remove the starting comment
+
+					}
+
+
+					NameValueToken nvt = new NameValueToken(swt, nt, ct);
+					m_tokens.set(ni, nvt);
+					i = ni;
 
 
 				} else {
@@ -1024,11 +1037,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		int i = 0;
 		while(i < m_tokens.size()){
 			//first find next define element
-			i = findToken(i, true, TokenIdentifierToken.class);
+			i = findToken(i, true, IdentifierToken.class);
 			if(i < 0) {
 				break;
 			} else {
-				TokenIdentifierToken t = (TokenIdentifierToken)m_tokens.get(i);
+				IdentifierToken t = (IdentifierToken)m_tokens.get(i);
 				if(t.getKeyword() == TokenIdentifier.ANNOTATION_START) {
 					int j = i + 1;
 					if(j < m_tokens.size()) {
@@ -1111,7 +1124,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(j < m_tokens.size()) {
 						Token tj = m_tokens.get(j);
 						if(tj instanceof EolToken) {
-							++j;
+							m_tokens.remove(tj);//don't need an EOL after a comment
 						} else if(tj instanceof CommentToken) {
 							CommentToken ctj = (CommentToken)tj;
 							if(cti.isLineComnent() || ctj.isLineComnent()) {
@@ -1120,6 +1133,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 								for(int k = j; k > i; --k) {
 									m_tokens.remove(k);
 								}
+
 							} else {
 								++i;
 							}
@@ -1218,9 +1232,42 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
-
+	/**
+	 * Finds the next IdentifierToken with the specified TokenIdentifier
+	 * @param i - starting index
+	 * @param forwardNotReverse
+	 * @param ti
+	 * @return
+	 */
+	private int findIdToken(int i, boolean forwardNotReverse, TokenIdentifier ti) {
+		boolean found = false;
+		int result = -1;
+		int j = i;
+		while(!found) {
+			j = findToken(j, forwardNotReverse, IdentifierToken.class);
+			if(j >= 0 && j < m_tokens.size()) {
+				IdentifierToken it = (IdentifierToken)m_tokens.get(j);
+				if(it.getKeyword() == ti) {
+					result = j;
+					found = true;
+				} else {
+					++j;
+				}
+			} else {
+				break;
+			}
+		}
+		return result;
+	}
+	/**
+	 * Finds the next token of the specified type
+	 * @param i - starting index
+	 * @param forwardNotReverse
+	 * @param cs
+	 * @return
+	 */
 	private int findToken(int i, boolean forwardNotReverse, Class<?>... cs) {
-		if(i < 0) {
+		if(i < 0 || i >= m_tokens.size()) {
 			return -1;
 		}
 		int result = -1;
@@ -1323,12 +1370,26 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		while(i < m_tokens.size()){
 			//first find next define element
-			int j = findToken(i, true, EnumToken.class);
+			int j = findIdToken(i, true, TokenIdentifier.ENUM);
 
 			if(j >= 0) {
 				//this should be safe because of how j was determined
-				EnumToken et = (EnumToken)(m_tokens.get(j));
-				//now get next token
+				IdentifierToken it = (IdentifierToken)m_tokens.get(j);
+				//replace with enum token
+				EnumToken et = new EnumToken(it);
+				m_tokens.set(j,  et);
+				//now check for a type definition
+				int k = findIdToken(j, true, TokenIdentifier.COLON);
+				if(k == j + 1) {
+					//so far so good
+					int m = k + 1;
+					if(m < m_tokens.size()) {
+						Token t = m_tokens.get(m);
+						if(t instanceof BaseTypeToken) {
+
+						}
+					}
+				}
 				int k = findToken(j, true, BaseTypeToken.class);
 				if(k == j + 1) {//it better be the very next token
 					BaseTypeToken swt = (BaseTypeToken)(m_tokens.get(k));
@@ -1376,7 +1437,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		if(tif != null) {
 
-			m_tokens.add(new TokenIdentifierToken(start, end, tif));
+			m_tokens.add(new IdentifierToken(start, end, tif));
 		} else {
 			m_tokens.add(new SingleWordToken(start, end, s));
 		}
@@ -1385,7 +1446,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
-
+	/**
+	 * find all line comments and insert the token at the start of the line they are on
+	 * @param c
+	 * @return
+	 */
 	private Coord processLineComment(Coord c) {
 		if(c == null) {
 			return null;

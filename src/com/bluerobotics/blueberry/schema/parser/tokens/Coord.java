@@ -22,15 +22,18 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 public class Coord implements Comparable<Coord> {
+	public final String filePath;
 	public final int line;
 	public final int index;
 	private String[] m_lines;
-	public Coord(int l, int i, String[] lines){
+	public Coord(String path, int l, int i, String[] lines){
+		filePath = path;
 		line = l;
 		index = i;
 		m_lines = lines;
 	}
 	public Coord(Coord c){
+		filePath = c.filePath;
 		line = c.line;
 		index = c.index;
 		m_lines = c.m_lines;
@@ -44,12 +47,12 @@ public class Coord implements Comparable<Coord> {
 		Coord result = null;
 		int i = line + 1;
 		if(i < m_lines.length) {
-			result = new Coord(i, 0, m_lines);
+			result = new Coord(filePath, i, 0, m_lines);
 		}
 		return result;
 	}
 	public Coord updateIndex(int i) {
-		return new Coord(line, i, m_lines);
+		return new Coord(filePath, line, i, m_lines);
 	}
 	/**
 	 * Increments the specified increment of characters.
@@ -65,7 +68,7 @@ public class Coord implements Comparable<Coord> {
 
 		}
 
-		result = new Coord(line, j, m_lines);
+		result = new Coord(filePath, line, j, m_lines);
 
 		return result;
 	}
@@ -82,7 +85,7 @@ public class Coord implements Comparable<Coord> {
 		return m_lines[line];
 	}
 	public Coord getLine(int i) {
-		return new Coord(i, index, m_lines);
+		return new Coord(filePath, i, index, m_lines);
 	}
 	/**
 	 * advances to the next non-whitespace character
@@ -247,7 +250,7 @@ public class Coord implements Comparable<Coord> {
 		return result;
 	}
 	public Coord gotoEol() {
-		return new Coord(this.line, getString().length(), this.m_lines);
+		return new Coord(this.filePath, this.line, getString().length(), this.m_lines);
 	}
 	public String toString() {
 		Coord end = incrementIndex(10);

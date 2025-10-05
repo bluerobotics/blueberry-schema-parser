@@ -21,63 +21,52 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
+
 /**
- * 
+ * A token that represents a base type
  */
-public class BaseTypeToken extends AbstractToken implements TypeToken {
-	public enum BaseType {
-		BOOL("bool"),
-		INT8("int8"),
-		UINT8("uint8"),
-		INT16("int16"),
-		UINT16("uint16"),
-		INT32("int32"),
-		UINT32("uint32"),
-		FLOAT32("float32"),
-		;
-		private String m_name;
-		private BaseType(String s) {
-			m_name = s;
-		}
-		String getName() {
-			return m_name;
-		}
-		static BaseType lookup(String s) {
-			BaseType result = null;
-			for(BaseType bt : values()) {
-				if(bt.getName().equals(s.trim())) {
-					result = bt;
-					break;
-				}
-			}
-			return result;
-		}
-	}
-	private final BaseType m_type;
-	public BaseTypeToken(Coord start, Coord end, BaseType bt) {
-		super(start, end);
-		m_type = bt;
-		
+public class BaseTypeToken extends IdentifierToken implements TypeToken {
+
+	private static final TokenIdentifier[] BASE_TYPES = {
+		TokenIdentifier.BOOLEAN,
+		TokenIdentifier.BYTE,
+		TokenIdentifier.DOUBLE,
+		TokenIdentifier.FLOAT,
+		TokenIdentifier.INT,
+		TokenIdentifier.INT16,
+		TokenIdentifier.INT32,
+		TokenIdentifier.INT64,
+		TokenIdentifier.INT8,
+		TokenIdentifier.UINT16,
+		TokenIdentifier.UINT32,
+		TokenIdentifier.UINT64,
+		TokenIdentifier.UINT8,
+		TokenIdentifier.LONG,
+		TokenIdentifier.SHORT,
+		TokenIdentifier.UNSIGNED,
+	};
+	private BaseTypeToken(IdentifierToken it) {
+		super(it.getStart(), it.getEnd(), it.getKeyword());
 	}
 
-	public static BaseTypeToken makeNew(Coord start, Coord end, String s) {
+	public static BaseTypeToken makeNew(IdentifierToken it) {
 		BaseTypeToken result = null;
-		BaseType bt = BaseType.lookup(s);
-		if(bt != null) {
-			result = new BaseTypeToken(start, end, bt);
+		for(TokenIdentifier ti : BASE_TYPES) {
+			if(it.getKeyword() == ti) {
+				result = new BaseTypeToken(it);
+				break;
+			}
 		}
+
 		return result;
 	}
-	public String toString() {
-		return "BaseTypeElement("+m_type+")";
-	}
 
-	public BaseType getBaseType() {
-		return m_type;
-	}
+
+
 
 	@Override
 	public String getName() {
-		return m_type.name();
+		return getKeyword().id();
 	}
 }
