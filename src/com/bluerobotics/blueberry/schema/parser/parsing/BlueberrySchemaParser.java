@@ -21,7 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,19 +30,16 @@ import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.CompactArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldUtils;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.Type;
 import com.bluerobotics.blueberry.schema.parser.tokens.AnnotationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken.BaseType;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BraceEndToken;
@@ -58,12 +54,11 @@ import com.bluerobotics.blueberry.schema.parser.tokens.DefineToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.DefinedTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.EqualsToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationOwner;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FieldNameToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FilePathToken;
-import com.bluerobotics.blueberry.schema.parser.tokens.KeywordToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.IdentifierToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NestedFieldAllocationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
@@ -72,11 +67,8 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.StringToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
-import com.bluerobotics.blueberry.schema.parser.tokens.IdentifierToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.TypeToken;
-import com.bluerobotics.blueberry.schema.parser.writers.TestWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
-import com.starfishmedical.utils.ResourceTools;
 
 /**
  * This class implements the token parsing algorithm
@@ -140,6 +132,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseComments();
 //			collapseDefines();
 			collapseNumbers();
+			collapseBaseTypes();
 			collapseAnnotations();
 			collapseNameValues();
 			collapseEnums();
@@ -506,7 +499,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			EnumToken et = (EnumToken)t;
 
 
-			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.get(), getComment(et.getComment()));
+			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getKeyword()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 
 				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue(), getComment(nvt.getComment()));
@@ -1107,7 +1100,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * Combine comment tokens if there are consecutive ones
 	 * Block comments will not be collapsed. Consecutive line comments will collapse into blocks.
-	 * Line comments following block comments will collapse into the block.
+	 * Comments separated by emptylines will not be collapsed
 	 */
 	private void collapseComments() {
 		int i = 0;
@@ -1124,10 +1117,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(j < m_tokens.size()) {
 						Token tj = m_tokens.get(j);
 						if(tj instanceof EolToken) {
-							m_tokens.remove(tj);//don't need an EOL after a comment
+							m_tokens.remove(j);
+
 						} else if(tj instanceof CommentToken) {
 							CommentToken ctj = (CommentToken)tj;
-							if(cti.isLineComnent() || ctj.isLineComnent()) {
+							if(cti.isLineComnent() && ctj.isLineComnent()) {
 								CommentToken ctn = cti.combine(ctj);
 								m_tokens.set(i, ctn);
 								for(int k = j; k > i; --k) {
@@ -1135,7 +1129,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 								}
 
 							} else {
-								++i;
+
 							}
 							notDone = false;
 						} else {
@@ -1150,6 +1144,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						i = Integer.MAX_VALUE;
 					}
 				}
+				++i;
 			} else {
 				i = Integer.MAX_VALUE;
 			}
@@ -1361,11 +1356,29 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	}
 	/**
+	 * Scan through all
+	 */
+	private void collapseBaseTypes() {
+		int i = 0;
+		while(i < m_tokens.size() && i >= 0) {
+			i = findToken(i, true, IdentifierToken.class);
+			if(i >= 0) {
+				IdentifierToken it = (IdentifierToken)m_tokens.get(i);
+				BaseTypeToken btt = BaseTypeToken.makeNew(it);
+				if(btt != null) {
+					m_tokens.set(i, btt);
+				}
+				++i;
+			}
+		}
+	}
+	/**
 	 * Collapse all the enum tokens and the following base type together
 	 * The base type becomes the type of the enum
 	 * @throws SchemaParserException
 	 */
 	private void collapseEnums() throws SchemaParserException {
+
 		int i = 0;
 
 		while(i < m_tokens.size()){
@@ -1378,27 +1391,47 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				//replace with enum token
 				EnumToken et = new EnumToken(it);
 				m_tokens.set(j,  et);
-				//now check for a type definition
-				int k = findIdToken(j, true, TokenIdentifier.COLON);
-				if(k == j + 1) {
-					//so far so good
-					int m = k + 1;
-					if(m < m_tokens.size()) {
-						Token t = m_tokens.get(m);
-						if(t instanceof BaseTypeToken) {
+				et.setBaseType(TokenIdentifier.UINT32);//this is the default
 
-						}
+				//check for comment
+				Token tm1 = j > 0 ? m_tokens.get(j - 1) : null;
+
+				if(tm1 instanceof CommentToken) {
+					//if this is the first comment of the file then it's probably not the comment for this enum
+					int h = findToken(j - 1, false, FilePathToken.class);
+					h = findToken(h, true, CommentToken.class);
+					if(h < j - 1) {
+						et.setComment((CommentToken)tm1);
+					} else {
+						tm1 = null;
 					}
 				}
+
+
+				//now check for a type definition
 				int k = findToken(j, true, BaseTypeToken.class);
-				if(k == j + 1) {//it better be the very next token
-					BaseTypeToken swt = (BaseTypeToken)(m_tokens.get(k));
-					et.setBaseType(swt.getBaseType());
-					m_tokens.remove(k);
-				} else {
-					throw new SchemaParserException("Enum keyword must be followed by a base type name!", et.getStart());
+				if(k == j + 3) {
+					//so far so good
+					//now check for colon and base type
+					Token t1 = m_tokens.get(j + 1);//should be the name
+					Token t2 = m_tokens.get(j + 2);//should be a colon
+					Token t3 = m_tokens.get(j + 3);//should be a base type
+					if(t1 instanceof SingleWordToken && IdentifierToken.check(t2, TokenIdentifier.COLON)) {
+						et.setBaseType(((BaseTypeToken)t3).getKeyword());
+						m_tokens.remove(j + 3);
+						m_tokens.remove(j + 2);
+					}
+
+
+
 				}
-				i = k;
+				if(tm1 != null) {
+					m_tokens.remove(j - 1);
+					--j;
+				}
+
+
+				i = j + 1;
 			} else {
 				break;
 			}

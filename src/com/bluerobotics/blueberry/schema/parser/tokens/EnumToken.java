@@ -44,7 +44,7 @@ public class EnumToken extends IdentifierToken implements TypeToken, DefinedType
 	public String toString() {
 		String s = getClass().getSimpleName()+"(";
 		s += m_define.getTypeName() + " ";
-		s += " " + ((m_baseType != null) ? m_baseType.name() : "") + " ";
+		s += " " + m_baseType.name() + " ";
 
 
 		for(NameValueToken nv : m_nameValues) {

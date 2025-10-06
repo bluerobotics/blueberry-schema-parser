@@ -38,5 +38,20 @@ public class IdentifierToken extends AbstractToken {
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_id+")";
 	}
+	/**
+	 * Checks the specified token to see if it's an IdentifierToken and that it's id matches the specified value
+	 * @param t2
+	 * @param colon
+	 * @return
+	 */
+	public static boolean check(Token t2, TokenIdentifier id) {
+		boolean result = false;
+		if(t2 instanceof IdentifierToken) {
+			if(((IdentifierToken)t2).getKeyword() == id) {
+				result = true;
+			}
+		}
+		return result;
+	}
 
 }
