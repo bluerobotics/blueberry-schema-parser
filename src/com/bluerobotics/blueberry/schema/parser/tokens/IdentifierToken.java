@@ -44,11 +44,22 @@ public class IdentifierToken extends AbstractToken {
 	 * @param colon
 	 * @return
 	 */
-	public static boolean check(Token t2, TokenIdentifier id) {
+	public static boolean check(Token t, TokenIdentifier... ids) {
 		boolean result = false;
-		if(t2 instanceof IdentifierToken) {
-			if(((IdentifierToken)t2).getKeyword() == id) {
+		if(t instanceof IdentifierToken) {
+			IdentifierToken it = (IdentifierToken)t;
+			result = it.check(ids);
+			
+		}
+		return result;
+	}
+	
+	public boolean check(TokenIdentifier... ids) {
+		boolean result = false;
+		for(TokenIdentifier ti : ids) {
+			if(getKeyword() == ti) {
 				result = true;
+				break;
 			}
 		}
 		return result;

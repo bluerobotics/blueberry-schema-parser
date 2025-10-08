@@ -952,38 +952,30 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * This likely now removes all EOL tokens
 	 */
 	private void collapseEols() {
-		int i = 0;
-		while(i < m_tokens.size()){
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()){
 			//first find next define element
-			i = findToken(i, true, EolToken.class);
-
-			int k = i - 1;
-			int j = i + 1;
-			Token tj = null;
-			Token tk = null;
-			if(k >= 0) {
-
-				tk = m_tokens.get(k);
-			}
-
-
-
-			if(j < m_tokens.size()) {
-				tj = m_tokens.get(j);
-			}
-			if(tk instanceof BraceStartToken ||
-				tk instanceof BraceEndToken ||
-				tk instanceof CommentToken ||
-				tk instanceof NameValueToken ||
-				tj instanceof EolToken ||
-//				tj instanceof FieldAllocationToken ||
-				tj instanceof BracketStartToken ||
-				tj instanceof BracketEndToken ||
-				tj instanceof SquareBracketStartToken ||
-				tj instanceof NameValueToken) {
-				m_tokens.remove(i);
+			EolToken et = m_tokens.gotoNext(EolToken.class);
+			Token t = m_tokens.relative(-1);
+			if(t instanceof EolToken || t instanceof CommentToken) {
+				m_tokens.remove(et);
 			} else {
-				i = j;
+				IdentifierToken it = m_tokens.relative(-1, IdentifierToken.class);
+				
+				if(it != null) {
+					if(it.check(TokenIdentifier.BRACE_END,
+							TokenIdentifier.BRACE_START,
+							TokenIdentifier.BRACKET_END,
+							TokenIdentifier.BRACKET_START,
+							TokenIdentifier.COLON,
+							TokenIdentifier.COMMA,
+							TokenIdentifier.SEMICOLON,
+							TokenIdentifier.SQUARE_BRACKET_END,
+							TokenIdentifier.SQUARE_BRACKET_START
+					)) {
+						m_tokens.remove(et);
+					}
+				}
 			}
 
 
