@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
+
 public class Coord implements Comparable<Coord> {
 	public final String filePath;
 	public final int line;
@@ -66,6 +68,8 @@ public class Coord implements Comparable<Coord> {
 		if(j > n) {
 			j = n;
 
+		} else if(j < 0) {
+			j = 0;
 		}
 
 		result = new Coord(filePath, line, j, m_lines);
@@ -110,6 +114,40 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
+	/**
+	 * retreats to be just after the last non-whitespace character
+	 * will not retreat to the previous line
+	 * @param c
+	 * @return
+	 */
+	public Coord trimEnd() {
+		Coord result = this;
+		boolean notDone = true;
+		boolean foundSpace = false;
+		while(notDone || result == null) {
+			if(!result.isAtStart() && result.isAtEnd()) {
+				result = result.incrementIndex(-1);
+				foundSpace = true;
+			}
+			if(result.isAtStart()) {
+				notDone = false;
+			} else {
+				char ch = result.getString().charAt(result.index);
+				if(ch == ' ' || ch == '\t') {
+					//go back one
+					result = result.incrementIndex(-1);
+					foundSpace = true;
+				} else {
+					notDone = false;
+					//go ahead if we've processed a space
+					if(foundSpace) {
+						result = result.incrementIndex(1);
+					}
+				}
+			}
+		}
+		return result;
+	}
 	public Coord advanceToWhite() {
 		Coord result = this;
 		boolean notDone = true;
@@ -135,10 +173,11 @@ public class Coord implements Comparable<Coord> {
 	 * @param matches
 	 * @return
 	 */
-	public Coord advanceToNext(char... matches) {
+	public Coord advanceToNext(TokenIdentifier... matches) {
 
 		Coord result = this;
-		if(result.charMatches(matches)){
+		//move off the current one if we're on one
+		if(result.matches(matches)){
 			result = result.incrementIndex(1);
 		} else {
 			boolean notDone = true;
@@ -153,7 +192,7 @@ public class Coord implements Comparable<Coord> {
 						break;
 					}
 
-					if(result.charMatches(matches)) {
+					if(result.matches(matches)) {
 						notDone = false;
 						break;
 					} else {
@@ -165,15 +204,16 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
-	public boolean charMatches(char... matches) {
-		char ch = getString().charAt(index);
+	public boolean matches(TokenIdentifier... matches) {
 		boolean matched = false;
-		for(char cht : matches) {
-			if(cht == ch) {
+
+		for(TokenIdentifier m : matches) {
+			if(startsWith(m.id())) {
 				matched = true;
-				break;
 			}
+
 		}
+
 		return matched;
 	}
 	/**
@@ -222,6 +262,9 @@ public class Coord implements Comparable<Coord> {
 	}
 	public boolean isAtEnd() {
 		return index >= getString().length();
+	}
+	public boolean isAtStart() {
+		return index <= 0;
 	}
 	public Coord indexOf(String s) {
 		return updateIndex(getString().indexOf(s, index));

@@ -132,7 +132,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseBaseTypes();
 			collapseAnnotations();
 			collapseNameValues();
-			collapseEnums();
+			collapseEols();
+//			collapseEnums();
 //			collapseEnumValues();
 //			identifyFieldNames();
 //			identifyBlockTypeInstances();
@@ -140,7 +141,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			collapseBaseTypeAllocations();
 //			collapseNestedFieldAllocations();
 //			collapseDefinedTypes();
-//			collapseEols();
+//
 //			collapseDefinedTypeComments();
 //			collapseDefinedTypeFields(0, null);
 //			removeTopLevelComments();
@@ -904,6 +905,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				break;
 			}
 		}
+
 	}
 	/**
 	 * Tests all single word tokens and replaces with a Number token if it's formatted like a number
@@ -972,7 +974,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(tk instanceof BraceStartToken ||
 				tk instanceof BraceEndToken ||
 				tk instanceof CommentToken ||
-				tk instanceof FieldAllocationToken ||
 				tk instanceof NameValueToken ||
 				tj instanceof EolToken ||
 //				tj instanceof FieldAllocationToken ||
@@ -1323,9 +1324,26 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			return c;
 		}
 		Coord start = c.trim();
-		//now advance to the next whitespace
-		Coord result = start.advanceToNext(' ','\t','{','}','(',')','=','@',':',';',',');
+		//now advance to the next interesting token
+		Coord result = start.advanceToNext(
+				TokenIdentifier.SPACE,
+				TokenIdentifier.TAB,
+				TokenIdentifier.BRACE_START,
+				TokenIdentifier.BRACE_END,
+				TokenIdentifier.BRACKET_START,
+				TokenIdentifier.BRACKET_END,
+				TokenIdentifier.SQUARE_BRACKET_START,
+				TokenIdentifier.SQUARE_BRACKET_END,
+				TokenIdentifier.BICOLON,
+				TokenIdentifier.COLON,
+				TokenIdentifier.EQUALS,
+				TokenIdentifier.ANNOTATION_START,
+				TokenIdentifier.SEMICOLON,
+				TokenIdentifier.COMMA
+				);
+				//' ','\t','{','}','(',')','=','@',':',';',',');
 		Coord end = result;
+		end = end.trimEnd();
 		String s = start.fromThisToThatString(end);
 
 		if(!s.isEmpty()) {

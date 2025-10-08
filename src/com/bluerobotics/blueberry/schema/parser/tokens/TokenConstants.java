@@ -33,6 +33,7 @@ public interface TokenConstants {
 		BRACKET_END(")"),
 		BRACKET_START("("),
 		BYTE("byte"),
+		BICOLON("::"),//this must come before a colon
 		COLON(":"),
 		COMMA(","),
 		CONST("const"),
@@ -52,10 +53,12 @@ public interface TokenConstants {
 		SEMICOLON(";"),
 		SEQUENCE("sequence"),
 		SHORT("short"),
+		SPACE(" "),//this is not intended to be used as a token, just to help parse
 		SQUARE_BRACKET_END("]"),
 		SQUARE_BRACKET_START("["),
 		STRING("string"),
 		STRUC("struct"),
+		TAB("\t"),//this is not intended to be used as a token, just to help parse
 		TYPEDEF("typedef"),
 		UINT16("uint16"),
 		UINT32("uint32"),
