@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 
 /**
- * 
+ * A class that wraps a hierarchical string name that can be easily expressed as various cases
  */
 public class FieldName {
 	private final String[] name;
@@ -71,7 +71,7 @@ public class FieldName {
 		result.add(s.substring(j).toLowerCase());
 		return result.toArray(new String[result.size()]);
 	}
-	
+
 	private String toSnake(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
@@ -100,7 +100,7 @@ public class FieldName {
 			if(s.length() > 1) {
 				result += s.substring(1).toLowerCase();
 			} else {
-				
+
 			}
 		}
 		return result;
@@ -158,14 +158,14 @@ public class FieldName {
 	public String toLowerCamel() {
 		return toCamel(false);
 	}
-	
+
 	public String toUpperCamel() {
 		return toCamel(true);
 	}
 	public String toLowerSnake() {
 		return toSnake(false);
 	}
-	
+
 	public String toUpperSnake() {
 		return toSnake(true);
 	}
@@ -174,7 +174,7 @@ public class FieldName {
 		for(String w : name) {
 			result += w;
 		}
-		
+
 		return result;
 	}
 	public String toDot() {
@@ -187,22 +187,22 @@ public class FieldName {
 			firstTime = false;
 			result += w;
 		}
-		
+
 		return result;
 	}
 	public String toPath() {
 		String result = "";
 		for(String w : name) {
-				
-			
+
+
 			result += w;
 			result += "/";
 		}
-		
+
 		return result;
 	}
 
-	
-	
+
+
 
 }

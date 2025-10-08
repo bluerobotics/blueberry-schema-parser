@@ -25,7 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 
@@ -41,63 +41,63 @@ public class PrettyWriter extends SourceWriter {
 	}
 
 	@Override
-	public void write(BlockField bf, String... headers) {
+	public void write(StructField bf, String... headers) {
 		startFile(headers);
-		
+
 		writeDefinedTypes(bf);
-		
+
 		writeBlockField(bf);
-		
-		
+
+
 		writeToFile(bf.getName().addSuffix("pretty").toLowerCamel(),".txt");
 	}
 	/**
 	 * write block field and children
 	 * @param bf
 	 */
-	private void writeBlockField(BlockField bf) {
-		addBlockComment(bf.getComment());
-		FieldName tn = bf.getTypeName();
-		FieldName bn = bf.getName();
-		String assigns = "";
-		boolean started = false;
-		for(BaseField f : bf.getHeaderFields()) {
-			if(f instanceof FixedIntField) {
-				FixedIntField fif = (FixedIntField)f;
-				if(!started) {
-					assigns = "(";
-					started = true;
-				}
-				assigns += " " +fif.getName().toLowerCamel() + " = " + WriterUtils.formatAsHex(fif.getValue());
-			}
-		}
-		if(started) {
-			assigns += " )";
-		}
-		
-		
-		addLine(tn.toUpperCamel() + " " + bn.toLowerCamel() + assigns + " {");
-		indent();
-		for(BaseField f : bf.getAllBaseFields()) {
-			writeBaseField(f);
-		}
-		for(BlockField bf2 : bf.getAllBlockFields()) {
-			writeBlockField(bf2);
-		}
-		closeBrace();
+	private void writeBlockField(StructField bf) {
+//		addBlockComment(bf.getComment());
+//		FieldName tn = bf.getTypeName();
+//		FieldName bn = bf.getName();
+//		String assigns = "";
+//		boolean started = false;
+//		for(BaseField f : bf.getHeaderFields()) {
+//			if(f instanceof FixedIntField) {
+//				FixedIntField fif = (FixedIntField)f;
+//				if(!started) {
+//					assigns = "(";
+//					started = true;
+//				}
+//				assigns += " " +fif.getName().toLowerCamel() + " = " + WriterUtils.formatAsHex(fif.getValue());
+//			}
+//		}
+//		if(started) {
+//			assigns += " )";
+//		}
+//
+//
+//		addLine(tn.toUpperCamel() + " " + bn.toLowerCamel() + assigns + " {");
+//		indent();
+//		for(BaseField f : bf.getAllBaseFields()) {
+//			writeBaseField(f);
+//		}
+//		for(StructField bf2 : bf.getAllBlockFields()) {
+//			writeBlockField(bf2);
+//		}
+//		closeBrace();
+//
+//
 
-		
-		
 	}
 
 	private void writeBaseField(BaseField f) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
-	private void writeDefinedTypes(BlockField bf) {
+	private void writeDefinedTypes(StructField bf) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

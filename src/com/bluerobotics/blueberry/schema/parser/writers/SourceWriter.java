@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
+import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
@@ -48,7 +48,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 public abstract class SourceWriter {
 	protected final File m_directory;
 	private static final String INDENT_STRING = "\t";
-	
+
 
 	protected StringBuffer m_buffer = new StringBuffer();
 	protected int m_indent = 0;
@@ -58,11 +58,11 @@ public abstract class SourceWriter {
 			m_directory = dir;
 		} else if(!dir.isDirectory()) {
 			throw new RuntimeException("Specified file location is not a directory!");
-		} else 
+		} else
 		m_directory = dir;
 	}
-	public abstract void write(BlockField bf, String... headers);
-	
+	public abstract void write(StructField bf, String... headers);
+
 	protected void indent() {
 		++m_indent;
 	}
@@ -88,8 +88,8 @@ public abstract class SourceWriter {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-	
+
+
 	}
 	protected void startFile(String... hs) {
 		clear();
@@ -106,7 +106,7 @@ public abstract class SourceWriter {
 	}
 	protected void addLine(){
 		add("\n");
-		
+
 	}
 	protected void addIndent(){
 		add(INDENT_STRING.repeat(m_indent));
@@ -123,7 +123,7 @@ public abstract class SourceWriter {
 	protected void addLineComment(String c) {
 		addLine("//"+c);
 	}
-	
+
 	protected void addDocComment(String... cs) {
 		addBlockComment(true, cs);
 	}
@@ -161,7 +161,7 @@ public abstract class SourceWriter {
 			}
 		}
 	}
-	
+
 	protected void addSectionDivider(String title) {
 		String[] ss = title.split("\\R");
 		addLine();
@@ -182,7 +182,7 @@ public abstract class SourceWriter {
 	protected FieldName makeBaseFieldNameRoot(Field bf) {
 		FieldName result = null;
 		result = bf.getCorrectParentName().addSuffix(bf.getName());
-		
+
 		return result;
 	}
 	/**
@@ -190,9 +190,9 @@ public abstract class SourceWriter {
 	 * @param top - the top level field in the schema
 	 * @return a list of array fields
 	 */
-	public List<ArrayField> getArrayFields(BlockField top){
+	public List<ArrayField> getArrayFields(StructField top){
 		ArrayList<ArrayField> afs = new ArrayList<ArrayField>();
-		top.scanThroughBlockFields(bf -> {
+		top.scanThroughFields(bf -> {
 			if(bf instanceof ArrayField) {
 				afs.add((ArrayField)bf);
 			}
@@ -204,15 +204,15 @@ public abstract class SourceWriter {
 	 * @param top
 	 * @return
 	 */
-	protected List<FixedIntField> getBlockKeys(BlockField top){
+	protected List<FixedIntField> getBlockKeys(StructField top){
 		ArrayList<FixedIntField> result = new ArrayList<FixedIntField>();
-		
-		top.scanThroughHeaderFields(f -> {
+
+		top.scanThroughFields(f -> {
 			if(f instanceof FixedIntField && f.getName().toLowerCamel().equals("key")) {
 				result.add((FixedIntField)f);
 			}
-		}, true);
-		
+		});
+
 		Collections.sort(result, (f1, f2) -> {
 			return (int)(f1.getValue() - f2.getValue());
 		});
@@ -224,7 +224,7 @@ public abstract class SourceWriter {
 //		if(p instanceof ArrayField) {
 //			pn = pn.addPrefix(p.getParent().getName());
 //		}
-		
+
 		String name = key.getName().addPrefix(pn).toUpperSnake();
 		return name;
 	}

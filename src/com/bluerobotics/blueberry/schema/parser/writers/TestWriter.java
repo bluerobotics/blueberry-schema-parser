@@ -27,12 +27,11 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BlockField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
-import com.bluerobotics.blueberry.schema.parser.fields.CompoundField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
+import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
  * A class to test writing something useful from the computed schema packet format
@@ -46,12 +45,12 @@ public class TestWriter extends SourceWriter {
 		return m_writer.toString();
 	}
 	@Override
-	public void write(BlockField bf, String... headers) {
+	public void write(StructField bf, String... headers) {
 		write(0, bf);
 	}
 	private void start(AbstractField f) {
 		w("(");
-		
+
 		if(f instanceof BaseField) {
 			BaseField bf = (BaseField)f;
 			w(""+bf.getIndex()+" ");
@@ -69,41 +68,41 @@ public class TestWriter extends SourceWriter {
 	private void end() {
 		w(")");
 	}
-	private void write(int i, BlockField f) {
-		
-		start(f);
-		++i;
-		eol(i);
-		write(i, f.getHeaderFields());
-		if(f.getBaseFields().size() > 0) {
-			eol(i);
-		}
-		write(i, f.getBaseFields());
-		for(BlockField bf2 : f.getBlockFields()) {
-			eol(i);
-			write(i, bf2);
-		}
-		
-		end();
+	private void write(int i, StructField f) {
+
+//		start(f);
+//		++i;
+//		eol(i);
+//		write(i, f.getHeaderFields());
+//		if(f.getBaseFields().size() > 0) {
+//			eol(i);
+//		}
+//		write(i, f.getBaseFields());
+//		for(StructField bf2 : f.getBlockFields()) {
+//			eol(i);
+//			write(i, bf2);
+//		}
+//
+//		end();
 //		eol(--i);
-		
+
 	}
 	private void write(int i, AbstractField f) {
-		if(f instanceof CompoundField) {
-			write(i, (CompoundField)f);
-//		} else if(f instanceof EnumField) {
-//			write(i, (EnumField)f);
-		} else if(f instanceof FixedIntField) {
-			write(i, (FixedIntField)f);
-		} else if(f instanceof BoolFieldField) {
-			write(i, (BoolFieldField)f);
-		} else if(f instanceof BaseField) {
-			write(i, (BaseField)f);
-		} else if(f instanceof BlockField) {
-			write(i, (BlockField)f);
-		}
+//		if(f instanceof CompoundField) {
+//			write(i, (CompoundField)f);
+////		} else if(f instanceof EnumField) {
+////			write(i, (EnumField)f);
+//		} else if(f instanceof FixedIntField) {
+//			write(i, (FixedIntField)f);
+//		} else if(f instanceof BoolFieldField) {
+//			write(i, (BoolFieldField)f);
+//		} else if(f instanceof BaseField) {
+//			write(i, (BaseField)f);
+//		} else if(f instanceof StructField) {
+//			write(i, (StructField)f);
+//		}
 	}
-	
+
 	private void write(int i, List<BaseField> fs) {
 		boolean firstTime = true;
 		for(AbstractField f : fs) {
@@ -132,22 +131,10 @@ public class TestWriter extends SourceWriter {
 			start(bf);
 			end();
 		}
-		
+
 		end();
 	}
-	private void write(int i, CompoundField f) {
-		if(f.getName() != null) {
-			start(f);
-			++i;
-			eol(i);
-			write(i, f.getBaseFields());
-			end();
-		} else {
-			write(i, f.getBaseFields());
 
-		}
-		
-	}
 	private void w(String s) {
 		m_writer.write(s);
 	}
@@ -155,5 +142,5 @@ public class TestWriter extends SourceWriter {
 		w("\n");
 		w("    ".repeat(i));
 	}
-	
+
 }

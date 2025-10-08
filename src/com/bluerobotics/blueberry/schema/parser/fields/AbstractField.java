@@ -140,9 +140,9 @@ public abstract class AbstractField implements Field {
 		FieldName result = null;
 		Field f = getContainingWord();
 		Field p = f.getParent();
-		BlockField bf = null;
+		StructField bf = null;
 		if(p != null) {
-			bf = (BlockField)p;
+			bf = (StructField)p;
 		}
 		
 		if(f.isInHeader() && bf != null) {
