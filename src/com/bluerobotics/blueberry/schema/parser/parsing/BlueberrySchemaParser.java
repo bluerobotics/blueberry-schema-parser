@@ -133,6 +133,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseAnnotations();
 			collapseNameValues();
 			collapseEols();
+			coolapseSemicolons();
+			checkBrackets();
 //			collapseEnums();
 //			collapseEnumValues();
 //			identifyFieldNames();
@@ -168,7 +170,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 ////			fu.computeParents(m_topLevelField);
 ////			fu.removeDuplicates(m_topLevelField, null);
 
-
+			extractEnums();
+			extractTypedefs();
+			extractStructs();
 
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
@@ -185,7 +189,33 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 
-
+	/**
+	 * Checks braces. Makes sure they are properly opened and closed and relate to known keywords
+	 * @throws SchemaParserException 
+	 */
+	private void checkBrackets() throws SchemaParserException {
+		
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()) {
+			m_tokens.matchBrackets(null);
+			m_tokens.next();
+		}
+	}
+	
+	private void extractStructs() {
+		// TODO Auto-generated method stub
+		
+	}
+	private void extractTypedefs() {
+		// TODO Auto-generated method stub
+		
+	}
+	private void extractEnums() {
+		m_tokens.resetIndex();
+		while(m_tokens.isAtEnd()) {
+			
+		}
+	}
 	/**
 	 * this is supposed to scan for constant fields and check to be sure they fit in the allocated number of bits
 	 * @param nfat
@@ -977,11 +1007,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					}
 				}
 			}
-
-
 		}
-
-
+	}
+	private void coolapseSemicolons() {
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()){
+			//first find next define element
+			IdentifierToken et = m_tokens.gotoNextId(TokenIdentifier.SEMICOLON);
+			Token t = m_tokens.relative(-1);
+			IdentifierToken it = m_tokens.relative(-1, IdentifierToken.class);
+			if(t instanceof NameValueToken || t instanceof CommentToken || t instanceof SingleWordToken
+					|| (it != null && it.check(TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END))) {
+				m_tokens.remove(et);
+			}
+		}
 	}
 	/**
 	 * Combine comment tokens if there are consecutive ones

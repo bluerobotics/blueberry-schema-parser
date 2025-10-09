@@ -63,7 +63,7 @@ public class TokenList {
 	public void remove(int i) {
 		if(i >= 0 && i < m_tokens.size()) {
 			if(i < m_index) {
-				--i;
+				--m_index;
 			}
 			m_tokens.remove(i);
 		}
@@ -225,14 +225,18 @@ public class TokenList {
  	 * @param ti
 	 * @return
 	 */
-	public IdentifierToken gotoNextId(TokenIdentifier ti) {
+	public IdentifierToken gotoNextId(TokenIdentifier... tis) {
 		IdentifierToken it = null;
 		Token t = gotoNext((tt) -> {
 			boolean result = false;
 			if(tt.getClass() == IdentifierToken.class) {
-				if(((IdentifierToken)tt).getKeyword() == ti) {
-					result = true;
+				for(TokenIdentifier ti : tis) {
+					if(((IdentifierToken)tt).getKeyword() == ti) {
+						result = true;
+						break;
+					}
 				}
+				
 			}
 			return result;
 		});
@@ -261,6 +265,78 @@ public class TokenList {
 	}
 	
 	
+	/**
+	 * find the bracket that closes the current opening 
+	 * @param it
+	 * @return
+	 * @throws SchemaParserException
+	 */
+	public IdentifierToken matchBrackets(IdentifierToken it) throws SchemaParserException {
+//		if(it == null) {
+//			resetIndex();
+////		} else if(it != null && getCurrent() != it) {
+////			throw new SchemaParserException("Somehow our index is out of sync with our token.", it.getStart());
+//		}
+		IdentifierToken result = gotoNextId(TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
+		
+		boolean fail = false;
+		if(it == null) {
+			if(result != null) {
+				
+				result = matchBrackets(result);
+				
+			}
+		} else {
+			if(result == null) {
+			
+				fail = true;
+			}
+		
+		
+		
+			TokenIdentifier match = null;
+			if(it != null) {
+				switch(it.getKeyword()) {
+				case BRACE_START:
+					match = TokenIdentifier.BRACE_END;
+					break;
+				case BRACKET_START:
+					match = TokenIdentifier.BRACKET_END;
+					break;
+				case SQUARE_BRACKET_START:
+					match = TokenIdentifier.SQUARE_BRACKET_END;
+					break;
+				default:
+					break;
+				}
+			
+		
+				if(result != null && result.getKeyword() == match) {
+					//we've got a matching close to roll back up the recursion
+					//so return with this result
+				} else {
+					switch(result.getKeyword()) {
+					case BRACE_START:
+					case BRACKET_START:
+					case SQUARE_BRACKET_START:
+						next();
+						result = matchBrackets(result);
+						break;
+					default:
+						fail = true;
+						break;
+						
+					}
+				}
+			}
+		}
+		if(fail) {
+			throw new SchemaParserException("Mismatched brackets", it.getStart());
+		}
+		return result;
+		
+	}
+
 	 
 	
 }
