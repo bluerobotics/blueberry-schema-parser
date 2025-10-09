@@ -191,29 +191,29 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	/**
 	 * Checks braces. Makes sure they are properly opened and closed and relate to known keywords
-	 * @throws SchemaParserException 
+	 * @throws SchemaParserException
 	 */
 	private void checkBrackets() throws SchemaParserException {
-		
+
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()) {
 			m_tokens.matchBrackets(null);
 			m_tokens.next();
 		}
 	}
-	
+
 	private void extractStructs() {
 		// TODO Auto-generated method stub
-		
+
 	}
 	private void extractTypedefs() {
 		// TODO Auto-generated method stub
-		
+
 	}
 	private void extractEnums() {
 		m_tokens.resetIndex();
 		while(m_tokens.isAtEnd()) {
-			
+
 		}
 	}
 	/**
@@ -991,7 +991,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				m_tokens.remove(et);
 			} else {
 				IdentifierToken it = m_tokens.relative(-1, IdentifierToken.class);
-				
+
 				if(it != null) {
 					if(it.check(TokenIdentifier.BRACE_END,
 							TokenIdentifier.BRACE_START,
@@ -1045,6 +1045,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(ct2.isLineComment()) {
 						CommentToken ctn = ct.combine(ct2);
 						m_tokens.replace(ct, ctn);
+						m_tokens.remove(ct2);
 					}
 				} else {
 					//check for eol

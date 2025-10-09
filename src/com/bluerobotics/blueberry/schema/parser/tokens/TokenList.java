@@ -27,16 +27,16 @@ import java.util.function.Function;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 
 /**
- * 
+ *
  */
 public class TokenList {
 	private final ArrayList<Token> m_tokens = new ArrayList<Token>();
 	private int m_index = 0;
 	public TokenList() {
-		
+
 	}
-	
-	
+
+
 	public Token getCurrent() {
 		return m_tokens.get(m_index);
 	}
@@ -68,7 +68,7 @@ public class TokenList {
 			m_tokens.remove(i);
 		}
 	}
-	
+
 	public void add(int i, Token t) {
 		m_tokens.add(i, t);
 	}
@@ -89,10 +89,10 @@ public class TokenList {
 			}
 		}
 	}
-	
+
 	public Token relative(int i) {
 		return m_tokens.get(m_index + i);
-		
+
 	}
 	public boolean isAtEnd() {
 		return m_index >= m_tokens.size();
@@ -112,14 +112,14 @@ public class TokenList {
 			++m_index;
 		}
 	}
-	
+
 	/**
 	 * Finds the next token of the specified type from the current index
 	 * Does test the token at the current index
 	 * @param forwardNotReverse
 	 * @param howFar - the number of steps to look. Zero means look until the end.
 	 * @param test - the test to check for
-	 * 
+	 *
 	 * @return
 	 */
 	private int findToken(boolean forwardNotReverse, int howFar, Function<Token, Boolean> test) {
@@ -145,8 +145,8 @@ public class TokenList {
 				}
 			}
 		}
-		
-		
+
+
 		int j = m_index;
 		while(notDone) {
 			Token t = m_tokens.get(j);
@@ -167,7 +167,7 @@ public class TokenList {
 		}
 		return result;
 	}
-	
+
 	public Token find(boolean forwardNotReverse, Class<?>... cs) {
 		Token result = null;
 		int i = findToken(forwardNotReverse, 0, (t) -> {
@@ -177,7 +177,7 @@ public class TokenList {
 					found = true;
 					break;
 				}
-				
+
 			}
 			return found;
 		});
@@ -206,7 +206,7 @@ public class TokenList {
 		return result;
 	}
 	/**
-	 * Advances to the next token of the specified sub-type 
+	 * Advances to the next token of the specified sub-type
  	 * if none exists then index is moved to past the last element of the list
  	 * The current location is tested and will be returned if it passes.
 	 * @param <T>
@@ -219,9 +219,9 @@ public class TokenList {
 		}));
 	}
 	/**
-	 * Advances to the next IdentifierToken of the specified sub-type 
+	 * Advances to the next IdentifierToken of the specified sub-type
  	 * if none exists then index is moved to past the last element of the list
- 	 * The current location is tested and will be returned if it passes.	 
+ 	 * The current location is tested and will be returned if it passes.
  	 * @param ti
 	 * @return
 	 */
@@ -236,7 +236,7 @@ public class TokenList {
 						break;
 					}
 				}
-				
+
 			}
 			return result;
 		});
@@ -263,10 +263,11 @@ public class TokenList {
 	public String toString() {
 		return getClass().getSimpleName() + "("+getCurrent()+")";
 	}
-	
-	
+
+
 	/**
-	 * find the bracket that closes the current opening 
+	 * find the bracket that closes the current opening
+	 * If the current location is not at an opening, it will move to the next complete closing or the end of the list
 	 * @param it
 	 * @return
 	 * @throws SchemaParserException
@@ -277,23 +278,25 @@ public class TokenList {
 ////		} else if(it != null && getCurrent() != it) {
 ////			throw new SchemaParserException("Somehow our index is out of sync with our token.", it.getStart());
 //		}
+		if(it != null) {
+			next();
+		}
 		IdentifierToken result = gotoNextId(TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
-		
+
 		boolean fail = false;
 		if(it == null) {
 			if(result != null) {
-				
 				result = matchBrackets(result);
-				
+
 			}
 		} else {
 			if(result == null) {
-			
+
 				fail = true;
 			}
-		
-		
-		
+
+
+
 			TokenIdentifier match = null;
 			if(it != null) {
 				switch(it.getKeyword()) {
@@ -309,8 +312,8 @@ public class TokenList {
 				default:
 					break;
 				}
-			
-		
+
+
 				if(result != null && result.getKeyword() == match) {
 					//we've got a matching close to roll back up the recursion
 					//so return with this result
@@ -319,13 +322,12 @@ public class TokenList {
 					case BRACE_START:
 					case BRACKET_START:
 					case SQUARE_BRACKET_START:
-						next();
 						result = matchBrackets(result);
 						break;
 					default:
 						fail = true;
 						break;
-						
+
 					}
 				}
 			}
@@ -334,9 +336,9 @@ public class TokenList {
 			throw new SchemaParserException("Mismatched brackets", it.getStart());
 		}
 		return result;
-		
+
 	}
 
-	 
-	
+
+
 }

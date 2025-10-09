@@ -129,7 +129,7 @@ public class Coord implements Comparable<Coord> {
 				result = result.incrementIndex(-1);
 				foundSpace = true;
 			}
-			if(result.isAtStart()) {
+			if(result.isAtStart() && !foundSpace) {
 				notDone = false;
 			} else {
 				char ch = result.getString().charAt(result.index);
@@ -296,7 +296,7 @@ public class Coord implements Comparable<Coord> {
 		return new Coord(this.filePath, this.line, getString().length(), this.m_lines);
 	}
 	public String toString() {
-		Coord end = incrementIndex(10);
+		Coord end = incrementIndex(15);
 		String s = fromThisToThatString(end);
 		s += "...";
 		s = "Coord(\""+s+"\")";
