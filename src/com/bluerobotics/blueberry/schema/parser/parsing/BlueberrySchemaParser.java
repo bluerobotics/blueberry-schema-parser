@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
+import com.bluerobotics.blueberry.schema.parser.fields.ConstField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
@@ -36,7 +38,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.Type;
-import com.bluerobotics.blueberry.schema.parser.tokens.AnnotationToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
@@ -80,6 +82,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	private final TokenList m_tokens = new TokenList();
 	private final ArrayList<DefinedField> m_defines = new ArrayList<>();
+	private final ArrayList<ConstField> m_constants = new ArrayList<>();
+	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private StructField m_topLevelField = null;
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
@@ -140,7 +144,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			collapseDefines();
 			collapseNumbers();
 			collapseBaseTypes();
-			collapseAnnotations();
+//			collapseAnnotations();
 			collapseNameValues();
 			collapseEols();
 			coolapseSemicolons();
@@ -197,27 +201,38 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
+	private FieldName m_module = null;
+	private ParentField m_parent = null;
+	private Token m_moduleEnd = null;
 
-
-	private void assembleFields() {
-		FieldName module = null;
-		ParentField parent = null;
+	private void assembleFields() throws SchemaParserException {
+		m_module = null;
+		m_parent = null;
+		m_moduleEnd = null;
 
 		m_tokens.resetIndex();
 
 		while(m_tokens.isMore()) {
-			if(parent == null) {//we're not currently doing anything
+			if(m_parent == null) {//we're not currently doing anything
 				Token t = m_tokens.getCurrent();
+				//check if we've hit the closing brace of the current module - if there is one
+				if(m_tokens.inOrder(m_moduleEnd, t)) {
+					m_module = null;
+					m_moduleEnd = null;
+				}
 				IdentifierToken it = m_tokens.relative(0,IdentifierToken.class);
 				if(it != null) {
 					switch(it.getKeyword()) {
 					case CONST:
+						processConst(it);
 						break;
 					case ENUM:
+//						processEnum(it);
 						break;
 					case MESSAGE:
 						break;
 					case MODULE:
+						processModule(it);
 						break;
 					case SEQUENCE:
 						break;
@@ -225,13 +240,133 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						break;
 					case TYPEDEF:
 						break;
+					case ANNOTATION_START:
+						processAnnotation(it);
+						break;
+					default:
+						System.out.println("Did not process "+it);
+						m_tokens.next();
+						break;
 					}
-				} else if(t instanceof AnnotationToken) {
+				} else if(t instanceof Annotation) {
 
 				}
 
 			}
 		}
+	}
+	private void processConst(IdentifierToken it) throws SchemaParserException {
+		CommentToken comment = m_tokens.relative(-1, CommentToken.class);
+		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
+		SingleWordToken name = m_tokens.relative(2, SingleWordToken.class);
+		IdentifierToken equals = m_tokens.relativeId(3, TokenIdentifier.EQUALS);
+		NumberToken value = m_tokens.relative(4, NumberToken.class);
+		StringToken string = m_tokens.relative(4, StringToken.class);
+		if(btt == null) {
+			throw new SchemaParserException("Only base types can be declared const.", it.getEnd());
+		} else {
+			Type type = null;
+			switch(btt.getKeyword()) {
+			case UNSIGNED:
+				BaseTypeToken btt2 = m_tokens.relative(2, BaseTypeToken.class);
+				name = m_tokens.relative(3, SingleWordToken.class);
+				equals = m_tokens.relativeId(4, TokenIdentifier.EQUALS);
+				value = m_tokens.relative(4, NumberToken.class);
+
+				if(btt2 == null) {
+					throw new SchemaParserException("Unsigned must be followed by a base type", btt.getEnd());
+				} else {
+					switch(btt2.getKeyword()) {
+					case INT8:
+					case BYTE:
+						type = Type.UINT8;
+						break;
+					case INT32:
+					case INT:
+					case LONG:
+						type = Type.UINT32;
+						break;
+					case INT16:
+					case SHORT:
+						type = Type.UINT16;
+						break;
+					case INT64:
+						type = Type.UINT64;
+						break;
+					default:
+						throw new SchemaParserException("Unsigned "+btt2.getKeyword().name()+" does not make sense.", btt2.getStart());
+					}
+				}
+				break;
+			case BOOLEAN:
+				type = Type.BOOL;
+				break;
+			case UINT8:
+				type = Type.UINT8;
+				break;
+			case UINT16:
+				type = Type.UINT16;
+				break;
+			case UINT32:
+				type = Type.UINT32;
+				break;
+			case UINT64:
+				type = Type.UINT64;
+				break;
+			case BYTE:
+			case INT8:
+				type = Type.INT8;
+				break;
+			case SHORT:
+			case INT16:
+				type = Type.INT16;
+				break;
+			case LONG:
+			case INT:
+			case INT32:
+				type = Type.INT32;
+				break;
+			case INT64:
+				type = Type.INT64;
+				break;
+			case STRING:
+				type = Type.STRING;
+				break;
+			default:
+				throw new SchemaParserException("Const must specify a type.", it.getEnd());
+			}
+			if(name == null) {
+				throw new SchemaParserException("Const must specify a name.", it.getEnd());
+			}
+			if(type != Type.STRING && value == null) {
+				throw new SchemaParserException("Const must have a specified value.", it.getEnd());
+			}
+			if(type == Type.STRING) {
+				m_constants.add(new ConstField(FieldName.fromCamel(name.getName()), string.getString(), comment.combineLines()));	
+				m_tokens.setIndex(string);
+			} else {
+				m_constants.add(new ConstField(FieldName.fromCamel(name.getName()), type, value.getNumber(), comment.combineLines()));
+				m_tokens.setIndex(value);
+			}
+			
+			
+			
+		}
+	}
+	private void processModule(IdentifierToken it) throws SchemaParserException {
+		SingleWordToken moduleName = m_tokens.relative(1, SingleWordToken.class);
+		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
+		if(braceStart == null) {
+			throw new SchemaParserException("Module should start with opening brace", it.getEnd());
+		} else if(moduleName == null){
+			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
+		} else {
+			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
+			m_module = FieldName.fromCamel(moduleName.getName());
+			m_moduleEnd = braceEnd;
+			
+		}
+		
 	}
 	/**
 	 * Checks braces. Makes sure they are properly opened and closed and relate to known keywords
@@ -329,14 +464,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			BlockTypeToken btt = (BlockTypeToken)nfat.getType();
 			DefinedTypeToken dtt = lookupType(btt.getName());
 			NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
-			long v = nvt.getValue();
+			BigDecimal v = nvt.getValue();
 			//now check all other fields
 
 			for(NestedFieldAllocationToken nfat2 : blocks) {
 				if(nfat2 != nfat) {//don't check against itself
 					BlockTypeToken btt2 = (BlockTypeToken)nfat2.getType();
 					NameValueToken nvt2 = btt2.getValue(KEY_FIELD_NAME);
-					long v2 = nvt2.getValue();
+					BigDecimal v2 = nvt2.getValue();
 					if(v2 == v) {
 						throw new SchemaParserException("Two block allocations have the same key value!", nvt.getNumberToken().getStart());
 					}
@@ -368,7 +503,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			NameValueToken nvt2 = b2.getValue(KEY_FIELD_NAME);
 			int result = -1;
 			if(nvt1 != null && nvt2 != null) {
-				result = (int)(nvt1.getValue() - nvt2.getValue());
+				result = nvt1.getValue().compareTo(nvt2.getValue());
 			}
 			return result;
 		});
@@ -387,7 +522,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			DefinedTypeToken dtt = lookupType(btt.getName());
 			NameValueToken nvt = btt.getValue(KEY_FIELD_NAME);
 			if(nvt != null) {
-				long vt = nvt.getValue();
+				long vt = nvt.getValue().longValue();
 				values.add(vt);
 			}
 
@@ -456,10 +591,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(DefinedField t : m_defines) {
 			if(t instanceof EnumToken) {
 				EnumToken et = (EnumToken)t;
-				long nextValue = 0;
+				int nextValue = 0;
 				for(NameValueToken nvt : et.getNameValueTokens()) {
 					if(nvt.isValue()) {
-						if(nvt.getValue() == nextValue) {
+						if(nvt.getValue().intValue() == nextValue) {
 							++nextValue;
 						}
 					} else {
@@ -597,7 +732,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getKeyword()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 
-				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue(), getComment(nvt.getComment()));
+				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue().intValue(), getComment(nvt.getComment()));
 
 			}
 			result = ef;
@@ -952,21 +1087,38 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	/**
 	 * scans for annotation starting tokens and makes annotation tokens of the next single word token
+	 * @throws SchemaParserException 
 	 */
-	private void collapseAnnotations() {
-		m_tokens.resetIndex();
-		while(m_tokens.isMore()) {
-			//first find next define element
-			IdentifierToken aT = m_tokens.gotoNextId(TokenIdentifier.ANNOTATION_START);
-			if(aT != null) {
+	private void processAnnotation(IdentifierToken at) throws SchemaParserException {
+		
+			if(at != null) {
 				SingleWordToken swt = m_tokens.relative(1, SingleWordToken.class);
 				if(swt != null) {
-					AnnotationToken at = new AnnotationToken(swt);
-					m_tokens.replace(aT, at);
-					m_tokens.remove(swt);
+					Annotation a = new Annotation(swt.getName());
+					m_annotations.add(a);
+					IdentifierToken bracketStart = m_tokens.relative(1, IdentifierToken.class);
+					if(bracketStart.getKeyword() != TokenIdentifier.BRACKET_START) {
+						throw new SchemaParserException("An annotation should include a bracketed list of parameters", swt.getEnd());
+					} else {
+						IdentifierToken bracketEnd = m_tokens.matchBrackets(bracketStart);
+						m_tokens.setIndex(bracketStart);
+						m_tokens.next();
+						while(m_tokens.inOrder(m_tokens.getCurrent(), bracketEnd)) {
+							Token t = m_tokens.getCurrent();
+							if(t instanceof StringToken || t instanceof SingleWordToken || t instanceof NumberToken) {
+								a.addParameter(t);
+							} else if(t instanceof CommentToken) {
+								//ignore comments
+							} else {
+								throw new SchemaParserException("This doesn't seem to be a valid annotation parameter "+t, t.getStart());
+							}
+							m_tokens.next();
+						}
+					}
+					
 				}
 			}
-		}
+		
 	}
 	/**
 	 * remove all end of line tokens that are preceded or followed by a token that no longer needs an EOL token

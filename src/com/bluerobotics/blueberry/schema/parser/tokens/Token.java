@@ -27,6 +27,6 @@ public interface Token {
 
 	Coord getEnd();
 	
-	
+	String getName();
 
 }

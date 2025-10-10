@@ -19,33 +19,55 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.tokens;
+package com.bluerobotics.blueberry.schema.parser.fields;
+
+import java.math.BigDecimal;
 
 /**
- *
+ * 
  */
-public abstract class AbstractToken implements Token {
-	private final Coord m_start;
-	private final Coord m_end;
-	public AbstractToken(Coord start, Coord end) {
-		m_start = start;
-		m_end = end;
+public class ConstField extends AbstractField {
+	private final BigDecimal m_value;
+	private final String m_string;
+	public ConstField(FieldName name, Type type, BigDecimal value, String comment) {
+		super(name, type, comment);
+		m_value = value;
+		m_string = null;
+	}
+	public ConstField(FieldName name, String string, String comment) {
+		super(name, Type.STRING, comment);
+		m_value = null;
+		m_string = string;
 	}
 	@Override
-	public Coord getStart() {
-		return m_start;
-	}
-	@Override
-	public Coord getEnd() {
-		return m_end;
-	}
-	public String toString() {
-		return getClass().getSimpleName() + "()";
-	}
+	Type checkType(Type t) throws RuntimeException {
+		switch(t) {
 	
-	@Override
-	public String getName() {
-		return m_start.fromThisToThatString(m_end);
+		case FLOAT32:
+		case INT16:
+		case INT32:
+		case INT8:
+		case UINT16:
+		case UINT32:
+		case UINT8:
+		case BOOL:
+			break;
+		case BOOLFIELD:
+		case ARRAY:
+		case COMPOUND:
+		case STRING:
+		case SEQUENCE:
+		default:
+			throw new RuntimeException("Field must only contain base types.");
+				
+		}
+		return t;
+	}
+	public BigDecimal getValue() {
+		return m_value;
+	}
+	public String getString() {
+		return m_string;
 	}
 
 }

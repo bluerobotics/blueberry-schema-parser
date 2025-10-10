@@ -21,10 +21,12 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+
 /**
  *
  */
-public class AnnotationToken extends SingleWordToken {
+public class Annotation  {
 	private enum KnownAnnotation {
 		 FILE_PATH("file_path"),
 		 TOPIC("topic"),
@@ -33,7 +35,7 @@ public class AnnotationToken extends SingleWordToken {
 		 SERIALIZATION("serialization"),
 		 REVISION("revision"),
 		 ;
-		private String name;
+		private final String name;
 		private KnownAnnotation(String n) {
 			name = n;
 		}
@@ -41,21 +43,20 @@ public class AnnotationToken extends SingleWordToken {
 			return name;
 		}
 	}
+	
 	public static final String FILE_PATH_ANNOTATION = "file_path";
 	public static final String TOPIC_ANNOTATION = "topic";
 	public static final String MESSAGE_KEY_ANNOTATION      = "message_key";
 	public static final String NAMESPACE_ANNOTATION      = "namespace";
 	public static final String SERIALIZATION_ANNOTATION      = "serialization";
 	private final KnownAnnotation m_known;
-	public AnnotationToken(SingleWordToken swt) {
-		this(swt.getStart(), swt.getEnd(), swt.getName());
-
-	}
-	public AnnotationToken(Coord start, Coord end, String name) {
-		super(start, end, name);
+	private final String m_name;
+	private ArrayList<Token> m_parameters = new ArrayList<>();
+	public Annotation(String name) {
+		m_name = name;
 		KnownAnnotation ka = null;
 		for(KnownAnnotation kaf : KnownAnnotation.values()) {
-			if(kaf.getName().equals(getName())) {
+			if(kaf.getName().equals(name)) {
 				ka = kaf;
 				break;
 			}
@@ -65,15 +66,21 @@ public class AnnotationToken extends SingleWordToken {
 	public boolean isKnown() {
 		return m_known != null;
 	}
+	public String getName() {
+		return m_name;
+	}
 	public String toString() {
 		if(isKnown()) {
 			return getClass().getSimpleName()+"("+m_known+")";
 		} else {
-			return super.toString();
+			return m_name;
 		}
 	}
-	public static AnnotationToken makeFilePathAnnotationToken(Coord c) {
-		return new AnnotationToken(c, c, KnownAnnotation.FILE_PATH.getName());
+	public void addParameter(Token t) {
+		if(t != null) {
+			m_parameters.add(t);
+		}
 	}
+	
 
 }

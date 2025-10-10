@@ -418,7 +418,7 @@ public class TokenList {
 			throw new SchemaParserException("Not sure what error this was "+it, it.getStart());
 
 		}
-
+		//don't think result can ever be null - it will have thrown an exception
 		return result;
 
 	}
