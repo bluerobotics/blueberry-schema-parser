@@ -41,7 +41,7 @@ public class TokenList {
 		return m_tokens.get(m_index);
 	}
 	public Token get(int i) {
-		if(i < 0 || i > m_tokens.size()) {
+		if(i < 0 || i >= m_tokens.size()) {
 			return null;
 		}
 		return m_tokens.get(i);
@@ -100,29 +100,51 @@ public class TokenList {
 	public boolean isMore() {
 		return m_index < m_tokens.size();
 	}
+	/**
+	 * sets the current index to the specified token.
+	 * If the token is null then this will go to the end of the list
+	 * @param t
+	 */
 	public void setIndex(Token t) {
-		int i = m_tokens.indexOf(t);
-		if(i < 0) {
-			throw new RuntimeException("Specified token not in list!");
+		if(t != null) {
+			int i = m_tokens.indexOf(t);
+			if(i < 0) {
+				throw new RuntimeException("Specified token not in list!");
+			}
+			m_index = i;
+		} else {
+			m_index = m_tokens.size();
 		}
-		m_index = i;
+		
 	}
 	public void next() {
 		if(!isAtEnd()) {
 			++m_index;
 		}
 	}
+	public Token next(Token t) throws SchemaParserException {
+		int i = m_tokens.indexOf(t);
+		if(i < 0) {
+			throw new SchemaParserException("Token " + t + " is not part of list.", t.getStart());
+		} else {
+			++i;
+			
+		}
+		return get(i);
+	}
 
 	/**
 	 * Finds the next token of the specified type from the current index
 	 * Does test the token at the current index
+	 * @param start the place to start
 	 * @param forwardNotReverse
 	 * @param howFar - the number of steps to look. Zero means look until the end.
 	 * @param test - the test to check for
 	 *
 	 * @return
 	 */
-	private int findToken(boolean forwardNotReverse, int howFar, Function<Token, Boolean> test) {
+	private int findToken(int start, boolean forwardNotReverse, int howFar, Function<Token, Boolean> test) {
+		int i  = start;
 		int result = -1;
 		boolean notDone = true;
 		int n;
@@ -130,7 +152,7 @@ public class TokenList {
 			if(howFar == 0) {
 				n = m_tokens.size();
 			} else {
-				n = m_index + howFar;
+				n = i + howFar;
 				if(n > m_tokens.size()) {
 					n = m_tokens.size();
 				}
@@ -139,15 +161,15 @@ public class TokenList {
 			if(howFar == 0) {
 				n = 0;
 			} else {
-				n = m_index - howFar;
-				if(m_index < 0) {
-					m_index = 0;
+				n = i - howFar;
+				if(i < 0) {
+					i = 0;
 				}
 			}
 		}
 
 
-		int j = m_index;
+		int j = i;
 		while(notDone) {
 			Token t = m_tokens.get(j);
 			if(test.apply(t)) {
@@ -168,9 +190,13 @@ public class TokenList {
 		return result;
 	}
 
-	public Token find(boolean forwardNotReverse, Class<?>... cs) {
+	public Token find(Token start, boolean forwardNotReverse, Class<?>... cs) {
 		Token result = null;
-		int i = findToken(forwardNotReverse, 0, (t) -> {
+		int startI = m_tokens.indexOf(start);
+		if(startI < 0) {
+			startI = 0;
+		}
+		int i = findToken(startI, forwardNotReverse, 0, (t) -> {
 			boolean found = false;
 			for(Class<?> c : cs) {
 				if(t.getClass() == c) {
@@ -194,17 +220,28 @@ public class TokenList {
 	 * @return
 	 */
 	private Token gotoNext(Function<Token, Boolean> test) {
-		Token result = null;
+		Token result = findNext(getCurrent(), test);
 
-		int i = findToken(true, 0, test);
-		if(i >= 0) {
-			result = m_tokens.get(i);
-			m_index = i;
-		} else {
-			m_index = m_tokens.size();
-		}
+		setIndex(result);
 		return result;
 	}
+	/**
+	 * finds the next token that passes the specified test
+	 * if none exists then returns null
+	 * The current location is tested and will be returned if it passes.
+	 * @param test
+	 * @return
+	 */
+	private Token findNext(Token start, Function<Token, Boolean> test) {
+		int startI = m_tokens.indexOf(start);
+		if(startI < 0) {
+			startI = 0;
+		}
+		int i = findToken(startI, true, 0, test);
+		
+		return get(i);
+	}
+	
 	/**
 	 * Advances to the next token of the specified sub-type
  	 * if none exists then index is moved to past the last element of the list
@@ -218,16 +255,18 @@ public class TokenList {
 			return cs == t.getClass();
 		}));
 	}
+	
+	
 	/**
-	 * Advances to the next IdentifierToken of the specified sub-type
- 	 * if none exists then index is moved to past the last element of the list
+	 * Finds the next IdentifierToken of the specified sub-type
+ 	 * if none exists then returns null
  	 * The current location is tested and will be returned if it passes.
  	 * @param ti
 	 * @return
 	 */
-	public IdentifierToken gotoNextId(TokenIdentifier... tis) {
+	public IdentifierToken findNextId(Token start, TokenIdentifier... tis) {
 		IdentifierToken it = null;
-		Token t = gotoNext((tt) -> {
+		Token t = findNext(start, (tt) -> {
 			boolean result = false;
 			if(tt.getClass() == IdentifierToken.class) {
 				for(TokenIdentifier ti : tis) {
@@ -246,6 +285,19 @@ public class TokenList {
 		return it;
 	}
 	/**
+	 * Advances to the next IdentifierToken of the specified sub-type
+ 	 * if none exists then index is moved to past the last element of the list
+ 	 * The current location is tested and will be returned if it passes.
+ 	 * @param ti
+	 * @return
+	 */
+	public IdentifierToken gotoNextId(TokenIdentifier... tis) {
+		IdentifierToken result = findNextId(getCurrent(), tis);
+		setIndex(result);
+		
+		return result;
+	}
+	/**
 	 * get the token in the position relative to the current token if it is of the specified type. Otherwise it return null.
 	 * @param <T>
 	 * @param i
@@ -260,6 +312,33 @@ public class TokenList {
 		}
 		return result;
 	}
+	
+	/**
+	 * finds the next occurance of the specified type and returns it cast to the specific type
+	 * @param <T>
+	 * @param start
+	 * @param type
+	 * @return
+	 */
+	public <T extends Token> T findNext(Token start, Class<T> type) {
+		Token r = findNext(start, t -> {
+			return t.getClass() == type;
+		});
+		
+		return type.cast(r);
+	}
+	
+	
+	public IdentifierToken relativeId(int i, TokenIdentifier id) {
+		IdentifierToken result = relative(i, IdentifierToken.class);
+		if(result != null) {
+			if(result.getKeyword() != id) {
+				result = null;
+			}
+		}
+		
+		return result;
+	}
 	public String toString() {
 		return getClass().getSimpleName() + "("+getCurrent()+")";
 	}
@@ -272,71 +351,100 @@ public class TokenList {
 	 * @return
 	 * @throws SchemaParserException
 	 */
-	public IdentifierToken matchBrackets(IdentifierToken it) throws SchemaParserException {
-//		if(it == null) {
-//			resetIndex();
-////		} else if(it != null && getCurrent() != it) {
-////			throw new SchemaParserException("Somehow our index is out of sync with our token.", it.getStart());
-//		}
-		if(it != null) {
-			next();
+	public IdentifierToken matchBrackets(Token t) throws SchemaParserException {
+		IdentifierToken result = null;
+		if(t == null) {
+			t = m_tokens.get(0);
 		}
-		IdentifierToken result = gotoNextId(TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
+		
+		IdentifierToken it = null;
+		TokenIdentifier match = null;
+		if(t instanceof IdentifierToken) {
+			it = (IdentifierToken)t;
+		
+			switch(it.getKeyword()) {
+			case BRACE_START:
+				match = TokenIdentifier.BRACE_END;
+				break;
+			case BRACKET_START:
+				match = TokenIdentifier.BRACKET_END;
+				break;
+			case SQUARE_BRACKET_START:
+				match = TokenIdentifier.SQUARE_BRACKET_END;
+				break;
+			case BRACE_END:
+			case BRACKET_END:
+			case SQUARE_BRACKET_END:
+				throw new SchemaParserException("Somehow got one of these "+it+"without an opening one.", it.getStart());
 
-		boolean fail = false;
-		if(it == null) {
-			if(result != null) {
-				result = matchBrackets(result);
-
+			default:
+				break;
 			}
+			if(match != null) {
+				t = next(t);
+			}
+		}
+		
+	
+		result = findNextId(t, TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
+
+		
+		
+		if(result == null && match != null) {
+			throw new SchemaParserException("Did not find a match for "+it, it.getStart());
+		} else if(match == null) {
+			result = matchBrackets(result);
+		} else if(result != null && result.getKeyword() == match) {
+				//we've got a matching close to roll back up the recursion
+				//so return with this result
 		} else {
-			if(result == null) {
+			throw new SchemaParserException("Not sure what error this was "+it, it.getStart());
 
-				fail = true;
-			}
-
-
-
-			TokenIdentifier match = null;
-			if(it != null) {
-				switch(it.getKeyword()) {
-				case BRACE_START:
-					match = TokenIdentifier.BRACE_END;
-					break;
-				case BRACKET_START:
-					match = TokenIdentifier.BRACKET_END;
-					break;
-				case SQUARE_BRACKET_START:
-					match = TokenIdentifier.SQUARE_BRACKET_END;
-					break;
-				default:
-					break;
-				}
-
-
-				if(result != null && result.getKeyword() == match) {
-					//we've got a matching close to roll back up the recursion
-					//so return with this result
-				} else {
-					switch(result.getKeyword()) {
-					case BRACE_START:
-					case BRACKET_START:
-					case SQUARE_BRACKET_START:
-						result = matchBrackets(result);
-						break;
-					default:
-						fail = true;
-						break;
-
-					}
-				}
-			}
 		}
-		if(fail) {
-			throw new SchemaParserException("Mismatched brackets", it.getStart());
-		}
+	
 		return result;
 
+	}
+	/**
+	 * Returns true if the first token occurs before the second token in this list
+	 * If either token is not actually in the list or either are null then returns false
+	 * @param t1
+	 * @param t2
+	 * @return
+	 */
+	public boolean inOrder(Token t1, Token t2) {
+		if(t1 == null || t2 == null) {
+			return false;
+		}
+		int i1 = m_tokens.indexOf(t1);
+		if(i1 < 0) {
+			return false;
+		}
+		int i2 = m_tokens.indexOf(t2);
+		if(i2 < 0) {
+			return false;
+		}
+		if(i1 < i2) {
+			return true;
+		}
+		return false;
+		
+	}
+	/**
+	 * removes a range of tokens from start to end.
+	 * Does not include end
+	 * @param start
+	 * @param end
+	 */
+	public void remove(Token start, Token end) {
+		if(inOrder(start, end)) {
+			
+		}
+		Token t = end;
+		while(inOrder(start, t)) {
+			Token newT = relative()
+		}
+		
 	}
 
 

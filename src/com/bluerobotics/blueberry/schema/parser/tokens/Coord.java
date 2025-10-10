@@ -335,5 +335,6 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
+	
 
 }

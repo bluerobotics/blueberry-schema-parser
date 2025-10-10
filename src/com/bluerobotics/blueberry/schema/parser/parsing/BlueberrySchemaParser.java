@@ -30,6 +30,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -78,6 +79,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	private final TokenList m_tokens = new TokenList();
 	private final ArrayList<DefinedTypeToken> m_defines = new ArrayList<DefinedTypeToken>();
+	private final ArrayList<Field> m_fieldTypes = new ArrayList<>();
 	private StructField m_topLevelField = null;
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
@@ -195,10 +197,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void checkBrackets() throws SchemaParserException {
 
-		m_tokens.resetIndex();
-		while(m_tokens.isMore()) {
-			m_tokens.matchBrackets(null);
-			m_tokens.next();
+		Token result = m_tokens.get(0);
+		while(result != null) {
+			result = m_tokens.matchBrackets(result);
+			result = m_tokens.next(result);
 		}
 	}
 
@@ -210,10 +212,36 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		// TODO Auto-generated method stub
 
 	}
-	private void extractEnums() {
+	/**
+	 * Scans for enum definitions
+	 * Should be of the form <comment?><enum><typeName><colon?><baseType?><openBrace>
+	 * Note this doesn't check for 
+	 * @throws SchemaParserException 
+	 */
+	private void extractEnums() throws SchemaParserException {
 		m_tokens.resetIndex();
 		while(m_tokens.isAtEnd()) {
-
+			IdentifierToken et = m_tokens.gotoNextId(TokenIdentifier.ENUM);
+			if(et != null) {
+				CommentToken enumComment = m_tokens.relative(-1, CommentToken.class);
+				SingleWordToken enumName = m_tokens.relative(1, SingleWordToken.class);
+				IdentifierToken colon = m_tokens.relativeId(2, TokenIdentifier.COLON);
+				BaseTypeToken enumType = m_tokens.relative(3, BaseTypeToken.class);
+				IdentifierToken braceStart = m_tokens.relativeId(colon == null ? 2 : 4, TokenIdentifier.COLON);
+				IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+				if(enumName != null && braceStart != null && braceEnd != null) {
+//					EnumField ef = new EnumField(enumName.getFieldName(), );
+//					m_defines.add(ef);
+					Token t = braceStart;
+					while(m_tokens.inOrder(t, braceEnd)) {
+						SingleWordToken swt = m_tokens.findNext(t, SingleWordToken.class);
+						
+						
+					}
+				}
+				
+				
+			}
 		}
 	}
 	/**

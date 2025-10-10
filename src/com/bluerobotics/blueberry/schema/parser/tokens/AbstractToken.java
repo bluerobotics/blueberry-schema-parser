@@ -42,6 +42,7 @@ public abstract class AbstractToken implements Token {
 	public String toString() {
 		return getClass().getSimpleName() + "()";
 	}
-
+	
+	
 
 }

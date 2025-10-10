@@ -26,5 +26,7 @@ public interface Token {
 	Coord getStart();
 
 	Coord getEnd();
+	
+	
 
 }
