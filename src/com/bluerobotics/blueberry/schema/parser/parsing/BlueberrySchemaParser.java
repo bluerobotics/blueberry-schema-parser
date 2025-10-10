@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
+import com.bluerobotics.blueberry.schema.parser.fields.DefinedField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
@@ -78,8 +79,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	private final TokenList m_tokens = new TokenList();
-	private final ArrayList<DefinedTypeToken> m_defines = new ArrayList<DefinedTypeToken>();
-	private final ArrayList<Field> m_fieldTypes = new ArrayList<>();
+	private final ArrayList<DefinedField> m_defines = new ArrayList<>();
 	private StructField m_topLevelField = null;
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 	private NestedFieldAllocationToken m_topLevelToken = null;
@@ -107,7 +107,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public void append(String filePath, String[] schemaLines) throws SchemaParserException {
 		//split into lines
 
-		Coord c = new Coord(filePath, 0,0, schemaLines);
+		Coord c = new Coord(filePath, 0,0, schemaLines);	/**
+		 * scan a range of tokens to resolve field allocaations in defined types
+		 * this will recurse and close all braces from deepest level outwards
+		 * @param start - the first index to scan
+		 * @param owner - the owner of the block of field allocations
+		 * @return the index of a closing brace token
+		 * @throws SchemaParserException
+		 */
+
 
 		m_tokens.add(new FilePathToken(c, filePath));
 
@@ -171,17 +179,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			fu.computeIndeces(m_topLevelField, 0);
 ////			fu.computeParents(m_topLevelField);
 ////			fu.removeDuplicates(m_topLevelField, null);
-
-			extractEnums();
-			extractTypedefs();
-			extractStructs();
+			assembleFields();
+//			extractEnums();
+//			extractTypedefs();
+//			extractStructs();
 
 		} catch (SchemaParserException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("************* Defines ***************");
-		for(Token pe : m_defines) {
+		for(DefinedField pe : m_defines) {
 			System.out.println(pe.toString());
 		}
 
@@ -191,6 +199,40 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 
+	private void assembleFields() {
+		FieldName module = null;
+		ParentField parent = null;
+
+		m_tokens.resetIndex();
+
+		while(m_tokens.isMore()) {
+			if(parent == null) {//we're not currently doing anything
+				Token t = m_tokens.getCurrent();
+				IdentifierToken it = m_tokens.relative(0,IdentifierToken.class);
+				if(it != null) {
+					switch(it.getKeyword()) {
+					case CONST:
+						break;
+					case ENUM:
+						break;
+					case MESSAGE:
+						break;
+					case MODULE:
+						break;
+					case SEQUENCE:
+						break;
+					case STRUC:
+						break;
+					case TYPEDEF:
+						break;
+					}
+				} else if(t instanceof AnnotationToken) {
+
+				}
+
+			}
+		}
+	}
 	/**
 	 * Checks braces. Makes sure they are properly opened and closed and relate to known keywords
 	 * @throws SchemaParserException
@@ -215,8 +257,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * Scans for enum definitions
 	 * Should be of the form <comment?><enum><typeName><colon?><baseType?><openBrace>
-	 * Note this doesn't check for 
-	 * @throws SchemaParserException 
+	 * Note this doesn't check for
+	 * @throws SchemaParserException
 	 */
 	private void extractEnums() throws SchemaParserException {
 		m_tokens.resetIndex();
@@ -235,12 +277,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					Token t = braceStart;
 					while(m_tokens.inOrder(t, braceEnd)) {
 						SingleWordToken swt = m_tokens.findNext(t, SingleWordToken.class);
-						
-						
+
+
 					}
 				}
-				
-				
+
+
 			}
 		}
 	}
@@ -385,7 +427,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void checkForDuplicateEnumValues() throws SchemaParserException {
-		for(Token t : m_defines) {
+		for(DefinedField t : m_defines) {
 			if(t instanceof EnumToken) {
 				EnumToken et = (EnumToken)t;
 				for(NameValueToken nvt : et.getNameValueTokens()) {
@@ -411,7 +453,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * Fills them in with the smallest, unused, positive, integer value.
 	 */
 	private void fillInMissingEnumValues() {
-		for(Token t : m_defines) {
+		for(DefinedField t : m_defines) {
 			if(t instanceof EnumToken) {
 				EnumToken et = (EnumToken)t;
 				long nextValue = 0;
@@ -652,13 +694,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private DefinedTypeToken lookupType(String typeName) {
 		DefinedTypeToken result = null;
-		for(DefinedTypeToken t : m_defines) {
-			if(t.getDefineToken() == null) {
-				System.out.println("blah");
-			}
-			if(t.getDefineToken().getTypeName().equals(typeName)) {
-				result = t;
-			}
+		for(DefinedField t : m_defines) {
+
 		}
 		return result;
 	}
@@ -687,81 +724,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	/**
-	 * scan a range of tokens to resolve field allocaations in defined types
-	 * this will recurse and close all braces from deepest level outwards
-	 * @param start - the first index to scan
-	 * @param owner - the owner of the block of field allocations
-	 * @return the index of a closing brace token
-	 * @throws SchemaParserException
-	 */
-	private int collapseDefinedTypeFields(int start, FieldAllocationOwner owner) throws SchemaParserException {
-		int result = -1;
-		int i = start;
-		int bsi = -1;
 
-		while(i < m_tokens.size()){
-			//find the next brace
-//			i = findToken(i, true, BraceStartToken.class, BraceEndToken.class);
-
-			Token ti = m_tokens.get(i);
-			if(bsi < 0 && owner != null) {
-				if(ti instanceof CommentToken) {
-
-				} else if(ti instanceof BraceStartToken) {
-					bsi = i;
-				} else {
-					result = start;
-					break;
-				}
-				++i;
-
-			} else if(ti instanceof FieldAllocationOwner) {
-
-				//we've found another owner so recurse
-				int m = collapseDefinedTypeFields(i + 1, (FieldAllocationOwner)ti);
-				if(m < 0) {
-					break;
-				} else if(ti instanceof DefinedTypeToken) {
-					m_defines.add((DefinedTypeToken)ti);
-					m_tokens.remove(ti);
-				} else if(owner != null && ti instanceof FieldAllocationToken) {
-					owner.add((FieldAllocationToken)ti);
-					m_tokens.remove(ti);
-				}
-//				i = m;
-			} else if(ti instanceof EnumToken) {
-				m_defines.add((EnumToken)ti);
-				m_tokens.remove(ti);
-			} else if(ti instanceof BraceEndToken) {
-				//can probably delete everything since the brace start, which was bsi
-				if(bsi < 0) {
-					throw new SchemaParserException("That's weird, we should have had an open brace before this, line "+ti.getStart().getLineIndex(), ti.getStart());
-				}
-				for(int k = i; k >= bsi; --k) {
-					m_tokens.remove(k);
-				}
-				result = start;
-				break;//bail out of this level of recursion
-			} else if(ti instanceof FieldAllocationToken) {
-				if(owner != null) {
-					owner.add((FieldAllocationToken)ti);
-				}
-				++i;
-
-			} else  {
-				++i;
-			}
-			if(i >= m_tokens.size()) {
-				if(bsi >= 0) {
-					throw new SchemaParserException("No closing brace!", m_tokens.get(bsi).getStart());
-				}
-			}
-
-		}
-		return result;
-
-	}
 	/**
 	 * Any sequence of a define token and a defined type token gets collapsed into a single defined type token
 	 * @throws SchemaParserException

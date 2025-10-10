@@ -32,13 +32,6 @@ public interface Field {
 	int getBitCount();
 	Field getParent();
 	void setParent(Field p);
-	void setInHeader(boolean b);
-	boolean isInHeader();
-	/**
-	 * return the 4 byte word that contains this field
-	 * if this is a 4 byte word then returns itself
-	 * @return
-	 */
-	Field getContainingWord();
+
 	FieldName getCorrectParentName();
 }

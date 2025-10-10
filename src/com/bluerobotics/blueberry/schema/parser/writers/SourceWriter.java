@@ -219,7 +219,7 @@ public abstract class SourceWriter {
 		return result;
 	}
 	protected String makeKeyName(FixedIntField key) {
-		Field p = key.getContainingWord().getParent();
+		Field p = key.getParent();
 		FieldName pn = p.getName();
 //		if(p instanceof ArrayField) {
 //			pn = pn.addPrefix(p.getParent().getName());

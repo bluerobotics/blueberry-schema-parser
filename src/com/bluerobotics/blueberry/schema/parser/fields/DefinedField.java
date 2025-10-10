@@ -22,8 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
- * 
+ *
  */
-public interface DefinedField {
+public interface DefinedField extends Field {
 	public FieldName getTypeName();
 }

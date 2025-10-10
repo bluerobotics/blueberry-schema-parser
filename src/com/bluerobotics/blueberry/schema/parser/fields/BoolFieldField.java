@@ -25,20 +25,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ *
  */
 public class BoolFieldField extends BaseField {
 	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
 	public BoolFieldField() {
 		super(null, Type.BOOLFIELD, null);
 	}
-	
-	
+
+
 	public void add(BoolField t) {
 		if(!isFull()) {
 			m_bools.add(t);
 			t.setParent(this);
-			t.setInHeader(isInHeader());
+
 		} else {
 			throw new RuntimeException("Cannot add more than 8 bits to this byte!");
 		}
@@ -64,7 +64,7 @@ public class BoolFieldField extends BaseField {
 			break;
 		default:
 			break;
-				
+
 		}
 		return t;
 	}
@@ -91,15 +91,10 @@ public class BoolFieldField extends BaseField {
 	}
 
 
-	@Override
-	public void setInHeader(boolean b) {
-		super.setInHeader(b);
-		m_bools.forEach(bool -> bool.setInHeader(b));
-	}
 
 
-	
-	
-	
+
+
+
 
 }

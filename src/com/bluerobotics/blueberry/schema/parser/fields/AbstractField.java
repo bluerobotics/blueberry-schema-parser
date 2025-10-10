@@ -27,7 +27,7 @@ public abstract class AbstractField implements Field {
 	private final String m_comment;
 	private Field m_parent = null;
 	private boolean m_inHeader = false;
-	
+
 	protected AbstractField(FieldName name, Type type, String comment) {
 		m_name = name;
 		m_type = checkType(type);
@@ -56,11 +56,11 @@ public abstract class AbstractField implements Field {
 	 * @throws RuntimeException if the type is not compatible
 	 */
 	abstract Type checkType(Type t) throws RuntimeException;
-	
+
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name+")";
 	}
-	
+
 	public boolean isInt() {
 		boolean result = false;
 		switch(getType()) {
@@ -84,7 +84,7 @@ public abstract class AbstractField implements Field {
 		case UINT8:
 			result = true;
 			break;
-		
+
 		}
 		return result;
 	}
@@ -111,47 +111,20 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
-	@Override
-	public void setInHeader(boolean b) {
-		m_inHeader = b;
-	}
-	@Override
-	public boolean isInHeader() {
-		return m_inHeader;
-	}
 
-	@Override
-	public Field getContainingWord() {
-		Field bf = this;
-		Field f = bf;
-		if(bf instanceof BoolField) {
-			f = bf.getParent().getParent();
-		} else if(bf.getBitCount() < 32) {
-			f = bf.getParent();
-		}
-		if(f == null) {
-			System.out.println("CWriter.getCorrectedParent");
-		}
-		return f;
-	
-		
-	}
 	public FieldName getCorrectParentName() {
 		FieldName result = null;
-		Field f = getContainingWord();
-		Field p = f.getParent();
+		Field p = getParent();
 		StructField bf = null;
 		if(p != null) {
 			bf = (StructField)p;
 		}
-		
-		if(f.isInHeader() && bf != null) {
-			result = bf.getTypeName();
-		} else if(bf != null) {
-			result = bf.getName();
-		}
+
+
+		result = bf.getName();
+
 		return result;
 	}
-	
-	
+
+
 }

@@ -182,7 +182,7 @@ public class CWriter extends SourceWriter {
 	}
 
 	private String makeBlockValueDefine(FixedIntField fif) {
-		FieldName parent = fif.getContainingWord().getParent().getName();
+		FieldName parent = fif.getParent().getName();
 
 		return parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
 	}
@@ -427,7 +427,7 @@ public class CWriter extends SourceWriter {
 			boolean array = false;
 
 			String arrayComment = "";
-			if(addBytesPerRepeat && (f.getContainingWord().getParent()) instanceof ArrayField) {
+			if(addBytesPerRepeat && (f.getParent()) instanceof ArrayField) {
 				array = true;
 				arrayComment = "@param i - index of array item to get\n"+
 								"@param bytesPerRepeat - number of bytes in each array repeated element";
@@ -453,8 +453,7 @@ public class CWriter extends SourceWriter {
 		}
 	}
 	private boolean isInArray(BaseField f) {
-		Field cw = f.getContainingWord();
-		StructField bf = (StructField)cw.getParent();//this must be true I think
+		StructField bf = (StructField)f.getParent();//this must be true I think
 		return (bf instanceof ArrayField);
 	}
 //	private void addBaseSetterGuts(BaseField f) {
@@ -480,7 +479,7 @@ public class CWriter extends SourceWriter {
 
 		String arrayParms = "";
 		String arrayComment = "";
-		Field p = f.getContainingWord().getParent();
+		Field p = f.getParent();
 		if(p instanceof ArrayField && doArrayStuff) {
 			af = (ArrayField)p;
 

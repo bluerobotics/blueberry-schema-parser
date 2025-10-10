@@ -66,39 +66,7 @@ public interface ParentField extends Field, DefinedField {
 //		cf.add(f);
 
 	}
-	default boolean addBool(ParentField pf, BoolField f) {
-		boolean result = false;
-		BoolFieldField bff = null;
 
-		for(Field ft2 : pf.getFields()) {
-			if(ft2 instanceof BoolFieldField) {
-				BoolFieldField bff2 = (BoolFieldField)ft2;
-				if(!bff2.isFull()){
-					bff = bff2;
-					break;
-				}
-			}
-		}
-		if(bff == null) {
-
-
-
-
-
-			bff = new BoolFieldField();
-			pf.add(bff);
-			bff.setParent(pf);
-			bff.setInHeader(pf.isInHeader());
-
-
-			if(bff != null) {
-				bff.add(f);
-				result = true;
-			}
-
-		}
-		return result;
-	}
 
 	/**
 	 * adds a bool field.

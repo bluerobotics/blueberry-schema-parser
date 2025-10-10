@@ -115,7 +115,7 @@ public class TokenList {
 		} else {
 			m_index = m_tokens.size();
 		}
-		
+
 	}
 	public void next() {
 		if(!isAtEnd()) {
@@ -128,7 +128,7 @@ public class TokenList {
 			throw new SchemaParserException("Token " + t + " is not part of list.", t.getStart());
 		} else {
 			++i;
-			
+
 		}
 		return get(i);
 	}
@@ -238,10 +238,10 @@ public class TokenList {
 			startI = 0;
 		}
 		int i = findToken(startI, true, 0, test);
-		
+
 		return get(i);
 	}
-	
+
 	/**
 	 * Advances to the next token of the specified sub-type
  	 * if none exists then index is moved to past the last element of the list
@@ -255,8 +255,8 @@ public class TokenList {
 			return cs == t.getClass();
 		}));
 	}
-	
-	
+
+
 	/**
 	 * Finds the next IdentifierToken of the specified sub-type
  	 * if none exists then returns null
@@ -294,7 +294,7 @@ public class TokenList {
 	public IdentifierToken gotoNextId(TokenIdentifier... tis) {
 		IdentifierToken result = findNextId(getCurrent(), tis);
 		setIndex(result);
-		
+
 		return result;
 	}
 	/**
@@ -312,7 +312,24 @@ public class TokenList {
 		}
 		return result;
 	}
-	
+	public Token relative(Token t, int i) {
+		Token result = null;
+		int j = m_tokens.indexOf(t);
+		if(j > 0) {
+			--j;
+			result = m_tokens.get(j);
+		}
+		return result;
+	}
+	public <T extends Token> T relative(Token t, int i, Class<T> type) {
+		T result = null;
+		Token t2 = relative(t, i);
+		if(t2.getClass() == type) {
+			result = type.cast(t);
+		}
+		return result;
+	}
+
 	/**
 	 * finds the next occurance of the specified type and returns it cast to the specific type
 	 * @param <T>
@@ -324,11 +341,11 @@ public class TokenList {
 		Token r = findNext(start, t -> {
 			return t.getClass() == type;
 		});
-		
+
 		return type.cast(r);
 	}
-	
-	
+
+
 	public IdentifierToken relativeId(int i, TokenIdentifier id) {
 		IdentifierToken result = relative(i, IdentifierToken.class);
 		if(result != null) {
@@ -336,7 +353,7 @@ public class TokenList {
 				result = null;
 			}
 		}
-		
+
 		return result;
 	}
 	public String toString() {
@@ -356,12 +373,12 @@ public class TokenList {
 		if(t == null) {
 			t = m_tokens.get(0);
 		}
-		
+
 		IdentifierToken it = null;
 		TokenIdentifier match = null;
 		if(t instanceof IdentifierToken) {
 			it = (IdentifierToken)t;
-		
+
 			switch(it.getKeyword()) {
 			case BRACE_START:
 				match = TokenIdentifier.BRACE_END;
@@ -384,12 +401,12 @@ public class TokenList {
 				t = next(t);
 			}
 		}
-		
-	
+
+
 		result = findNextId(t, TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
 
-		
-		
+
+
 		if(result == null && match != null) {
 			throw new SchemaParserException("Did not find a match for "+it, it.getStart());
 		} else if(match == null) {
@@ -401,7 +418,7 @@ public class TokenList {
 			throw new SchemaParserException("Not sure what error this was "+it, it.getStart());
 
 		}
-	
+
 		return result;
 
 	}
@@ -428,7 +445,7 @@ public class TokenList {
 			return true;
 		}
 		return false;
-		
+
 	}
 	/**
 	 * removes a range of tokens from start to end.
@@ -437,14 +454,14 @@ public class TokenList {
 	 * @param end
 	 */
 	public void remove(Token start, Token end) {
-		if(inOrder(start, end)) {
-			
-		}
-		Token t = end;
+		Token t = relative(end, -1);
 		while(inOrder(start, t)) {
-			Token newT = relative()
+			Token newT = relative(t, -1);
+			remove(t);
+			t = newT;
+
 		}
-		
+
 	}
 
 
