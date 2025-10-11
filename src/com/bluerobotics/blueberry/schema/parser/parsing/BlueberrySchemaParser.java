@@ -32,12 +32,12 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.ConstField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
-import com.bluerobotics.blueberry.schema.parser.fields.Type;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseType;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.ArrayToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
@@ -304,7 +304,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		IdentifierToken braceOpen = m_tokens.relativeId(colon == null ? 3 : 5, TokenIdentifier.BRACE_START);
 		if(name != null && braceOpen != null) {
 			
-//			EnumField ef = new EnumField();
+			EnumType ef = new EnumType();
 		}
 		
 	}
@@ -318,14 +318,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(btt == null) {
 			throw new SchemaParserException("Only base types can be declared const.", it.getEnd());
 		} else {
-			Type type = lookupType(btt);
+			BaseType type = lookupType(btt);
 			if(name == null) {
 				throw new SchemaParserException("Const must specify a name.", it.getEnd());
 			}
-			if(type != Type.STRING && value == null) {
+			if(type != BaseType.STRING && value == null) {
 				throw new SchemaParserException("Const must have a specified value.", it.getEnd());
 			}
-			if(type == Type.STRING) {
+			if(type == BaseType.STRING) {
 				m_constants.add(new ConstField(FieldName.fromCamel(name.getName()), string.getString(), comment.combineLines()));	
 				m_tokens.setIndex(string);
 			} else {
@@ -338,42 +338,42 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	}
 	
-	private Type lookupType(IdentifierToken it) throws SchemaParserException {
-		Type type = null;
+	private BaseType lookupType(IdentifierToken it) throws SchemaParserException {
+		BaseType type = null;
 		switch(it.getKeyword()) {
 		case BOOLEAN:
-			type = Type.BOOL;
+			type = BaseType.BOOL;
 			break;
 		case UINT8:
-			type = Type.UINT8;
+			type = BaseType.UINT8;
 			break;
 		case UINT16:
-			type = Type.UINT16;
+			type = BaseType.UINT16;
 			break;
 		case UINT32:
-			type = Type.UINT32;
+			type = BaseType.UINT32;
 			break;
 		case UINT64:
-			type = Type.UINT64;
+			type = BaseType.UINT64;
 			break;
 		case BYTE:
 		case INT8:
-			type = Type.INT8;
+			type = BaseType.INT8;
 			break;
 		case SHORT:
 		case INT16:
-			type = Type.INT16;
+			type = BaseType.INT16;
 			break;
 		case LONG:
 		case INT:
 		case INT32:
-			type = Type.INT32;
+			type = BaseType.INT32;
 			break;
 		case INT64:
-			type = Type.INT64;
+			type = BaseType.INT64;
 			break;
 		case STRING:
-			type = Type.STRING;
+			type = BaseType.STRING;
 			break;
 		default:
 			throw new SchemaParserException("Const must specify a type.", it.getEnd());
@@ -757,7 +757,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			EnumToken et = (EnumToken)t;
 
 
-			EnumField ef = new EnumField(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getKeyword()), getComment(et.getComment()));
+			EnumType ef = new EnumType(FieldName.fromCamel(fieldName), FieldName.fromCamel(tt.getName()), lookupBaseType(et.getKeyword()), getComment(et.getComment()));
 			for(NameValueToken nvt : et.getNameValueTokens()) {
 
 				ef.addNameValue(FieldName.fromSnake(nvt.getName()), nvt.getValue().intValue(), getComment(nvt.getComment()));
@@ -767,7 +767,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		} else if(t instanceof BaseTypeToken) {
 			BaseTypeToken btt = (BaseTypeToken)t;
-			Type tp = lookupBaseType(btt.getKeyword());
+			BaseType tp = lookupBaseType(btt.getKeyword());
 			switch(tp) {
 
 			case BOOL:
@@ -800,41 +800,41 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param bt
 	 * @return
 	 */
-	Type lookupBaseType(TokenIdentifier bt) {
-		Type result = null;
+	BaseType lookupBaseType(TokenIdentifier bt) {
+		BaseType result = null;
 		switch(bt) {
 		case BOOLEAN:
-			result = Type.BOOL;
+			result = BaseType.BOOL;
 			break;
 		case FLOAT:
-			result = Type.FLOAT32;
+			result = BaseType.FLOAT32;
 			break;
 		case DOUBLE:
-			result = Type.FLOAT64;
+			result = BaseType.FLOAT64;
 			break;
 		case INT16:
-			result = Type.INT16;
+			result = BaseType.INT16;
 			break;
 		case INT32:
-			result = Type.INT32;
+			result = BaseType.INT32;
 			break;
 		case INT8:
-			result = Type.INT8;
+			result = BaseType.INT8;
 			break;
 		case UINT16:
-			result = Type.UINT16;
+			result = BaseType.UINT16;
 			break;
 		case UINT32:
-			result = Type.UINT32;
+			result = BaseType.UINT32;
 			break;
 		case UINT8:
-			result = Type.UINT8;
+			result = BaseType.UINT8;
 			break;
 		case UINT64:
-			result = Type.UINT64;
+			result = BaseType.UINT64;
 			break;
 		case INT64:
-			result = Type.INT64;
+			result = BaseType.INT64;
 			break;
 
 
