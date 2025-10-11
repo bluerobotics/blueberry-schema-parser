@@ -34,6 +34,7 @@ public interface TokenConstants {
 		BRACKET_START("("),
 		BYTE("byte"),
 		BICOLON("::"),//this must come before a colon
+		CHAR("ckar"),
 		COLON(":"),
 		COMMA(","),
 		CONST("const"),

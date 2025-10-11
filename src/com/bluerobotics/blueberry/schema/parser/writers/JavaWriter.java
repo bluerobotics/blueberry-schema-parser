@@ -30,8 +30,8 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -790,7 +790,7 @@ public class JavaWriter extends SourceWriter {
 //		});
 	}
 
-	private void writeEnum(EnumField f) {
+	private void writeEnum(EnumType f) {
 		List<NameValue> nvs = f.getNameValues();
 
 		String comment = f.getComment();
@@ -884,8 +884,8 @@ public class JavaWriter extends SourceWriter {
 	 */
 	private String lookupObjectTypeForJavaVars(BaseField f){
 		String result = "";
-		if(f instanceof EnumField) {
-			result = makeEnumTypeName((EnumField)f);
+		if(f instanceof EnumType) {
+			result = makeEnumTypeName((EnumType)f);
 		} else {
 			switch(f.getType()) {
 			case ARRAY:
@@ -915,8 +915,8 @@ public class JavaWriter extends SourceWriter {
 	}
 	private String lookupTypeForJavaVars(BaseField f) {
 		String result = "";
-		if(f instanceof EnumField) {
-			result = makeEnumTypeName((EnumField)f);
+		if(f instanceof EnumType) {
+			result = makeEnumTypeName((EnumType)f);
 		} else {
 			switch(f.getType()) {
 			case ARRAY:
@@ -958,7 +958,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		return result;
 	}
-	private String lookupTypeForJavaType(EnumField f) {
+	private String lookupTypeForJavaType(EnumType f) {
 		String result = "";
 
 		switch(f.getType()) {
@@ -1001,7 +1001,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		return result;
 	}
-	private String makeEnumTypeName(EnumField f) {
+	private String makeEnumTypeName(EnumType f) {
 		return f.getTypeName().addSuffix("enum").toUpperCamel();
 	}
 

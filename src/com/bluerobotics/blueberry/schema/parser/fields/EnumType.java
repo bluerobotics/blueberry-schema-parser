@@ -29,7 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 /**
  * 
  */
-public class EnumField extends BaseField implements DefinedField {
+public class EnumType extends BaseType  {
 	public class NameValue {
 		FieldName name;
 		long value;
@@ -58,11 +58,13 @@ public class EnumField extends BaseField implements DefinedField {
 		}
 	}
 	private final FieldName m_typeName;
+	private final String m_comment;
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
 
-	public EnumField(FieldName name, FieldName typeName, Type type, String comment) {
-		super(name, type, comment);
+	public EnumType(FieldName typeName, TypeDef type, String comment) {
+		super(type);
 		m_typeName = typeName;
+		m_comment = comment;
 	}
 	
 	public void addNameValue(FieldName name, long value, String comment) {
@@ -81,7 +83,7 @@ public class EnumField extends BaseField implements DefinedField {
 	public boolean equals(Object obj) {
 		boolean result =  super.equals(obj);
 		if(result) {
-			EnumField ef = (EnumField)obj;
+			EnumType ef = (EnumType)obj;
 			
 			if(!ef.getTypeName().equals(getTypeName())) {
 				result = false;

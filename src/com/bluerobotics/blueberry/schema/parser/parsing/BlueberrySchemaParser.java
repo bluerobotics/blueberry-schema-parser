@@ -144,11 +144,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			collapseDefines();
 			collapseNumbers();
 			collapseBaseTypes();
+			collapseUnsigned();
 //			collapseAnnotations();
 			collapseNameValues();
 			collapseEols();
 			coolapseSemicolons();
 			checkBrackets();
+			
 //			collapseEnums();
 //			collapseEnumValues();
 //			identifyFieldNames();
@@ -201,6 +203,45 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
+	private void collapseUnsigned() throws SchemaParserException {
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()) {
+			BaseTypeToken it = m_tokens.gotoNext(BaseTypeToken.class);
+			if(it != null && it.getKeyword() == TokenIdentifier.UNSIGNED) {
+				BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
+				TokenIdentifier newTi = null;
+				if(btt == null) {
+					throw new SchemaParserException("Unsigned keyword must be followed by a base type.", it.getEnd());
+				} else {
+					switch(btt.getKeyword()) {
+					case BYTE:
+					case INT8:
+						newTi = TokenIdentifier.UINT8;
+						break;
+					case SHORT:
+					case INT16:
+						newTi = TokenIdentifier.UINT16;
+						break;
+					case LONG:
+					case INT:
+					case INT32:
+						newTi = TokenIdentifier.UINT32;
+						break;
+					case INT64:
+						newTi = TokenIdentifier.UINT64;
+						break;
+					default:
+						throw new SchemaParserException("Unsigned keyword makes no sense combined with "+btt.getName(), btt.getStart());
+					}
+					BaseTypeToken newBtt = new BaseTypeToken(it.getStart(), btt.getEnd(), newTi);
+					m_tokens.replace(it, newBtt);
+					m_tokens.remove(btt);
+				}
+			}
+			m_tokens.next();
+		}
+		
+	}
 	private FieldName m_module = null;
 	private ParentField m_parent = null;
 	private Token m_moduleEnd = null;
@@ -227,7 +268,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						processConst(it);
 						break;
 					case ENUM:
-//						processEnum(it);
+						processEnum(it);
 						break;
 					case MESSAGE:
 						break;
@@ -255,6 +296,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	private void processEnum(IdentifierToken enumT) {
+		CommentToken comment = m_tokens.relative(-1, CommentToken.class);
+		SingleWordToken name = m_tokens.relative(2, SingleWordToken.class);
+		IdentifierToken colon = m_tokens.relativeId(3, TokenIdentifier.COLON);
+		BaseTypeToken btt = m_tokens.relative(4, BaseTypeToken.class);
+		IdentifierToken braceOpen = m_tokens.relativeId(colon == null ? 3 : 5, TokenIdentifier.BRACE_START);
+		if(name != null && braceOpen != null) {
+			
+//			EnumField ef = new EnumField();
+		}
+		
+	}
 	private void processConst(IdentifierToken it) throws SchemaParserException {
 		CommentToken comment = m_tokens.relative(-1, CommentToken.class);
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
@@ -265,76 +318,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(btt == null) {
 			throw new SchemaParserException("Only base types can be declared const.", it.getEnd());
 		} else {
-			Type type = null;
-			switch(btt.getKeyword()) {
-			case UNSIGNED:
-				BaseTypeToken btt2 = m_tokens.relative(2, BaseTypeToken.class);
-				name = m_tokens.relative(3, SingleWordToken.class);
-				equals = m_tokens.relativeId(4, TokenIdentifier.EQUALS);
-				value = m_tokens.relative(4, NumberToken.class);
-
-				if(btt2 == null) {
-					throw new SchemaParserException("Unsigned must be followed by a base type", btt.getEnd());
-				} else {
-					switch(btt2.getKeyword()) {
-					case INT8:
-					case BYTE:
-						type = Type.UINT8;
-						break;
-					case INT32:
-					case INT:
-					case LONG:
-						type = Type.UINT32;
-						break;
-					case INT16:
-					case SHORT:
-						type = Type.UINT16;
-						break;
-					case INT64:
-						type = Type.UINT64;
-						break;
-					default:
-						throw new SchemaParserException("Unsigned "+btt2.getKeyword().name()+" does not make sense.", btt2.getStart());
-					}
-				}
-				break;
-			case BOOLEAN:
-				type = Type.BOOL;
-				break;
-			case UINT8:
-				type = Type.UINT8;
-				break;
-			case UINT16:
-				type = Type.UINT16;
-				break;
-			case UINT32:
-				type = Type.UINT32;
-				break;
-			case UINT64:
-				type = Type.UINT64;
-				break;
-			case BYTE:
-			case INT8:
-				type = Type.INT8;
-				break;
-			case SHORT:
-			case INT16:
-				type = Type.INT16;
-				break;
-			case LONG:
-			case INT:
-			case INT32:
-				type = Type.INT32;
-				break;
-			case INT64:
-				type = Type.INT64;
-				break;
-			case STRING:
-				type = Type.STRING;
-				break;
-			default:
-				throw new SchemaParserException("Const must specify a type.", it.getEnd());
-			}
+			Type type = lookupType(btt);
 			if(name == null) {
 				throw new SchemaParserException("Const must specify a name.", it.getEnd());
 			}
@@ -352,6 +336,50 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			
 		}
+	}
+	
+	private Type lookupType(IdentifierToken it) throws SchemaParserException {
+		Type type = null;
+		switch(it.getKeyword()) {
+		case BOOLEAN:
+			type = Type.BOOL;
+			break;
+		case UINT8:
+			type = Type.UINT8;
+			break;
+		case UINT16:
+			type = Type.UINT16;
+			break;
+		case UINT32:
+			type = Type.UINT32;
+			break;
+		case UINT64:
+			type = Type.UINT64;
+			break;
+		case BYTE:
+		case INT8:
+			type = Type.INT8;
+			break;
+		case SHORT:
+		case INT16:
+			type = Type.INT16;
+			break;
+		case LONG:
+		case INT:
+		case INT32:
+			type = Type.INT32;
+			break;
+		case INT64:
+			type = Type.INT64;
+			break;
+		case STRING:
+			type = Type.STRING;
+			break;
+		default:
+			throw new SchemaParserException("Const must specify a type.", it.getEnd());
+		}
+		
+		return type;
 	}
 	private void processModule(IdentifierToken it) throws SchemaParserException {
 		SingleWordToken moduleName = m_tokens.relative(1, SingleWordToken.class);

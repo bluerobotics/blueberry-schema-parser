@@ -26,32 +26,11 @@ package com.bluerobotics.blueberry.schema.parser.fields;
  */
 public class BaseField extends AbstractField {
 	private int m_index = -1;
-	public BaseField(FieldName name, Type type, String comment) {
+	public BaseField(FieldName name, BaseType type, String comment) {
 		super(name, type, comment);
 	}
 
-	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
 	
-		case FLOAT32:
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-		case BOOLFIELD:
-			break;
-		case ARRAY:
-		case BLOCK:
-		case BOOL:
-		case COMPOUND:
-			throw new RuntimeException("Field must only contain base types.");
-				
-		}
-		return t;
-	}
 	public void setIndex(int bi) {
 		m_index = bi;
 	}

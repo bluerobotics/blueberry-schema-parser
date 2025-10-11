@@ -30,6 +30,7 @@ public class BaseTypeToken extends IdentifierToken implements TypeToken {
 
 	private static final TokenIdentifier[] BASE_TYPES = {
 		TokenIdentifier.BOOLEAN,
+		TokenIdentifier.CHAR,
 		TokenIdentifier.BYTE,
 		TokenIdentifier.DOUBLE,
 		TokenIdentifier.FLOAT,
@@ -49,7 +50,9 @@ public class BaseTypeToken extends IdentifierToken implements TypeToken {
 	private BaseTypeToken(IdentifierToken it) {
 		super(it.getStart(), it.getEnd(), it.getKeyword());
 	}
-
+	public BaseTypeToken(Coord start, Coord end, TokenIdentifier keyword) {
+		super(start, end, keyword);
+	}
 	public static BaseTypeToken makeNew(IdentifierToken it) {
 		BaseTypeToken result = null;
 		for(TokenIdentifier ti : BASE_TYPES) {

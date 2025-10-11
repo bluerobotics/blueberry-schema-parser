@@ -33,16 +33,12 @@ public class StructField extends AbstractField implements ParentField {
 	private final ArrayList<Field> m_fields = new ArrayList<>();
 	private final FieldName m_typeName;
 
-	protected StructField(FieldName name, FieldName typeName, Type type, String comment) {
-		super(name, type, comment);
+	protected StructField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, comment);
 		m_typeName = typeName;
 
 	}
-	public StructField(FieldName name, FieldName typeName, String comment) {
-		super(name, Type.BLOCK, comment);
-		m_typeName = typeName;
 
-	}
 	@Override
 	public void add(AbstractField f) {
 		if(f == null) {
@@ -63,7 +59,7 @@ public class StructField extends AbstractField implements ParentField {
 		return 0;
 	}
 	@Override
-	Type checkType(Type t) throws RuntimeException {
+	BaseType checkType(BaseType t) throws RuntimeException {
 		switch(t) {
 
 		case BLOCK:

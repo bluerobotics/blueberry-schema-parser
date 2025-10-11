@@ -30,7 +30,7 @@ import java.util.List;
 public class BoolFieldField extends BaseField {
 	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
 	public BoolFieldField() {
-		super(null, Type.BOOLFIELD, null);
+		super(null, BaseType.BOOLFIELD, null);
 	}
 
 
@@ -47,7 +47,7 @@ public class BoolFieldField extends BaseField {
 		return m_bools.size() >= 8;
 	}
 	@Override
-	Type checkType(Type t) throws RuntimeException {
+	BaseType checkType(BaseType t) throws RuntimeException {
 		switch(t) {
 		case BLOCK:
 		case BOOL:

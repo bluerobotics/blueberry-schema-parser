@@ -27,13 +27,13 @@ import java.util.List;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
-import com.bluerobotics.blueberry.schema.parser.fields.Type;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseType;
 
 /**
  * This class implements the autogeneration of C code based on a parsed field structure
@@ -248,7 +248,7 @@ public class CWriter extends SourceWriter {
 //		}
 	}
 
-	private String makeEnumName(EnumField ef, NameValue nv) {
+	private String makeEnumName(EnumType ef, NameValue nv) {
 		return nv.getName().addPrefix(ef.getTypeName()).toUpperSnake();
 	}
 
@@ -493,7 +493,7 @@ public class CWriter extends SourceWriter {
 
 
 		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
-		if(f instanceof EnumField) {
+		if(f instanceof EnumType) {
 			functionName = "("+rt+")" + functionName;
 		}
 		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");");
@@ -669,9 +669,9 @@ public class CWriter extends SourceWriter {
 	private String getBaseType(BaseField f) {
 		String rt = "";
 
-		Type t = f.getType();
-		if(f instanceof EnumField) {
-			rt = getEnumTypeName((EnumField)f);
+		BaseType t = f.getType();
+		if(f instanceof EnumType) {
+			rt = getEnumTypeName((EnumType)f);
 		} else {
 
 			switch(t) {
@@ -715,7 +715,7 @@ public class CWriter extends SourceWriter {
 	}
 
 
-	private String getEnumTypeName(EnumField f) {
+	private String getEnumTypeName(EnumType f) {
 		return f.getTypeName().toUpperCamel();
 	}
 

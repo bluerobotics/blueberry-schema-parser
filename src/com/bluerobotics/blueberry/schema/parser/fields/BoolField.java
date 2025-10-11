@@ -27,10 +27,10 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 public class BoolField extends BaseField {
 
 	public BoolField(FieldName name, String comment) {
-		super(name, Type.BOOL, comment);
+		super(name, BaseType.BOOL, comment);
 	}
 	@Override
-	Type checkType(Type t) throws RuntimeException {
+	BaseType checkType(BaseType t) throws RuntimeException {
 		switch(t) {
 		
 		

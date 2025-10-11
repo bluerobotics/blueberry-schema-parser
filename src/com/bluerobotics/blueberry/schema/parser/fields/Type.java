@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -22,48 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
- *
+ * 
  */
-public enum Type {
-	BOOL           (1),
-	INT8           (8),
-	UINT8          (8),
-	BOOLFIELD      (8),
-	INT16          (16),
-	UINT16         (16),
-	INT32          (32),
-	UINT32         (32),
-	FLOAT32        (32),
-	INT64		   (64),
-	UINT64         (64),
-	FLOAT64         (64),
-	COMPOUND       (32),
-	ARRAY          (Integer.MAX_VALUE),
-	BLOCK          (Integer.MAX_VALUE),
-	COMPACT_ARRAY  (Integer.MAX_VALUE),
-	SEQUENCE       (Integer.MAX_VALUE),
-	STRING         (Integer.MAX_VALUE),
-	;
-
-
-
-
-
-
-
-
-
-	private int bitNum;
-	Type(int bn){
-		bitNum = bn;
-	}
-	public int getBitCount() {
-		return bitNum;
-	}
-	public boolean isBaseType() {
-		return bitNum <= 32;
-	}
-
-
-
+public interface Type {
+	public FieldName getTypeName();
 }

@@ -30,7 +30,7 @@ public abstract class AbstractField implements Field {
 
 	protected AbstractField(FieldName name, Type type, String comment) {
 		m_name = name;
-		m_type = checkType(type);
+		m_type = type;
 		m_comment = comment;
 	}
 	@Override
@@ -47,47 +47,15 @@ public abstract class AbstractField implements Field {
 	}
 	@Override
 	public int getBitCount() {
-		return m_type.getBitCount();
+		return 0;
 	}
-	/**
-	 * checks the type to see if it's compatible with this field
-	 * @param t the type to check
-	 * @return the same type
-	 * @throws RuntimeException if the type is not compatible
-	 */
-	abstract Type checkType(Type t) throws RuntimeException;
+	
 
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name+")";
 	}
 
-	public boolean isInt() {
-		boolean result = false;
-		switch(getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			break;
-		case BOOLFIELD:
-			break;
-		case COMPOUND:
-			break;
-		case FLOAT32:
-			break;
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			result = true;
-			break;
-
-		}
-		return result;
-	}
+	
 	@Override
 	public Field getParent() {
 		return m_parent;

@@ -22,57 +22,59 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 /**
- * 
+ *
  */
-public class FixedIntField extends BaseField {
-	@Override
-	public boolean equals(Object obj) {
-		boolean result = super.equals(obj);
-		if(result) {
-			FixedIntField fif = (FixedIntField)obj;
-			if(fif.getValue() != getValue()) {
-				result = false;
-			}
+public class BaseType implements Type {
+	public enum TypeDef {
+		BOOL           (1),
+		INT8           (8),
+		UINT8          (8),
+		BOOLFIELD      (8),
+		INT16          (16),
+		UINT16         (16),
+		INT32          (32),
+		UINT32         (32),
+		FLOAT32        (32),
+		INT64		   (64),
+		UINT64         (64),
+		FLOAT64         (64),
+		;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		private int bitNum;
+		private FieldName name;
+		TypeDef(int bn){
+			bitNum = bn;
+			name = FieldName.fromSnake(name());
 		}
-		return result;
+		public int getBitCount() {
+			return bitNum;
+		}
+		public boolean isBaseType() {
+			return bitNum <= 32;
+		}
+		public FieldName getName() {
+			return name;
+		}
 	}
-
-	private final long m_value;
-
-	public FixedIntField(BaseField f, long value) {
-		super(f.getName(), f.getType(), f.getComment());
-		m_value = value;
+	private final TypeDef m_type;
+	
+	public BaseType(TypeDef t) {
+		m_type = t;
 	}
 	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-	
-		
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			break;
-		case ARRAY:
-		case BLOCK:
-		case BOOL:
-		case COMPOUND:
-		case FLOAT32:
-		case BOOLFIELD:
-
-			throw new RuntimeException("Field must only contain base types.");
-		
-
-				
-		}
-		return t;
+	public FieldName getTypeName() {
+		return m_type.getName();
 	}
 	
-	public long getValue() {
-		return m_value;
-	}
-	
+
+
 
 }

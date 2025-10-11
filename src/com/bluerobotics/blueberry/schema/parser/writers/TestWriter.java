@@ -29,7 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
 import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
@@ -55,7 +55,7 @@ public class TestWriter extends SourceWriter {
 			BaseField bf = (BaseField)f;
 			w(""+bf.getIndex()+" ");
 		}
-		if(f instanceof EnumField) {
+		if(f instanceof EnumType) {
 			w("enum ");
 		}
 		w(f.getType().name());
