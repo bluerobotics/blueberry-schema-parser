@@ -21,8 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.writers;
 
-import java.util.ArrayList;
-
 /**
  * some handy formatting and conversion tools
  */

@@ -27,10 +27,6 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
-import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
@@ -46,7 +42,7 @@ public class TestWriter extends SourceWriter {
 	}
 	@Override
 	public void write(StructField bf, String... headers) {
-		write(0, bf);
+//		write(0, bf);
 	}
 	private void start(AbstractField f) {
 		w("(");
@@ -55,10 +51,10 @@ public class TestWriter extends SourceWriter {
 			BaseField bf = (BaseField)f;
 			w(""+bf.getIndex()+" ");
 		}
-		if(f instanceof EnumType) {
-			w("enum ");
-		}
-		w(f.getType().name());
+//		if(f instanceof EnumType) {
+//			w("enum ");
+//		}
+//		w(f.getType().name());
 		if(f.getName() != null) {
 			w(" ");
 			w(f.getName().toUpperCamel());
@@ -110,30 +106,30 @@ public class TestWriter extends SourceWriter {
 				eol(i);
 			}
 			firstTime = false;
-			write(i, f);
+//			write(i, f);
 		}
 	}
-	private void write(int i, FixedIntField f) {
-		start(f);
-		w(" = " + WriterUtils.formatAsHex(f.getValue()));
-		end();
-	}
+//	private void write(int i, FixedIntField f) {
+//		start(f);
+//		w(" = " + WriterUtils.formatAsHex(f.getValue()));
+//		end();
+//	}
 	private void write(int i, BaseField f) {
 		start(f);
 		end();
 //		eol(i);
 	}
-	private void write(int i, BoolFieldField f) {
-		start(f);
-		++i;
-		for(BoolField bf : f.getBoolFields()) {
-			eol(i);
-			start(bf);
-			end();
-		}
-
-		end();
-	}
+//	private void write(int i, BoolFieldField f) {
+//		start(f);
+//		++i;
+//		for(BoolField bf : f.getBoolFields()) {
+//			eol(i);
+//			start(bf);
+//			end();
+//		}
+//
+//		end();
+//	}
 
 	private void w(String s) {
 		m_writer.write(s);

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -19,30 +19,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.types;
+
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 
 /**
- * 
+ *
  */
-public class BoolField extends BaseField {
+public abstract class AbstractType implements Type {
+	private final FieldName m_typeName;
+	private final String m_comment;
+	private final TypeId m_typeId;
 
-	public BoolField(FieldName name, String comment) {
-		super(name, BaseType.BOOL, comment);
+
+public AbstractType(TypeId id, FieldName typeName, String comment) {
+
+		m_typeName = typeName;
+		m_comment = comment;
+		m_typeId = id;
+
+	}
+
+
+	@Override
+	public FieldName getTypeName() {
+		return m_typeName;
 	}
 	@Override
-	BaseType checkType(BaseType t) throws RuntimeException {
-		switch(t) {
-		
-		
-		case BOOL:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain bitfield types.");
-	
-		}
-		return t;
+	public String getComment() {
+		return m_comment;
 	}
-	
-	
+	@Override
+	public TypeId getTypeId() {
+		return m_typeId;
+	}
+
 
 }

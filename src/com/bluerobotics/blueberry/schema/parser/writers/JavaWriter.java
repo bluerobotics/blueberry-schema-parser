@@ -22,19 +22,13 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
-
-import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumType.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
+import com.bluerobotics.blueberry.schema.parser.types.EnumType;
+import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
 
 /**
  * Autogenerates Java code stubs based on a parsed field structure
@@ -757,7 +751,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 
 		writeConsants(top);
-		writeKeyEnum(top);
+//		writeKeyEnum(top);
 		writeFieldIndexEnum(top);
 		writeBitIndexEnum(top);
 		writeOtherEnums(top);
@@ -795,7 +789,7 @@ public class JavaWriter extends SourceWriter {
 
 		String comment = f.getComment();
 		String name = makeEnumTypeName(f);
-		String type = lookupTypeForJavaType(f);
+//		String type = lookupTypeForJavaType(f);
 
 		addDocComment(comment);
 		addLine("public enum "+name+" {");
@@ -807,7 +801,7 @@ public class JavaWriter extends SourceWriter {
 			} else {
 				c = "";
 			}
-			addLine(nv.getName().toUpperSnake()+"(("+type+")"+nv.getValueAsHex()+"),"+c);
+//			addLine(nv.getName().toUpperSnake()+"(("+type+")"+nv.getValueAsHex()+"),"+c);
 		}
 		addLine(";");
 		addLine("private static EnumLookup<"+name+"> m_lookup = new EnumLookup<"+name+">();");
@@ -835,172 +829,172 @@ public class JavaWriter extends SourceWriter {
 
 	}
 
-	private String lookupTypeForFuncName(BaseField f) {
-		String result = "";
-		switch(f.getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			result = "bool";
-			break;
-		case BOOLFIELD:
-			result = "byte";
-			break;
-		case COMPOUND:
-			result = "int";
-			break;
-		case FLOAT32:
-			result = "float";
-			break;
-		case INT16:
-			result = "short";
-			break;
-		case INT32:
-			result = "int";
-			break;
-		case INT8:
-			result = "byte";
-			break;
-		case UINT16:
-			result = "short";
-			break;
-		case UINT32:
-			result = "int";
-			break;
-		case UINT8:
-			result = "byte";
-			break;
-
-		}
-		return result;
-	}
+//	private String lookupTypeForFuncName(BaseField f) {
+//		String result = "";
+//		switch(f.getType()) {
+//		case ARRAY:
+//			break;
+//		case BLOCK:
+//			break;
+//		case BOOL:
+//			result = "bool";
+//			break;
+//		case BOOLFIELD:
+//			result = "byte";
+//			break;
+//		case COMPOUND:
+//			result = "int";
+//			break;
+//		case FLOAT32:
+//			result = "float";
+//			break;
+//		case INT16:
+//			result = "short";
+//			break;
+//		case INT32:
+//			result = "int";
+//			break;
+//		case INT8:
+//			result = "byte";
+//			break;
+//		case UINT16:
+//			result = "short";
+//			break;
+//		case UINT32:
+//			result = "int";
+//			break;
+//		case UINT8:
+//			result = "byte";
+//			break;
+//
+//		}
+//		return result;
+//	}
 	/**
 	 * looks up an object type to represent the type of the specified base field
 	 * This will not return a primitive type, instead it looks up the equivalent class type
 	 * @param f
 	 * @return
 	 */
-	private String lookupObjectTypeForJavaVars(BaseField f){
-		String result = "";
-		if(f instanceof EnumType) {
-			result = makeEnumTypeName((EnumType)f);
-		} else {
-			switch(f.getType()) {
-			case ARRAY:
-				break;
-			case BLOCK:
-				break;
-			case BOOL:
-				result = "Boolean";
-				break;
-			case FLOAT32:
-				result = "Double";
-				break;
-			case BOOLFIELD:
-			case COMPOUND:
-			case INT16:
-			case INT32:
-			case INT8:
-			case UINT16:
-			case UINT32:
-			case UINT8:
-				result = "Integer";
-				break;
-
-			}
-		}
-		return result;
-	}
-	private String lookupTypeForJavaVars(BaseField f) {
-		String result = "";
-		if(f instanceof EnumType) {
-			result = makeEnumTypeName((EnumType)f);
-		} else {
-			switch(f.getType()) {
-			case ARRAY:
-				break;
-			case BLOCK:
-				break;
-			case BOOL:
-				result = "boolean";
-				break;
-			case BOOLFIELD:
-				result = "int";
-				break;
-			case COMPOUND:
-				result = "int";
-				break;
-			case FLOAT32:
-				result = "double";
-				break;
-			case INT16:
-				result = "int";
-				break;
-			case INT32:
-				result = "int";
-				break;
-			case INT8:
-				result = "int";
-				break;
-			case UINT16:
-				result = "int";
-				break;
-			case UINT32:
-				result = "int";
-				break;
-			case UINT8:
-				result = "int";
-				break;
-
-			}
-		}
-		return result;
-	}
-	private String lookupTypeForJavaType(EnumType f) {
-		String result = "";
-
-		switch(f.getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			result = "boolean";
-			break;
-		case BOOLFIELD:
-			result = "int";
-			break;
-		case COMPOUND:
-			result = "int";
-			break;
-		case FLOAT32:
-			result = "double";
-			break;
-		case INT16:
-			result = "short";
-			break;
-		case INT32:
-			result = "int";
-			break;
-		case INT8:
-			result = "byte";
-			break;
-		case UINT16:
-			result = "short";
-			break;
-		case UINT32:
-			result = "int";
-			break;
-		case UINT8:
-			result = "byte";
-			break;
-
-
-		}
-		return result;
-	}
+//	private String lookupObjectTypeForJavaVars(BaseField f){
+//		String result = "";
+//		if(f instanceof EnumType) {
+//			result = makeEnumTypeName((EnumType)f);
+//		} else {
+//			switch(f.getType()) {
+//			case ARRAY:
+//				break;
+//			case BLOCK:
+//				break;
+//			case BOOL:
+//				result = "Boolean";
+//				break;
+//			case FLOAT32:
+//				result = "Double";
+//				break;
+//			case BOOLFIELD:
+//			case COMPOUND:
+//			case INT16:
+//			case INT32:
+//			case INT8:
+//			case UINT16:
+//			case UINT32:
+//			case UINT8:
+//				result = "Integer";
+//				break;
+//
+//			}
+//		}
+//		return result;
+//	}
+//	private String lookupTypeForJavaVars(BaseField f) {
+//		String result = "";
+//		if(f instanceof EnumType) {
+//			result = makeEnumTypeName((EnumType)f);
+//		} else {
+//			switch(f.getType()) {
+//			case ARRAY:
+//				break;
+//			case BLOCK:
+//				break;
+//			case BOOL:
+//				result = "boolean";
+//				break;
+//			case BOOLFIELD:
+//				result = "int";
+//				break;
+//			case COMPOUND:
+//				result = "int";
+//				break;
+//			case FLOAT32:
+//				result = "double";
+//				break;
+//			case INT16:
+//				result = "int";
+//				break;
+//			case INT32:
+//				result = "int";
+//				break;
+//			case INT8:
+//				result = "int";
+//				break;
+//			case UINT16:
+//				result = "int";
+//				break;
+//			case UINT32:
+//				result = "int";
+//				break;
+//			case UINT8:
+//				result = "int";
+//				break;
+//
+//			}
+//		}
+//		return result;
+//	}
+//	private String lookupTypeForJavaType(EnumType f) {
+//		String result = "";
+//
+//		switch(f.getType()) {
+//		case ARRAY:
+//			break;
+//		case BLOCK:
+//			break;
+//		case BOOL:
+//			result = "boolean";
+//			break;
+//		case BOOLFIELD:
+//			result = "int";
+//			break;
+//		case COMPOUND:
+//			result = "int";
+//			break;
+//		case FLOAT32:
+//			result = "double";
+//			break;
+//		case INT16:
+//			result = "short";
+//			break;
+//		case INT32:
+//			result = "int";
+//			break;
+//		case INT8:
+//			result = "byte";
+//			break;
+//		case UINT16:
+//			result = "short";
+//			break;
+//		case UINT32:
+//			result = "int";
+//			break;
+//		case UINT8:
+//			result = "byte";
+//			break;
+//
+//
+//		}
+//		return result;
+//	}
 	private String makeEnumTypeName(EnumType f) {
 		return f.getTypeName().addSuffix("enum").toUpperCamel();
 	}
@@ -1158,30 +1152,30 @@ public class JavaWriter extends SourceWriter {
 
 	}
 
-	private void writeKeyEnum(StructField top) {
-		List<FixedIntField> keys = getBlockKeys(top);
-		addDocComment("An enum of all the block keys for the "+top.getName()+" schema.");
-		addLine("public enum "+m_keyEnumName+" {");
-		indent();
-		for(FixedIntField key : keys) {
-			String name = makeKeyName(key);
-			addDocComment(key.getComment());
-			addLine(name + "("+WriterUtils.formatAsHex(key.getValue())+"),");
-		}
-		addLine(";");
-		addLine("private int value;");
-		addLine("private "+m_keyEnumName+"(int i){");
-		indent();
-		addLine("value = i;");
-		closeBrace();
-
-		addLine("public int getValue(){");
-		indent();
-		addLine("return value;");
-		closeBrace();
-		closeBrace();
-		addLine();
-
-	}
+//	private void writeKeyEnum(StructField top) {
+//		List<FixedIntField> keys = getBlockKeys(top);
+//		addDocComment("An enum of all the block keys for the "+top.getName()+" schema.");
+//		addLine("public enum "+m_keyEnumName+" {");
+//		indent();
+//		for(FixedIntField key : keys) {
+//			String name = makeKeyName(key);
+//			addDocComment(key.getComment());
+//			addLine(name + "("+WriterUtils.formatAsHex(key.getValue())+"),");
+//		}
+//		addLine(";");
+//		addLine("private int value;");
+//		addLine("private "+m_keyEnumName+"(int i){");
+//		indent();
+//		addLine("value = i;");
+//		closeBrace();
+//
+//		addLine("public int getValue(){");
+//		indent();
+//		addLine("return value;");
+//		closeBrace();
+//		closeBrace();
+//		addLine();
+//
+//	}
 
 }

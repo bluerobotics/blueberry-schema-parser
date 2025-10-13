@@ -363,6 +363,7 @@ public class TokenList {
 
 	/**
 	 * find the bracket that closes the current opening
+	 * Looks for braces (curly brackets), (round) brackets, angle brackets and square brackets.
 	 * If the current location is not at an opening, it will move to the next complete closing or the end of the list
 	 * @param it
 	 * @return
@@ -389,6 +390,10 @@ public class TokenList {
 			case SQUARE_BRACKET_START:
 				match = TokenIdentifier.SQUARE_BRACKET_END;
 				break;
+			case ANGLE_BRACKET_START:
+				match = TokenIdentifier.ANGLE_BRACKET_END;
+				break;
+			case ANGLE_BRACKET_END:
 			case BRACE_END:
 			case BRACKET_END:
 			case SQUARE_BRACKET_END:
@@ -403,7 +408,16 @@ public class TokenList {
 		}
 
 
-		result = findNextId(t, TokenIdentifier.BRACE_START, TokenIdentifier.BRACKET_START, TokenIdentifier.SQUARE_BRACKET_START, TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END);
+		result = findNextId(t,
+				TokenIdentifier.BRACE_START,
+				TokenIdentifier.BRACKET_START,
+				TokenIdentifier.SQUARE_BRACKET_START,
+				TokenIdentifier.BRACE_END,
+				TokenIdentifier.BRACKET_END,
+				TokenIdentifier.SQUARE_BRACKET_END,
+				TokenIdentifier.ANGLE_BRACKET_START,
+				TokenIdentifier.ANGLE_BRACKET_END
+				);
 
 
 

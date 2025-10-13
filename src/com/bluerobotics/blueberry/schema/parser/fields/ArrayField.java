@@ -21,28 +21,20 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
-
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
 
 /**
  *
  */
-public abstract class ParentField extends AbstractField {
-	private final ArrayList<Field> m_children = new ArrayList<>();
-	protected ParentField(FieldName name, Type type, String comment) {
+public class ArrayField extends AbstractField {
+	private final int m_number;
+	protected ArrayField(FieldName name, Type type, int number, String comment) {
 		super(name, type, comment);
+		m_number = number;
 	}
-	public void add(Field f) {
-		m_children.add(f);
-	}
-
-	public void scanThroughFields(Consumer<Field> c) {
-		for(Field f : m_children) {
-			c.accept(f);
-		}
+	public int getNumber() {
+		return m_number;
 	}
 
 }

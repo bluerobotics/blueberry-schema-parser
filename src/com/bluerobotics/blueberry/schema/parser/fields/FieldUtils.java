@@ -21,9 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  */

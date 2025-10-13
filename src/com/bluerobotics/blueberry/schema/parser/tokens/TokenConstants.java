@@ -26,6 +26,8 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
  */
 public interface TokenConstants {
 	public enum TokenIdentifier {
+		ANGLE_BRACKET_START("<"),
+		ANGLE_BRACKET_END(">"),
 		ANNOTATION_START("@"),
 		BOOLEAN("boolean"),
 		BRACE_END("}"),
@@ -58,7 +60,7 @@ public interface TokenConstants {
 		SQUARE_BRACKET_END("]"),
 		SQUARE_BRACKET_START("["),
 		STRING("string"),
-		STRUC("struct"),
+		STRUCT("struct"),
 		TAB("\t"),//this is not intended to be used as a token, just to help parse
 		TYPEDEF("typedef"),
 		UINT16("uint16"),

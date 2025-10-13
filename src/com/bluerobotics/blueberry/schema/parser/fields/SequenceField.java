@@ -21,9 +21,15 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.Type;
 /**
- * 
+ *
  */
-public interface Type {
-	public FieldName getTypeName();
+public class SequenceField extends ParentField {
+
+	protected SequenceField(FieldName name, Type type, String comment) {
+		super(name, type, comment);
+	}
+
 }

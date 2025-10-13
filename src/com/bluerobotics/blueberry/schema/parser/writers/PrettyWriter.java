@@ -22,12 +22,9 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
-import java.util.ArrayList;
 
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 
 /**
  * A SourceWriter to generate a pretty version of the schema

@@ -21,11 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.Type;
+
 public abstract class AbstractField implements Field {
 	private final FieldName m_name;
 	private final Type m_type;
 	private final String m_comment;
-	private Field m_parent = null;
+	private ParentField m_parent = null;
 	private boolean m_inHeader = false;
 
 	protected AbstractField(FieldName name, Type type, String comment) {
@@ -49,19 +52,19 @@ public abstract class AbstractField implements Field {
 	public int getBitCount() {
 		return 0;
 	}
-	
+
 
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name+")";
 	}
 
-	
+
 	@Override
 	public Field getParent() {
 		return m_parent;
 	}
 	@Override
-	public void setParent(Field p) {
+	public void setParent(ParentField p) {
 		m_parent = p;
 	}
 	@Override
@@ -80,19 +83,8 @@ public abstract class AbstractField implements Field {
 		return result;
 	}
 
-	public FieldName getCorrectParentName() {
-		FieldName result = null;
-		Field p = getParent();
-		StructField bf = null;
-		if(p != null) {
-			bf = (StructField)p;
-		}
 
 
-		result = bf.getName();
-
-		return result;
-	}
 
 
 }

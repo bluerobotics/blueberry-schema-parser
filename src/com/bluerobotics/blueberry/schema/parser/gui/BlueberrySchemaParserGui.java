@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Image;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -14,13 +13,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -30,7 +27,6 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
@@ -39,7 +35,6 @@ import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.PrettyWriter;
 import com.starfishmedical.settings.Settings;
 import com.starfishmedical.settings.SettingsDialog;
-import com.starfishmedical.settings.SettingsKey;
 import com.starfishmedical.settings.SettingsTableCellEditor;
 import com.starfishmedical.settings.SettingsTableCellRenderer;
 import com.starfishmedical.settings.SettingsTableModel;
@@ -223,12 +218,12 @@ public class BlueberrySchemaParserGui implements Constants {
 		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 		m_text.append("Generating Java code in \"" + dir+"\"\n");
 
-		if(m_parser.getTopLevelField() == null) {
-			parse();
-		}
+//		if(m_parser.getTopLevelField() == null) {
+//			parse();
+//		}
 
 		JavaWriter jw = new JavaWriter(dir);
-		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+//		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 
@@ -236,26 +231,26 @@ public class BlueberrySchemaParserGui implements Constants {
 		File dir = m_settings.getFile(Key.C_DIRECTORY);
 		m_text.append("Generating C code in \"" + dir+"\"\n");
 
-		if(m_parser.getTopLevelField() == null) {
-			parse();
-		}
+//		if(m_parser.getTopLevelField() == null) {
+//			parse();
+//		}
 
 
 		CWriter cw = new CWriter(dir);
-		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+//		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 	private void generatePretty() {
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
 		m_text.append("Generating Beautified Schema in \"" + dir+"\"\n");
 
-		if(m_parser.getTopLevelField() == null) {
-			parse();
-		}
+//		if(m_parser.getTopLevelField() == null) {
+//			parse();
+//		}
 
 
 		PrettyWriter pw = new PrettyWriter(dir);
-		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+//		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
 	private void parse() {

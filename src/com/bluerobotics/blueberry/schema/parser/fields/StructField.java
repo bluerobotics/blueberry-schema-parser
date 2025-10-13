@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,91 +21,15 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.Type;
 /**
  *
  */
-public class StructField extends AbstractField implements ParentField {
-	private final ArrayList<Field> m_fields = new ArrayList<>();
-	private final FieldName m_typeName;
+public class StructField extends ParentField {
 
-	protected StructField(FieldName name, FieldName typeName, String comment) {
-		super(name, typeName, comment);
-		m_typeName = typeName;
-
+	protected StructField(FieldName name, Type type, String comment) {
+		super(name, type, comment);
 	}
-
-	@Override
-	public void add(AbstractField f) {
-		if(f == null) {
-			return;
-		}
-		m_fields.add(f);
-	}
-	public List<Field> getFields(){
-
-		return m_fields;
-
-	}
-
-
-	@Override
-	public int getBitCount() {
-		//TODO: figure this out!
-		return 0;
-	}
-	@Override
-	BaseType checkType(BaseType t) throws RuntimeException {
-		switch(t) {
-
-		case BLOCK:
-			break;
-		default:
-			throw new RuntimeException("Field must only contain block types.");
-
-		}
-		return t;
-	}
-	@Override
-	public FieldName getTypeName() {
-		return m_typeName;
-	}
-	public void scanThroughFields(Consumer<Field> consumer) {
-		for(Field bf : getFields()) {
-			if(bf instanceof ParentField) {
-				((ParentField)bf).scanThroughFields(consumer);
-			} else {
-				consumer.accept(bf);
-			}
-		}
-
-
-	}
-
-
-	public static StructField getBlockParent(Field ft) {
-
-		Field f = ft;
-		while(!(f instanceof StructField) && f != null) {
-			f = f.getParent();
-		}
-		StructField result = null;
-		if(f != null) {
-			result = (StructField)f;
-		}
-		return result;
-
-	}
-
-
-	public int getBaseWordCount() {
-		return 0;
-	}
-
-
 
 }

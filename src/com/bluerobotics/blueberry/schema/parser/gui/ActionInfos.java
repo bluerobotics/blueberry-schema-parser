@@ -21,10 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.gui;
 
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-
-import javax.swing.KeyStroke;
 
 import com.starfishmedical.sfdq.actions.ActionInfo;
 

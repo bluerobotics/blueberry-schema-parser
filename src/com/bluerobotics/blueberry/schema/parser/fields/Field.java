@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.types.Type;
+
 public interface Field {
 
 	Type getType();
@@ -31,7 +33,6 @@ public interface Field {
 
 	int getBitCount();
 	Field getParent();
-	void setParent(Field p);
+	void setParent(ParentField p);
 
-	FieldName getCorrectParentName();
 }

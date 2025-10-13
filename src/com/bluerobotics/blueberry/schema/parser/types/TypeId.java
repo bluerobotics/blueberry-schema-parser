@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -19,11 +19,54 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.types;
+
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 
 /**
  *
  */
-public interface DefinedField extends Field {
-	public FieldName getTypeName();
+public enum TypeId {
+	BOOL           (1),
+	INT8           (8),
+	UINT8          (8),
+	BOOLFIELD      (8),
+	INT16          (16),
+	UINT16         (16),
+	INT32          (32),
+	UINT32         (32),
+	FLOAT32        (32),
+	INT64		   (64),
+	UINT64         (64),
+	FLOAT64         (64),
+	STRING         (32),
+	SEQUENCE       (32),
+	STRUCT         (0),
+	MESSAGE        (0),
+	;
+
+
+
+
+
+
+
+
+
+	private int bitNum;
+	private FieldName name;
+	TypeId(int bn){
+		bitNum = bn;
+		name = FieldName.fromSnake(name());
+	}
+	public int getBitCount() {
+		return bitNum;
+	}
+	public boolean isBaseType() {
+		return bitNum <= 32;
+	}
+
+	public FieldName getTypeName() {
+		return name;
+	}
 }

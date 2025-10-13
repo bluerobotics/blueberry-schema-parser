@@ -25,22 +25,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
-import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
  * This class provides useful functionality for generating source files, without any specific language implementation
@@ -181,7 +172,7 @@ public abstract class SourceWriter {
 	 */
 	protected FieldName makeBaseFieldNameRoot(Field bf) {
 		FieldName result = null;
-		result = bf.getCorrectParentName().addSuffix(bf.getName());
+//		result = bf.getCorrectParentName().addSuffix(bf.getName());
 
 		return result;
 	}
@@ -199,34 +190,7 @@ public abstract class SourceWriter {
 		});
 		return afs;
 	}
-	/**
-	 * recurses through all the block hierarchy and collects all fixed int fields called "key"
-	 * @param top
-	 * @return
-	 */
-	protected List<FixedIntField> getBlockKeys(StructField top){
-		ArrayList<FixedIntField> result = new ArrayList<FixedIntField>();
 
-		top.scanThroughFields(f -> {
-			if(f instanceof FixedIntField && f.getName().toLowerCamel().equals("key")) {
-				result.add((FixedIntField)f);
-			}
-		});
 
-		Collections.sort(result, (f1, f2) -> {
-			return (int)(f1.getValue() - f2.getValue());
-		});
-		return result;
-	}
-	protected String makeKeyName(FixedIntField key) {
-		Field p = key.getParent();
-		FieldName pn = p.getName();
-//		if(p instanceof ArrayField) {
-//			pn = pn.addPrefix(p.getParent().getName());
-//		}
-
-		String name = key.getName().addPrefix(pn).toUpperSnake();
-		return name;
-	}
 
 }

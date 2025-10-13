@@ -19,17 +19,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.types;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 
 /**
- * 
+ *
  */
-public class EnumType extends BaseType  {
+public class EnumType extends AbstractType {
 	public class NameValue {
 		FieldName name;
 		long value;
@@ -49,32 +50,27 @@ public class EnumType extends BaseType  {
 		public String getComment() {
 			return comment;
 		}
-		
+
 		public String toString() {
-			return getClass().getSimpleName() + "(" + name + " = " + value + ")"; 
+			return getClass().getSimpleName() + "(" + name + " = " + value + ")";
 		}
 		public String getValueAsHex() {
 			return WriterUtils.formatAsHex(getValue());
 		}
 	}
-	private final FieldName m_typeName;
-	private final String m_comment;
+
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
 
-	public EnumType(FieldName typeName, TypeDef type, String comment) {
-		super(type);
-		m_typeName = typeName;
-		m_comment = comment;
+	public EnumType(FieldName typeName, TypeId id, String comment) {
+		super(id, typeName, comment);
+
 	}
-	
+
 	public void addNameValue(FieldName name, long value, String comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
 
-	@Override
-	public FieldName getTypeName() {
-		return m_typeName;
-	}
+
 	public List<NameValue> getNameValues(){
 		return m_nameValues;
 	}
@@ -84,15 +80,18 @@ public class EnumType extends BaseType  {
 		boolean result =  super.equals(obj);
 		if(result) {
 			EnumType ef = (EnumType)obj;
-			
+
 			if(!ef.getTypeName().equals(getTypeName())) {
 				result = false;
 			}
 		}
 		return result;
 	}
-	
-	
-	
-	
+
+
+
+
+
+
+
 }

@@ -19,30 +19,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.types;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
-
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 
 /**
  *
  */
-public abstract class ParentField extends AbstractField {
-	private final ArrayList<Field> m_children = new ArrayList<>();
-	protected ParentField(FieldName name, Type type, String comment) {
-		super(name, type, comment);
+public class StringType extends AbstractType {
+	private static final StringType SINGLETON = new StringType(FieldName.fromCamel("String"), "");
+	private StringType(FieldName typeName, String comment) {
+		super(TypeId.STRING, typeName, comment);
 	}
-	public void add(Field f) {
-		m_children.add(f);
+	public static StringType getStringType() {
+		return SINGLETON;
 	}
 
-	public void scanThroughFields(Consumer<Field> c) {
-		for(Field f : m_children) {
-			c.accept(f);
-		}
-	}
 
 }

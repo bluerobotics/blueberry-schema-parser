@@ -24,16 +24,13 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 import java.io.File;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolField;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumType;
-import com.bluerobotics.blueberry.schema.parser.fields.EnumType.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.fields.FixedIntField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
-import com.bluerobotics.blueberry.schema.parser.fields.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.EnumType;
+import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
 
 /**
  * This class implements the autogeneration of C code based on a parsed field structure
@@ -69,7 +66,7 @@ public class CWriter extends SourceWriter {
 
 
 		addSectionDivider("Types");
-		addBlockKeyEnum(top);
+//		addBlockKeyEnum(top);
 
 		addFirstBlockDefine(top);
 
@@ -181,11 +178,11 @@ public class CWriter extends SourceWriter {
 
 	}
 
-	private String makeBlockValueDefine(FixedIntField fif) {
-		FieldName parent = fif.getParent().getName();
-
-		return parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
-	}
+//	private String makeBlockValueDefine(FixedIntField fif) {
+//		FieldName parent = fif.getParent().getName();
+//
+//		return parent.addSuffix(fif.getName()).addSuffix("VALUE").toUpperSnake();
+//	}
 
 
 	private void writeBlockValueDefine(StructField top) {
@@ -400,129 +397,129 @@ public class CWriter extends SourceWriter {
 	}
 
 
-	private void addBoolGetter(BoolField b, boolean protoNotDeclaration) {
+//	private void addBoolGetter(BoolField b, boolean protoNotDeclaration) {
+//
+//		addBaseGetter(b, protoNotDeclaration, true);
+//		if(!protoNotDeclaration) {
+//			indent();
+//			String dn = makeBaseFieldNameRoot(b).addSuffix("INDEX").toUpperSnake();
+//			addBoolGetterGuts(b, dn, "return ");
+//			outdent();
+//			addLine("}");
+//		}
+//
+//
+//
+//
+//	}
 
-		addBaseGetter(b, protoNotDeclaration, true);
-		if(!protoNotDeclaration) {
-			indent();
-			String dn = makeBaseFieldNameRoot(b).addSuffix("INDEX").toUpperSnake();
-			addBoolGetterGuts(b, dn, "return ");
-			outdent();
-			addLine("}");
-		}
-
-
-
-
-	}
-
-	private void addBaseGetter(BaseField f, boolean protoNotDeclaration, boolean addBytesPerRepeat) {
-		if(f.getName() != null) {
-
-			String gs = "get";
-			String c = f.getName().toLowerCamel()+" field of the " + f.getCorrectParentName().toLowerCamel() + " " + f.getCorrectParentName().toUpperCamel()+ "\n"+f.getComment();
-			String rt = getBaseType(f);
-			String function = makeBaseFieldNameRoot(f).toUpperCamel();
-
-			boolean array = false;
-
-			String arrayComment = "";
-			if(addBytesPerRepeat && (f.getParent()) instanceof ArrayField) {
-				array = true;
-				arrayComment = "@param i - index of array item to get\n"+
-								"@param bytesPerRepeat - number of bytes in each array repeated element";
-
-			}
-
-			addDocComment( gs + "s the " + c + "\n"+
-					"@param buf - the buffer containing the packet\n" +
-					"@param currentBlock - the index of the block we're interested in\n"+
-					arrayComment
-					);
-
-
-
-			String s = rt;
-			String arrayParam = array ? ", uint32_t i, uint32_t bytesPerRepeat" : "";
-			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock"+arrayParam+")";
-
-			s += protoNotDeclaration ? ";" : "{";
-			addLine(s);
-
-
-		}
-	}
-	private boolean isInArray(BaseField f) {
-		StructField bf = (StructField)f.getParent();//this must be true I think
-		return (bf instanceof ArrayField);
-	}
+//	private void addBaseGetter(BaseField f, boolean protoNotDeclaration, boolean addBytesPerRepeat) {
+//		if(f.getName() != null) {
+//
+//			String gs = "get";
+//			String c = f.getName().toLowerCamel()+" field of the " + f.getCorrectParentName().toLowerCamel() + " " + f.getCorrectParentName().toUpperCamel()+ "\n"+f.getComment();
+//			String rt = getBaseType(f);
+//			String function = makeBaseFieldNameRoot(f).toUpperCamel();
+//
+//			boolean array = false;
+//
+//			String arrayComment = "";
+//			if(addBytesPerRepeat && (f.getParent()) instanceof ArrayField) {
+//				array = true;
+//				arrayComment = "@param i - index of array item to get\n"+
+//								"@param bytesPerRepeat - number of bytes in each array repeated element";
+//
+//			}
+//
+//			addDocComment( gs + "s the " + c + "\n"+
+//					"@param buf - the buffer containing the packet\n" +
+//					"@param currentBlock - the index of the block we're interested in\n"+
+//					arrayComment
+//					);
+//
+//
+//
+//			String s = rt;
+//			String arrayParam = array ? ", uint32_t i, uint32_t bytesPerRepeat" : "";
+//			s += " " + gs + "Bb" + function + "(Bb* buf, BbBlock currentBlock"+arrayParam+")";
+//
+//			s += protoNotDeclaration ? ";" : "{";
+//			addLine(s);
+//
+//
+//		}
+//	}
+//	private boolean isInArray(BaseField f) {
+//		StructField bf = (StructField)f.getParent();//this must be true I think
+//		return (bf instanceof ArrayField);
+//	}
 //	private void addBaseSetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 //		addBaseSetterGuts(f, dn);
 //	}
-	private void addBaseSetterGuts(BaseField f, String index, String value) {
-		String rt = getBaseType(f);
-		String paramName = f.getCorrectParentName().toLowerCamel();
-
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("set").toLowerCamel();
-		addLine(functionName + "(buf, currentBlock, " + index + ", " + value + ");");
-	}
+//	private void addBaseSetterGuts(BaseField f, String index, String value) {
+//		String rt = getBaseType(f);
+//		String paramName = f.getCorrectParentName().toLowerCamel();
+//
+//		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("set").toLowerCamel();
+//		addLine(functionName + "(buf, currentBlock, " + index + ", " + value + ");");
+//	}
 //	private void addBaseGetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 //		addBaseGetterGuts(f, dn);
 //	}
-	private void addBaseGetterGuts(BaseField f, String index, String start, boolean doArrayStuff) {
-		String rt = getBaseType(f);
-		String paramName = f.getCorrectParentName().toLowerCamel();
-
-		ArrayField af = null;
-
-		String arrayParms = "";
-		String arrayComment = "";
-		Field p = f.getParent();
-		if(p instanceof ArrayField && doArrayStuff) {
-			af = (ArrayField)p;
-
-			arrayParms = " + (i * bytesPerRepeat)";
-
-
-			arrayComment = " //magic number represents the number of bytes in each array rep";
-		}
-
-
-
-
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
-		if(f instanceof EnumType) {
-			functionName = "("+rt+")" + functionName;
-		}
-		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");");
-
-
-
-	}
+//	private void addBaseGetterGuts(BaseField f, String index, String start, boolean doArrayStuff) {
+//		String rt = getBaseType(f);
+//		String paramName = f.getCorrectParentName().toLowerCamel();
+//
+//		ArrayField af = null;
+//
+//		String arrayParms = "";
+//		String arrayComment = "";
+//		Field p = f.getParent();
+//		if(p instanceof ArrayField && doArrayStuff) {
+//			af = (ArrayField)p;
+//
+//			arrayParms = " + (i * bytesPerRepeat)";
+//
+//
+//			arrayComment = " //magic number represents the number of bytes in each array rep";
+//		}
+//
+//
+//
+//
+//		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("bb").addPrefix("get").toLowerCamel();
+//		if(f instanceof EnumType) {
+//			functionName = "("+rt+")" + functionName;
+//		}
+//		addLine(start + functionName + "(buf, currentBlock , " + index +  arrayParms +");");
+//
+//
+//
+//	}
 //	private void addBoolSetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 //
 //		addBoolSetterGuts(f, dn);
 //	}
-	private void addBoolSetterGuts(BaseField f, String index, String value) {
-		String paramName = f.getCorrectParentName().toLowerCamel();
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set","bb").toLowerCamel();
-		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();
-		addLine(functionName + "(buf, currentBlock, " + index + ", " + dbn + ", " + value + ");");
-	}
+//	private void addBoolSetterGuts(BaseField f, String index, String value) {
+//		String paramName = f.getCorrectParentName().toLowerCamel();
+//		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("set","bb").toLowerCamel();
+//		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();
+//		addLine(functionName + "(buf, currentBlock, " + index + ", " + dbn + ", " + value + ");");
+//	}
 //	private void addBoolGetterGuts(BaseField f) {
 //		String dn = makeBaseFieldNameRoot(f).addSuffix("INDEX").toUpperSnake();
 //		addBoolGetterGuts(f, dn);
 //	}
-	private void addBoolGetterGuts(BaseField f, String index, String start) {
-		String paramName = f.getCorrectParentName().toLowerCamel();
-		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();
-		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get", "bb").toLowerCamel();
-		addLine(start + functionName + "(buf, currentBlock , " + index + ", " + dbn + ");");
-
-	}
+//	private void addBoolGetterGuts(BaseField f, String index, String start) {
+//		String paramName = f.getCorrectParentName().toLowerCamel();
+//		String dbn = makeBaseFieldNameRoot(f).addSuffix("MASK").toUpperSnake();
+//		String functionName = FieldName.fromSnake(f.getType().name()).addPrefix("get", "bb").toLowerCamel();
+//		addLine(start + functionName + "(buf, currentBlock , " + index + ", " + dbn + ");");
+//
+//	}
 
 	private void addBlockFunctionAdder(StructField top, boolean protoNotDeclaration) {
 //		ArrayList<StructField> fields = new ArrayList<StructField>();
@@ -666,81 +663,81 @@ public class CWriter extends SourceWriter {
 	}
 
 
-	private String getBaseType(BaseField f) {
-		String rt = "";
-
-		BaseType t = f.getType();
-		if(f instanceof EnumType) {
-			rt = getEnumTypeName((EnumType)f);
-		} else {
-
-			switch(t) {
-			case COMPOUND:
-			case ARRAY:
-			case BLOCK:
-				break;
-			case BOOL:
-				rt = "bool";
-				break;
-			case BOOLFIELD:
-				rt = "uint8_t";
-				break;
-			case FLOAT32:
-				rt = "float";
-				break;
-			case INT16:
-				rt = "int16_t";
-				break;
-			case INT32:
-				rt = "int32_t";
-				break;
-			case INT8:
-				rt = "int8_t";
-				break;
-			case UINT16:
-				rt = "uint16_t";
-				break;
-			case UINT32:
-				rt = "uint32_t";
-				break;
-			case UINT8:
-				rt = "uint8_t";
-				break;
-			default:
-				break;
-
-			}
-		}
-		return rt;
-	}
+//	private String getBaseType(BaseField f) {
+//		String rt = "";
+//
+//		BaseType t = f.getType();
+//		if(f instanceof EnumType) {
+//			rt = getEnumTypeName((EnumType)f);
+//		} else {
+//
+//			switch(t) {
+//			case COMPOUND:
+//			case ARRAY:
+//			case BLOCK:
+//				break;
+//			case BOOL:
+//				rt = "bool";
+//				break;
+//			case BOOLFIELD:
+//				rt = "uint8_t";
+//				break;
+//			case FLOAT32:
+//				rt = "float";
+//				break;
+//			case INT16:
+//				rt = "int16_t";
+//				break;
+//			case INT32:
+//				rt = "int32_t";
+//				break;
+//			case INT8:
+//				rt = "int8_t";
+//				break;
+//			case UINT16:
+//				rt = "uint16_t";
+//				break;
+//			case UINT32:
+//				rt = "uint32_t";
+//				break;
+//			case UINT8:
+//				rt = "uint8_t";
+//				break;
+//			default:
+//				break;
+//
+//			}
+//		}
+//		return rt;
+//	}
 
 
 	private String getEnumTypeName(EnumType f) {
 		return f.getTypeName().toUpperCamel();
 	}
 
-	private void addBlockKeyDefines(StructField top) {
-		List<FixedIntField> keys = getBlockKeys(top);
-
-		for(FixedIntField key : keys) {
-			String name = makeBaseFieldNameRoot(key).toUpperSnake();
-			writeDefine(name, ""+key.getValue(), key);
-		}
-	}
-
-	private void addBlockKeyEnum(StructField top) {
-		List<FixedIntField> keys = getBlockKeys(top);
-		addLine("typedef enum {");
-		indent();
-		for(FixedIntField key : keys) {
+//	private void addBlockKeyDefines(StructField top) {
+//		List<FixedIntField> keys = getBlockKeys(top);
+//
+//		for(FixedIntField key : keys) {
 //			String name = makeBaseFieldNameRoot(key).toUpperSnake();
-			String name = makeKeyName(key);
-			addLine(name + " = "+WriterUtils.formatAsHex(key.getValue())+",");
-		}
-		outdent();
-		addLine("} BlockKeys;");
-		addLine();
-	}
+//			writeDefine(name, ""+key.getValue(), key);
+//		}
+//	}
+
+//	private void addBlockKeyEnum(StructField top) {
+//		List<FixedIntField> keys = getBlockKeys(top);
+//		addLine("typedef enum {");
+//		indent();
+//		for(FixedIntField key : keys) {
+////			String name = makeBaseFieldNameRoot(key).toUpperSnake();
+//			String name = makeKeyName(key);
+//			addLine(name + " = "+WriterUtils.formatAsHex(key.getValue())+",");
+//		}
+//		outdent();
+//		addLine("} BlockKeys;");
+//		addLine();
+//	}
 	private void addBlockAdders(StructField top, boolean protoNotDeclaration) {
 //		//first get all blocks that we want to make adders for
 //		List<StructField> bfs = top.getAllBlockFields();
@@ -757,7 +754,7 @@ public class CWriter extends SourceWriter {
 //			addArrayGetter(af, protoNotDeclaration);
 //		}
 	}
-	private void addArrayGetter(ArrayField bf, boolean protoNotDeclaration) {
+//	private void addArrayGetter(ArrayField bf, boolean protoNotDeclaration) {
 //		String blockName = bf.getName().toUpperCamel();
 //		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
 //		String functionName = "getBb"+blockName;
@@ -846,7 +843,7 @@ public class CWriter extends SourceWriter {
 //			outdent();
 //			addLine("}");
 //		}
-	}
+//	}
 	private void addPacketStartFinish(StructField top, boolean protoNotDeclaration) {
 //		String blockName = top.getName().toUpperCamel();
 //		List<BaseField> fs = top.getHeaderFields();
@@ -1020,7 +1017,7 @@ public class CWriter extends SourceWriter {
 //		}
 	}
 
-	private void addArrayAdder(ArrayField bf, boolean protoNotDeclaration) {
+//	private void addArrayAdder(ArrayField bf, boolean protoNotDeclaration) {
 //		String blockName =  bf.getName().toUpperCamel();
 //		String comment = "Adds a new "+blockName+" to the specified packet.\n"+bf.getComment();
 //		String functionName = "addBb"+blockName;
@@ -1106,9 +1103,9 @@ public class CWriter extends SourceWriter {
 //			outdent();
 //			addLine("}");
 //		}
-	}
+//	}
 
-	private void addArrayElementAdder(ArrayField bf, boolean protoNotDeclaration) {
+//	private void addArrayElementAdder(ArrayField bf, boolean protoNotDeclaration) {
 //
 //		List<BaseField> fs = bf.getNamedBaseFields();
 //
@@ -1153,6 +1150,6 @@ public class CWriter extends SourceWriter {
 //			}
 //		}
 
-	}
+//	}
 
 }

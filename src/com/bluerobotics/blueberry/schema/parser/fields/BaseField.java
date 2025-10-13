@@ -21,8 +21,10 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+
 /**
- * 
+ *
  */
 public class BaseField extends AbstractField {
 	private int m_index = -1;
@@ -30,11 +32,14 @@ public class BaseField extends AbstractField {
 		super(name, type, comment);
 	}
 
-	
+
 	public void setIndex(int bi) {
 		m_index = bi;
 	}
 	public int getIndex() {
 		return m_index;
 	}
+
+
+
 }

@@ -23,6 +23,9 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+
 /**
  *
  */
@@ -43,16 +46,16 @@ public class Annotation  {
 			return name;
 		}
 	}
-	
-	public static final String FILE_PATH_ANNOTATION = "file_path";
-	public static final String TOPIC_ANNOTATION = "topic";
-	public static final String MESSAGE_KEY_ANNOTATION      = "message_key";
-	public static final String NAMESPACE_ANNOTATION      = "namespace";
-	public static final String SERIALIZATION_ANNOTATION      = "serialization";
+
+	public static final FieldName FILE_PATH_ANNOTATION = FieldName.fromSnake("file_path");
+	public static final FieldName TOPIC_ANNOTATION = FieldName.fromSnake("topic");
+	public static final FieldName MESSAGE_KEY_ANNOTATION      = FieldName.fromSnake("message_key");
+	public static final FieldName NAMESPACE_ANNOTATION      = FieldName.fromSnake("namespace");
+	public static final FieldName SERIALIZATION_ANNOTATION      = FieldName.fromSnake("serialization");
 	private final KnownAnnotation m_known;
-	private final String m_name;
-	private ArrayList<Token> m_parameters = new ArrayList<>();
-	public Annotation(String name) {
+	private final FieldName m_name;
+	private ArrayList<Constant> m_parameters = new ArrayList<>();
+	public Annotation(FieldName name) {
 		m_name = name;
 		KnownAnnotation ka = null;
 		for(KnownAnnotation kaf : KnownAnnotation.values()) {
@@ -66,21 +69,22 @@ public class Annotation  {
 	public boolean isKnown() {
 		return m_known != null;
 	}
-	public String getName() {
+	public FieldName getName() {
 		return m_name;
 	}
 	public String toString() {
 		if(isKnown()) {
 			return getClass().getSimpleName()+"("+m_known+")";
 		} else {
-			return m_name;
+			return m_name.toLowerSnake();
 		}
 	}
-	public void addParameter(Token t) {
+	public void addParameter(Constant t) {
 		if(t != null) {
 			m_parameters.add(t);
 		}
 	}
-	
+	public
+
 
 }

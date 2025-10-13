@@ -19,61 +19,57 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.types;
+
+import java.util.HashMap;
+
+import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 
 /**
  *
  */
-public class BaseType implements Type {
-	public enum TypeDef {
-		BOOL           (1),
-		INT8           (8),
-		UINT8          (8),
-		BOOLFIELD      (8),
-		INT16          (16),
-		UINT16         (16),
-		INT32          (32),
-		UINT32         (32),
-		FLOAT32        (32),
-		INT64		   (64),
-		UINT64         (64),
-		FLOAT64         (64),
-		;
-	
-	
-	
-	
-	
-	
-	
-	
-	
-		private int bitNum;
-		private FieldName name;
-		TypeDef(int bn){
-			bitNum = bn;
-			name = FieldName.fromSnake(name());
-		}
-		public int getBitCount() {
-			return bitNum;
-		}
-		public boolean isBaseType() {
-			return bitNum <= 32;
-		}
-		public FieldName getName() {
-			return name;
-		}
+public class BaseType extends AbstractType {
+	private static final HashMap<TypeId,BaseType> BASE_TYPES = new HashMap<>();
+	private BaseType(TypeId id) {
+		super(id, FieldName.fromCamel(id.name()),"");
 	}
-	private final TypeDef m_type;
-	
-	public BaseType(TypeDef t) {
-		m_type = t;
+	public static BaseType getBaseType(TypeId id) {
+		BaseType bt = BASE_TYPES.get(id);
+		if(bt == null) {
+			switch(id) {
+			case BOOL:
+
+			case BOOLFIELD:
+			case FLOAT32:
+			case FLOAT64:
+			case INT16:
+			case INT32:
+			case INT64:
+			case INT8:
+			case UINT16:
+			case UINT32:
+			case UINT64:
+			case UINT8:
+				bt = new BaseType(id);
+				BASE_TYPES.put(id, bt);
+				break;
+			case SEQUENCE:
+			case STRING:
+			case STRUCT:
+				break;
+
+
+			}
+		}
+		return bt;
 	}
-	@Override
-	public FieldName getTypeName() {
-		return m_type.getName();
-	}
-	
+
+
+
+
+
+
+
 
 
 

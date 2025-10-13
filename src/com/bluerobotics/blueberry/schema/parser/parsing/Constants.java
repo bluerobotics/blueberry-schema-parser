@@ -26,7 +26,7 @@ import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import javax.swing.Icon;	
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import com.starfishmedical.utils.ResourceTools;
