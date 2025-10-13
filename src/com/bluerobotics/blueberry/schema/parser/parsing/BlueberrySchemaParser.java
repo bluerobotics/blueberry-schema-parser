@@ -901,7 +901,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							}
 							m_tokens.next();
 						}
-						if(a.getName())
+						if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
+							
+						}
 					}
 
 				}
