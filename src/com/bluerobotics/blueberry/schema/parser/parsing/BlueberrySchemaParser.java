@@ -27,6 +27,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberTypeConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BlockToken;
@@ -50,6 +51,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenList;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
+import com.bluerobotics.blueberry.schema.parser.types.MessageType;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
 import com.bluerobotics.blueberry.schema.parser.types.TypeDefType;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
@@ -65,10 +67,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	private final TokenList m_tokens = new TokenList();
 	private final ArrayList<Type> m_defines = new ArrayList<>();
-	private final ArrayList<Constant> m_constants = new ArrayList<>();
+	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
-	private NestedFieldAllocationToken m_topLevelToken = null;
 
 	public String[] getHeader() {
 		String[] result = new String[m_topLevelComments.size()];
@@ -254,6 +255,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	private FieldName m_module = null;
 	private Token m_moduleEnd = null;
+	private String m_fileName = null;//indicates the filename that the present tokens are from
 
 	private void assembleFields() throws SchemaParserException {
 		m_module = null;
@@ -305,8 +307,19 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	private void processMessage(IdentifierToken it) {
-		// TODO Auto-generated method stub
+	private void processMessage(IdentifierToken it) throws SchemaParserException {
+		CommentToken comment = m_tokens.relative(-1, CommentToken.class);
+		SingleWordToken nameToken = m_tokens.relative(1, SingleWordToken.class);//or this
+		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.SQUARE_BRACKET_START);
+		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+		FieldName name = FieldName.fromCamel(nameToken.getName()).addPrefix(m_module);
+
+		MessageType m = new MessageType(name, comment.combineLines());
+
+		m.addAnnotation(m_annotations);
+		m_annotations.clear();
+
+		//TODO add fields
 	}
 	/**
 	 * of the form <comment?><sequence><angle bracket start><constituentTypeName><comma?><number?><angle bracket end><sequenceTypeName>
@@ -335,7 +348,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(btt != null && typeName != null && squareBracketStart == null) {
 			//this is a normal base type
 			TypeId id = lookupBaseType(btt.getKeyword());
-			TypeDefType tdt = new TypeDefType(id, FieldName.fromCamel(typeName.getName()), comment.combineLines());
+			FieldName fn = FieldName.fromCamel(typeName.getName()).addPrefix(m_module);
+			TypeDefType tdt = new TypeDefType(id, fn, comment.combineLines());
 			m_defines.add(tdt);
 		}
 
@@ -349,11 +363,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		IdentifierToken braceOpen = m_tokens.relativeId(colon == null ? 3 : 5, TokenIdentifier.BRACE_START);
 		if(name != null && braceOpen != null) {
 			TypeId bt = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.UINT32;
-			EnumType et = new EnumType(FieldName.fromCamel(name.getName()),bt, comment.combineLines());
+			FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
+			EnumType et = new EnumType(fn,bt, comment.combineLines());
 			m_defines.add(et);
 		}
 
 	}
+	/**
+	 *
+	 * @param it
+	 * @throws SchemaParserException
+	 */
 	private void processConst(IdentifierToken it) throws SchemaParserException {
 		CommentToken comment = m_tokens.relative(-1, CommentToken.class);
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
@@ -372,11 +392,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(type != null && value == null) {
 				throw new SchemaParserException("Const must have a specified value.", it.getEnd());
 			}
+			FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
 			if(stringType != null) {
-				m_constants.add(new StringConstant(FieldName.fromCamel(name.getName()), string.getString(), comment.combineLines()));
+				m_constants.add(new StringConstant(fn, string.getString(), comment.combineLines()));
 				m_tokens.setIndex(string);
 			} else {
-				m_constants.add(new NumberTypeConstant(type, FieldName.fromCamel(name.getName()), value.getNumber(), comment.combineLines()));
+				m_constants.add(new NumberTypeConstant(type, fn, value.getNumber(), comment.combineLines()));
 				m_tokens.setIndex(value);
 			}
 
@@ -393,7 +414,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
-			m_module = FieldName.fromCamel(moduleName.getName());
+			m_module = FieldName.fromCamel(moduleName.getName()).addSuffix(new FieldName("::"));
+			//TODO: what is the best way to separate the module name from the rest?
 			m_moduleEnd = braceEnd;
 
 		}
@@ -624,199 +646,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 
-	/**
-	 * This grabs any comments that precede a defined type token and assigns to that token
-	 */
-	private void collapseDefinedTypeComments() {
-		int i = 0;
-		while(i < m_tokens.size()){
-			//find the next brace
-			i = findToken(i, true, BlockToken.class, CompoundToken.class, EnumToken.class);
-
-			if(i > 0 && i < m_tokens.size()) {
-				DefinedTypeToken dtt = (DefinedTypeToken)m_tokens.get(i);
-				Token prevT = m_tokens.get(i - 1);
-				if(prevT instanceof CommentToken) {
-					dtt.setComment((CommentToken)prevT);
-					m_tokens.remove(prevT);
-				}
-				++i;
-			} else {
-				break;
-			}
-		}
-	}
-
-	/**
-	 * Any sequence of a define token and a defined type token gets collapsed into a single defined type token
-	 * @throws SchemaParserException
-	 */
-	private void collapseDefinedTypes() throws SchemaParserException {
-		int i = 0;
-		while(i < m_tokens.size()){
-			//first find next define element
-			i = findToken(i, true, DefineToken.class);
-
-			if(i > 0 && i < m_tokens.size() - 1) {//note the limits here!
-				DefineToken dt = (DefineToken)m_tokens.get(i);
-				Token nextT = m_tokens.get(i + 1);
-				if(nextT instanceof DefinedTypeToken) {
-					DefinedTypeToken dtt = (DefinedTypeToken)nextT;
-					dtt.setDefinedTypeName(dt);
-					m_tokens.remove(i);
-				} else {
-					throw new SchemaParserException("Expected either block, enum or compound here!", nextT.getStart());
-
-				}
-			} else {
-				break;
-			}
-		}
-	}
-	/**
-	 * A sequence of Comment, BlockType and FieldName form the allocation of a blockType
-	 * These get collapsed into a nested field allocation
-	 * @throws SchemaParserException
-	 */
-	private void collapseNestedFieldAllocations() throws SchemaParserException {
-		int i = 0;
-//		while(i < m_tokens.size()){
-//			//first find next define element
-//			i = findToken(i, true, BlockTypeToken.class);
-//
-//			if(i > 0 && i < m_tokens.size() - 1) {//note the limits here!
-//
-//				BlockTypeToken et = (BlockTypeToken)m_tokens.get(i);
-//				CommentToken ct = null;
-//				FieldNameToken fnt = null;
-//				Token tPrev = null;
-//				if(i > 0) {
-//					tPrev = m_tokens.get(i - 1);
-//					if(tPrev instanceof CommentToken) {
-//						ct = (CommentToken)tPrev;
-//					}
-//				}
-//				Token tNext = m_tokens.get(i + 1);
-//				if(tNext instanceof FieldNameToken) {
-//					fnt = (FieldNameToken)tNext;
-//					FieldAllocationToken fat = new NestedFieldAllocationToken(fnt, et, ct);
-//					if(ct != null) {
-//						m_tokens.remove(i);
-//						m_tokens.set(tPrev, fat);
-//						m_tokens.remove(i + 1);
-//						m_tokens.remove(i);
-//					} else {
-//						m_tokens.set(i,  fat);
-//						m_tokens.remove(i + 1);
-//					}
-//				} else {
-//					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
-//				}
-//			} else {
-//				break;
-//			}
-//		}
-	}
-
-	/**
-	 * Any sequence of a Comment, BaseType, FieldName is the allocation of a base type field
-	 * so collapse them to a single field allocation token
-	 * @throws SchemaParserException
-	 */
-	private void collapseBaseTypeAllocations() throws SchemaParserException {
-		int i = 0;
-		while(i < m_tokens.size()){
-//			//first find next define element
-//			i = findToken(i, true, BaseTypeToken.class);
-//
-//			if(i > 0 && i < m_tokens.size() - 1) {//note the limits here!
-//
-//				BaseTypeToken swt = (BaseTypeToken)m_tokens.get(i);
-//				CommentToken ct = null;
-//				FieldNameToken fnt = null;
-//				if(i > 0) {
-//					Token tPrev = m_tokens.get(i - 1);
-//					if(tPrev instanceof CommentToken) {
-//						ct = (CommentToken)tPrev;
-//					}
-//				}
-//				Token tNext = m_tokens.get(i + 1);
-//				if(tNext instanceof FieldNameToken) {
-//					fnt = (FieldNameToken)tNext;
-//					FieldAllocationToken fat = new FieldAllocationToken(fnt, swt, ct);
-//					if(ct != null) {
-//						m_tokens.remove(ct);
-//					}
-//
-//				} else {
-//					throw new SchemaParserException("Expected field name token here.", tNext.getStart());
-//				}
-//			} else {
-//				break;
-//			}
-		}
-	}
-	/**
-	 * grab any name values from within brackets that occur on a block type allocation
-	 * These will define constant values in the block header
-	 * @throws SchemaParserException
-	 */
-	private void collapseBlockTypeTokenNameValues() throws SchemaParserException {
-		int i = 0;
-		while(i < m_tokens.size()){
-//			//first find next define element
-//			i = findToken(i, true, BlockTypeToken.class);
-//
-//
-//			if(i > 0 && i < m_tokens.size()) {//note the limits here!
-//				BlockTypeToken btt = (BlockTypeToken)m_tokens.get(i);
-//				int bs = findToken(i, true, BracketStartToken.class);
-//				int be = findToken(i, true, BracketEndToken.class);
-//				BracketStartToken bst = null;
-//				BracketEndToken bet = null;
-//
-//
-//				if(bs >= 0) {
-//					bst = (BracketStartToken)m_tokens.get(bs);
-//					//throw this out if it's not on the same line
-//					if(bst.getStart().getLineIndex() != btt.getStart().getLineIndex()) {
-//						bst = null;
-//					}
-//				}
-//				if(be >= 0) {
-//					bet = (BracketEndToken)m_tokens.get(be);
-//				}
-//
-//				if(bst != null) {
-//					if(bet == null) {
-//						throw new SchemaParserException("No closing brackets for opening brackets.", bst.getStart());
-//					}
-//
-//					int j = bs+1;
-//					while(m_tokens.get(j) != bet) {
-//						Token t = m_tokens.get(j);
-//						if(t instanceof NameValueToken) {
-//							btt.add((NameValueToken)t);
-//						} else {
-//							if(t instanceof EolToken) {
-//							} else {
-//								throw new SchemaParserException("Unexpected token!", t.getStart());
-//							}
-//						}
-//						++j;
-//					}
-//					for(int k = be; k >= bs; --k) {
-//						m_tokens.remove(k);
-//					}
-//
-//				}
-//			} else {
-//				break;
-//			}
-//			++i;
-
-		}
-	}
 
 	/**
 	 * now collapse any token sequences of form CommentToken, SingleWordToken, IdentifierToken (equals sign), NumberToken to a NameValueToken
@@ -892,8 +721,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						m_tokens.next();
 						while(m_tokens.inOrder(m_tokens.getCurrent(), bracketEnd)) {
 							Token t = m_tokens.getCurrent();
-							if(t instanceof StringToken || t instanceof SingleWordToken || t instanceof NumberToken) {
-								a.addParameter(t);
+							if(t instanceof StringToken || t instanceof SingleWordToken) {
+								a.addParameter(t.getName());
+							} else if(t instanceof NumberToken) {
+								NumberToken nt = (NumberToken)t;
+								a.addParameter(nt.getNumber());
 							} else if(t instanceof CommentToken) {
 								//ignore comments
 							} else {
@@ -902,7 +734,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							m_tokens.next();
 						}
 						if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
-							
+							String fn = a.getParameter(0, String.class);
+							if(fn == null) {
+								throw new SchemaParserException("File path annotation should have a string parameter", null);
+							} else {
+								m_fileName = fn;
+							}
+
 						}
 					}
 

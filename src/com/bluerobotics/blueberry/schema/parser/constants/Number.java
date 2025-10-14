@@ -23,27 +23,57 @@ package com.bluerobotics.blueberry.schema.parser.constants;
 
 import java.math.BigDecimal;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-
-
 /**
  *
  */
-public class NumberTypeConstant extends AbstractConstant<Number> {
-	private final Number m_value;
-	public NumberTypeConstant(TypeId id, FieldName name, Number value, String comment) {
-		super(BaseType.getBaseType(id), name, comment);
-		m_value = value;
+public class Number {
+	private final BigDecimal m_value;
+	private final boolean m_integer;
+
+	public Number(Long v) {
+		m_value = new BigDecimal(v);
+		m_integer = true;
 	}
 
-	@Override
-	public Number getValue() {
+	public Number(String s) {
+		BigDecimal result = null;
+		String s2 = s.toLowerCase();
+		int n = s2.length();
+		if(s2.startsWith("0x")) {
+			result = new BigDecimal(Long.parseLong(s2, 2, n, 16));
+			m_integer = true;
+		} else if(s2.startsWith("0d")) {
+			result = new BigDecimal(Long.parseLong(s2, 2, n, 10));
+			m_integer = true;
+		} else if(s2.startsWith("0b")) {
+			result = new BigDecimal(Long.parseLong(s2, 2, n,  2));
+			m_integer = true;
+		} else if(s2.length() > 1 && s2.startsWith("0")) {
+			result = new BigDecimal(Long.parseLong(s2, 1, n, 8));
+			m_integer = true;
+		} else {
+			result = new BigDecimal(s2);
+			if(s2.contains(".") || s2.contains("e")) {
+				m_integer = false;
+			} else {
+				m_integer = true;
+			}
+		}
+		m_value = result;
+	}
+	public static Number parse(String s) {
+		return new Number(s);
+	}
+	public boolean isInteger() {
+		return m_integer;
+	}
+	public BigDecimal getNumber() {
 		return m_value;
 	}
-
-
-
-
+	public float getFloat() {
+		return m_value.floatValue();
+	}
+	public float getInt() {
+		return m_value.intValue();
+	}
 }

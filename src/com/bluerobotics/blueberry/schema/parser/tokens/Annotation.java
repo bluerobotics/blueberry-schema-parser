@@ -54,7 +54,7 @@ public class Annotation  {
 	public static final FieldName SERIALIZATION_ANNOTATION      = FieldName.fromSnake("serialization");
 	private final KnownAnnotation m_known;
 	private final FieldName m_name;
-	private ArrayList<Constant> m_parameters = new ArrayList<>();
+	private ArrayList<Object> m_parameters = new ArrayList<>();
 	public Annotation(FieldName name) {
 		m_name = name;
 		KnownAnnotation ka = null;
@@ -79,12 +79,19 @@ public class Annotation  {
 			return m_name.toLowerSnake();
 		}
 	}
-	public void addParameter(Constant t) {
+	public void addParameter(Object t) {
 		if(t != null) {
 			m_parameters.add(t);
 		}
 	}
-	public
+	public <C extends Object> C getParameter(int i, Class<C> t) {
+		C result = null;
+		Object c = m_parameters.get(i);
+		if(c.getClass() == t) {
+			result = t.cast(c);
+		}
+		return result;
+	}
 
 
 }

@@ -22,9 +22,10 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.math.BigDecimal;
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 
 /**
- * 
+ *
  */
 public class NameValueToken extends AbstractToken {
 	private NumberToken value;
@@ -33,24 +34,24 @@ public class NameValueToken extends AbstractToken {
 	public NameValueToken(SingleWordToken n, NumberToken v, CommentToken c){
 		super(n.getStart().getFirst(v != null ? v.getStart() : null).getFirst(c != null ? c.getStart() : null),
 				n.getEnd().getLast(v != null ? v.getEnd() : null).getLast(c != null ? c.getEnd() : null));
-		
+
 		name = n;
 		value = v;
 		comment = c;
 	}
-	public NameValueToken(String n, long v) {
-		super(null, null);
-		name = new SingleWordToken(null, null, n);
-		value = NumberToken.make(v);
-		comment = null;
-	}
+//	public NameValueToken(String n, long v) {
+//		super(null, null);
+//		name = new SingleWordToken(null, null, n);
+//		value = NumberToken.make(v);
+//		comment = null;
+//	}
 	public String getName() {
 		return name.getName();
 	}
 	public NumberToken getNumberToken() {
 		return value;
 	}
-	public BigDecimal getValue() {
+	public Number getValue() {
 		return value.getNumber();
 	}
 	public boolean isValue() {
@@ -70,7 +71,7 @@ public class NameValueToken extends AbstractToken {
 		s += ")";
 		return s;
 	}
-	public void setValue(long v) {
-		value = NumberToken.make(v);
-	}
+//	public void setValue(long v) {
+//		value = NumberToken.make(v);
+//	}
 }

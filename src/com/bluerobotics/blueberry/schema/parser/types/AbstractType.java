@@ -21,7 +21,11 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 
 /**
  *
@@ -30,6 +34,8 @@ public abstract class AbstractType implements Type {
 	private final FieldName m_typeName;
 	private final String m_comment;
 	private final TypeId m_typeId;
+	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
+
 
 
 public AbstractType(TypeId id, FieldName typeName, String comment) {
@@ -53,6 +59,27 @@ public AbstractType(TypeId id, FieldName typeName, String comment) {
 	public TypeId getTypeId() {
 		return m_typeId;
 	}
+	public void addAnnotation(Annotation... as) {
+		for(Annotation a : as) {
+			m_annotations.add(a);
+		}
+	}
+	public void addAnnotation(List<Annotation> as) {
+		for(Annotation a : as) {
+			m_annotations.add(a);
+		}
+	}
+
+	public Annotation getAnnotation(FieldName name) {
+		Annotation result = null;
+		for(Annotation a : m_annotations) {
+			if(a.getName().equals(name)){
+				result = a;
+			}
+		}
+		return result;
+	}
+
 
 
 }

@@ -27,6 +27,7 @@ import java.util.ArrayList;
  * A class that wraps a hierarchical string name that can be easily expressed as various cases
  */
 public class FieldName {
+	public static final FieldName EMPTY = FieldName.fromCamel("");
 	private final String[] name;
 	public FieldName(String... ss) {
 		int n = ss.length;
@@ -126,6 +127,9 @@ public class FieldName {
 		return new FieldName(ss);
 	}
 	public FieldName addPrefix(FieldName f) {
+		if(f == null) {
+			return this;
+		}
 		int m = f.name.length;
 		int n = name.length;
 		int mm = m + n;
