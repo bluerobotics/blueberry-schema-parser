@@ -26,17 +26,17 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
-
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 /**
  * 
  */
 public class EnumField extends AbstractField {
 	public class NameValue {
 		FieldName name;
-		long value;
+		Number value;
 		boolean isValue;
 		String comment;
-		public NameValue(FieldName n, long v, String c) {
+		public NameValue(FieldName n, Number v, String c) {
 			name = n;
 			value = v;
 			comment = c;
@@ -44,7 +44,7 @@ public class EnumField extends AbstractField {
 		public FieldName getName() {
 			return name;
 		}
-		public long getValue() {
+		public Number getValue() {
 			return value;
 		}
 		public String getComment() {
@@ -52,10 +52,10 @@ public class EnumField extends AbstractField {
 		}
 
 		public String toString() {
-			return getClass().getSimpleName() + "(" + name + " = " + value + ")";
+			return getClass().getSimpleName() + "(" + name.toUpperSnake() + " = " + value + ")";
 		}
 		public String getValueAsHex() {
-			return WriterUtils.formatAsHex(getValue());
+			return WriterUtils.formatAsHex(getValue().asLong());
 		}
 	}
 
@@ -64,13 +64,20 @@ public class EnumField extends AbstractField {
 		super(name, type, id, comment);
 	}
 	
-	public void addNameValue(FieldName name, long value, String comment) {
+	public void addNameValue(FieldName name, Number value, String comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
 
 
 	public List<NameValue> getNameValues(){
 		return m_nameValues;
+	}
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		result += getTypeName().toUpperCamel();
+		result += ")";
+		return result;
 	}
 
 }

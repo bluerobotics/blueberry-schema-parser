@@ -31,6 +31,9 @@ public abstract class AbstractConstant<T> implements Constant<T> {
 	private final FieldName m_name;
 	private final String m_comment;
 	private final Type m_type;
+	private String m_fileName = null;
+	private FieldName m_namespace = null;
+	
 	protected AbstractConstant(Type type, FieldName name, String comment) {
 		m_type = type;
 		m_name = name;
@@ -48,4 +51,22 @@ public abstract class AbstractConstant<T> implements Constant<T> {
 	public Type getType() {
 		return m_type;
 	}
+	
+	@Override
+	public void setFileName(String name) {
+		m_fileName = name;
+	}
+	@Override
+	public String getFileName() {
+		return m_fileName;
+	}
+	@Override
+	public void setNamespace(FieldName name) {
+		m_namespace = name;
+	}
+	@Override
+	public FieldName getNamespace() {
+		return m_namespace;
+	}
+	
 }

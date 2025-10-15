@@ -31,6 +31,8 @@ public abstract class AbstractField implements Field {
 	private final FieldName m_name;
 	private final FieldName m_typeName;
 	private final String m_comment;
+	private String m_fileName = null;
+	private FieldName m_namespace = null;
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
@@ -111,6 +113,23 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
+	@Override
+	public void setFileName(String name) {
+		m_fileName = name;
+	}
+	@Override
+	public String getFileName() {
+		return m_fileName;
+	}
+	@Override
+	public void setNamespace(FieldName name) {
+		m_namespace = name;
+	}
+	@Override
+	public FieldName getNamespace() {
+		return m_namespace;
+	}
+	
 
 
 

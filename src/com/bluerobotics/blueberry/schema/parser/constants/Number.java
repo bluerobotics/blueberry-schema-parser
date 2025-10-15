@@ -27,6 +27,7 @@ import java.math.BigDecimal;
  *
  */
 public class Number {
+	public static final Number NAN = new Number();
 	private final BigDecimal m_value;
 	private final boolean m_integer;
 
@@ -34,11 +35,15 @@ public class Number {
 		m_value = new BigDecimal(v);
 		m_integer = true;
 	}
-
+	private Number() {
+		m_value = null;
+		m_integer = false;
+	}
 	public Number(String s) {
 		BigDecimal result = null;
 		String s2 = s.toLowerCase();
 		int n = s2.length();
+		
 		if(s2.startsWith("0x")) {
 			result = new BigDecimal(Long.parseLong(s2, 2, n, 16));
 			m_integer = true;
@@ -67,13 +72,34 @@ public class Number {
 	public boolean isInteger() {
 		return m_integer;
 	}
-	public BigDecimal getNumber() {
-		return m_value;
+
+	public double asFloat() {
+		double result = Double.NaN;
+	
+		if(m_value != null) {
+			m_value.floatValue();
+		}
+		return result;
 	}
-	public float getFloat() {
-		return m_value.floatValue();
+	public int asInt() {
+		int result = -1;
+		if(m_value != null) {
+			result  = m_value.intValue();
+		}
+		return result;
 	}
-	public int getInt() {
-		return m_value.intValue();
+	public long asLong() {
+		long result = -1;
+		if(m_value != null) {
+			result  = m_value.longValue();
+		}
+		return result;
+	}
+	public String toString() {
+		String result = "NAN";
+		if(m_value != null) {
+			result = m_value.toString();
+		}
+		return result;
 	}
 }

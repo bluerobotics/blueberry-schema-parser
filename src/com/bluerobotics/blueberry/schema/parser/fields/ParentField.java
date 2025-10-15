@@ -45,5 +45,11 @@ public abstract class ParentField extends AbstractField {
 			c.accept(f);
 		}
 	}
-
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		result += getTypeName().toUpperCamel();
+		result += ")";
+		return result;
+	}
 }

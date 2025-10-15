@@ -204,6 +204,36 @@ public class FieldName {
 
 		return result;
 	}
+	/**
+	 * Checks that none of the characters of this string are upper case
+	 * @param s
+	 * @return true if all characters are lower case or not cased characters
+	 */
+	private boolean isAllLowerCase(String s) {
+		boolean result = true;
+		for(int i = 0; i < s.length(); ++i) {
+			if(Character.isUpperCase(s.charAt(i))) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+	/**
+	 * Checks that none of the characters of this string are lower case
+	 * @param s
+	 * @return true if all characters are upper case or not cased characters
+	 */
+	private boolean isAllUpperCase(String s) {
+		boolean result = true;
+		for(int i = 0; i < s.length(); ++i) {
+			if(Character.isLowerCase(s.charAt(i))) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
 
 
 

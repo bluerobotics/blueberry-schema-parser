@@ -31,9 +31,9 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
-public class NumberTypeConstant extends AbstractConstant<Number> {
+public class NumberConstant extends AbstractConstant<Number> {
 	private final Number m_value;
-	public NumberTypeConstant(TypeId id, FieldName name, Number value, String comment) {
+	public NumberConstant(TypeId id, FieldName name, Number value, String comment) {
 		super(BaseType.getBaseType(id), name, comment);
 		m_value = value;
 	}

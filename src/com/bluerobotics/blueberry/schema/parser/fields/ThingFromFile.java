@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,26 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-
-
 /**
- * A class to represent both a data type and an instance of that type
+ * 
  */
-public interface Field extends ThingFromFile {
-
-	FieldName getTypeName();
-
-	TypeId getTypeId();
-	
-
-	int getBitCount();
-	Field getParent();
-	void setParent(ParentField p);
-	
-	
-	
-	
-
-
+public interface ThingFromFile {
+	FieldName getName();
+	String getComment();
+	void setFileName(String name);
+	String getFileName();
+	void setNamespace(FieldName name);
+	FieldName getNamespace();
 }
