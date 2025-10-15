@@ -73,11 +73,14 @@ public class Annotation  {
 		return m_name;
 	}
 	public String toString() {
+		String result = "Annotation(";
 		if(isKnown()) {
-			return getClass().getSimpleName()+"("+m_known+")";
+			result += getClass().getSimpleName()+"("+m_known+")";
 		} else {
-			return m_name.toLowerSnake();
+			result += m_name.toLowerSnake();
 		}
+		result += ")";
+		return result;
 	}
 	public void addParameter(Object t) {
 		if(t != null) {
