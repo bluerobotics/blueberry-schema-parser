@@ -73,7 +73,7 @@ public class Number {
 	public float getFloat() {
 		return m_value.floatValue();
 	}
-	public float getInt() {
+	public int getInt() {
 		return m_value.intValue();
 	}
 }

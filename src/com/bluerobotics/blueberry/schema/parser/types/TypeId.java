@@ -42,7 +42,9 @@ public enum TypeId {
 	STRING         (32),
 	SEQUENCE       (32),
 	STRUCT         (0),
-	MESSAGE        (0),
+	MESSAGE        (0), 
+	ARRAY          (0),
+	DEFERRED       (0), //this means the type is not currently know but should be looked up later
 	;
 
 

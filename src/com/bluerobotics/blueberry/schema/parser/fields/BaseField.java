@@ -22,24 +22,19 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  *
  */
 public class BaseField extends AbstractField {
 	private int m_index = -1;
-	public BaseField(FieldName name, BaseType type, String comment) {
-		super(name, type, comment);
+	public BaseField(FieldName name, TypeId id, String comment) {
+		super(name, FieldName.fromCamel(id.name()), id, comment);
 	}
 
 
-	public void setIndex(int bi) {
-		m_index = bi;
-	}
-	public int getIndex() {
-		return m_index;
-	}
-
+	
 
 
 }

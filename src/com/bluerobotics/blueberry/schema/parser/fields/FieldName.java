@@ -27,10 +27,9 @@ import java.util.ArrayList;
  * A class that wraps a hierarchical string name that can be easily expressed as various cases
  */
 public class FieldName {
-	public static final FieldName EMPTY = FieldName.fromCamel("");
+	public static final FieldName EMPTY = new FieldName(new String[0]);
 	private final String[] name;
 	public FieldName(String... ss) {
-		int n = ss.length;
 		name = ss;
 	}
 	public static FieldName fromDot(String n) {

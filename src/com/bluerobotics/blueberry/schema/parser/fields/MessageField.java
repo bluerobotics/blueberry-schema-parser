@@ -21,14 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
 public class MessageField extends ParentField {
 
-	public MessageField(FieldName name, Type type, String comment) {
-		super(name, type, comment);
+	public MessageField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, TypeId.MESSAGE, comment);
 	}
 
 }

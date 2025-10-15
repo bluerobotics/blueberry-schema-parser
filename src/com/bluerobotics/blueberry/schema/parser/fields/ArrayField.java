@@ -21,16 +21,15 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  *
  */
 public class ArrayField extends AbstractField {
 	private final int m_number;
-	protected ArrayField(FieldName name, Type type, int number, String comment) {
-		super(name, type, comment);
+	public ArrayField(FieldName name, FieldName typeName, TypeId typeId, int number, String comment) {
+		super(name, typeName, TypeId.ARRAY, comment);
 		m_number = number;
 	}
 	public int getNumber() {

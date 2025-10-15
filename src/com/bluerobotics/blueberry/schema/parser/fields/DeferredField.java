@@ -21,29 +21,16 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
-
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
- * An abstract field that adds the concept of child fields
+ * 
  */
-public abstract class ParentField extends AbstractField {
-	private final ArrayList<Field> m_children = new ArrayList<>();
-	protected ParentField(FieldName name, FieldName typeName, TypeId typeId, String comment) {
-		super(name, typeName, typeId, comment);
-	}
-	public void add(Field f) {
-		m_children.add(f);
-	}
+public class DeferredField extends AbstractField {
 
-	public void scanThroughFields(Consumer<Field> c) {
-		for(Field f : m_children) {
-			c.accept(f);
-		}
+	public DeferredField(FieldName name, FieldName type, String comment) {
+		super(name, type, TypeId.DEFERRED, comment);
+		// TODO Auto-generated constructor stub
 	}
 
 }

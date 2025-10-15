@@ -21,12 +21,17 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
+
+/**
+ * A class to represent both a data type and an instance of that type
+ */
 public interface Field {
 
-	Type getType();
+	FieldName getTypeName();
 
+	TypeId getTypeId();
 	FieldName getName();
 
 	String getComment();
@@ -34,5 +39,6 @@ public interface Field {
 	int getBitCount();
 	Field getParent();
 	void setParent(ParentField p);
+
 
 }

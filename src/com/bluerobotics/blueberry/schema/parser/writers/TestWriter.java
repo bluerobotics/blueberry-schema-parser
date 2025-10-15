@@ -49,7 +49,7 @@ public class TestWriter extends SourceWriter {
 
 		if(f instanceof BaseField) {
 			BaseField bf = (BaseField)f;
-			w(""+bf.getIndex()+" ");
+//			w(""+bf.getIndex()+" ");
 		}
 //		if(f instanceof EnumType) {
 //			w("enum ");

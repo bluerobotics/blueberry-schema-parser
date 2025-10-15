@@ -22,25 +22,31 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 public abstract class AbstractField implements Field {
 	private final FieldName m_name;
-	private final Type m_type;
+	private final FieldName m_typeName;
 	private final String m_comment;
+	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	protected AbstractField(FieldName name, Type type, String comment) {
+	protected AbstractField(FieldName name, FieldName type, TypeId id, String comment) {
 		m_name = name;
-		m_type = type;
+		m_typeName = type;
 		m_comment = comment;
+		m_typeId = id;
 	}
 	@Override
-	public Type getType() {
-		return m_type;
+	public FieldName getTypeName() {
+		return m_typeName;
+	}
+	@Override
+	public TypeId getTypeId() {
+		return m_typeId;
 	}
 	@Override
 	public FieldName getName() {
@@ -74,7 +80,7 @@ public abstract class AbstractField implements Field {
 		boolean result = false;
 		if(obj != null && obj.getClass().equals(getClass())) {
 			Field f = (Field)obj;
-			if(f.getType() == getType()) {
+			if(f.getTypeName().equals(getTypeName()) && f.getTypeId() == getTypeId()) {
 				if(f.getParent() != null && f.getParent().equals(getParent())) {
 					if(f.getName() != null && f.getName().equals(getName())){
 						result = true;
@@ -85,9 +91,17 @@ public abstract class AbstractField implements Field {
 		return result;
 	}
 
-	public void addAnnotation(Annotation a) {
-		m_annotations.add(a);
+	public void addAnnotation(Annotation... as) {
+		for(Annotation a : as) {
+			m_annotations.add(a);
+		}
 	}
+	public void addAnnotation(List<Annotation> as) {
+		for(Annotation a : as) {
+			m_annotations.add(a);
+		}
+	}
+
 	public Annotation getAnnotation(FieldName name) {
 		Annotation result = null;
 		for(Annotation a : m_annotations) {

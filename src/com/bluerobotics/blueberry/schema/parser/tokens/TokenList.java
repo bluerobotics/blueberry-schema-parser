@@ -255,6 +255,21 @@ public class TokenList {
 			return cs == t.getClass();
 		}));
 	}
+	
+	
+	public Token gotoNextOfThese(Class<?>... cs) {
+		Token resultT = gotoNext(t -> {
+			boolean result = false;
+			for(Class<?> c : cs) {
+				if(t.getClass() == c) {
+					result = true;
+					break;
+				}
+			}
+			return result;
+		});
+		return resultT;
+	}
 
 
 	/**
@@ -460,6 +475,14 @@ public class TokenList {
 		}
 		return false;
 
+	}
+	/**
+	 * Computes whether this list's current token is before the specified token
+	 * @param t - the specified token
+	 * @return - true if the current token is before the specified one
+	 */
+	public boolean isCurrentBefore(Token t) {
+		return inOrder(getCurrent(), t);
 	}
 	/**
 	 * removes a range of tokens from start to end.

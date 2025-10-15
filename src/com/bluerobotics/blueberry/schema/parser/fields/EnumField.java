@@ -22,28 +22,55 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 
 /**
- * An abstract field that adds the concept of child fields
+ * 
  */
-public abstract class ParentField extends AbstractField {
-	private final ArrayList<Field> m_children = new ArrayList<>();
-	protected ParentField(FieldName name, FieldName typeName, TypeId typeId, String comment) {
-		super(name, typeName, typeId, comment);
-	}
-	public void add(Field f) {
-		m_children.add(f);
+public class EnumField extends AbstractField {
+	public class NameValue {
+		FieldName name;
+		long value;
+		boolean isValue;
+		String comment;
+		public NameValue(FieldName n, long v, String c) {
+			name = n;
+			value = v;
+			comment = c;
+		}
+		public FieldName getName() {
+			return name;
+		}
+		public long getValue() {
+			return value;
+		}
+		public String getComment() {
+			return comment;
+		}
+
+		public String toString() {
+			return getClass().getSimpleName() + "(" + name + " = " + value + ")";
+		}
+		public String getValueAsHex() {
+			return WriterUtils.formatAsHex(getValue());
+		}
 	}
 
-	public void scanThroughFields(Consumer<Field> c) {
-		for(Field f : m_children) {
-			c.accept(f);
-		}
+	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
+	public EnumField(FieldName name, FieldName type, TypeId id, String comment) {
+		super(name, type, id, comment);
+	}
+	
+	public void addNameValue(FieldName name, long value, String comment) {
+		m_nameValues.add(new NameValue(name,value, comment));
+	}
+
+
+	public List<NameValue> getNameValues(){
+		return m_nameValues;
 	}
 
 }

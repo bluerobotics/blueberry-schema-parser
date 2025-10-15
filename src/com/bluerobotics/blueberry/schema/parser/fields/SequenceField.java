@@ -21,14 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
 public class SequenceField extends ParentField {
 
-	public SequenceField(FieldName name, Type type, String comment) {
-		super(name, type, comment);
+	protected SequenceField(FieldName name, FieldName typeName, String comment) {
+		super(name, typeName, TypeId.SEQUENCE, comment);
 	}
 
 }
