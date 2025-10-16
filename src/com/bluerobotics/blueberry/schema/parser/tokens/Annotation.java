@@ -22,6 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
@@ -44,6 +46,14 @@ public class Annotation  {
 		}
 		public String getName() {
 			return name;
+		}
+	}
+	
+	public class DeferredParameter {
+		
+		final FieldName name; 
+		private DeferredParameter(FieldName n) {
+			name = n;
 		}
 	}
 
@@ -94,6 +104,30 @@ public class Annotation  {
 			result = t.cast(c);
 		}
 		return result;
+	}
+	public List<Object> getParameters(){
+		return m_parameters;
+	}
+	/**
+	 * replace any deferred parameters using a lookup function that will return a new parameter object based on the supplied field name
+	 * @param f
+	 */
+	public void replaceDeferredParameters(Function<FieldName, Object> f) {
+		for(int i = 0; i < m_parameters.size(); ++i) {
+			Object o = m_parameters.get(i);
+			if(o instanceof DeferredParameter) {
+				DeferredParameter df = (DeferredParameter)o;
+				Object ro = f.apply(df.name);
+				if(ro == null) {
+					m_parameters.set(i, ro);
+				}
+			}
+		}
+	}
+	
+	
+	public void addDeferredParameter(FieldName n) {
+		m_parameters.add(new DeferredParameter(n));
 	}
 
 

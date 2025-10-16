@@ -16,6 +16,7 @@ public class SchemaParserException extends Exception {
 		super(addLineAndPointer(s, c));
 		m_location = c;
 	}
+	
 	public Coord getLocaation() {
 		return m_location;
 	}
@@ -29,7 +30,7 @@ public class SchemaParserException extends Exception {
 			s += " ".repeat(c.index);
 			s += "^\n";
 		} else {
-			s = "null\n";
+			s += "\n";
 		}
 		
 		return s;

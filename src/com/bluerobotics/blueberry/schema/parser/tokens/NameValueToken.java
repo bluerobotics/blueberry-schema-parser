@@ -21,7 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.math.BigDecimal;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 
 /**
@@ -38,15 +37,7 @@ public class NameValueToken extends AbstractToken {
 		name = n;
 		value = v;
 		comment = c;
-	}
-//	public NameValueToken(String n, long v) {
-//		super(null, null);
-//		name = new SingleWordToken(null, null, n);
-//		value = NumberToken.make(v);
-//		comment = null;
-//	}
-	public String getName() {
-		return name.getName();
+	
 	}
 	public NumberToken getNumberToken() {
 		return value;

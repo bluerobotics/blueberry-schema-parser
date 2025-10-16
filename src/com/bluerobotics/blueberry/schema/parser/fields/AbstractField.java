@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
@@ -42,6 +43,13 @@ public abstract class AbstractField implements Field {
 		m_comment = comment;
 		m_typeId = id;
 	}
+	
+	
+	
+
+
+
+
 	@Override
 	public FieldName getTypeName() {
 		return m_typeName;
@@ -92,18 +100,19 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
-
+	
 	public void addAnnotation(Annotation... as) {
 		for(Annotation a : as) {
 			m_annotations.add(a);
 		}
 	}
+	@Override
 	public void addAnnotation(List<Annotation> as) {
 		for(Annotation a : as) {
 			m_annotations.add(a);
 		}
 	}
-
+	@Override
 	public Annotation getAnnotation(FieldName name) {
 		Annotation result = null;
 		for(Annotation a : m_annotations) {
@@ -128,6 +137,19 @@ public abstract class AbstractField implements Field {
 	@Override
 	public FieldName getNamespace() {
 		return m_namespace;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void scanAnnotations(Consumer<Annotation> c) {
+		for(Annotation a : m_annotations) {
+			c.accept(a);
+		}
 	}
 	
 

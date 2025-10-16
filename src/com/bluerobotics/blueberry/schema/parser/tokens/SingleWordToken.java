@@ -25,20 +25,18 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
  * 
  */
 public class SingleWordToken extends AbstractToken {
-	private final String m_name;
+
 
 	
 	
 	public SingleWordToken(Coord start, Coord end, String name) {
 		super(start, end);
-		m_name = name;
+		
 		
 		
 	}
 	public String toString() {
-		return getClass().getSimpleName()+"(\""+m_name+"\")";
+		return getClass().getSimpleName()+"(\""+getName()+"\")";
 	}
-	public String getName() {
-		return m_name;
-	}
+	
 }

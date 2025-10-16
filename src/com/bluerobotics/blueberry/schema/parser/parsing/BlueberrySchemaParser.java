@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
@@ -33,6 +34,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.TypeDefField;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
@@ -70,7 +72,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final TokenList m_tokens = new TokenList();
 	private final ArrayList<Field> m_defines = new ArrayList<>();
 	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();
-	private final ArrayList<MessageField> m_messages = new ArrayList<>();
+	private final ArrayList<Field> m_messages = new ArrayList<>();
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 
@@ -174,6 +176,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 ////			fu.computeParents(m_topLevelField);
 ////			fu.removeDuplicates(m_topLevelField, null);
 			assembleFields();
+
+			
+			processDeferredFields(m_defines, m_defines);	
+			processDeferredFields(m_messages, m_defines);
+			
+			applyDeferredParameters(m_defines);
+			applyDeferredParameters(m_messages);
+
 //			extractEnums();
 //			extractTypedefs();
 //			extractStructs();
@@ -190,6 +200,55 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 
+	}
+	/**
+	 * check all annotations of all 
+	 */
+	private void applyDeferredParameters(List<Field> fs) {
+		for(Field f : fs) {
+			f.scanAnnotations(a -> {
+				a.replaceDeferredParameters(fn -> {
+					Object result = null;
+					for(Constant<?> c : m_constants) {
+						if(c.getName().equals(fn)) {
+							result = c.getValue();
+							break;
+						}
+					}
+					return result;
+				});
+			});
+		}
+	}
+
+	/**
+	 * method that returns a replacement field for a deferred field
+	 * @param m_defines2
+	 * @param m_defines3
+	 * @throws SchemaParserException 
+	 */
+	private <T extends Field> void processDeferredFields(List<Field> fs, ArrayList<Field> defines) throws SchemaParserException {
+		for(int i = 0; i < fs.size(); ++i) {
+			Field f = fs.get(i);
+			if(f instanceof DeferredField) {
+				FieldName name = f.getName();
+				FieldName typeName = f.getTypeName();
+				Field dft = null;
+				for(Field df : defines) {
+					if(df.getTypeName().equals(typeName)) {
+						dft = df;
+						break;
+					}
+				}
+				if(dft == null) {
+					throw new SchemaParserException("Could not find a type definition for"+typeName.toUpperCamel(), null);
+				}
+				fs.set(i, dft.makeInstance(name));
+			} else if(f instanceof ParentField) {
+				processDeferredFields(((ParentField)f).getChildren(), defines);
+			}
+		}
+		
 	}
 	/**
 	 * typedef keyword is not required before enum, sequence and struct keywords so remove it
@@ -920,8 +979,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 						while(m_tokens.isCurrentBefore( bracketEnd)) {
 							Token t = m_tokens.getCurrent();
-							if(t instanceof StringToken || t instanceof SingleWordToken) {
+							if(t instanceof StringToken) {
+								
 								a.addParameter(t.getName());
+							} else if(t instanceof SingleWordToken) {
+								//this is likely a constant
+								a.addDeferredParameter(FieldName.guess(t.getName()));
 							} else if(t instanceof NumberToken) {
 								NumberToken nt = (NumberToken)t;
 								a.addParameter(nt.getNumber());

@@ -30,5 +30,12 @@ public class SequenceField extends ParentField {
 	protected SequenceField(FieldName name, FieldName typeName, String comment) {
 		super(name, typeName, TypeId.SEQUENCE, comment);
 	}
+	
+	@Override
+	public Field makeInstance(FieldName name) {
+		SequenceField result = new SequenceField(name, getTypeName(), getComment());
+		result.copyChildrenFrom(this);
+		return result;
+	}
 
 }

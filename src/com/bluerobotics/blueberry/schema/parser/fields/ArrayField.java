@@ -35,5 +35,9 @@ public class ArrayField extends AbstractField {
 	public int getNumber() {
 		return m_number;
 	}
+	@Override
+	public Field makeInstance(FieldName name) {
+		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment());
+	}
 
 }

@@ -31,4 +31,11 @@ public class MessageField extends ParentField {
 		super(name, typeName, TypeId.MESSAGE, comment);
 	}
 
+	@Override
+	public Field makeInstance(FieldName name) {
+		MessageField result = new MessageField(name, getTypeName(), getComment());
+		result.copyChildrenFrom(this);
+		return result;
+	}
+
 }

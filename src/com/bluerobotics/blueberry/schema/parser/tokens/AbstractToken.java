@@ -44,7 +44,7 @@ public abstract class AbstractToken implements Token {
 	}
 	
 	@Override
-	public String getName() {
+	public final String getName() {
 		return m_start.fromThisToThatString(m_end);
 	}
 

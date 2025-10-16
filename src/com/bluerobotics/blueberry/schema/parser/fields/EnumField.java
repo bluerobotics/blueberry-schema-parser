@@ -80,4 +80,13 @@ public class EnumField extends AbstractField {
 		return result;
 	}
 
+	@Override
+	public Field makeInstance(FieldName name) {
+		EnumField result = new EnumField(name, getTypeName(), getTypeId(), getComment());
+		result.m_nameValues.addAll(m_nameValues);
+		return result;
+	}
+	
+	
+
 }

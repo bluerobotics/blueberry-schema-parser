@@ -32,4 +32,9 @@ public class TypeDefField extends AbstractField {
 		super(name, typeName, typeId, comment);
 	}
 
+	@Override
+	public Field makeInstance(FieldName name) {
+		return new TypeDefField(name, getTypeName(), getTypeId(), getComment());
+	}
+
 }

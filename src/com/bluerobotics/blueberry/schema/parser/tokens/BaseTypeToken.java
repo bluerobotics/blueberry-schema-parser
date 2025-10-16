@@ -68,8 +68,4 @@ public class BaseTypeToken extends IdentifierToken implements TypeToken {
 
 
 
-	@Override
-	public String getName() {
-		return getKeyword().id();
-	}
 }

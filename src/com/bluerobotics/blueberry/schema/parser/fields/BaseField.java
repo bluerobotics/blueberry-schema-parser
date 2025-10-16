@@ -32,6 +32,10 @@ public class BaseField extends AbstractField {
 	public BaseField(FieldName name, TypeId id, String comment) {
 		super(name, FieldName.fromCamel(id.name()), id, comment);
 	}
+	@Override
+	public Field makeInstance(FieldName name) {
+		return new BaseField(name, getTypeId(), getComment());
+	}
 
 
 	

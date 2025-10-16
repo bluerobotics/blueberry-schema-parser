@@ -21,6 +21,10 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.List;
+import java.util.function.Consumer;
+
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 
@@ -37,6 +41,14 @@ public interface Field extends ThingFromFile {
 	int getBitCount();
 	Field getParent();
 	void setParent(ParentField p);
+	
+	Field makeInstance(FieldName name);
+
+	void addAnnotation(List<Annotation> as);
+
+	Annotation getAnnotation(FieldName name);
+	
+	void scanAnnotations(Consumer<Annotation> c);
 	
 	
 	

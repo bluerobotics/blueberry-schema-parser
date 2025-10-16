@@ -52,4 +52,12 @@ public abstract class ParentField extends AbstractField {
 		result += ")";
 		return result;
 	}
+	protected void copyChildrenFrom(ParentField pf) {
+		pf.scanThroughFields(f -> {
+			add(f.makeInstance(f.getName()));
+		});
+	}
+	public ArrayList<Field> getChildren(){
+		return m_children;
+	}
 }

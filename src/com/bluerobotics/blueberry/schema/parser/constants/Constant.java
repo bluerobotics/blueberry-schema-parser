@@ -21,7 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.constants;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 import com.bluerobotics.blueberry.schema.parser.fields.ThingFromFile;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
 
@@ -30,7 +29,5 @@ import com.bluerobotics.blueberry.schema.parser.types.Type;
  */
 public interface Constant<T> extends ThingFromFile {
 	public T getValue();
-	public FieldName getName();
 	public Type getType();
-	public String getComment();
 }

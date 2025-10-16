@@ -33,4 +33,9 @@ public class DeferredField extends AbstractField {
 		// TODO Auto-generated constructor stub
 	}
 
+	@Override
+	public Field makeInstance(FieldName name) {
+		return new DeferredField(name, getTypeName(), getComment());
+	}
+
 }
