@@ -131,7 +131,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseNumbers();
 			collapseBaseTypes();
 			collapseUnsigned();
-			
+
 //			collapseAnnotations();
 			collapseTypedefs();
 			collapseNameValues();
@@ -216,7 +216,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m_tokens.next();
 				}
 			}
-			
+
 		}
 	}
 	/**
@@ -437,32 +437,35 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void processTypedef(IdentifierToken it) throws SchemaParserException {
-		
-		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//either this
-		SingleWordToken swt = m_tokens.relative(1, SingleWordToken.class);//or this
+
+		SingleWordToken name = m_tokens.relative(1, SingleWordToken.class);//or this
+		BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);//either this
 		SingleWordToken typeName = m_tokens.relative(2, SingleWordToken.class);//name of new type
 		IdentifierToken squareBracketStart = m_tokens.relativeId(3, TokenIdentifier.SQUARE_BRACKET_START);
-		NumberToken arraySize = m_tokens.relative(4, NumberToken.class);
-		SingleWordToken arraySizeConst = m_tokens.relative(4,SingleWordToken.class);
-		IdentifierToken squareBracketEnd = m_tokens.relativeId(5, TokenIdentifier.SQUARE_BRACKET_END);
-		if(typeName == null) {
+		
+		
+		if(name == null) {
 			throw new SchemaParserException("No type name specified for this typedef.",it.getEnd());
-		} else if(btt == null && swt == null) {
+		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		FieldName fn = FieldName.fromCamel(typeName.getName()).addPrefix(m_module);
+		FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
 
 		if(squareBracketStart == null) {
-
+		
 			//this is a normal base type
 
 			TypeDefField tdf = new TypeDefField(FieldName.EMPTY, fn, id, m_lastComment);
 			tdf.setFileName(m_fileName);
 			tdf.setNamespace(m_module);
 			m_defines.add(tdf);
-			
+
 		} else {
+			//this is an array type
+			NumberToken arraySize = m_tokens.relative(4, NumberToken.class);
+			SingleWordToken arraySizeConst = m_tokens.relative(4,SingleWordToken.class);
+			IdentifierToken squareBracketEnd = m_tokens.relativeId(5, TokenIdentifier.SQUARE_BRACKET_END);
 			//this is an array
 			if(squareBracketEnd == null) {
 				throw new SchemaParserException("No closing square-bracket found.",squareBracketStart.getEnd());
@@ -497,7 +500,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result != null ? result.getValue().asInt() : -1;
 	}
 	private void processEnum(IdentifierToken enumT) throws SchemaParserException {
-		
+
 
 		SingleWordToken name = m_tokens.relative(1, SingleWordToken.class);
 		IdentifierToken colon = m_tokens.relativeId(2, TokenIdentifier.COLON);
@@ -519,7 +522,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		et.setNamespace(m_module);
 		m_lastComment = null;
 		m_defines.add(et);
-		
+
 		m_tokens.setIndex(braceStart);
 
 		while(m_tokens.isCurrentBefore(braceEnd)) {
@@ -540,9 +543,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				fname = FieldName.guess(nameValueToken.getName());
 				et.addNameValue(fname, nameValueToken.getValue(), comment);
 			}
-			
-			
-			
+
+
+
 			m_tokens.setIndex(m_tokens.relative(1));
 
 		}
@@ -559,38 +562,45 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
 		IdentifierToken stringType = m_tokens.relativeId(1,  TokenIdentifier.STRING);
+		NameValueToken nvt = m_tokens.relative(2, NameValueToken.class);
 		SingleWordToken name = m_tokens.relative(2, SingleWordToken.class);
 		IdentifierToken equals = m_tokens.relativeId(3, TokenIdentifier.EQUALS);
-		NumberToken value = m_tokens.relative(4, NumberToken.class);
 		StringToken string = m_tokens.relative(4, StringToken.class);
-		if(btt == null) {
-			throw new SchemaParserException("Only base types can be declared const.", it.getEnd());
-		} else {
-			TypeId type = lookupBaseType(btt.getKeyword());
-			if(name == null) {
-				throw new SchemaParserException("Const must specify a name.", it.getEnd());
+
+
+		if(btt != null) {
+
+			if(nvt == null) {
+				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
 			}
-			if(type != null && value == null) {
-				throw new SchemaParserException("Const must have a specified value.", it.getEnd());
+
+			TypeId typeId = lookupBaseType(btt.getKeyword());
+
+			FieldName fn = FieldName.guess(nvt.getName()).addPrefix(m_module);
+
+			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), comment);
+			c.setFileName(m_fileName);
+			c.setNamespace(m_module);
+			m_constants.add(c);
+			m_tokens.setIndex(nvt);
+		} else if(stringType != null) {
+			if(equals == null) {
+				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
 			}
 			FieldName fn = FieldName.guess(name.getName()).addPrefix(m_module);
-			if(stringType != null) {
-				StringConstant c = new StringConstant(fn, string.getString(), comment);
-				c.setFileName(m_fileName);
-				c.setNamespace(m_module);
-				m_constants.add(c);
-				m_tokens.setIndex(string);
-			} else {
-				NumberConstant c = new NumberConstant(type, fn, value.getNumber(), comment);
-				c.setFileName(m_fileName);
-				c.setNamespace(m_module);
-				m_constants.add(c);
-				m_tokens.setIndex(value);
-			}
-
-
+			StringConstant c = new StringConstant(fn, string.getString(), comment);
+			c.setFileName(m_fileName);
+			c.setNamespace(m_module);
+			m_constants.add(c);
+			m_tokens.setIndex(string);
+		} else {
+			throw new SchemaParserException("Only base types and Strings can be declared const.", it.getEnd());
 
 		}
+
+
+
+
 	}
 	private void processModule(IdentifierToken it) throws SchemaParserException {
 		SingleWordToken moduleName = m_tokens.relative(1, SingleWordToken.class);
@@ -601,9 +611,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
-			m_module = FieldName.fromCamel(moduleName.getName()).addSuffix(new FieldName("::"));
+			m_module = FieldName.fromCamel(moduleName.getName());
+
 			//TODO: what is the best way to separate the module name from the rest?
 			m_moduleEnd = braceEnd;
+			m_tokens.setIndex(braceStart);
 
 		}
 
