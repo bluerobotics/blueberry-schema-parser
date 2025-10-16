@@ -276,7 +276,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		while(m_tokens.isMore()) {
 			Token t = m_tokens.getCurrent();
 			//check if we've hit the closing brace of the current module - if there is one
-			if(m_tokens.inOrder(m_moduleEnd, t)) {
+			if(!m_tokens.isCurrentBefore(m_moduleEnd)) {
 				m_module = null;
 				m_moduleEnd = null;
 			}
@@ -449,7 +449,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
+		FieldName fn = FieldName.fromCamel(name.getName());
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
 
 		if(squareBracketStart == null) {
@@ -460,6 +460,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			tdf.setFileName(m_fileName);
 			tdf.setNamespace(m_module);
 			m_defines.add(tdf);
+			m_tokens.setIndex(btt != null ? btt : typeName );
+
 
 		} else {
 			//this is an array type
@@ -479,6 +481,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			af.setFileName(m_fileName);
 			af.setNamespace(m_module);
 			m_defines.add(af);
+			m_tokens.setIndex(squareBracketEnd);
+
 
 		}
 

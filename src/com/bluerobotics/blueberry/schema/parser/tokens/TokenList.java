@@ -521,7 +521,7 @@ public class TokenList {
 	}
 	/**
 	 * Returns true if the first token occurs before the second token in this list
-	 * If either token is not actually in the list or either are null then returns false
+	 * If tokens are equal or a token is not actually in the list or either are null then returns false
 	 * @param t1
 	 * @param t2
 	 * @return
