@@ -32,6 +32,15 @@ public class FieldName {
 	public FieldName(String... ss) {
 		name = ss;
 	}
+	public static FieldName guess(String s) {
+		FieldName result;
+		if(isUnderscore(s) || isAllUpperCase(s)) {
+			result = fromSnake(s);
+		} else {
+			result = fromCamel(s);
+		}
+		return result;
+	}
 	public static FieldName fromDot(String n) {
 		return new FieldName(breakUpDot(n));
 	}
@@ -209,7 +218,7 @@ public class FieldName {
 	 * @param s
 	 * @return true if all characters are lower case or not cased characters
 	 */
-	private boolean isAllLowerCase(String s) {
+	private static boolean isAllLowerCase(String s) {
 		boolean result = true;
 		for(int i = 0; i < s.length(); ++i) {
 			if(Character.isUpperCase(s.charAt(i))) {
@@ -224,7 +233,7 @@ public class FieldName {
 	 * @param s
 	 * @return true if all characters are upper case or not cased characters
 	 */
-	private boolean isAllUpperCase(String s) {
+	private static boolean isAllUpperCase(String s) {
 		boolean result = true;
 		for(int i = 0; i < s.length(); ++i) {
 			if(Character.isLowerCase(s.charAt(i))) {
@@ -233,6 +242,11 @@ public class FieldName {
 			}
 		}
 		return result;
+	}
+	
+	private static boolean isUnderscore(String s) {
+		return s.contains("_");
+		
 	}
 
 

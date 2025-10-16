@@ -206,14 +206,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					case STRUCT:
 					case SEQUENCE:
 						m_tokens.next();
-						m_tokens.remove(id);
+						m_tokens.remove(typedef);
 						break;
 					default:
 						m_tokens.next();
 						break;
 					}
+				} else {
+					m_tokens.next();
 				}
 			}
+			
 		}
 	}
 	/**
@@ -531,10 +534,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			NameValueToken nameValueToken = m_tokens.relative(0, NameValueToken.class);
 			FieldName fname;
 			if(nameToken != null) {
-				fname = FieldName.fromSnake(nameToken.getName());
+				fname = FieldName.guess(nameToken.getName());
 				et.addNameValue(fname, Number.NAN, comment);
 			} else if(nameValueToken != null) {
-				fname = FieldName.fromSnake(nameValueToken.getName());
+				fname = FieldName.guess(nameValueToken.getName());
 				et.addNameValue(fname, nameValueToken.getValue(), comment);
 			}
 			
@@ -570,7 +573,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(type != null && value == null) {
 				throw new SchemaParserException("Const must have a specified value.", it.getEnd());
 			}
-			FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
+			FieldName fn = FieldName.guess(name.getName()).addPrefix(m_module);
 			if(stringType != null) {
 				StringConstant c = new StringConstant(fn, string.getString(), comment);
 				c.setFileName(m_fileName);
@@ -612,12 +615,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void checkBrackets() throws SchemaParserException {
-
-		Token result = m_tokens.get(0);
-		while(result != null) {
-			result = m_tokens.matchBrackets(result);
-			result = m_tokens.next(result);
-		}
+		m_tokens.matchBrackets(null);
 	}
 
 
@@ -968,7 +966,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							TokenIdentifier.SQUARE_BRACKET_START
 					)) {
 						m_tokens.remove(et);
+					} else {
+						m_tokens.next();
 					}
+				} else {
+					m_tokens.next();
 				}
 			}
 		}
@@ -983,6 +985,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(t instanceof NameValueToken || t instanceof CommentToken || t instanceof SingleWordToken
 					|| (it != null && it.check(TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END))) {
 				m_tokens.remove(et);
+			} else {
+				m_tokens.next();
 			}
 		}
 	}

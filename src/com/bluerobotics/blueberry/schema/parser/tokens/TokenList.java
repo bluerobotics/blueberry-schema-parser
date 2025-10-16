@@ -57,7 +57,16 @@ public class TokenList {
 	}
 	public void remove(Token t) {
 		if(t != null) {
-			remove(m_tokens.indexOf(t));
+			int i = m_tokens.indexOf(t);
+			if(i >= 0) {
+				if(i < m_index) {
+					--m_index;
+				}
+				remove(i);	
+			
+				
+			}
+			
 		}
 	}
 	public void remove(int i) {
@@ -299,6 +308,20 @@ public class TokenList {
 		}
 		return it;
 	}
+	
+	public boolean isMatchId(Token t, TokenIdentifier...ids) {
+		boolean result = false;
+		if(t instanceof IdentifierToken) {
+			IdentifierToken idt = (IdentifierToken)t;
+			for(TokenIdentifier id : ids) {
+				if(((IdentifierToken) t).getKeyword() == id) {
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
 	/**
 	 * Advances to the next IdentifierToken of the specified sub-type
  	 * if none exists then index is moved to past the last element of the list
@@ -379,17 +402,21 @@ public class TokenList {
 	/**
 	 * find the bracket that closes the current opening
 	 * Looks for braces (curly brackets), (round) brackets, angle brackets and square brackets.
-	 * If the current location is not at an opening, it will move to the next complete closing or the end of the list
-	 * @param it
-	 * @return
-	 * @throws SchemaParserException
+	 * If the current location is not at an opening, it should return null, but will still have checked the whole list.
+	 * If the input is null then it starts at the beginning of the list
+	 * If the token list does not have matches for all brackets of all types then an exception will be thrown.
+	 * @param t - the token to start at. Must be a member of this token list
+	 * @return - the matching closing brace token
+	 * @throws SchemaParserException 
 	 */
-	public IdentifierToken matchBrackets(Token t) throws SchemaParserException {
+	public IdentifierToken matchBrackets(Token start) throws SchemaParserException {
 		IdentifierToken result = null;
+	
+		Token t = start;
 		if(t == null) {
-			t = m_tokens.get(0);
+			t = get(0);
 		}
-
+		System.out.println("TokenList.matchBrackets() testing token "+m_tokens.indexOf(t));
 		IdentifierToken it = null;
 		TokenIdentifier match = null;
 		if(t instanceof IdentifierToken) {
@@ -421,33 +448,74 @@ public class TokenList {
 				t = next(t);
 			}
 		}
-
-
-		result = findNextId(t,
-				TokenIdentifier.BRACE_START,
-				TokenIdentifier.BRACKET_START,
-				TokenIdentifier.SQUARE_BRACKET_START,
-				TokenIdentifier.BRACE_END,
-				TokenIdentifier.BRACKET_END,
-				TokenIdentifier.SQUARE_BRACKET_END,
-				TokenIdentifier.ANGLE_BRACKET_START,
-				TokenIdentifier.ANGLE_BRACKET_END
-				);
-
-
-
-		if(result == null && match != null) {
-			throw new SchemaParserException("Did not find a match for "+it, it.getStart());
-		} else if(match == null) {
-			result = matchBrackets(result);
-		} else if(result != null && result.getKeyword() == match) {
-				//we've got a matching close to roll back up the recursion
-				//so return with this result
-		} else {
-			throw new SchemaParserException("Not sure what error this was "+it, it.getStart());
-
+		//at this point, if match == null then this was not an open bracket and it cannot be a close bracket because that would have thrown an exception
+		//so for now the only course of action is to look for the next interesting thing
+		
+		boolean keepLooking = true;
+		Token foundT = t;
+		while(keepLooking) {
+			foundT = findNextId(foundT,
+					TokenIdentifier.BRACE_START,
+					TokenIdentifier.BRACKET_START,
+					TokenIdentifier.SQUARE_BRACKET_START,
+					TokenIdentifier.ANGLE_BRACKET_START,
+					TokenIdentifier.BRACE_END,
+					TokenIdentifier.BRACKET_END,
+					TokenIdentifier.SQUARE_BRACKET_END,
+					TokenIdentifier.ANGLE_BRACKET_END
+					);
+			//if we've found an opening then we need to recurse. That will return the closing brace of the opening, so we may need to look further
+			if(isMatchId(foundT, TokenIdentifier.BRACE_START,
+					TokenIdentifier.BRACKET_START,
+					TokenIdentifier.SQUARE_BRACKET_START,
+					TokenIdentifier.ANGLE_BRACKET_START)){
+				foundT = matchBrackets(foundT);
+				//this is now the closing bracket of the start we just found
+				//move ahead one token so we don't get caught in an infinite loop
+				//but if we didn't find anything then just bail
+				if(foundT == null) {
+					keepLooking = false;
+				} else {	
+					foundT = next(foundT);
+					if(foundT == null) {
+						//hit the end of the list
+						keepLooking = false;
+					}
+				}
+				
+			} else {
+				//this must be a closing brace or null
+				keepLooking = false;
+			}
 		}
-		//don't think result can ever be null - it will have thrown an exception
+		
+		
+		//at this point we have either found a closing brace or nothing at all
+		
+		if(foundT == null) {
+			if(match != null) {
+				//we have not found anthing but we should have
+				throw new SchemaParserException("Did not find a match for "+it, it.getStart());
+			} else {
+				//we found nothing but that's ok
+				result = null;
+				
+			}
+		} else {
+			//we found a thing - it must be an identifier token because it would not have left the loop above otherwise
+		
+			result = (IdentifierToken)foundT; 
+			if(result.getKeyword() != match) {
+				//the found thing does not match but it must be a closing bracket because of the loop exit circumstances above. This is bad
+				throw new SchemaParserException("Found an unexpected "+result.getKeyword(), result.getStart());
+
+			} else {
+				//we have a match so we found the thing!
+			}
+		}
+			
+		
+	
 		return result;
 
 	}
