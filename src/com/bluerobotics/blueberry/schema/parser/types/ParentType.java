@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
@@ -33,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
 public abstract class ParentType extends AbstractType {
 	private final ArrayList<Field> m_children = new ArrayList<>();
 
-	protected ParentType(TypeId id, FieldName typeName, String comment) {
+	protected ParentType(TypeId id, SymbolName typeName, String comment) {
 		super(id, typeName, comment);
 	}
 

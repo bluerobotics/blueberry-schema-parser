@@ -21,14 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public class StringType extends AbstractType {
-	private static final StringType SINGLETON = new StringType(FieldName.fromCamel("String"), "");
-	private StringType(FieldName typeName, String comment) {
+	private static final StringType SINGLETON = new StringType(SymbolName.fromCamel("String"), "");
+	private StringType(SymbolName typeName, String comment) {
 		super(TypeId.STRING, typeName, comment);
 	}
 	public static StringType getStringType() {

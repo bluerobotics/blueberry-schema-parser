@@ -21,14 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public class StructType extends ParentType {
 
-	public StructType(FieldName typeName, String comment) {
+	public StructType(SymbolName typeName, String comment) {
 		super(TypeId.STRUCT, typeName, comment);
 	}
 

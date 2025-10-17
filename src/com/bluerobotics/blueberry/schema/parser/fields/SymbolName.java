@@ -26,14 +26,14 @@ import java.util.ArrayList;
 /**
  * A class that wraps a hierarchical string name that can be easily expressed as various cases
  */
-public class FieldName {
-	public static final FieldName EMPTY = new FieldName(new String[0]);
+public class SymbolName {
+	public static final SymbolName EMPTY = new SymbolName(new String[0]);
 	private final String[] name;
-	public FieldName(String... ss) {
+	public SymbolName(String... ss) {
 		name = ss;
 	}
-	public static FieldName guess(String s) {
-		FieldName result;
+	public static SymbolName guess(String s) {
+		SymbolName result;
 		if(isUnderscore(s) || isAllUpperCase(s)) {
 			result = fromSnake(s);
 		} else {
@@ -41,14 +41,14 @@ public class FieldName {
 		}
 		return result;
 	}
-	public static FieldName fromDot(String n) {
-		return new FieldName(breakUpDot(n));
+	public static SymbolName fromDot(String n) {
+		return new SymbolName(breakUpDot(n));
 	}
-	public static FieldName fromCamel(String n) {
-		return new FieldName(breakUpCamel(n));
+	public static SymbolName fromCamel(String n) {
+		return new SymbolName(breakUpCamel(n));
 	}
-	public static FieldName fromSnake(String n) {
-		return new FieldName(breakUpSnake(n));
+	public static SymbolName fromSnake(String n) {
+		return new SymbolName(breakUpSnake(n));
 	}
 	private static String[] breakUpDot(String s) {
 		return s.toLowerCase().split("\\.");
@@ -114,13 +114,21 @@ public class FieldName {
 		}
 		return result;
 	}
-	public FieldName addSuffix(String... ss) {
-		return addSuffix(new FieldName(ss));
+	/**
+	 * Make a new SymbolName by adding the specified array of Strings to the end of this SymbolName
+	 * @param ss
+	 * @return
+	 */
+	public SymbolName append(String... ss) {
+		return append(new SymbolName(ss));
 	}
-	public FieldName addPrefix(String... ss) {
-		return addPrefix(new FieldName(ss));
-	}
-	public FieldName addSuffix(FieldName f) {
+
+	/**
+	 * Make a new SymbolName by adding the specified SymbolName to the front of this SymbolName
+	 * @param f
+	 * @return
+	 */
+	public SymbolName append(SymbolName f) {
 		int m = name.length;
 		int n = f.name.length;
 		int mm = m + n;
@@ -132,9 +140,22 @@ public class FieldName {
 				ss[i] = f.name[i - m];
 			}
 		}
-		return new FieldName(ss);
+		return new SymbolName(ss);
 	}
-	public FieldName addPrefix(FieldName f) {
+	/**
+	 * Make a new SymbolName by adding the specified array of Strings to the front of this SymbolName
+	 * @param ss
+	 * @return
+	 */
+	public SymbolName prepend(String... ss) {
+		return prepend(new SymbolName(ss));
+	}
+	/**
+	 * Make a new SymbolName by adding the specified SymbolName to the front of this SymbolName
+	 * @param f
+	 * @return
+	 */
+	public SymbolName prepend(SymbolName f) {
 		if(f == null) {
 			return this;
 		}
@@ -149,7 +170,7 @@ public class FieldName {
 				ss[i] = name[i - m];
 			}
 		}
-		return new FieldName(ss);
+		return new SymbolName(ss);
 	}
 	public String toString() {
 		return toCamel(false);
@@ -158,8 +179,8 @@ public class FieldName {
 	@Override
 	public boolean equals(Object obj) {
 		boolean result = false;
-		if(obj instanceof FieldName) {
-			FieldName fn = (FieldName)obj;
+		if(obj instanceof SymbolName) {
+			SymbolName fn = (SymbolName)obj;
 			if(fn.toCamel(true).equals(toCamel(true))) {
 				result = true;
 			}

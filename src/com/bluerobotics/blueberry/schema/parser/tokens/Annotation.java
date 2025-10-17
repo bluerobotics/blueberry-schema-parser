@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import com.bluerobotics.blueberry.schema.parser.constants.Constant;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
@@ -51,22 +50,25 @@ public class Annotation  {
 	
 	public class DeferredParameter {
 		
-		final FieldName name; 
-		private DeferredParameter(FieldName n) {
+		final SymbolName name; 
+		final SymbolName[] imports;
+		private DeferredParameter(SymbolName n, SymbolName[] ims) {
 			name = n;
+			imports = ims;
 		}
 	}
 
-	public static final FieldName FILE_PATH_ANNOTATION = FieldName.fromSnake("file_path");
-	public static final FieldName TOPIC_ANNOTATION = FieldName.fromSnake("topic");
-	public static final FieldName MESSAGE_KEY_ANNOTATION      = FieldName.fromSnake("message_key");
-	public static final FieldName NAMESPACE_ANNOTATION      = FieldName.fromSnake("namespace");
-	public static final FieldName SERIALIZATION_ANNOTATION      = FieldName.fromSnake("serialization");
+	public static final SymbolName FILE_PATH_ANNOTATION = SymbolName.fromSnake("file_path");
+	public static final SymbolName TOPIC_ANNOTATION = SymbolName.fromSnake("topic");
+	public static final SymbolName MESSAGE_KEY_ANNOTATION      = SymbolName.fromSnake("message_key");
+	public static final SymbolName NAMESPACE_ANNOTATION      = SymbolName.fromSnake("namespace");
+	public static final SymbolName SERIALIZATION_ANNOTATION      = SymbolName.fromSnake("serialization");
 	private final KnownAnnotation m_known;
-	private final FieldName m_name;
+	private final SymbolName m_name;
 	private ArrayList<Object> m_parameters = new ArrayList<>();
-	public Annotation(FieldName name) {
+	public Annotation(SymbolName name) {
 		m_name = name;
+		
 		KnownAnnotation ka = null;
 		for(KnownAnnotation kaf : KnownAnnotation.values()) {
 			if(kaf.getName().equals(name)) {
@@ -79,7 +81,7 @@ public class Annotation  {
 	public boolean isKnown() {
 		return m_known != null;
 	}
-	public FieldName getName() {
+	public SymbolName getName() {
 		return m_name;
 	}
 	public String toString() {
@@ -112,7 +114,7 @@ public class Annotation  {
 	 * replace any deferred parameters using a lookup function that will return a new parameter object based on the supplied field name
 	 * @param f
 	 */
-	public void replaceDeferredParameters(Function<FieldName, Object> f) {
+	public void replaceDeferredParameters(Function<SymbolName, Object> f) {
 		for(int i = 0; i < m_parameters.size(); ++i) {
 			Object o = m_parameters.get(i);
 			if(o instanceof DeferredParameter) {
@@ -126,8 +128,8 @@ public class Annotation  {
 	}
 	
 	
-	public void addDeferredParameter(FieldName n) {
-		m_parameters.add(new DeferredParameter(n));
+	public void addDeferredParameter(SymbolName n, SymbolName[] imports) {
+		m_parameters.add(new DeferredParameter(n, imports));
 	}
 
 

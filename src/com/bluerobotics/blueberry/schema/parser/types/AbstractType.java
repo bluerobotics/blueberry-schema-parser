@@ -24,21 +24,21 @@ package com.bluerobotics.blueberry.schema.parser.types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 
 /**
  *
  */
 public abstract class AbstractType implements Type {
-	private final FieldName m_typeName;
+	private final SymbolName m_typeName;
 	private final String m_comment;
 	private final TypeId m_typeId;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 
 
 
-public AbstractType(TypeId id, FieldName typeName, String comment) {
+public AbstractType(TypeId id, SymbolName typeName, String comment) {
 
 		m_typeName = typeName;
 		m_comment = comment;
@@ -48,7 +48,7 @@ public AbstractType(TypeId id, FieldName typeName, String comment) {
 
 
 	@Override
-	public FieldName getTypeName() {
+	public SymbolName getTypeName() {
 		return m_typeName;
 	}
 	@Override
@@ -70,7 +70,7 @@ public AbstractType(TypeId id, FieldName typeName, String comment) {
 		}
 	}
 
-	public Annotation getAnnotation(FieldName name) {
+	public Annotation getAnnotation(SymbolName name) {
 		Annotation result = null;
 		for(Annotation a : m_annotations) {
 			if(a.getName().equals(name)){

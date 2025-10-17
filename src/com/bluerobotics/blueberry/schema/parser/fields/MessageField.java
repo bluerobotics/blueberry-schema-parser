@@ -27,12 +27,12 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class MessageField extends ParentField {
 
-	public MessageField(FieldName name, FieldName typeName, String comment) {
+	public MessageField(SymbolName name, SymbolName typeName, String comment) {
 		super(name, typeName, TypeId.MESSAGE, comment);
 	}
 
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		MessageField result = new MessageField(name, getTypeName(), getComment());
 		result.copyChildrenFrom(this);
 		return result;

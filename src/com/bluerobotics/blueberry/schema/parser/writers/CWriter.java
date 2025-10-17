@@ -26,7 +26,7 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
@@ -246,7 +246,7 @@ public class CWriter extends SourceWriter {
 	}
 
 	private String makeEnumName(EnumType ef, NameValue nv) {
-		return nv.getName().addPrefix(ef.getTypeName()).toUpperSnake();
+		return nv.getName().prepend(ef.getTypeName()).toUpperSnake();
 	}
 
 	private void writeBaseFieldDefines(StructField top) {

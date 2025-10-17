@@ -21,26 +21,26 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.constants;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
 
 /**
  *
  */
 public abstract class AbstractConstant<T> implements Constant<T> {
-	private final FieldName m_name;
+	private final SymbolName m_name;
 	private final String m_comment;
 	private final Type m_type;
 	private String m_fileName = null;
-	private FieldName m_namespace = null;
+	private SymbolName m_namespace = null;
 	
-	protected AbstractConstant(Type type, FieldName name, String comment) {
+	protected AbstractConstant(Type type, SymbolName name, String comment) {
 		m_type = type;
 		m_name = name;
 		m_comment = comment;
 	}
 	@Override
-	public FieldName getName() {
+	public SymbolName getName() {
 		return m_name;
 	}
 	@Override
@@ -61,11 +61,11 @@ public abstract class AbstractConstant<T> implements Constant<T> {
 		return m_fileName;
 	}
 	@Override
-	public void setNamespace(FieldName name) {
+	public void setNamespace(SymbolName name) {
 		m_namespace = name;
 	}
 	@Override
-	public FieldName getNamespace() {
+	public SymbolName getNamespace() {
 		return m_namespace;
 	}
 	

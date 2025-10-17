@@ -23,7 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.constants;
 
 import java.math.BigDecimal;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -33,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class NumberConstant extends AbstractConstant<Number> {
 	private final Number m_value;
-	public NumberConstant(TypeId id, FieldName name, Number value, String comment) {
+	public NumberConstant(TypeId id, SymbolName name, Number value, String comment) {
 		super(BaseType.getBaseType(id), name, comment);
 		m_value = value;
 	}

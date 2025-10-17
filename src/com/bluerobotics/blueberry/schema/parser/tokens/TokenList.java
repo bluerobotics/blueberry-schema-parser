@@ -416,7 +416,6 @@ public class TokenList {
 		if(t == null) {
 			t = get(0);
 		}
-		System.out.println("TokenList.matchBrackets() testing token "+m_tokens.indexOf(t));
 		IdentifierToken it = null;
 		TokenIdentifier match = null;
 		if(t instanceof IdentifierToken) {

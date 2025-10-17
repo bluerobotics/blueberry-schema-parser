@@ -21,13 +21,13 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public class TypeDefType extends AbstractType {
-	public TypeDefType(TypeId id, FieldName typeName, String comment) {
+	public TypeDefType(TypeId id, SymbolName typeName, String comment) {
 		super(id, typeName, comment);
 	}
 

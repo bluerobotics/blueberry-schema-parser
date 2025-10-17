@@ -33,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public abstract class ParentField extends AbstractField {
 	private final ArrayList<Field> m_children = new ArrayList<>();
-	protected ParentField(FieldName name, FieldName typeName, TypeId typeId, String comment) {
+	protected ParentField(SymbolName name, SymbolName typeName, TypeId typeId, String comment) {
 		super(name, typeName, typeId, comment);
 	}
 	public void add(Field f) {

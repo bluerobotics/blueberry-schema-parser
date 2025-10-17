@@ -28,7 +28,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class ArrayField extends AbstractField {
 	private final int m_number;
-	public ArrayField(FieldName name, FieldName typeName, TypeId typeId, int number, String comment) {
+	public ArrayField(SymbolName name, SymbolName typeName, TypeId typeId, int number, String comment) {
 		super(name, typeName, TypeId.ARRAY, comment);
 		m_number = number;
 	}
@@ -36,7 +36,7 @@ public class ArrayField extends AbstractField {
 		return m_number;
 	}
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment());
 	}
 

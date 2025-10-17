@@ -26,7 +26,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdent
 /**
  * A token that represents a base type
  */
-public class BaseTypeToken extends IdentifierToken implements TypeToken {
+public class BaseTypeToken extends IdentifierToken {
 
 	private static final TokenIdentifier[] BASE_TYPES = {
 		TokenIdentifier.BOOLEAN,

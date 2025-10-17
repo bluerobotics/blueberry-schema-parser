@@ -28,12 +28,12 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class TypeDefField extends AbstractField {
 
-	public TypeDefField(FieldName name, FieldName typeName, TypeId typeId, String comment) {
+	public TypeDefField(SymbolName name, SymbolName typeName, TypeId typeId, String comment) {
 		super(name, typeName, typeId, comment);
 	}
 
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		return new TypeDefField(name, getTypeName(), getTypeId(), getComment());
 	}
 

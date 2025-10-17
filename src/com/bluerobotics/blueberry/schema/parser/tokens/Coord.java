@@ -63,7 +63,6 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public Coord incrementIndex(int i) {
 		int j = index + i;
-		Coord result = null;
 		int n = getString().length();
 		if(j > n) {
 			j = n;
@@ -72,9 +71,7 @@ public class Coord implements Comparable<Coord> {
 			j = 0;
 		}
 
-		result = new Coord(filePath, line, j, m_lines);
-
-		return result;
+		return new Coord(filePath, line, j, m_lines);
 	}
 	/**
 	 * Increment the index by the length of the specified String.
@@ -167,7 +164,7 @@ public class Coord implements Comparable<Coord> {
 		return result;
 	}
 	/**
-	 * this should advance from the current location to the next token
+	 * this should advance from the current location to the start of the next token
 	 * This means if we're on a token identifier we should move off it
 	 * If we're not on a token identifier we should move to the next one
 	 * @param matches
@@ -177,28 +174,22 @@ public class Coord implements Comparable<Coord> {
 
 		Coord result = this;
 		//move off the current one if we're on one
-		if(result.matches(matches)){
-			result = result.incrementIndex(1);
+		TokenIdentifier match = result.findMatch(matches);
+		if(match != null){
+			//we're on one of the specified identifiers so move past it and return
+			result = result.incrementIndex(match.id().length());
 		} else {
+			//we're not on an identifier
 			boolean notDone = true;
-			while(notDone && result != null) {
+			while(!result.isAtEnd()) {
 
-				if(result.isAtEnd()) {
-					notDone = false;
-				} else {
-					result = result.incrementIndex(1);
-					if(result.isEol()) {
-						notDone = false;
-						break;
-					}
-
-					if(result.matches(matches)) {
-						notDone = false;
-						break;
-					} else {
-
-					}
-				}
+				
+				result = result.incrementIndex(1);
+				if(result.isEol() || result.matches(matches)) {
+					//if we've hit the end of a line or we get a match then we're done
+					break;
+				} 
+				
 
 			}
 		}
@@ -210,6 +201,26 @@ public class Coord implements Comparable<Coord> {
 		for(TokenIdentifier m : matches) {
 			if(startsWith(m.id())) {
 				matched = true;
+				break;
+			}
+
+		}
+
+		return matched;
+	}
+	/**
+	 * find the TokenIdentifier from the parameters that matches the start of this Coord.
+	 * If this Coord does not start with any of the specified TokenIdentifiers then it returns null
+	 * @param matches
+	 * @return
+	 */
+	public TokenIdentifier findMatch(TokenIdentifier... matches) {
+		TokenIdentifier matched = null;
+
+		for(TokenIdentifier m : matches) {
+			if(startsWith(m.id())) {
+				matched = m;
+				break;
 			}
 
 		}

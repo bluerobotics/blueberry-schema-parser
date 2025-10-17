@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
@@ -56,10 +56,10 @@ public enum TypeId {
 
 
 	private int bitNum;
-	private FieldName name;
+	private SymbolName name;
 	TypeId(int bn){
 		bitNum = bn;
-		name = FieldName.fromSnake(name());
+		name = SymbolName.fromSnake(name());
 	}
 	public int getBitCount() {
 		return bitNum;
@@ -68,7 +68,7 @@ public enum TypeId {
 		return bitNum <= 32;
 	}
 
-	public FieldName getTypeName() {
+	public SymbolName getTypeName() {
 		return name;
 	}
 }

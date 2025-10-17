@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 
 /**
@@ -32,16 +32,16 @@ import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
  */
 public class EnumType extends AbstractType {
 	public class NameValue {
-		FieldName name;
+		SymbolName name;
 		long value;
 		boolean isValue;
 		String comment;
-		public NameValue(FieldName n, long v, String c) {
+		public NameValue(SymbolName n, long v, String c) {
 			name = n;
 			value = v;
 			comment = c;
 		}
-		public FieldName getName() {
+		public SymbolName getName() {
 			return name;
 		}
 		public long getValue() {
@@ -61,12 +61,12 @@ public class EnumType extends AbstractType {
 
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
 
-	public EnumType(FieldName typeName, TypeId id, String comment) {
+	public EnumType(SymbolName typeName, TypeId id, String comment) {
 		super(id, typeName, comment);
 
 	}
 
-	public void addNameValue(FieldName name, long value, String comment) {
+	public void addNameValue(SymbolName name, long value, String comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
 

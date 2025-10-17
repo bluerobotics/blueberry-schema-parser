@@ -32,16 +32,16 @@ import com.bluerobotics.blueberry.schema.parser.constants.Number;
  */
 public class EnumField extends AbstractField {
 	public class NameValue {
-		FieldName name;
+		SymbolName name;
 		Number value;
 		boolean isValue;
 		String comment;
-		public NameValue(FieldName n, Number v, String c) {
+		public NameValue(SymbolName n, Number v, String c) {
 			name = n;
 			value = v;
 			comment = c;
 		}
-		public FieldName getName() {
+		public SymbolName getName() {
 			return name;
 		}
 		public Number getValue() {
@@ -60,11 +60,11 @@ public class EnumField extends AbstractField {
 	}
 
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
-	public EnumField(FieldName name, FieldName type, TypeId id, String comment) {
+	public EnumField(SymbolName name, SymbolName type, TypeId id, String comment) {
 		super(name, type, id, comment);
 	}
 	
-	public void addNameValue(FieldName name, Number value, String comment) {
+	public void addNameValue(SymbolName name, Number value, String comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
 
@@ -81,7 +81,7 @@ public class EnumField extends AbstractField {
 	}
 
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		EnumField result = new EnumField(name, getTypeName(), getTypeId(), getComment());
 		result.m_nameValues.addAll(m_nameValues);
 		return result;

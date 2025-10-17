@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
@@ -32,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.DeferredField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -53,12 +54,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenList;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.EnumType;
-import com.bluerobotics.blueberry.schema.parser.types.MessageType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
-import com.bluerobotics.blueberry.schema.parser.types.TypeDefType;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-import com.bluerobotics.blueberry.schema.parser.constants.Number;
 
 /**
  * This class implements the token parsing algorithm
@@ -73,6 +69,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final ArrayList<Field> m_defines = new ArrayList<>();
 	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();
 	private final ArrayList<Field> m_messages = new ArrayList<>();
+	private final ArrayList<SymbolName> m_imports = new ArrayList<>();
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 
@@ -129,31 +126,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public void parse() throws SchemaParserException {
 		try {
 			collapseComments();
-//			collapseDefines();
 			collapseNumbers();
 			collapseBaseTypes();
 			collapseUnsigned();
 
-//			collapseAnnotations();
 			collapseTypedefs();
 			collapseNameValues();
 			collapseEols();
 			coolapseSemicolons();
-			checkBrackets();
+			m_tokens.matchBrackets(null);
 
-//			collapseEnums();
-//			collapseEnumValues();
-//			identifyFieldNames();
-//			identifyBlockTypeInstances();
-//			collapseBlockTypeTokenNameValues();
-//			collapseBaseTypeAllocations();
-//			collapseNestedFieldAllocations();
-//			collapseDefinedTypes();
-//
-//			collapseDefinedTypeComments();
-//			collapseDefinedTypeFields(0, null);
-//			removeTopLevelComments();
-//			removeTopLevelField();
+
+
 //
 //			fillInMissingEnumValues();
 //			checkForDuplicateEnumValues();
@@ -231,19 +215,39 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(int i = 0; i < fs.size(); ++i) {
 			Field f = fs.get(i);
 			if(f instanceof DeferredField) {
-				FieldName name = f.getName();
-				FieldName typeName = f.getTypeName();
+				SymbolName[] imports = ((DeferredField) f).getImports();
+				SymbolName typeName = f.getTypeName();
 				Field dft = null;
+				
 				for(Field df : defines) {
+					boolean match = false;
+					SymbolName nameSpace = df.getNamespace();
 					if(df.getTypeName().equals(typeName)) {
-						dft = df;
-						break;
+						if(nameSpace == null) {
+							match = true;
+						} else {
+							for(SymbolName im : imports) {
+								if(nameSpace.equals(im)) {
+									match = true;
+									break;
+								}
+							}
+							
+						}
+						if(match) {
+							if(dft != null) {
+								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
+							} else {
+								dft = df;
+							}
+						}
+						
 					}
 				}
 				if(dft == null) {
 					throw new SchemaParserException("Could not find a type definition for"+typeName.toUpperCamel(), null);
 				}
-				fs.set(i, dft.makeInstance(name));
+				fs.set(i, dft.makeInstance(f.getName()));
 			} else if(f instanceof ParentField) {
 				processDeferredFields(((ParentField)f).getChildren(), defines);
 			}
@@ -321,7 +325,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
-	private FieldName m_module = null;
+	private SymbolName m_module = null;
 	private Token m_moduleEnd = null;
 	private String m_fileName = null;//indicates the filename that the present tokens are from
 	private String m_lastComment = null;
@@ -347,6 +351,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					break;
 				case ENUM:
 					processEnum(it);
+					break;
+				case IMPORT:
+					processImport(it);
 					break;
 				case MESSAGE:
 					processMessage(it);
@@ -375,6 +382,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			} else if(t instanceof FilePathToken) {
 				FilePathToken fpt = (FilePathToken)t;
 				m_fileName = fpt.getString();
+				m_imports.clear();
 			} else if(t instanceof CommentToken) {
 				CommentToken ct = (CommentToken)t;
 				m_lastComment = ct.combineLines();
@@ -382,6 +390,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			m_tokens.next();
 
 		}
+	}
+	private void processImport(IdentifierToken it) {
+		SingleWordToken nameToken = m_tokens.relative(1, SingleWordToken.class);//or this
+		
+		m_imports.add(SymbolName.guess(nameToken.getName()));
 	}
 	private void processMessage(IdentifierToken it) throws SchemaParserException {
 		SingleWordToken nameToken = m_tokens.relative(1, SingleWordToken.class);//or this
@@ -392,10 +405,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceStart == null) {
 			throw new SchemaParserException("Message stament has no opening brace.", it.getEnd());
 		}
-		FieldName name = FieldName.fromCamel(nameToken.getName()).addPrefix(m_module);
+		SymbolName name = SymbolName.fromCamel(nameToken.getName()).prepend(m_module);
 
 
-		MessageField m = new MessageField(FieldName.EMPTY, name, m_lastComment);
+		MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment);
 		m.setFileName(m_fileName);
 		m.setNamespace(m_module);
 		m_lastComment = null;
@@ -421,10 +434,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(btt != null) {
 				//add a base type field
 				TypeId tid = lookupBaseType(btt.getKeyword());
-				m.add(new BaseField(FieldName.fromCamel(nameToken.getName()), tid, comment));
+				m.add(new BaseField(SymbolName.fromCamel(nameToken.getName()), tid, comment));
 
 			} else if(typeNameToken != null) {
-				m.add(new DeferredField(FieldName.fromCamel(nameToken.getName()), FieldName.fromCamel(typeNameToken.getName()), comment));
+				m.add(new DeferredField(SymbolName.fromCamel(nameToken.getName()), SymbolName.fromCamel(typeNameToken.getName()), m_imports.toArray(new SymbolName[m_imports.size()]), comment));
 			}
 			m_tokens.setIndex(nameToken);
 			m_tokens.next();
@@ -442,17 +455,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void processStructs(IdentifierToken it) throws SchemaParserException {
 
 		SingleWordToken nameToken = m_tokens.relative(1, SingleWordToken.class);//or this
-		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.SQUARE_BRACKET_START);
+		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
 		if(nameToken == null) {
-			throw new SchemaParserException("Message has no specified name.", it.getEnd());
+			throw new SchemaParserException("Struct has no specified name.", it.getEnd());
 		} else if(braceStart == null) {
-			throw new SchemaParserException("Message stament has no opening brace.", it.getEnd());
+			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
 		}
-		FieldName name = FieldName.fromCamel(nameToken.getName()).addPrefix(m_module);
+		SymbolName name = SymbolName.fromCamel(nameToken.getName()).prepend(m_module);
 
 
-		StructField m = new StructField(FieldName.EMPTY, name, m_lastComment);
+		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment);
 		m.setFileName(m_fileName);
 		m.setNamespace(m_module);
 		m_lastComment = null;
@@ -476,14 +489,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(nameToken == null) {
 				throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
 			}
-			name = FieldName.fromCamel(nameToken.getName());
+			name = SymbolName.fromCamel(nameToken.getName());
 			if(btt != null) {
 				//add a base type field
 				TypeId tid = lookupBaseType(btt.getKeyword());
 				m.add(new BaseField(name, tid, comment));
 
 			} else if(typeNameToken != null) {
-				m.add(new DeferredField(name, FieldName.fromCamel(typeNameToken.getName()), comment));
+				m.add(new DeferredField(name, SymbolName.fromCamel(typeNameToken.getName()), m_imports.toArray(new SymbolName[m_imports.size()]),comment));
 			}
 			m_tokens.setIndex(nameToken);
 			m_tokens.next();
@@ -508,14 +521,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		FieldName fn = FieldName.fromCamel(name.getName());
+		SymbolName fn = SymbolName.fromCamel(name.getName());
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
 
 		if(squareBracketStart == null) {
 		
 			//this is a normal base type
 
-			TypeDefField tdf = new TypeDefField(FieldName.EMPTY, fn, id, m_lastComment);
+			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, fn, id, m_lastComment);
 			tdf.setFileName(m_fileName);
 			tdf.setNamespace(m_module);
 			m_defines.add(tdf);
@@ -535,8 +548,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			//FieldName name, FieldName typeName, TypeId typeId, int number, String comment
 
-			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(FieldName.fromSnake(arraySizeConst.getName()));
-			ArrayField af = new ArrayField(FieldName.EMPTY, fn, id, n, m_lastComment);
+			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(SymbolName.fromSnake(arraySizeConst.getName()));
+			ArrayField af = new ArrayField(SymbolName.EMPTY, fn, id, n, m_lastComment);
 			af.setFileName(m_fileName);
 			af.setNamespace(m_module);
 			m_defines.add(af);
@@ -549,7 +562,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
-	private int lookupConstInt(FieldName name) {
+	private int lookupConstInt(SymbolName name) {
 		NumberConstant result = null;
 		for(Constant<?> c : m_constants) {
 			if(c instanceof NumberConstant) {
@@ -579,8 +592,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		TypeId bt = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.UINT32;
-		FieldName fn = FieldName.fromCamel(name.getName()).addPrefix(m_module);
-		EnumField et = new EnumField(FieldName.EMPTY, fn, bt, m_lastComment);
+		SymbolName fn = SymbolName.fromCamel(name.getName()).prepend(m_module);
+		EnumField et = new EnumField(SymbolName.EMPTY, fn, bt, m_lastComment);
 		et.setFileName(m_fileName);
 		et.setNamespace(m_module);
 		m_lastComment = null;
@@ -598,13 +611,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			String comment = ct != null ? ct.combineLines() : null;
 			SingleWordToken nameToken = m_tokens.relative(0, SingleWordToken.class);
 			NameValueToken nameValueToken = m_tokens.relative(0, NameValueToken.class);
-			FieldName fname;
+			SymbolName fname = null;
 			if(nameToken != null) {
-				fname = FieldName.guess(nameToken.getName());
+				fname = SymbolName.guess(nameToken.getName());
 				et.addNameValue(fname, Number.NAN, comment);
 			} else if(nameValueToken != null) {
-				fname = FieldName.guess(nameValueToken.getName());
-				et.addNameValue(fname, nameValueToken.getValue(), comment);
+				try {
+					fname = SymbolName.guess(nameValueToken.getName());
+					et.addNameValue(fname, nameValueToken.getValue(), comment);
+				} catch(RuntimeException e) {
+					System.out.println("BlueberrySchemaParser.processEnum ");
+				}
+				
 			}
 
 
@@ -639,7 +657,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
 
-			FieldName fn = FieldName.guess(nvt.getName()).addPrefix(m_module);
+			SymbolName fn = SymbolName.guess(nvt.getName()).prepend(m_module);
 
 			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), comment);
 			c.setFileName(m_fileName);
@@ -650,7 +668,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(equals == null) {
 				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
 			}
-			FieldName fn = FieldName.guess(name.getName()).addPrefix(m_module);
+			SymbolName fn = SymbolName.guess(name.getName()).prepend(m_module);
 			StringConstant c = new StringConstant(fn, string.getString(), comment);
 			c.setFileName(m_fileName);
 			c.setNamespace(m_module);
@@ -674,7 +692,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
-			m_module = FieldName.fromCamel(moduleName.getName());
+			m_module = SymbolName.fromCamel(moduleName.getName());
 
 			//TODO: what is the best way to separate the module name from the rest?
 			m_moduleEnd = braceEnd;
@@ -685,13 +703,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 
-	/**
-	 * Checks braces. Makes sure they are properly opened and closed and relate to known keywords
-	 * @throws SchemaParserException
-	 */
-	private void checkBrackets() throws SchemaParserException {
-		m_tokens.matchBrackets(null);
-	}
+
 
 
 
@@ -833,15 +845,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			throw new SchemaParserException("Couldn't make a field for some reason", null);
 //		}
 //	}
-	private BaseType lookupType(IdentifierToken it) throws SchemaParserException {
-		TypeId id = lookupBaseType(it.getKeyword());
-		BaseType result = BaseType.getBaseType(id);
-		if(result == null) {
-			throw new SchemaParserException("Could not find base type: "+it.getKeyword(), it.getStart());
-		}
 
-		return result;
-	}
 
 
 	/**
@@ -885,7 +889,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		case INT64:
 			result = TypeId.INT64;
 			break;
-
+		default:
+			break;
 
 		}
 		return result;
@@ -967,7 +972,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(at != null) {
 				SingleWordToken swt = m_tokens.relative(1, SingleWordToken.class);
 				if(swt != null) {
-					Annotation a = new Annotation(FieldName.fromSnake(swt.getName()));
+					Annotation a = new Annotation(SymbolName.fromSnake(swt.getName()));
 
 					IdentifierToken bracketStart = m_tokens.relativeId(2, TokenIdentifier.BRACKET_START);
 					if(bracketStart.getKeyword() == null) {
@@ -984,7 +989,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 								a.addParameter(t.getName());
 							} else if(t instanceof SingleWordToken) {
 								//this is likely a constant
-								a.addDeferredParameter(FieldName.guess(t.getName()));
+								a.addDeferredParameter(SymbolName.guess(t.getName()), m_imports.toArray(new SymbolName[m_imports.size()]));
 							} else if(t instanceof NumberToken) {
 								NumberToken nt = (NumberToken)t;
 								a.addParameter(nt.getNumber());
@@ -1038,7 +1043,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							TokenIdentifier.BRACE_START,
 							TokenIdentifier.BRACKET_END,
 							TokenIdentifier.BRACKET_START,
-							TokenIdentifier.COLON,
 							TokenIdentifier.COMMA,
 							TokenIdentifier.SEMICOLON,
 							TokenIdentifier.SQUARE_BRACKET_END,
@@ -1403,7 +1407,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		Coord start = c.trim();
 		//now advance to the next interesting token
-		Coord result = start.advanceToNext(
+		Coord result = start.advanceToNext( //the following elements are sensitive to order. For example the scope separator must be tested before the colon
 				TokenIdentifier.SPACE,
 				TokenIdentifier.TAB,
 				TokenIdentifier.BRACE_START,
@@ -1412,14 +1416,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				TokenIdentifier.BRACKET_END,
 				TokenIdentifier.SQUARE_BRACKET_START,
 				TokenIdentifier.SQUARE_BRACKET_END,
-				TokenIdentifier.BICOLON,
+				TokenIdentifier.SCOPE_SEPARATOR,
 				TokenIdentifier.COLON,
 				TokenIdentifier.EQUALS,
 				TokenIdentifier.ANNOTATION_START,
 				TokenIdentifier.SEMICOLON,
 				TokenIdentifier.COMMA
 				);
-				//' ','\t','{','}','(',')','=','@',':',';',',');
 		Coord end = result;
 		end = end.trimEnd();
 		String s = start.fromThisToThatString(end);

@@ -33,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public interface Field extends ThingFromFile {
 
-	FieldName getTypeName();
+	SymbolName getTypeName();
 
 	TypeId getTypeId();
 	
@@ -42,11 +42,11 @@ public interface Field extends ThingFromFile {
 	Field getParent();
 	void setParent(ParentField p);
 	
-	Field makeInstance(FieldName name);
+	Field makeInstance(SymbolName name);
 
 	void addAnnotation(List<Annotation> as);
 
-	Annotation getAnnotation(FieldName name);
+	Annotation getAnnotation(SymbolName name);
 	
 	void scanAnnotations(Consumer<Annotation> c);
 	

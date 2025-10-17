@@ -35,7 +35,7 @@ public interface TokenConstants {
 		BRACKET_END(")"),
 		BRACKET_START("("),
 		BYTE("byte"),
-		BICOLON("::"),//this must come before a colon
+		SCOPE_SEPARATOR("::"),//this must come before a colon
 		CHAR("ckar"),
 		COLON(":"),
 		COMMA(","),
@@ -45,6 +45,7 @@ public interface TokenConstants {
 		EQUALS("="),
 //		ESCAPE_DELIMITER("_"),
 		FLOAT("float"),
+		IMPORT("import"),
 		INT("int"),
 		INT16("int16"),
 		INT32("int32"),

@@ -21,14 +21,14 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public class SequenceType extends ParentType {
 
-	public SequenceType(FieldName typeName, String comment) {
+	public SequenceType(SymbolName typeName, String comment) {
 		super(TypeId.STRING, typeName, comment);
 		// TODO Auto-generated constructor stub
 	}

@@ -30,7 +30,7 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
@@ -170,8 +170,8 @@ public abstract class SourceWriter {
 	 * @param bf - the field in question
 	 * @return a field name that consists of the field name plus names of it's parent(s)
 	 */
-	protected FieldName makeBaseFieldNameRoot(Field bf) {
-		FieldName result = null;
+	protected SymbolName makeBaseFieldNameRoot(Field bf) {
+		SymbolName result = null;
 //		result = bf.getCorrectParentName().addSuffix(bf.getName());
 
 		return result;

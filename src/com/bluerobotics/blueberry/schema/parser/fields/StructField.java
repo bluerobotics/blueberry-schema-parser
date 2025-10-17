@@ -27,11 +27,11 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class StructField extends ParentField {
 
-	public StructField(FieldName name, FieldName typeName, String comment) {
+	public StructField(SymbolName name, SymbolName typeName, String comment) {
 		super(name, typeName, TypeId.STRUCT, comment);
 	}
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		StructField result = new StructField(name, getTypeName(), getComment());
 		result.copyChildrenFrom(this);
 		return result;

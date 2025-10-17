@@ -29,15 +29,15 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 public abstract class AbstractField implements Field {
-	private final FieldName m_name;
-	private final FieldName m_typeName;
+	private final SymbolName m_name;
+	private final SymbolName m_typeName;
 	private final String m_comment;
 	private String m_fileName = null;
-	private FieldName m_namespace = null;
+	private SymbolName m_namespace = null;
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	protected AbstractField(FieldName name, FieldName type, TypeId id, String comment) {
+	protected AbstractField(SymbolName name, SymbolName type, TypeId id, String comment) {
 		m_name = name;
 		m_typeName = type;
 		m_comment = comment;
@@ -51,7 +51,7 @@ public abstract class AbstractField implements Field {
 
 
 	@Override
-	public FieldName getTypeName() {
+	public SymbolName getTypeName() {
 		return m_typeName;
 	}
 	@Override
@@ -59,7 +59,7 @@ public abstract class AbstractField implements Field {
 		return m_typeId;
 	}
 	@Override
-	public FieldName getName() {
+	public SymbolName getName() {
 		return m_name;
 	}
 	@Override
@@ -113,7 +113,7 @@ public abstract class AbstractField implements Field {
 		}
 	}
 	@Override
-	public Annotation getAnnotation(FieldName name) {
+	public Annotation getAnnotation(SymbolName name) {
 		Annotation result = null;
 		for(Annotation a : m_annotations) {
 			if(a.getName().equals(name)){
@@ -131,11 +131,11 @@ public abstract class AbstractField implements Field {
 		return m_fileName;
 	}
 	@Override
-	public void setNamespace(FieldName name) {
+	public void setNamespace(SymbolName name) {
 		m_namespace = name;
 	}
 	@Override
-	public FieldName getNamespace() {
+	public SymbolName getNamespace() {
 		return m_namespace;
 	}
 

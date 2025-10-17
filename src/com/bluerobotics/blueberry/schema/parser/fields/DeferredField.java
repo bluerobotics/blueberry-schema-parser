@@ -27,15 +27,19 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * 
  */
 public class DeferredField extends AbstractField {
-
-	public DeferredField(FieldName name, FieldName type, String comment) {
+	private final SymbolName[] m_imports;
+	public DeferredField(SymbolName name, SymbolName type, SymbolName[] imports, String comment) {
 		super(name, type, TypeId.DEFERRED, comment);
-		// TODO Auto-generated constructor stub
+		m_imports = imports;
 	}
 
 	@Override
-	public Field makeInstance(FieldName name) {
-		return new DeferredField(name, getTypeName(), getComment());
+	public Field makeInstance(SymbolName name) {
+		return new DeferredField(name, getTypeName(), getImports(), getComment());
+	}
+	
+	public SymbolName[] getImports() {
+		return m_imports;
 	}
 
 }

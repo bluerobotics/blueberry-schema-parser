@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.constants;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.StringType;
 
@@ -31,7 +31,7 @@ import com.bluerobotics.blueberry.schema.parser.types.StringType;
 public class StringConstant extends AbstractConstant<String> {
 
 	private final String m_value;
-	public StringConstant(FieldName name, String value, String comment) {
+	public StringConstant(SymbolName name, String value, String comment) {
 		super(StringType.getStringType(), name, comment);
 		m_value = value;
 	}

@@ -25,10 +25,10 @@ package com.bluerobotics.blueberry.schema.parser.fields;
  * 
  */
 public interface ThingFromFile {
-	FieldName getName();
+	SymbolName getName();
 	String getComment();
 	void setFileName(String name);
 	String getFileName();
-	void setNamespace(FieldName name);
-	FieldName getNamespace();
+	void setNamespace(SymbolName name);
+	SymbolName getNamespace();
 }

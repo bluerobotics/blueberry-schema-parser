@@ -25,7 +25,7 @@ public class SchemaParserException extends Exception {
 		
 		if(c != null) {
 		
-			s +=  "at line "+ c.line + "\n";
+			s +=  " at line "+ c.line + "\n";
 			s += c.getString() + "\n";
 			s += " ".repeat(c.index);
 			s += "^\n";

@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  * A type to temporarily remember a specified type name before all types have been processed
@@ -29,7 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
  */
 public class PlaceholderType extends AbstractType {
 
-	public PlaceholderType(FieldName typeName) {
+	public PlaceholderType(SymbolName typeName) {
 		super(null, typeName, "");
 	}
 

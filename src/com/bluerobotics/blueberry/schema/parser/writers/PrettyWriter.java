@@ -46,7 +46,7 @@ public class PrettyWriter extends SourceWriter {
 		writeBlockField(bf);
 
 
-		writeToFile(bf.getName().addSuffix("pretty").toLowerCamel(),".txt");
+		writeToFile(bf.getName().append("pretty").toLowerCamel(),".txt");
 	}
 	/**
 	 * write block field and children

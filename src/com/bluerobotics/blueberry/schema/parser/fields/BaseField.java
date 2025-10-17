@@ -29,11 +29,11 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class BaseField extends AbstractField {
 	private int m_index = -1;
-	public BaseField(FieldName name, TypeId id, String comment) {
-		super(name, FieldName.fromCamel(id.name()), id, comment);
+	public BaseField(SymbolName name, TypeId id, String comment) {
+		super(name, SymbolName.fromCamel(id.name()), id, comment);
 	}
 	@Override
-	public Field makeInstance(FieldName name) {
+	public Field makeInstance(SymbolName name) {
 		return new BaseField(name, getTypeId(), getComment());
 	}
 

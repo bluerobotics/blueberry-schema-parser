@@ -25,7 +25,7 @@ import java.io.File;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
@@ -34,7 +34,7 @@ import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
  * Autogenerates Java code stubs based on a parsed field structure
  */
 public class JavaWriter extends SourceWriter {
-	private FieldName m_packageName;
+	private SymbolName m_packageName;
 	private String m_constantsName;
 	private String m_bitIndexEnumName;
 	private String m_fieldIndexEnumName;
@@ -51,16 +51,16 @@ public class JavaWriter extends SourceWriter {
 
 	@Override
 	public void write(StructField top, String... headers) {
-		m_packageName = FieldName.fromDot("com.bluerobotics.blueberry").addSuffix(top.getName().toLowerCase());
-		m_constantsName = top.getName().addSuffix("constants").toUpperCamel();
-		m_bitIndexEnumName = top.getName().addSuffix("bit","index").toUpperCamel();
-		m_fieldIndexEnumName = top.getName().addSuffix("field","index").toUpperCamel();
-		m_packetBuilderName = top.getName().addSuffix("builder").toUpperCamel();
+		m_packageName = SymbolName.fromDot("com.bluerobotics.blueberry").append(top.getName().toLowerCase());
+		m_constantsName = top.getName().append("constants").toUpperCamel();
+		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
+		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
+		m_packetBuilderName = top.getName().append("builder").toUpperCamel();
 //		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
-		m_keyEnumName = top.getName().addSuffix("block","keys").toUpperCamel();
-		m_consumerInterfaceName = top.getName().addSuffix("consumer").toUpperCamel();
-		m_consumerManagerName = top.getName().addSuffix("consumer","manager").toUpperCamel();
-		m_packetRecieverName = top.getName().addSuffix("Receiver").toUpperCamel();
+		m_keyEnumName = top.getName().append("block","keys").toUpperCamel();
+		m_consumerInterfaceName = top.getName().append("consumer").toUpperCamel();
+		m_consumerManagerName = top.getName().append("consumer","manager").toUpperCamel();
+		m_packetRecieverName = top.getName().append("Receiver").toUpperCamel();
 
 
 		writeConstantsFile(top, headers);
@@ -268,7 +268,7 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeInterfaceMethod(StructField bf) {
-		String className = bf.getName().addSuffix("parser").toUpperCamel();
+		String className = bf.getName().append("parser").toUpperCamel();
 		addDocComment("consume the "+className+" block.\n"+bf.getComment());
 		addLine("public void consume("+className+" p);");
 	}
@@ -996,7 +996,7 @@ public class JavaWriter extends SourceWriter {
 //		return result;
 //	}
 	private String makeEnumTypeName(EnumType f) {
-		return f.getTypeName().addSuffix("enum").toUpperCamel();
+		return f.getTypeName().append("enum").toUpperCamel();
 	}
 
 	private void writeConsants(StructField top) {

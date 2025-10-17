@@ -21,13 +21,13 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.types;
 
-import com.bluerobotics.blueberry.schema.parser.fields.FieldName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public interface Type {
-	public FieldName getTypeName();
+	public SymbolName getTypeName();
 	public String getComment();
 	public TypeId getTypeId();
 }
