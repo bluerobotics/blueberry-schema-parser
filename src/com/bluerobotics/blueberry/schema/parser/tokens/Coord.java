@@ -53,6 +53,11 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
+	/**
+	 * make a new Coord at the specified character of this Coord's line
+	 * @param i
+	 * @return
+	 */
 	public Coord updateIndex(int i) {
 		return new Coord(filePath, line, i, m_lines);
 	}
@@ -277,6 +282,11 @@ public class Coord implements Comparable<Coord> {
 	public boolean isAtStart() {
 		return index <= 0;
 	}
+	/**
+	 * advance to the next occurrence of the specified string within the this Coord's line
+	 * @param s
+	 * @return
+	 */
 	public Coord indexOf(String s) {
 		return updateIndex(getString().indexOf(s, index));
 	}
@@ -309,7 +319,9 @@ public class Coord implements Comparable<Coord> {
 	public String toString() {
 		Coord end = incrementIndex(15);
 		String s = fromThisToThatString(end);
-		s += "...";
+		if(s.length() > 14) {
+			s += "...";
+		}
 		s = "Coord(\""+s+"\")";
 		return s;
 	}

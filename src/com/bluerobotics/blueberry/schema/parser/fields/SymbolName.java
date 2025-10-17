@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class that wraps a hierarchical string name that can be easily expressed as various cases
@@ -29,9 +30,26 @@ import java.util.ArrayList;
 public class SymbolName {
 	public static final SymbolName EMPTY = new SymbolName(new String[0]);
 	private final String[] name;
-	public SymbolName(String... ss) {
+	private SymbolName(String... ss) {
 		name = ss;
 	}
+	public static SymbolName make(List<String> ss) {
+		SymbolName result = EMPTY;
+		int i = ss.size() -1;
+		if(i > 0) {
+			for(; i >= 0; --i) {
+				String s = ss.get(i);
+				//remove elements that only contain whitespace or nothing at all
+				if(s.isBlank()) {
+					ss.remove(i);
+				}
+			}
+			result = new SymbolName(ss.toArray(new String[ss.size()]));
+		}
+		
+		return result;
+	}
+	
 	public static SymbolName guess(String s) {
 		SymbolName result;
 		if(isUnderscore(s) || isAllUpperCase(s)) {
@@ -47,7 +65,7 @@ public class SymbolName {
 		return new SymbolName(breakUpDot(n));
 	}
 	public static SymbolName fromCamel(String n) {
-		return new SymbolName(breakUpCamel(n));
+		return make(breakUpCamel(n));
 	}
 	public static SymbolName fromSnake(String n) {
 		return new SymbolName(breakUpSnake(n));
@@ -58,7 +76,7 @@ public class SymbolName {
 	private static String[] breakUpSnake(String s) {
 		return s.toLowerCase().split("_");
 	}
-	private static String[] breakUpCamel(String s){
+	private static List<String> breakUpCamel(String s){
 		ArrayList<String> result = new ArrayList<String>();
 		int j = 0;
 		boolean inNumber = false;
@@ -80,7 +98,7 @@ public class SymbolName {
 			}
 		}
 		result.add(s.substring(j).toLowerCase());
-		return result.toArray(new String[result.size()]);
+		return result;
 	}
 
 	private String toSnake(boolean upperNotLower) {
@@ -274,7 +292,11 @@ public class SymbolName {
 	private static boolean isDot(String s) {
 		return s.contains(".");
 	}
-
+	/**
+	 * removes all elements that occur after the specified separator. It also removes the separator
+	 * @param separator - the character sequence that is used to separate the scope from the name
+	 * @return
+	 */
 	public SymbolName getScope(String separator) {
 		ArrayList<String> result = new ArrayList<>();
 		for(String s : name) {
@@ -285,9 +307,13 @@ public class SymbolName {
 				result.add(s);
 			}
 		}
-		return new SymbolName(result.toArray(new String[result.size()]));
+		return make(result);
 	}
-	
+	/**
+	 * Removes any elements that occur to the left of the specified separator. It also removes the separator.
+	 * @param separator - the character sequence that is used to separate the scope from the name
+	 * @return
+	 */
 	public SymbolName deScope(String separator) {
 		ArrayList<String> result = new ArrayList<>();
 		
@@ -299,11 +325,49 @@ public class SymbolName {
 				result.add(0, s);
 			}
 		}
-		return new SymbolName(result.toArray(new String[result.size()]));
+		return make(result);
 	}
-	
+	/**
+	 * checks to see if this symbol name is a match for the specified name and list of imported scope
+	 * @param separator - the character sequence that is used to separate the scope from the name
+	 * @param imports - an array of scope names, any one of which might match the scope of this symbol name
+	 * @param name - the local name that is being compared to this symbol name.
+	 * @return
+	 */
 	public boolean isMatchWithScope(String separator, SymbolName[] imports, SymbolName name) {
 		boolean result = false;
+		SymbolName thisScope = getScope(separator);
+		SymbolName thisName = deScope(separator);
+		SymbolName thatScope = name.getScope(separator);
+		SymbolName thatName = name.deScope(separator);
+		
+		
+		if(thisScope == EMPTY && thatScope == EMPTY) {
+			if(thisName.equals(thatName)) {
+				//an unscoped match
+				result = true;
+			}
+		} else if(thisScope.equals(thatScope)) {
+			if(thisName.equals(thatName)) {
+			//	a perfect match
+				result = true;
+			}
+		} else if(thatScope == EMPTY) {
+			for(SymbolName i : imports) {
+				if(i.equals(thisScope) && thisName.equals(thatName)){
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	public SymbolName addScope(String separator, SymbolName scope) {
+		SymbolName result = this;
+		if(scope != null) {
+			result = result.prepend(separator).prepend(scope);
+		}
 		return result;
 	}
 

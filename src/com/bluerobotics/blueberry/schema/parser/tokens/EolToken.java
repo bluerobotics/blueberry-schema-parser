@@ -27,9 +27,5 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 public class EolToken extends AbstractToken {
 	public EolToken(Coord start) {
 		super(start,start);
-		
-	}
-	public String toString() {
-		return getClass().getSimpleName()+"()";
 	}
 }

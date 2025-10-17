@@ -100,6 +100,9 @@ public class TokenList {
 	}
 
 	public Token relative(int i) {
+		if(i+m_index < 0 || i >= m_tokens.size()) {
+			return null;
+		}
 		return m_tokens.get(m_index + i);
 
 	}
@@ -345,7 +348,7 @@ public class TokenList {
 	public <T extends Token> T relative(int i, Class<T> type){
 		T result = null;
 		Token t = relative(i);
-		if(t.getClass() == type) {
+		if(t != null && t.getClass() == type) {
 			result = type.cast(t);
 		}
 		return result;
