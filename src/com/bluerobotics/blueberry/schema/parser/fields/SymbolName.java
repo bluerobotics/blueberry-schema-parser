@@ -36,6 +36,8 @@ public class SymbolName {
 		SymbolName result;
 		if(isUnderscore(s) || isAllUpperCase(s)) {
 			result = fromSnake(s);
+		} else if(isDot(s)) {
+			result = fromDot(s);
 		} else {
 			result = fromCamel(s);
 		}
@@ -269,8 +271,41 @@ public class SymbolName {
 		return s.contains("_");
 		
 	}
+	private static boolean isDot(String s) {
+		return s.contains(".");
+	}
 
-
+	public SymbolName getScope(String separator) {
+		ArrayList<String> result = new ArrayList<>();
+		for(String s : name) {
+			if(s.equals(separator)) {
+				
+				break;
+			} else {
+				result.add(s);
+			}
+		}
+		return new SymbolName(result.toArray(new String[result.size()]));
+	}
+	
+	public SymbolName deScope(String separator) {
+		ArrayList<String> result = new ArrayList<>();
+		
+		for(int i = name.length - 1; i >= 0; --i) {
+			String s = name[i];
+			if(s.equals(separator)) {
+				break;
+			} else {
+				result.add(0, s);
+			}
+		}
+		return new SymbolName(result.toArray(new String[result.size()]));
+	}
+	
+	public boolean isMatchWithScope(String separator, SymbolName[] imports, SymbolName name) {
+		boolean result = false;
+		return result;
+	}
 
 
 }
