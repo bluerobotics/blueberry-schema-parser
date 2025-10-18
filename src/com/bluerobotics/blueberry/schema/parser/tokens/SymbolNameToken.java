@@ -26,17 +26,21 @@ import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 /**
  * 
  */
-public class SingleWordToken extends AbstractToken {
+public class SymbolNameToken extends AbstractToken {
 
+	private final SymbolName m_name;
 	
 	
-	public SingleWordToken(Coord start, Coord end) {
+	public SymbolNameToken(Coord start, Coord end, SymbolName name) {
 		super(start, end);
+		m_name = name;
 		
 		
 		
 	}
-	
+	public SymbolName getSymbolName() {
+		return m_name;
+	}
 	public String toString() {
 		return getClass().getSimpleName()+"(\""+getName()+"\")";
 	}

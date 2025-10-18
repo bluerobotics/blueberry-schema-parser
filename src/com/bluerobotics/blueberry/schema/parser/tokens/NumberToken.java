@@ -12,11 +12,11 @@ import com.bluerobotics.blueberry.schema.parser.constants.Number;
 public class NumberToken extends SingleWordToken {
 	private final Number m_value;
 	private NumberToken(SingleWordToken swt, Number v){
-		super(swt.getStart(), swt.getEnd(), swt.getName());
+		super(swt.getStart(), swt.getEnd());
 		m_value = v;
 	}
 	private NumberToken(Number v) {
-		super(null, null, null);
+		super(null, null);
 		m_value = v;
 	}
 

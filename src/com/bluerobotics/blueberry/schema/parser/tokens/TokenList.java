@@ -100,10 +100,11 @@ public class TokenList {
 	}
 
 	public Token relative(int i) {
-		if(i+m_index < 0 || i >= m_tokens.size()) {
+		int j = i + m_index;
+		if(j < 0 || j >= m_tokens.size()) {
 			return null;
 		}
-		return m_tokens.get(m_index + i);
+		return m_tokens.get(j);
 
 	}
 	public boolean isAtEnd() {

@@ -36,7 +36,7 @@ public class SymbolName {
 	public static SymbolName make(List<String> ss) {
 		SymbolName result = EMPTY;
 		int i = ss.size() -1;
-		if(i > 0) {
+		if(i >= 0) {
 			for(; i >= 0; --i) {
 				String s = ss.get(i);
 				//remove elements that only contain whitespace or nothing at all
@@ -193,7 +193,7 @@ public class SymbolName {
 		return new SymbolName(ss);
 	}
 	public String toString() {
-		return toCamel(false);
+		return toLowerSnake();
 	}
 
 	@Override
@@ -298,6 +298,9 @@ public class SymbolName {
 	 * @return
 	 */
 	public SymbolName getScope(String separator) {
+		if(!contains(separator)) {
+			return EMPTY;
+		}
 		ArrayList<String> result = new ArrayList<>();
 		for(String s : name) {
 			if(s.equals(separator)) {
@@ -363,7 +366,20 @@ public class SymbolName {
 		return result;
 	}
 	
+	public boolean contains(String s) {
+		boolean result = false;
+		for(String st : name) {
+			if(st.equals(s.toLowerCase().trim())) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
 	public SymbolName addScope(String separator, SymbolName scope) {
+		if(contains(separator)) {
+			throw new RuntimeException("This symbol name already seems to have scope.");
+		}
 		SymbolName result = this;
 		if(scope != null) {
 			result = result.prepend(separator).prepend(scope);

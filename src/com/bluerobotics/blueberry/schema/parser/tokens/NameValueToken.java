@@ -22,47 +22,48 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
  *
  */
 public class NameValueToken extends AbstractToken {
-	private NumberToken value;
-	private final SingleWordToken name;
-	private final CommentToken comment;
-	public NameValueToken(SingleWordToken n, NumberToken v, CommentToken c){
+	private Number value;
+	private final SymbolName name;
+	private final String comment;
+	public NameValueToken(SymbolNameToken n, NumberToken v, CommentToken c){
 		super(n.getStart().getFirst(v != null ? v.getStart() : null).getFirst(c != null ? c.getStart() : null),
 				n.getEnd().getLast(v != null ? v.getEnd() : null).getLast(c != null ? c.getEnd() : null));
 
-		name = n;
-		value = v;
-		comment = c;
+		name = n.getSymbolName();
+		value = v.getNumber();
+		comment = c == null ? null : c.combineLines();
 	
 	}
-	public NumberToken getNumberToken() {
-		return value;
-	}
+
 	public Number getValue() {
-		return value.getNumber();
+		return value;
 	}
 	public boolean isValue() {
 		return value != null;
 	}
-	public CommentToken getComment() {
+	public SymbolName getSymbolName() {
+		return name;
+	}
+	public String getComment() {
 		return comment;
 	}
 	public String toString() {
 		String s = getClass().getSimpleName();
 		s += "(";
-		s += name.getName();
+		s += name;
 		if(isValue()) {
 			s += " = ";
-			s += value.getName();
+			s += value;
 		}
 		s += ")";
 		return s;
 	}
-//	public void setValue(long v) {
-//		value = NumberToken.make(v);
-//	}
+	
+
 }
