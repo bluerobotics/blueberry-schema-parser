@@ -71,20 +71,19 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final ArrayList<Field> m_messages = new ArrayList<>();
 	private final ArrayList<SymbolName> m_imports = new ArrayList<>();
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	private ArrayList<CommentToken> m_topLevelComments = new ArrayList<CommentToken>();
 
-	public String[] getHeader() {
-		String[] result = new String[m_topLevelComments.size()];
-		for(int i = 0; i < m_topLevelComments.size(); ++i) {
-			CommentToken ct = m_topLevelComments.get(i);
-			result[i] = ct.combineLines();
-
-		}
-		return result;
-	}
+	
 	public void clear() {
 		m_tokens.clear();
 		m_defines.clear();
+		m_messages.clear();
+		m_imports.clear();
+		m_annotations.clear();
+		m_constants.clear();
+		m_fileName = null;
+		m_lastComment = null;
+		m_module = null;
+		m_moduleEnd = null;
 
 	}
 	/**
@@ -189,7 +188,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 
-
+		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
 	private void collapseSymbolNames() {
@@ -238,12 +237,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolNameToken tScope = m_tokens.relative(-1, SymbolNameToken.class);
 				if(tScope != null && tName != null) {
 					//this should be a scoped name
-					SymbolNameToken swt = new SymbolNameToken(tScope.getStart(), tName.getEnd(), SymbolName.guess(tScope.getName()).append(TokenIdentifier.SCOPE_SEPARATOR.id()).append(tName.getName()));
+					SymbolNameToken swt = new SymbolNameToken(tScope.getStart(), tName.getEnd(), tScope.getSymbolName().append(TokenIdentifier.SCOPE_SEPARATOR.id()).append(tName.getSymbolName()));
 					m_tokens.replace(tScope, swt);
 					m_tokens.remove(s);
 					m_tokens.remove(tName);
 				} else if(tScope == null && tName != null){
-					SymbolNameToken swt = new SymbolNameToken(s.getStart(), tName.getEnd(), SymbolName.guess(TokenIdentifier.SCOPE_SEPARATOR.id()).append(tName.getName()));
+					SymbolNameToken swt = new SymbolNameToken(s.getStart(), tName.getEnd(), SymbolName.guess(TokenIdentifier.SCOPE_SEPARATOR.id()).append(tName.getSymbolName()));
 					m_tokens.replace(s, swt);
 					m_tokens.remove(tName);
 
@@ -285,7 +284,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(int i = 0; i < fs.size(); ++i) {
 			Field f = fs.get(i);
 			if(f instanceof DeferredField) {
-				SymbolName[] imports = ((DeferredField) f).getImports();
+				List<SymbolName> imports = ((DeferredField) f).getImports();
 				SymbolName typeName = f.getTypeName();
 				Field dft = null;
 				
@@ -495,7 +494,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m.add(new BaseField(nameToken.getSymbolName(), tid, comment));
 	
 				} else if(typeNameToken != null) {
-					m.add(new DeferredField(nameToken.getSymbolName(), SymbolName.fromCamel(typeNameToken.getName()), m_imports.toArray(new SymbolName[m_imports.size()]), comment));
+					DeferredField df = new DeferredField(nameToken.getSymbolName(), typeNameToken.getSymbolName(), m_imports, comment);
+					df.addImport(m_module);
+					m.add(df);
+					
 				}
 				m_tokens.setIndex(nameToken);
 				m_tokens.next();
@@ -535,10 +537,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_tokens.setIndex(braceStart);
 
 		while(m_tokens.isCurrentBefore(braceEnd)) {
-			Token t = m_tokens.gotoNextOfThese(SingleWordToken.class, BaseTypeToken.class);
-			if(t == null) {
+			Token t = m_tokens.gotoNextOfThese(braceEnd, SymbolNameToken.class, BaseTypeToken.class);
+			if(t == null || t == braceEnd) {
 				break;
 			}
+			
 			//reuse a bunch of fields from above for the sub-field
 			CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 			String comment = ct != null ? ct.combineLines() : null;
@@ -555,7 +558,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				m.add(new BaseField(name, tid, comment));
 
 			} else if(typeNameToken != null) {
-				m.add(new DeferredField(name, typeNameToken.getSymbolName(), m_imports.toArray(new SymbolName[m_imports.size()]),comment));
+				DeferredField df = new DeferredField(name, typeNameToken.getSymbolName(), m_imports,comment);
+				df.addImport(m_module);
+				m.add(df);
 			}
 			m_tokens.setIndex(nameToken);
 			m_tokens.next();
@@ -598,7 +603,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else {
 			//this is an array type
 			NumberToken arraySize = m_tokens.relative(4, NumberToken.class);
-			SingleWordToken arraySizeConst = m_tokens.relative(4,SingleWordToken.class);
+			SymbolNameToken arraySizeConst = m_tokens.relative(4,SymbolNameToken.class);
 			IdentifierToken squareBracketEnd = m_tokens.relativeId(5, TokenIdentifier.SQUARE_BRACKET_END);
 			//this is an array
 			if(squareBracketEnd == null) {
@@ -662,8 +667,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_tokens.setIndex(braceStart);
 
 		while(m_tokens.isCurrentBefore(braceEnd)) {
-			Token t = m_tokens.gotoNextOfThese(SingleWordToken.class, NameValueToken.class);
-			if(t == null) {
+			Token t = m_tokens.gotoNextOfThese(braceEnd, SymbolNameToken.class, NameValueToken.class, braceEnd.getClass());
+			if(t == null || t == braceEnd) {
 				break;
 			}
 			//reuse a bunch of fields from above for the sub-field
@@ -967,7 +972,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	/**
-	 * now collapse any token sequences of form CommentToken, SingleWordToken, IdentifierToken (equals sign), NumberToken to a NameValueToken
+	 * now collapse any token sequences of form CommentToken, SymbolNameToken, IdentifierToken (equals sign), NumberToken to a NameValueToken
 	 * @throws SchemaParserException
 	 */
 	private void collapseNameValues() throws SchemaParserException {
@@ -1026,59 +1031,60 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void processAnnotation(IdentifierToken at) throws SchemaParserException {
 
-			if(at != null) {
-				SingleWordToken swt = m_tokens.relative(1, SingleWordToken.class);
-				if(swt != null) {
-					Annotation a = new Annotation(SymbolName.fromSnake(swt.getName()));
+		if(at != null) {
+			SymbolNameToken swt = m_tokens.relative(1, SymbolNameToken.class);
+			IdentifierToken bracketStart = m_tokens.relativeId(2, TokenIdentifier.BRACKET_START);
+			IdentifierToken bracketEnd = m_tokens.matchBrackets(bracketStart);
 
-					IdentifierToken bracketStart = m_tokens.relativeId(2, TokenIdentifier.BRACKET_START);
-					if(bracketStart.getKeyword() == null) {
-						throw new SchemaParserException("An annotation should include a bracketed list of parameters", swt.getEnd());
-					} else {
-						IdentifierToken bracketEnd = m_tokens.matchBrackets(bracketStart);
-						m_tokens.setIndex(bracketStart);
-						m_tokens.next();
-
-						while(m_tokens.isCurrentBefore( bracketEnd)) {
-							Token t = m_tokens.getCurrent();
-							if(t instanceof StringToken) {
-								
-								a.addParameter(t.getName());
-							} else if(t instanceof SingleWordToken) {
-								//this is likely a constant
-								a.addDeferredParameter(SymbolName.guess(t.getName()), m_imports.toArray(new SymbolName[m_imports.size()]));
-							} else if(t instanceof NumberToken) {
-								NumberToken nt = (NumberToken)t;
-								a.addParameter(nt.getNumber());
-							} else if(t instanceof CommentToken) {
-								//ignore comments
-							} else if(t instanceof IdentifierToken) {
-								IdentifierToken comma = (IdentifierToken)t;
-								if(comma.getKeyword() != TokenIdentifier.COMMA){
-									throw new SchemaParserException("Parameters should e comma separated "+t, t.getStart());
-								}
-							} else {
-								throw new SchemaParserException("This doesn't seem to be a valid annotation parameter "+t, t.getStart());
-							}
-							m_tokens.next();
-
-						}
-						if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
-							String fn = a.getParameter(0, String.class);
-							if(fn == null) {
-								throw new SchemaParserException("File path annotation should have a string parameter", null);
-							} else {
-								m_fileName = fn;
-							}
-
-						} else {
-							m_annotations.add(a);
-						}
-					}
-
-				}
+			if(swt == null) {
+				throw new SchemaParserException("Annotation symbol should be followed by a name", at.getEnd());
+			} else if(bracketStart == null) {
+				throw new SchemaParserException("Annotation should be followed by an opening bracket.", swt.getEnd());
+			} else if(bracketEnd == null) {
+				//this should never happen because the match bracket will throw its own exception
 			}
+			
+			Annotation a = new Annotation(swt.getSymbolName());
+			
+			m_tokens.setIndex(bracketStart);
+			m_tokens.next();
 
+			while(m_tokens.isCurrentBefore( bracketEnd)) {
+				Token t = m_tokens.getCurrent();
+				if(t instanceof StringToken) {
+					
+					a.addParameter(t.getName());
+				} else if(t instanceof SymbolNameToken) {
+					//this is likely a constant
+					a.addDeferredParameter(((SymbolNameToken)t).getSymbolName(), m_imports.toArray(new SymbolName[m_imports.size()]));
+				} else if(t instanceof NumberToken) {
+					NumberToken nt = (NumberToken)t;
+					a.addParameter(nt.getNumber());
+				} else if(t instanceof CommentToken) {
+					//ignore comments
+				} else if(t instanceof IdentifierToken) {
+					IdentifierToken comma = (IdentifierToken)t;
+					if(comma.getKeyword() != TokenIdentifier.COMMA){
+						throw new SchemaParserException("Parameters should e comma separated "+t, t.getStart());
+					}
+				} else {
+					throw new SchemaParserException("This doesn't seem to be a valid annotation parameter "+t, t.getStart());
+				}
+				m_tokens.next();
+
+			}
+			if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
+				String fn = a.getParameter(0, String.class);
+				if(fn == null) {
+					throw new SchemaParserException("File path annotation should have a string parameter", null);
+				} else {
+					m_fileName = fn;
+				}
+
+			} else {
+				m_annotations.add(a);
+			}
+		}
 	}
 	/**
 	 * remove all end of line tokens that are preceded or followed by a token that no longer needs an EOL token

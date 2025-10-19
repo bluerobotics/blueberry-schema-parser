@@ -28,10 +28,24 @@ import java.util.List;
  * A class that wraps a hierarchical string name that can be easily expressed as various cases
  */
 public class SymbolName {
-	public static final SymbolName EMPTY = new SymbolName(new String[0]);
+	public enum Case {
+		UNSPECIFIED,
+		UPPER_CAMEL,
+		LOWER_CAMEL,
+		UPPER_SNAKE,
+		LOWER_SNAKE,
+		MIXED_SNAKE,
+		LOWER_DOT,
+		UPPER_DOT,
+		MIXED_DOT,
+	}
+	public static final SymbolName EMPTY = new SymbolName(Case.UNSPECIFIED, new String[0]);
+	private final Case m_case;
 	private final String[] name;
-	private SymbolName(String... ss) {
+	
+	private SymbolName(Case c, String... ss) {
 		name = ss;
+		m_case = c;
 	}
 	public static SymbolName make(List<String> ss) {
 		SymbolName result = EMPTY;
@@ -44,7 +58,7 @@ public class SymbolName {
 					ss.remove(i);
 				}
 			}
-			result = new SymbolName(ss.toArray(new String[ss.size()]));
+			result = new SymbolName(Case.UNSPECIFIED, ss.toArray(new String[ss.size()]));
 		}
 		
 		return result;
@@ -62,13 +76,30 @@ public class SymbolName {
 		return result;
 	}
 	public static SymbolName fromDot(String n) {
-		return new SymbolName(breakUpDot(n));
+		
+		Case c = Case.MIXED_DOT;
+		if(isAllUpperCase(n)) {
+			c = Case.UPPER_DOT;
+		} else if(isAllUpperCase(n)) {
+			c = Case.LOWER_DOT;
+		}
+		return new SymbolName(c, breakUpDot(n));
 	}
 	public static SymbolName fromCamel(String n) {
+		Case c = Case.LOWER_SNAKE;
+		if(Character.isUpperCase(n.charAt(0))) {
+			c = Case.UPPER_SNAKE;
+		}
 		return make(breakUpCamel(n));
 	}
 	public static SymbolName fromSnake(String n) {
-		return new SymbolName(breakUpSnake(n));
+		Case c = Case.MIXED_SNAKE;
+		if(isAllUpperCase(n)) {
+			c = Case.UPPER_SNAKE;
+		} else if(isAllUpperCase(n)) {
+			c = Case.LOWER_SNAKE;
+		}
+		return new SymbolName(c, breakUpSnake(n));
 	}
 	private static String[] breakUpDot(String s) {
 		return s.toLowerCase().split("\\.");
@@ -140,9 +171,15 @@ public class SymbolName {
 	 * @return
 	 */
 	public SymbolName append(String... ss) {
-		return append(new SymbolName(ss));
+		return append(new SymbolName(getCase(), ss));
 	}
-
+	/**
+	 * Indicates the case of the string this was derived from
+	 * @return
+	 */
+	private Case getCase() {
+		return m_case;
+	}
 	/**
 	 * Make a new SymbolName by adding the specified SymbolName to the front of this SymbolName
 	 * @param f
@@ -160,7 +197,7 @@ public class SymbolName {
 				ss[i] = f.name[i - m];
 			}
 		}
-		return new SymbolName(ss);
+		return new SymbolName(getCase(), ss);
 	}
 	/**
 	 * Make a new SymbolName by adding the specified array of Strings to the front of this SymbolName
@@ -168,7 +205,7 @@ public class SymbolName {
 	 * @return
 	 */
 	public SymbolName prepend(String... ss) {
-		return prepend(new SymbolName(ss));
+		return prepend(new SymbolName(getCase(),ss));
 	}
 	/**
 	 * Make a new SymbolName by adding the specified SymbolName to the front of this SymbolName
@@ -190,7 +227,7 @@ public class SymbolName {
 				ss[i] = name[i - m];
 			}
 		}
-		return new SymbolName(ss);
+		return new SymbolName(getCase(), ss);
 	}
 	public String toString() {
 		return toLowerSnake();
@@ -337,7 +374,7 @@ public class SymbolName {
 	 * @param name - the local name that is being compared to this symbol name.
 	 * @return
 	 */
-	public boolean isMatchWithScope(String separator, SymbolName[] imports, SymbolName name) {
+	public boolean isMatchWithScope(String separator, List<SymbolName> imports, SymbolName name) {
 		boolean result = false;
 		SymbolName thisScope = getScope(separator);
 		SymbolName thisName = deScope(separator);

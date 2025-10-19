@@ -37,4 +37,11 @@ public class TypeDefField extends AbstractField {
 		return new TypeDefField(name, getTypeName(), getTypeId(), getComment());
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName()+"("+getTypeName().toUpperCamel()+")";
+	}
+	
+	
+
 }

@@ -269,14 +269,23 @@ public class TokenList {
 		}));
 	}
 	
-	
-	public Token gotoNextOfThese(Class<?>... cs) {
+	/**
+	 * finds the next tokens of the specified class, but will stop if it reaches stopHere
+	 * @param stopHere
+	 * @param cs
+	 * @return
+	 */
+	public Token gotoNextOfThese(Token stopHere, Class<?>... cs) {
 		Token resultT = gotoNext(t -> {
 			boolean result = false;
-			for(Class<?> c : cs) {
-				if(t.getClass() == c) {
-					result = true;
-					break;
+			if(t == stopHere) {
+				result = true;
+			} else {
+				for(Class<?> c : cs) {
+					if(t.getClass() == c) {
+						result = true;
+						break;
+					}
 				}
 			}
 			return result;

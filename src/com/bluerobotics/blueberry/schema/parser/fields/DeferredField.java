@@ -21,16 +21,19 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  * 
  */
 public class DeferredField extends AbstractField {
-	private final SymbolName[] m_imports;
-	public DeferredField(SymbolName name, SymbolName type, SymbolName[] imports, String comment) {
+	private final ArrayList<SymbolName> m_imports = new ArrayList<>();;
+	public DeferredField(SymbolName name, SymbolName type, List<SymbolName> imports, String comment) {
 		super(name, type, TypeId.DEFERRED, comment);
-		m_imports = imports;
+		m_imports.addAll(imports);
 	}
 
 	@Override
@@ -38,8 +41,14 @@ public class DeferredField extends AbstractField {
 		return new DeferredField(name, getTypeName(), getImports(), getComment());
 	}
 	
-	public SymbolName[] getImports() {
+	public List<SymbolName> getImports() {
 		return m_imports;
+	}
+	public void addImport(SymbolName s) {
+		if(s == null) {
+			return;
+		}
+		m_imports.add(s);
 	}
 
 }
