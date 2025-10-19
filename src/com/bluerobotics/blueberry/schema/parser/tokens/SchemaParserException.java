@@ -6,7 +6,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 /**
  * 
  */
-public class SchemaParserException extends Exception {
+public class SchemaParserException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 	

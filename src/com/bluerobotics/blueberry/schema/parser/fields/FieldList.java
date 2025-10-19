@@ -22,40 +22,50 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Consumer;
 
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
-import com.bluerobotics.blueberry.schema.parser.types.Type;
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-
 /**
- * An abstract field that adds the concept of child fields
+ * 
  */
-public abstract class ParentField extends AbstractField {
-	private final FieldList m_children = new FieldList();
-	protected ParentField(SymbolName name, SymbolName typeName, TypeId typeId, String comment) {
-		super(name, typeName, typeId, comment);
+public class FieldList {
+	private final ArrayList<Field> m_fields = new ArrayList<>();
+	public void add(Field f){
+		m_fields.add(f);
 	}
-	public void add(Field f) {
-		m_children.add(f);
+	public <T extends Field> void forEachOfType(Class<T> c, boolean deep, Consumer<T> con) {
+		for(Field f : m_fields) {
+			if(f.getClass() == c) {
+				T cf = c.cast(f);
+				con.accept(cf);
+			} else if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				
+			}
+		}
 	}
-
-	public void scanThroughFields(Consumer<Field> c) {
-		m_children.forEach(c);
+	public void forEach(Consumer<Field> con) {
+		for(Field f : m_fields) {
+			con.accept(f);
+		}
 	}
-	public String toString() {
-		String result = getClass().getSimpleName();
-		result += "(";
-		result += getTypeName().toUpperCamel();
-		result += ")";
-		return result;
+	public void clear() {
+		m_fields.clear();
 	}
-	protected void copyChildrenFrom(ParentField pf) {
-		pf.scanThroughFields(f -> {
-			add(f.makeInstance(f.getName()));
-		});
+	public int size() {
+		return m_fields.size();
 	}
-	public FieldList getChildren(){
-		return m_children;
+	public Field get(int i) {
+		return m_fields.get(i);
+	}
+	public void set(int i, Field f) {
+		m_fields.set(i, f);
+	}
+	public List<Field> getList(){
+		return m_fields;
+	}
+	public ListIterator<Field> getIterator(){
+		return m_fields.listIterator();
 	}
 }

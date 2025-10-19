@@ -69,6 +69,16 @@ public class Number {
 	public static Number parse(String s) {
 		return new Number(s);
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		boolean result = false;
+		if(obj instanceof Number) {
+			Number n = (Number)obj;
+			result = n.m_value.equals(m_value);
+		}
+		return result;
+	}
 	public boolean isInteger() {
 		return m_integer;
 	}
@@ -101,5 +111,8 @@ public class Number {
 			result = m_value.toString();
 		}
 		return result;
+	}
+	public boolean isNan() {
+		return m_value == null;
 	}
 }

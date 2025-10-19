@@ -23,10 +23,12 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 /**
  * 
  */
@@ -85,6 +87,57 @@ public class EnumField extends AbstractField {
 		EnumField result = new EnumField(name, getTypeName(), getTypeId(), getComment());
 		result.m_nameValues.addAll(m_nameValues);
 		return result;
+	}
+	/**
+	 * fills in missing enum values
+	 * will try zero if it is not used for the first element
+	 * will increment the value until it does not exist in the list
+
+	 */
+	public void fillInMissingValues() {
+		long maxV = Long.MIN_VALUE;
+		long i = 0;
+		ListIterator<NameValue> nvs = m_nameValues.listIterator();
+		while(nvs.hasNext()) {
+			NameValue nv = nvs.next();
+			if(nv.getValue().isNan()) {
+				while(exists(i)){
+					++i;
+				}
+				NameValue nv2 = new NameValue(nv.getName(), new Number(i), nv.getComment());
+				nvs.set(nv2);
+			} else {
+				
+				
+				
+				
+			}
+		}
+	}
+
+	
+	private boolean exists(long v) {
+		boolean result = false;
+		for(NameValue nv : m_nameValues) {
+			if(nv.getValue().asLong() == v) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+	private long getMin() {
+		long v = Long.MAX_VALUE;
+		for(NameValue nv : m_nameValues) {
+			long n = nv.getValue().asLong();
+			if(n < v) {
+				v = n;
+			}
+		}
+		if(v == Long.MAX_VALUE) {
+			v = 0;
+		}
+		return v;
 	}
 	
 	

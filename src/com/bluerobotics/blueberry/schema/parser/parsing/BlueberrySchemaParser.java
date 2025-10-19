@@ -22,7 +22,9 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
@@ -32,7 +34,9 @@ import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.DeferredField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -66,9 +70,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	private final TokenList m_tokens = new TokenList();
-	private final ArrayList<Field> m_defines = new ArrayList<>();
+	private final FieldList m_defines = new FieldList();
 	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();
-	private final ArrayList<Field> m_messages = new ArrayList<>();
+	private final FieldList m_messages = new FieldList();
 	private final ArrayList<SymbolName> m_imports = new ArrayList<>();
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 
@@ -145,7 +149,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 //
-//			fillInMissingEnumValues();
 //			checkForDuplicateEnumValues();
 //			List<NestedFieldAllocationToken> blocks = listAllBlocks(m_topLevelToken, null);
 //			fillInMissingKeyValues(blocks);
@@ -166,6 +169,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 ////			fu.computeParents(m_topLevelField);
 ////			fu.removeDuplicates(m_topLevelField, null);
 			assembleFields();
+			fillInMissingEnumValues();
+			checkForDuplicateEnumValues();
+			fillInMissingMessageKeyValues();
 
 			
 			processDeferredFields(m_defines, m_defines);	
@@ -183,13 +189,61 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			e.printStackTrace();
 		}
 		System.out.println("************* Defines ***************");
-		for(Field t : m_defines) {
-			System.out.println(t.toString());
-		}
+		m_defines.forEach(f -> {
+			
+			System.out.println(f.toString());
+		});
 
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	private void fillInMissingMessageKeyValues() {
+		m_messages.forEachOfType(MessageField.class, false, mf -> {
+			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			if(a == null) {
+				 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION);
+				a.addParameter(new Number(getNextMessageKey()));
+				mf.addAnnotation(a);
+				
+			}
+		});
+	}
+	/**
+	 * picks the next available message
+	 * @return
+	 */
+	private long getNextMessageKey() {
+		final ArrayList<Integer> keys = new ArrayList<>();
+		m_messages.forEachOfType(MessageField.class, false, mf -> {
+			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			if(a != null) {
+				Number an = a.getParameter(0, Number.class);
+				if(an != null) {
+					keys.add(an.asInt());
+				}
+			}
+			
+		});
+		Collections.sort(keys);
+		int i = 0;
+		if(keys.size() > 0) {
+			i = keys.get(0);
+		}
+		//find the first value that does not exist
+		boolean done = false;
+		while(!done) {
+			done = true;
+			for(Integer k : keys) {
+				if(i == k) {
+					++i;
+					done = false;
+					break;
+				}
+			}
+		}
+		
+		return i;
 	}
 	private void collapseSymbolNames() {
 		m_tokens.resetIndex();
@@ -257,8 +311,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * check all annotations of all 
 	 */
-	private void applyDeferredParameters(List<Field> fs) {
-		for(Field f : fs) {
+	private void applyDeferredParameters(FieldList fs) {
+		fs.forEach(f -> {
 			f.scanAnnotations(a -> {
 				a.replaceDeferredParameters(fn -> {
 					Object result = null;
@@ -271,7 +325,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					return result;
 				});
 			});
-		}
+		});
 	}
 
 	/**
@@ -280,7 +334,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param m_defines3
 	 * @throws SchemaParserException 
 	 */
-	private <T extends Field> void processDeferredFields(List<Field> fs, ArrayList<Field> defines) throws SchemaParserException {
+	private <T extends Field> void processDeferredFields(FieldList fs, FieldList defines) throws SchemaParserException {
 		for(int i = 0; i < fs.size(); ++i) {
 			Field f = fs.get(i);
 			if(f instanceof DeferredField) {
@@ -288,7 +342,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolName typeName = f.getTypeName();
 				Field dft = null;
 				
-				for(Field df : defines) {
+			
+				for(Field df : defines.getList()) {
 					if(df.getTypeName().isMatchWithScope(TokenIdentifier.SCOPE_SEPARATOR.id(), imports, typeName)) {
 						if(dft != null) {
 							throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
@@ -445,8 +500,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	}
 	private void processImport(IdentifierToken it) {
-		SingleWordToken nameToken = m_tokens.relative(1, SingleWordToken.class);//or this
-		
+		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
+		if(nameToken == null) {
+			throw new SchemaParserException("Import statement does not have a name specified", null);
+		}
 		m_imports.add(SymbolName.guess(nameToken.getName()));
 	}
 	private void processMessage(IdentifierToken it) throws SchemaParserException {
@@ -777,47 +834,30 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void checkForDuplicateEnumValues() throws SchemaParserException {
-//		for(DefinedField t : m_defines) {
-//			if(t instanceof EnumToken) {
-//				EnumToken et = (EnumToken)t;
-//				for(NameValueToken nvt : et.getNameValueTokens()) {
-//					if(!nvt.isValue()) {
-//						throw new SchemaParserException("Weird! There is no value set for this enum value.", nvt.getStart());
-//					}
-//					for(NameValueToken nvt2 : et.getNameValueTokens()) {
-//						if(nvt2 == nvt) {
-//							//don't worry, these are the same element
-//						} else if(nvt.getName().equals(nvt2.getName())) {
-//							//found two names that are the same
-//							throw new SchemaParserException("Two enum element names are the same!", nvt2.getStart());
-//						} else if(nvt.getValue() == nvt2.getValue()) {
-//							throw new SchemaParserException("Two enum elements have the same values!", nvt2.getStart());
-//						}
-//					}
-//				}
-//			}
-//		}
+		m_defines.forEachOfType(EnumField.class, true, ef -> {
+			for(NameValue nv1 : ef.getNameValues()) {
+				for(NameValue nv2 : ef.getNameValues()) {
+					if(nv1 == nv2) {
+						//don't do anything, they're the same item
+					} else if(nv1.getName().equals(nv2.getName())){
+						//they have the same name
+						throw new SchemaParserException("Duplicate enum item names: "+nv1.getName().toUpperSnake(), null);
+					} else if(nv1.getValue().equals(nv2.getValue())) {
+						//they have the same value
+						throw new SchemaParserException("Duplicate enum item values: "+nv1.getName().toUpperSnake()+" = "+nv1.getValue(), null);
+					}
+				}
+			}
+		});
 	}
 	/**
 	 * Scans for enum tokens that are missing values for their elements.
 	 * Fills them in with the smallest, unused, positive, integer value.
 	 */
 	private void fillInMissingEnumValues() {
-//		for(DefinedField t : m_defines) {
-//			if(t instanceof EnumToken) {
-//				EnumToken et = (EnumToken)t;
-//				int nextValue = 0;
-//				for(NameValueToken nvt : et.getNameValueTokens()) {
-//					if(nvt.isValue()) {
-//						if(nvt.getValue().intValue() == nextValue) {
-//							++nextValue;
-//						}
-//					} else {
-//						nvt.setValue(nextValue);
-//					}
-//				}
-//			}
-//		}
+		m_defines.forEachOfType(EnumField.class, true, ef -> {
+			ef.fillInMissingValues();
+		});
 	}
 	/**
 	 * constructs a hierarchy of fields to represent all the packets
