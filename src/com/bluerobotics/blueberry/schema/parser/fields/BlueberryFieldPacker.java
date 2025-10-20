@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
 
@@ -31,7 +32,10 @@ import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
  * if a smaller word is packed it will be placed in the first available empty spot
  */
 public class BlueberryFieldPacker {
-	ArrayList<Boolean> pt = new ArrayList<>();
+	/**
+	 * An array of booleans used to keep track of the message packing. Used bytes are true. Unused bytes are false.
+	 */
+	ArrayList<Boolean> m_bytes = new ArrayList<>();
 	public void pack(Field f) {
 		if(f instanceof MessageField) {
 			pack((MessageField)f);
@@ -45,34 +49,113 @@ public class BlueberryFieldPacker {
 			pack((ArrayField)f);
 		} else if(f instanceof EnumField) {
 			pack((EnumField)f);
+		} else if(f instanceof BoolFieldField) {
+			pack((BoolFieldField)f);
 		} else {
 			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), null);
 		}
 	}
 	public void pack(MessageField f) {
-		
+		//first make sure all bools are contained in bool field fields.
+		organizeBools(f);
+		//now go through all children and compute the indeces
+		f.getChildren().forEach(ft -> pack(ft));
 	}
+
 	public void pack(StructField f) {
-		
+		f.getChildren().forEach(ft -> pack(ft));
 	}
 	public void pack(SequenceField f) {
 		
 	}
+	public void pack(BoolFieldField f) {
+		f.setIndex(findAndAssignSpot(1));
+	}
 	public void pack(BaseField f) {
+		if(f.getBitCount() == 1) {
+			throw new RuntimeException("All bit fields should have been moved out of the message by now and added to a bool field field.");
+		} else {
+			f.setIndex(findAndAssignSpot(f.getByteCount()));
+		}
+	}
+	private void addBool(BaseField f) {
+		//find first bool field field
 		
 	}
 	public void pack(ArrayField f) {
 		
 	}
 	public void pack(EnumField f) {
-		
+		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
 	private int findAndAssignSpot(int byteNum) {
 		//TODO: check that bytenum is only either 1, 2, 4, 8
 		
 		int i = 0;
-//		while(i < )
+		while(i < m_bytes.size()) {
+			if(isEmpty(i, byteNum)) {
+				break;
+			} else {
+				i += byteNum;
+			}
+		}
+		
+		//add padding if necessary
+		//e.g. if bytes size is 3 and i is 4, then we would need to add one
+		while(m_bytes.size() < i) {
+			m_bytes.add(false);
+		}
+		
+		//fill in assigned bytes
+		for(int j = i; j < byteNum + i; ++j) {
+			m_bytes.set(j, true);
+		}
 		return i;
 	}
+	private boolean isEmpty(int i, int byteNum) {
+		boolean result = true;
+		for(int j = 0; j < byteNum; ++j) {
+			if(m_bytes.get(j + i)){
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+
 	
+	
+	/**
+	 * recurse through the specified parent and make sure all one bit fields are contained within bool field fields
+	 * @param pf
+	 */
+	private void organizeBools(ParentField pf) {
+		ListIterator<Field> li = pf.getChildren().getIterator();
+		BoolFieldField bff = null;
+		while(li.hasNext()) {
+			Field f = li.next();
+			if(f instanceof BoolFieldField) {
+				bff = (BoolFieldField)f;
+				if(bff.getChildren().size() >= 8) {
+					bff = null;
+				}
+				
+			} else if(f instanceof BaseField) {
+				BaseField bf = (BaseField)f;
+				if(bf.getBitCount() == 1) {
+					if(bff != null) {
+						bff.add(bf);
+						li.remove();
+					} else {
+						bff = new BoolFieldField();
+						bff.add(bf);
+						li.set(bff);
+					}
+				}
+			} else if(f instanceof ParentField) {
+				ParentField pf2 = (ParentField)f;
+				organizeBools(pf2);
+			}
+		}
+	}
 }

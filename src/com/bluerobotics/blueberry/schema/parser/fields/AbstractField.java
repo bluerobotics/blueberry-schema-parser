@@ -33,6 +33,7 @@ public abstract class AbstractField implements Field {
 	private final SymbolName m_typeName;
 	private final String m_comment;
 	private String m_fileName = null;
+	private int m_byteIndex = -1;
 	private SymbolName m_namespace = null;
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
@@ -46,6 +47,17 @@ public abstract class AbstractField implements Field {
 	
 	
 	
+	
+
+
+
+	@Override
+	public int getByteCount() {
+		return getBitCount()/8;
+	}
+
+
+
 
 
 
@@ -139,18 +151,23 @@ public abstract class AbstractField implements Field {
 		return m_namespace;
 	}
 
-
-
-
-
-
-
 	@Override
 	public void scanAnnotations(Consumer<Annotation> c) {
 		for(Annotation a : m_annotations) {
 			c.accept(a);
 		}
 	}
+
+	@Override
+	public int getIndex() {
+		return m_byteIndex;
+	}
+
+	@Override
+	public void setIndex(int i) {
+		m_byteIndex = i;
+	}
+	
 	
 
 

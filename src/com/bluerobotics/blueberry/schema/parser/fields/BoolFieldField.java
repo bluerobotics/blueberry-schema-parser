@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,51 +21,38 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.List;
-import java.util.function.Consumer;
-
-import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
-
 /**
- * A class to represent both a data type and an instance of that type
+ * A Field to contain 8 booleans
  */
-public interface Field extends ThingFromFile {
+public class BoolFieldField extends ParentField {
 
-	SymbolName getTypeName();
+	protected BoolFieldField() {
+		super(null, null, TypeId.BOOLFIELD, null);
+	}
 
-	TypeId getTypeId();
-	
+	@Override
+	public Field makeInstance(SymbolName name) {
+		BoolFieldField bf = new BoolFieldField();
+		return bf;
+	}
 
-	int getBitCount();
-	int getByteCount();
-	Field getParent();
-	void setParent(ParentField p);
-	
-	Field makeInstance(SymbolName name);
-
-	void addAnnotation(List<Annotation> as);
-
-	Annotation getAnnotation(SymbolName name);
-	
-	void scanAnnotations(Consumer<Annotation> c);
-	/**
-	 * Gets the byte index of this element within the message bytes
-	 * If this is a single bit then it could represent the bit index within it's containing byte
-	 * @return
-	 */
-	public int getIndex();
-	/**
-	 * Sets the byte index of this element within the message bytes
-	 * If this is a single bit then it could represent the bit index within it's containing byte
-	 * @param i
-	 */
-	public void setIndex(int i);
+	@Override
+	public void add(Field f) {
+		if(f.getBitCount() == 1) {
+			super.add(f);
+			int i = getChildren().getList().indexOf(f);
+			f.setIndex(i);
+		} else {
+			throw new RuntimeException("Can only add 1 bit fields to this type.");
+		}
+	}
 	
 	
 	
 	
-
+	
+	
 
 }
