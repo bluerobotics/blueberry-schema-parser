@@ -32,6 +32,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlueberryFieldPacker;
 import com.bluerobotics.blueberry.schema.parser.fields.DeferredField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
@@ -179,6 +180,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			applyDeferredParameters(m_defines);
 			applyDeferredParameters(m_messages);
+			
+			computeIndeces();
 
 //			extractEnums();
 //			extractTypedefs();
@@ -198,6 +201,23 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
+	/**
+	 * Calculates the field indeces for messages, based on the word packing rules
+	 */
+	private void computeIndeces() {
+		
+		m_messages.forEachOfType(MessageField.class, false, mf -> {
+			Annotation a = mf.getAnnotation(Annotation.SERIALIZATION_ANNOTATION);
+			Object s = a.getParameter(0, Object.class);
+			if(s.toString().equals("CDR")) {
+				throw new SchemaParserException("CDR serialization not supported yet", null);
+			}
+			BlueberryFieldPacker p = new BlueberryFieldPacker();
+			p.pack(mf);
+		});
+		
+	}
+	
 	private void fillInMissingMessageKeyValues() {
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
 			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
