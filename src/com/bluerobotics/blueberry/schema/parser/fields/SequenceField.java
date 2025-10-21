@@ -27,7 +27,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class SequenceField extends ParentField {
 
-	protected SequenceField(SymbolName name, SymbolName typeName, String comment) {
+	public SequenceField(SymbolName name, SymbolName typeName, String comment) {
 		super(name, typeName, TypeId.SEQUENCE, comment);
 	}
 	

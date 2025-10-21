@@ -40,6 +40,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.TypeDefField;
@@ -207,11 +208,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void computeIndeces() {
 		
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
+			
+			boolean doCdr = false;
 			Annotation a = mf.getAnnotation(Annotation.SERIALIZATION_ANNOTATION);
-			Object s = a.getParameter(0, Object.class);
-			if(s.toString().equals("CDR")) {
-				throw new SchemaParserException("CDR serialization not supported yet", null);
+			if(a != null) {
+				Object s = a.getParameter(0, Object.class);
+				if(s.toString().equals("CDR")) {
+					doCdr = true;
+					throw new SchemaParserException("CDR serialization not supported yet", null);
+				}
 			}
+				
 			BlueberryFieldPacker p = new BlueberryFieldPacker();
 			p.pack(mf);
 		});
@@ -492,6 +499,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				case SEQUENCE:
 					processSequence(it);
 					break;
+				case STRING:
+					processString(it);
+					break;
 				case STRUCT:
 					processStructs(it);
 					break;
@@ -519,6 +529,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		}
 	}
+	
 	private void processImport(IdentifierToken it) {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
@@ -587,7 +598,46 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void processSequence(IdentifierToken it) throws SchemaParserException {
-		throw new SchemaParserException("Have not coded sequence processing yet",it.getEnd());
+		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.BRACE_START);
+		if(angleBracketStart == null) {
+			throw new SchemaParserException("Sequence keyword should be followed by an open angle bracket.", it.getEnd());
+		}
+		BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);
+		SymbolNameToken snt = m_tokens.relative(2, SymbolNameToken.class);
+		Field cf = null;
+		if(btt != null) {
+			TypeId tid = lookupBaseType(btt.getKeyword());
+			cf = new BaseField(null, tid, null);
+		} else if(snt != null) {
+			cf = new DeferredField(null, snt.getSymbolName(), m_imports, null);
+		} else {
+			throw new SchemaParserException("Sequence must be defined with a type for its elements.", it.getEnd());
+		}
+		IdentifierToken commaT = m_tokens.relativeId(3, TokenIdentifier.COMMA);
+		NumberToken nt = m_tokens.relative(4, NumberToken.class);
+		int n = -1;
+		if(commaT != null && nt != null) {
+			n = nt.getNumber().asInt();
+		}
+		IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
+		if(angleBracketEnd == null) {
+			throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
+		}
+		
+		m_tokens.setIndex(angleBracketEnd);
+		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+		
+		SequenceField sf = new SequenceField(null, nameToken.getSymbolName(), m_lastComment);
+		sf.setFileName(m_fileName);
+		sf.setNamespace(m_module);
+		sf.add(cf);
+		m_lastComment = null;
+		
+	}
+	
+	private void processString(IdentifierToken it) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void processStructs(IdentifierToken it) throws SchemaParserException {

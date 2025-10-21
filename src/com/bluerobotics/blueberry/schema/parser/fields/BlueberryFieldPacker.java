@@ -51,6 +51,8 @@ public class BlueberryFieldPacker {
 			pack((EnumField)f);
 		} else if(f instanceof BoolFieldField) {
 			pack((BoolFieldField)f);
+		} else if(f instanceof TypeDefField) {
+			pack((TypeDefField)f);
 		} else {
 			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), null);
 		}
@@ -82,8 +84,11 @@ public class BlueberryFieldPacker {
 		//find first bool field field
 		
 	}
+	private void pack(TypeDefField f) {
+		f.setIndex(findAndAssignSpot(f.getByteCount()));	
+	}
 	public void pack(ArrayField f) {
-		
+		f.setIndex(findAndAssignSpot(f.getByteCount()));	
 	}
 	public void pack(EnumField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
@@ -108,7 +113,13 @@ public class BlueberryFieldPacker {
 		
 		//fill in assigned bytes
 		for(int j = i; j < byteNum + i; ++j) {
-			m_bytes.set(j, true);
+			if(j == m_bytes.size()) {
+				m_bytes.add(true);
+			} else if(j > m_bytes.size()) {
+				throw new RuntimeException("Can put stuff beyond the end of the list.");
+			} else {
+				m_bytes.set(j, true);
+			}
 		}
 		return i;
 	}

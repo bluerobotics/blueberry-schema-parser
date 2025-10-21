@@ -33,7 +33,7 @@ public abstract class AbstractField implements Field {
 	private final SymbolName m_typeName;
 	private final String m_comment;
 	private String m_fileName = null;
-	private int m_byteIndex = -1;
+	private int m_index = -1;
 	private SymbolName m_namespace = null;
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
@@ -80,7 +80,7 @@ public abstract class AbstractField implements Field {
 	}
 	@Override
 	public int getBitCount() {
-		return 0;
+		return getTypeId().getBitCount();
 	}
 
 
@@ -100,11 +100,13 @@ public abstract class AbstractField implements Field {
 	@Override
 	public boolean equals(Object obj) {
 		boolean result = false;
-		if(obj != null && obj.getClass().equals(getClass())) {
+		if(this == obj) {
+			result = true;
+		} else if(obj != null && obj.getClass().equals(getClass())) {
 			Field f = (Field)obj;
 			if(f.getTypeName().equals(getTypeName()) && f.getTypeId() == getTypeId()) {
-				if(f.getParent() != null && f.getParent().equals(getParent())) {
-					if(f.getName() != null && f.getName().equals(getName())){
+				if(f.getParent() == getParent() || (f.getParent() != null && f.getParent().equals(getParent()))) {
+					if(f.getName() == getName() || (f.getName() != null && f.getName().equals(getName()))){
 						result = true;
 					}
 				}
@@ -160,12 +162,12 @@ public abstract class AbstractField implements Field {
 
 	@Override
 	public int getIndex() {
-		return m_byteIndex;
+		return m_index;
 	}
 
 	@Override
 	public void setIndex(int i) {
-		m_byteIndex = i;
+		m_index = i;
 	}
 	
 	
