@@ -39,6 +39,7 @@ public enum Key implements SettingsKey {
 	HEADER_FILE_PATH(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
 	SCHEMA_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
 	JAVA_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
+	JAVA_PACKAGE_NAME(String.class, "com.bluerobotics.blueberry.bb"),
 	C_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
 	
 	

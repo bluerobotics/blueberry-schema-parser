@@ -21,21 +21,26 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  * 
  */
 public class StringField extends AbstractField {
-	protected StringField(SymbolName name, String comment) {
-		super(name, null, TokenIdentifier.STRING, comment);
-	}
 	private final int m_maxSize;
+	public StringField(SymbolName name, int maxSize, String comment) {
+		super(name, null, TypeId.STRING, comment);
+		m_maxSize = maxSize;
+	}
+	
 	@Override
 	public Field makeInstance(SymbolName name) {
 		// TODO Auto-generated method stub
-		return null;
+		return new StringField(name, getMaxSize(), getComment());
+	}
+
+	private int getMaxSize() {
+		return m_maxSize;
 	}
 
 }

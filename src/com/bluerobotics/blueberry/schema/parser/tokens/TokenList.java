@@ -408,7 +408,7 @@ public class TokenList {
 		return result;
 	}
 	public String toString() {
-		return getClass().getSimpleName() + "("+getCurrent()+")";
+		return getClass().getSimpleName() + "("+getCurrent()+", " + relative(1) + ", " + relative(2) + "...)";
 	}
 
 
@@ -562,7 +562,11 @@ public class TokenList {
 	 * @return - true if the current token is before the specified one
 	 */
 	public boolean isCurrentBefore(Token t) {
-		return inOrder(getCurrent(), t);
+		if(isAtEnd()) {
+			return false;
+		} else {
+			return inOrder(getCurrent(), t);
+		}
 	}
 	/**
 	 * removes a range of tokens from start to end.

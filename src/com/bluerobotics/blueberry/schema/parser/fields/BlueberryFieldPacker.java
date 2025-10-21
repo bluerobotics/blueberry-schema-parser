@@ -53,6 +53,8 @@ public class BlueberryFieldPacker {
 			pack((BoolFieldField)f);
 		} else if(f instanceof TypeDefField) {
 			pack((TypeDefField)f);
+		} else if(f instanceof StringField) {
+			pack((StringField)f);
 		} else {
 			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), null);
 		}
@@ -91,6 +93,9 @@ public class BlueberryFieldPacker {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));	
 	}
 	public void pack(EnumField f) {
+		f.setIndex(findAndAssignSpot(f.getByteCount()));
+	}
+	public void pack(StringField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
 	private int findAndAssignSpot(int byteNum) {

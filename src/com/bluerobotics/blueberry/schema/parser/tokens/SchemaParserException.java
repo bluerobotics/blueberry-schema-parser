@@ -25,7 +25,7 @@ public class SchemaParserException extends RuntimeException {
 		
 		if(c != null) {
 		
-			s +=  " at line "+ c.line + "\n";
+			s +=  " at line "+ (c.line + 1) + "\n";
 			s += c.getString() + "\n";
 			s += " ".repeat(c.index);
 			s += "^\n";

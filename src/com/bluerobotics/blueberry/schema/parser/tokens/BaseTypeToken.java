@@ -46,6 +46,7 @@ public class BaseTypeToken extends IdentifierToken {
 		TokenIdentifier.LONG,
 		TokenIdentifier.SHORT,
 		TokenIdentifier.UNSIGNED,
+		TokenIdentifier.STRING,
 	};
 	private BaseTypeToken(IdentifierToken it) {
 		super(it.getStart(), it.getEnd(), it.getKeyword());

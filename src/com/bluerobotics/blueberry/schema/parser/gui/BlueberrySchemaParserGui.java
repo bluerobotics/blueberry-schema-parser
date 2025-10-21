@@ -155,7 +155,7 @@ public class BlueberrySchemaParserGui implements Constants {
 
 		resizer.addMoveComponent(toolbar);
 		cp.add(toolbar, BorderLayout.NORTH);
-		Key[] keys = new Key[] {Key.SCHEMA_DIRECTORY, Key.JAVA_DIRECTORY, Key.C_DIRECTORY, Key.HEADER_FILE_PATH };
+		Key[] keys = new Key[] {Key.SCHEMA_DIRECTORY, Key.JAVA_DIRECTORY, Key.JAVA_PACKAGE_NAME, Key.C_DIRECTORY, Key.HEADER_FILE_PATH };
 
 		JTable setTable = new JTable(new SettingsTableModel(m_settings, keys));
 
@@ -256,21 +256,21 @@ public class BlueberrySchemaParserGui implements Constants {
 	private void parse() {
 
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
-
-		m_parser.clear();
-		parse(dir, dir);
 		try {
+			m_parser.clear();
+			loadFiles(dir, dir);
+		
 			m_parser.parse();
 		} catch(SchemaParserException e) {
 			m_text.append(e.toString());
 		}
 	}
-	private void parse(File root, File f) {
+	private void loadFiles(File root, File f) throws SchemaParserException {
 		m_text.append("Parsing \""+f+"\"\n");
 		if(f.isDirectory()) {
 			File[] fs = f.listFiles();
 			for(File cf : fs) {
-				parse(root, cf);
+				loadFiles(root, cf);
 			}
 		} else if(f.isFile()) {
 			BufferedReader br;
@@ -285,12 +285,10 @@ public class BlueberrySchemaParserGui implements Constants {
 			}
 
 			if(ss != null) {
-				try {
-					Path p = root.toPath().relativize(f.toPath());
-					m_parser.append(p.toString(), ss);
-				} catch (SchemaParserException e) {
-					m_text.append(e.toString());
-				}
+				
+				Path p = root.toPath().relativize(f.toPath());
+				m_parser.append(p.toString(), ss);
+				
 			}
 			m_text.append("Done\n");
 		}
