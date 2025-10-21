@@ -26,7 +26,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  *
  */
 public class SequenceField extends ParentField {
-
+	private int m_limit;
 	public SequenceField(SymbolName name, SymbolName typeName, String comment) {
 		super(name, typeName, TypeId.SEQUENCE, comment);
 	}
@@ -37,5 +37,10 @@ public class SequenceField extends ParentField {
 		result.copyChildrenFrom(this);
 		return result;
 	}
-
+	public void setLimit(int n) {
+		m_limit = n;
+	}
+	public int getLimit() {
+		return m_limit;
+	}
 }

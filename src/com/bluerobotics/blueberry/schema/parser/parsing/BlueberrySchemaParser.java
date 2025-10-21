@@ -598,7 +598,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void processSequence(IdentifierToken it) throws SchemaParserException {
-		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.BRACE_START);
+		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
 		if(angleBracketStart == null) {
 			throw new SchemaParserException("Sequence keyword should be followed by an open angle bracket.", it.getEnd());
 		}
@@ -631,6 +631,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		sf.setFileName(m_fileName);
 		sf.setNamespace(m_module);
 		sf.add(cf);
+		sf.setLimit(n);
 		m_lastComment = null;
 		
 	}
@@ -1593,6 +1594,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				TokenIdentifier.BRACKET_END,
 				TokenIdentifier.SQUARE_BRACKET_START,
 				TokenIdentifier.SQUARE_BRACKET_END,
+				TokenIdentifier.ANGLE_BRACKET_START,
+				TokenIdentifier.ANGLE_BRACKET_END,
 				TokenIdentifier.SCOPE_SEPARATOR,
 				TokenIdentifier.COLON,
 				TokenIdentifier.EQUALS,
