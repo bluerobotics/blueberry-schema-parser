@@ -598,6 +598,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void processSequence(IdentifierToken it) throws SchemaParserException {
+
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
 		if(angleBracketStart == null) {
 			throw new SchemaParserException("Sequence keyword should be followed by an open angle bracket.", it.getEnd());
@@ -626,6 +627,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		m_tokens.setIndex(angleBracketEnd);
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+		if(nameToken == null) {
+			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
+		}
+		m_tokens.setIndex(angleBracketEnd);
 		
 		SequenceField sf = new SequenceField(null, nameToken.getSymbolName(), m_lastComment);
 		sf.setFileName(m_fileName);
@@ -637,8 +642,32 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	
 	private void processString(IdentifierToken it) {
-		// TODO Auto-generated method stub
+
+		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
+		NumberToken maxSize = null;
+		if(angleBracketStart != null) {
+			maxSize = m_tokens.relative(2,NumberToken.class);
+			IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
+			if(angleBracketEnd == null) {
+				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
+			}
+			m_tokens.setIndex(angleBracketEnd);
+
+		}
 		
+		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+		
+		if(nameToken == null) {
+			throw new SchemaParserException("String field needs a name specified.", it.getEnd());
+		}
+		m_tokens.setIndex(nameToken);
+		
+		SequenceField sf = new SequenceField(null, nameToken.getSymbolName(), m_lastComment);
+		sf.setFileName(m_fileName);
+		sf.setNamespace(m_module);
+		sf.add(cf);
+		sf.setLimit(n);
+		m_lastComment = null;		
 	}
 
 	private void processStructs(IdentifierToken it) throws SchemaParserException {
@@ -691,7 +720,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				m.add(df);
 			}
 			m_tokens.setIndex(nameToken);
-			m_tokens.next();
 
 		}
 	}
