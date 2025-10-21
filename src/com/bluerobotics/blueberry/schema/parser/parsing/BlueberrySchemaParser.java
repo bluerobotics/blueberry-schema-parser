@@ -626,6 +626,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		m_tokens.setIndex(angleBracketEnd);
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+		if(nameToken == null) {
+			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
+		}
+		m_tokens.setIndex(angleBracketEnd);
 		
 		SequenceField sf = new SequenceField(null, nameToken.getSymbolName(), m_lastComment);
 		sf.setFileName(m_fileName);
