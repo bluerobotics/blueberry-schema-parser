@@ -51,7 +51,7 @@ public class JavaWriter extends SourceWriter {
 
 	@Override
 	public void write(StructField top, String... headers) {
-		m_packageName = 
+//		m_packageName = 
 		m_constantsName = top.getName().append("constants").toUpperCamel();
 		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
 		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();

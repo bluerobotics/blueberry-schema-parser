@@ -24,7 +24,6 @@ package com.bluerobotics.blueberry.schema.parser.parsing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
@@ -72,29 +71,39 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 
-	private final TokenList m_tokens = new TokenList();
-	private final FieldList m_defines = new FieldList();
-	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();
-	private final FieldList m_messages = new FieldList();
-	private final ArrayList<SymbolName> m_imports = new ArrayList<>();
-	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-
+	private final TokenList m_tokens = new TokenList();//this is where all tokens get assembled while parsing
+	private final FieldList m_defines = new FieldList();//all defines end up here
+	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();//all parsed constants will be stored here
+	private final FieldList m_messages = new FieldList();//all parsed messages will be stored here
 	
+	private final ArrayList<SymbolName> m_imports = new ArrayList<>();//temporary storage of imported module names
+	private final ArrayList<Annotation> m_annotations = new ArrayList<>();//temporary storage of annotations
+	private SymbolName m_module = null;//keeps track of the current module that the token being currently processed is within. Null if none.
+	private Token m_moduleEnd = null;//indicates the closing brace of the module that we are currently in. Null if none.
+	private String m_fileName = null;//indicates the filename that the present tokens are from
+	private String m_lastComment = null;//temporary storage for the last processed comment
+
+	/**
+	 * Clear this parser's state in preparation for a new parsing session
+	 */
 	public void clear() {
 		m_tokens.clear();
 		m_defines.clear();
+		m_constants.clear();
 		m_messages.clear();
+		
 		m_imports.clear();
 		m_annotations.clear();
-		m_constants.clear();
-		m_fileName = null;
-		m_lastComment = null;
+		
 		m_module = null;
 		m_moduleEnd = null;
+		m_fileName = null;
+		m_lastComment = null;
+		
 
 	}
 	/**
-	 * this method performs the parsing of the schema and builds a structure of fields to represent the packet
+	 * this reads through the contents of a file and adds tokens to the current token list
 	 * @param filePath - a string of the file path of this file
 	 * @param schema - a string containing the schema to parse
 	 * @throws SchemaParserException
@@ -126,6 +135,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	
 	}
+	/**
+	 * scans through the token list and generates a full set of constants, defines and message fields from it.
+	 * @throws SchemaParserException
+	 */
 	public void parse() throws SchemaParserException {
 		try {
 			
@@ -144,35 +157,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			collapseSemicolons();
 			
+			//check all brackets of all kinds to be sure they all match
 			m_tokens.matchBrackets(null);
 
-
-
-//
-//			checkForDuplicateEnumValues();
-//			List<NestedFieldAllocationToken> blocks = listAllBlocks(m_topLevelToken, null);
-//			fillInMissingKeyValues(blocks);
-//			checkForDuplicateKeyValues(blocks);
-//			checkKeyValuesForSize(m_topLevelToken);
-//
-//			if(m_tokens.size() > 0) {
-//				throw new SchemaParserException("Tokens left over after parsing.", m_tokens.get(0).getStart());
-//			}
-//
-//
-//			//now build model of packets
-//
-//			buildPackets(m_topLevelToken, null);
-//			FieldUtils fu = new FieldUtils();
-//			fu.padExtraSpaceInCompoundFields(m_topLevelField);
-//			fu.computeIndeces(m_topLevelField, 0);
-////			fu.computeParents(m_topLevelField);
-////			fu.removeDuplicates(m_topLevelField, null);
 			assembleFields();
 			fillInMissingEnumValues();
 			checkForDuplicateEnumValues();
 			fillInMissingMessageKeyValues();
-
+			checkForDuplicateMessageKeys();
 			
 			processDeferredFields(m_defines, m_defines);	
 			processDeferredFields(m_messages, m_defines);
@@ -182,12 +174,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			computeIndeces();
 
-//			extractEnums();
-//			extractTypedefs();
-//			extractStructs();
 
 		} catch (SchemaParserException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("************* Defines ***************");
@@ -199,6 +187,26 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	/**
+	 * scans all messages and checks for any duplicate message keys
+	 * this should be called after fillInMessageKeyValues()
+	 */
+	private void checkForDuplicateMessageKeys() {
+		final ArrayList<Integer> keys = new ArrayList<>();
+		m_messages.forEachOfType(MessageField.class, false, mf -> {
+			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			if(a != null) {
+				Number an = a.getParameter(0, Number.class);
+				if(an != null) {
+					int i = an.asInt();
+					if(keys.contains(i)) {
+						throw new SchemaParserException("Duplicate message key detected ("+i+")in "+mf.getName(), null);
+					}
+					keys.add(an.asInt());
+				}
+			}
+		});
 	}
 	/**
 	 * Calculates the field indeces for messages, based on the word packing rules
@@ -222,7 +230,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		});
 		
 	}
-	
+	/**
+	 * scan through all messages and assign any message keys that have not been assigned.
+	 */
 	private void fillInMissingMessageKeyValues() {
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
 			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
@@ -235,7 +245,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		});
 	}
 	/**
-	 * picks the next available message
+	 * picks the next available message key value
 	 * @return
 	 */
 	private long getNextMessageKey() {
@@ -270,6 +280,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		return i;
 	}
+	/**
+	 * scans through all SingleWordTokens and converts them to SymbolNameTokens
+	 * Note that this should be called after scanning for numbers
+	 */
 	private void collapseSymbolNames() {
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()) {
@@ -458,11 +472,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
-	private SymbolName m_module = null;
-	private Token m_moduleEnd = null;
-	private String m_fileName = null;//indicates the filename that the present tokens are from
-	private String m_lastComment = null;
 
+	/**
+	 * scans through the whole token list and creates all the fields
+	 * @throws SchemaParserException
+	 */
 	private void assembleFields() throws SchemaParserException {
 		m_module = null;
 		m_moduleEnd = null;
@@ -524,8 +538,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		}
 	}
-	
-	private void processImport(IdentifierToken it) {
+
+	private void processImport(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
 			throw new SchemaParserException("Import statement does not have a name specified", null);
@@ -533,6 +547,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_imports.add(SymbolName.guess(nameToken.getName()));
 		m_tokens.setIndex(nameToken);
 	}
+	
 	private void processMessage(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
@@ -658,7 +673,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @return
 	 */
-	private StringField processString(IdentifierToken it) {
+	private StringField processString(IdentifierToken it)  throws SchemaParserException {
 
 		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
@@ -820,6 +835,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
+	/**
+	 * Looks up a symbol name in the constant list and returns its integer value if it exists
+	 * @param name
+	 * @return
+	 */
 	private int lookupConstInt(SymbolName name) {
 		NumberConstant result = null;
 		for(Constant<?> c : m_constants) {
@@ -833,6 +853,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result != null ? result.getValue().asInt() : -1;
 	}
+	
 	private void processEnum(IdentifierToken enumT) throws SchemaParserException {
 
 
@@ -1672,6 +1693,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		Coord end = result;
 		
 		
+		
+		
+		
+		addToken(start, end);
+		
+		return result;
+	}
+	/**
+	 * creates a new token from the specified start and end coordinates and the specified string
+	 * @param start
+	 * @param end
+	 * @param s
+	 */
+	private void addToken(Coord start, Coord end) {
 		String s = start.fromThisToThatString(end);
 		if(s.isBlank()) {
 			//this should allow whitespace to be tokenized
@@ -1679,13 +1714,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			end = end.trimEnd();
 			s = start.fromThisToThatString(end);
 		}
-		
-		
-		addToken(start, end, s);
-		
-		return result;
-	}
-	private void addToken(Coord start, Coord end, String s) {
+				
 		TokenIdentifier tif = null;
 		if(s.isEmpty()) {
 			return;
@@ -1716,7 +1745,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 	/**
-	 * find all line comments and insert the token at the start of the line they are on
+	 * find all line comments and insert the token at the start of the line they are on in the token list
 	 * @param c
 	 * @return
 	 */
@@ -1734,7 +1763,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			//find the index of the first element of the line that this comment occurred on.
 			//place this commment before that element
 
-			m_tokens.add(getFirstIndexBeforeLine(start.line), new CommentToken(start, end, comment, false));
+			m_tokens.add(m_tokens.getFirstIndexBeforeLine(start.line), new CommentToken(start, end, comment, false));
 		}
 
 		return result;
@@ -1780,29 +1809,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 	}
+	
 
-	private int getFirstIndexBeforeLine(int line) {
-		int i = m_tokens.size();
-		if(i > 0) {
-			--i;
-			boolean done = false;
-			while(!done) {
-				int lt = m_tokens.get(i).getStart().line;
-				if(lt < line) {
-					++i;
-					done = true;
-				} else {
-					if(i <= 0) {
-						break;
-					} else {
-						--i;
-					}
-				}
-			}
-
-		}
-		return i;
-	}
 	/**
 	 * Checks if the next element of the file is a block comment
 	 * @return the next Coord after a comment if there is one. null if incomplete comment, c if no comment
@@ -1817,7 +1825,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		//first check for comment block
 		if(result.startsWith(COMMENT_BLOCK_START)) {
 
-//			result = result.indexOf(COMMENT_BLOCK_START);
 			result = result.incrementIndex(COMMENT_BLOCK_START);//move to the end of the block comment
 			String comment = "";
 

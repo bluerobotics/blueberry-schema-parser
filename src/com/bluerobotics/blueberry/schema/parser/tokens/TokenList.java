@@ -584,6 +584,33 @@ public class TokenList {
 		}
 
 	}
+	/**
+	 * looks back through the tokens and finds the first index of this list that occurs before the specified line.
+	 * @param line
+	 * @return
+	 */
+	public int getFirstIndexBeforeLine(int line) {
+		int i = size();
+		if(i > 0) {
+			--i;
+			boolean done = false;
+			while(!done) {
+				int lt = get(i).getStart().line;
+				if(lt < line) {
+					++i;
+					done = true;
+				} else {
+					if(i <= 0) {
+						break;
+					} else {
+						--i;
+					}
+				}
+			}
+
+		}
+		return i;
+	}
 
 
 
