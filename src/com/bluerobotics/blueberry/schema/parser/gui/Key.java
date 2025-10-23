@@ -36,7 +36,8 @@ public enum Key implements SettingsKey {
 //	APP_HEIGHT(Integer.class, 480),
 //	APP_WIDTH(Integer.class, 640),
 	
-	HEADER_FILE_PATH(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
+	CODE_HEADER_FILE_PATH(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
+	IDL_HEADER_FILE_PATH(URI.class, (new File(System.getProperty("user.dir"))).toURI()),
 	SCHEMA_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
 	JAVA_DIRECTORY(File.class, (new File(System.getProperty("user.dir")))),
 	JAVA_PACKAGE_NAME(String.class, "com.bluerobotics.blueberry.bb"),

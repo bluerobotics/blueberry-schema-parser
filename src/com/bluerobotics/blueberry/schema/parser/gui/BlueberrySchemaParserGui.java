@@ -59,8 +59,11 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextArea m_text = new JTextArea();
-	private String m_header;
+	private String m_codeHeader;
+	private String m_idlHeader;
+
 	/**
+	 * 
 	 * Constructs the GUI, maps actions
 	 * @param s - a settings object for persistence
 	 */
@@ -82,9 +85,11 @@ public class BlueberrySchemaParserGui implements Constants {
 		cp.setLayout(new BorderLayout());
 		
 		m_settings.addSettingsListener(e -> {
-			m_header = readHeader();
-		}, Key.HEADER_FILE_PATH, true);
-
+			m_codeHeader = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+		}, Key.CODE_HEADER_FILE_PATH, true);
+		m_settings.addSettingsListener(e -> {
+			m_idlHeader = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
+		}, Key.IDL_HEADER_FILE_PATH, true);
 
 		int x = s.getInt(Key.APP_POS_X);
 		int y = s.getInt(Key.APP_POS_Y);
@@ -168,7 +173,9 @@ public class BlueberrySchemaParserGui implements Constants {
 				Key.JAVA_DIRECTORY,
 				Key.JAVA_PACKAGE_NAME,
 				Key.C_DIRECTORY,
-				Key.HEADER_FILE_PATH };
+				Key.CODE_HEADER_FILE_PATH,
+				Key.IDL_HEADER_FILE_PATH,
+		};
 
 		JTable setTable = new JTable(new SettingsTableModel(m_settings, keys));
 
@@ -236,7 +243,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		}
 
 
-		JavaWriter w = new JavaWriter(dir, m_parser, m_header);
+		JavaWriter w = new JavaWriter(dir, m_parser, m_codeHeader);
 		w.write();
 		m_text.append("Done");
 	}
@@ -249,18 +256,24 @@ public class BlueberrySchemaParserGui implements Constants {
 			parse();
 		}
 
-		CWriter w = new CWriter(dir, m_parser, m_header);
+		CWriter w = new CWriter(dir, m_parser, m_codeHeader);
 		w.write();
 		m_text.append("Done");
 	}
-	private String readHeader() {
+	private String readHeader(URI uri) {
 		String header = "";
 		
-		try {
-			header = Files.readString(Path.of(m_settings.getUri(Key.HEADER_FILE_PATH)));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		Path p = Path.of(uri);
+		if(!Files.isRegularFile(p)) {
+			System.out.println("Code header is not a file: "+p);
+			
+		} else {
+			try {
+				header = Files.readString(p);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		return header;
 			
@@ -274,7 +287,7 @@ public class BlueberrySchemaParserGui implements Constants {
 //		}
 
 
-		PrettyWriter pw = new PrettyWriter(dir, m_parser, m_header);
+		PrettyWriter pw = new PrettyWriter(dir, m_parser, m_idlHeader);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
