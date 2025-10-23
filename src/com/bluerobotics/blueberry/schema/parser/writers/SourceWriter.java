@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
@@ -52,7 +54,14 @@ public abstract class SourceWriter {
 		} else
 		m_directory = dir;
 	}
-	public abstract void write(StructField bf, String... headers);
+	/**
+	 * Main method that triggers the generation of all files for the specified messages and defines
+	 * Probably only enums will trigger code output from the define list.
+	 * @param messages
+	 * @param defines
+	 * @param headers
+	 */
+	public abstract void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers);
 
 	protected void indent() {
 		++m_indent;

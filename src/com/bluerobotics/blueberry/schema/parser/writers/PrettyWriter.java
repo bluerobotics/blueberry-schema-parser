@@ -22,8 +22,11 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
+import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
@@ -38,15 +41,15 @@ public class PrettyWriter extends SourceWriter {
 	}
 
 	@Override
-	public void write(StructField bf, String... headers) {
-		startFile(headers);
-
-		writeDefinedTypes(bf);
-
-		writeBlockField(bf);
-
-
-		writeToFile(bf.getName().append("pretty").toLowerCamel(),".txt");
+	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+//		startFile(headers);
+//
+//		writeDefinedTypes(bf);
+//
+//		writeBlockField(bf);
+//
+//
+//		writeToFile(bf.getName().append("pretty").toLowerCamel(),".txt");
 	}
 	/**
 	 * write block field and children

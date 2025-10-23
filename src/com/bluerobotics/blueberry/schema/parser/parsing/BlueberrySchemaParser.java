@@ -1876,7 +1876,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 
-
+	public FieldList getMessages() {
+		return m_messages;
+	}
+	public FieldList getDefines() {
+		return m_defines;
+	}
+	public List<Constant<?>> getConstants(){
+		return m_constants;
+	}
 
 
 

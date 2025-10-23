@@ -11,9 +11,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
@@ -75,6 +79,8 @@ public class BlueberrySchemaParserGui implements Constants {
 		cp = p;
 
 		cp.setLayout(new BorderLayout());
+		
+		
 
 
 		int x = s.getInt(Key.APP_POS_X);
@@ -218,27 +224,38 @@ public class BlueberrySchemaParserGui implements Constants {
 		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 		m_text.append("Generating Java code in \"" + dir+"\"\n");
 
-//		if(m_parser.getTopLevelField() == null) {
-//			parse();
-//		}
+		if(m_parser.getMessages().size() == 0) {
+			parse();
+		}
 
-		JavaWriter jw = new JavaWriter(dir);
-//		jw.write(m_parser.getTopLevelField(), m_parser.getHeader());
-		m_text.append("Done");
+
+		JavaWriter w = new JavaWriter(dir);
+		w.write(m_parser.getMessages(), m_parser.getDefines(), m_parser.getConstants(), readHeader());		m_text.append("Done");
 	}
 
 	private void generateC() {
 		File dir = m_settings.getFile(Key.C_DIRECTORY);
 		m_text.append("Generating C code in \"" + dir+"\"\n");
 
-//		if(m_parser.getTopLevelField() == null) {
-//			parse();
-//		}
+		if(m_parser.getMessages().size() == 0) {
+			parse();
+		}
 
-
-		CWriter cw = new CWriter(dir);
-//		cw.write(m_parser.getTopLevelField(), m_parser.getHeader());
+		CWriter w = new CWriter(dir);
+		w.write(m_parser.getMessages(), m_parser.getDefines(), m_parser.getConstants(), readHeader());
 		m_text.append("Done");
+	}
+	private String readHeader() {
+		String header = "";
+		
+		try {
+			header = Files.readString(Path.of(m_settings.getUri(Key.HEADER_FILE_PATH)));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return header;
+			
 	}
 	private void generatePretty() {
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);

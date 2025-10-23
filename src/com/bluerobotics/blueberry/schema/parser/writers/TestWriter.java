@@ -25,8 +25,10 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
@@ -41,7 +43,7 @@ public class TestWriter extends SourceWriter {
 		return m_writer.toString();
 	}
 	@Override
-	public void write(StructField bf, String... headers) {
+	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
 //		write(0, bf);
 	}
 	private void start(AbstractField f) {

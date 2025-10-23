@@ -24,7 +24,9 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 import java.io.File;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
@@ -50,25 +52,23 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	@Override
-	public void write(StructField top, String... headers) {
-//		m_packageName = 
-		m_constantsName = top.getName().append("constants").toUpperCamel();
-		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
-		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
-		m_packetBuilderName = top.getName().append("builder").toUpperCamel();
-//		m_packetDecoderName = top.getName().addSuffix("decoder").toUpperCamel();
-		m_keyEnumName = top.getName().append("block","keys").toUpperCamel();
-		m_consumerInterfaceName = top.getName().append("consumer").toUpperCamel();
-		m_consumerManagerName = top.getName().append("consumer","manager").toUpperCamel();
-		m_packetRecieverName = top.getName().append("Receiver").toUpperCamel();
-
-
-		writeConstantsFile(top, headers);
-		writePacketBuilder(top, headers);
-		writeBlockParsers(top, headers);
-		writeParserInterface(top, headers);
-		writeConsumerManager(top, headers);
-		writePacketReceiver(top, headers);
+	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+//		m_constantsName = top.getName().append("constants").toUpperCamel();
+//		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
+//		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
+//		m_packetBuilderName = top.getName().append("builder").toUpperCamel();
+//		m_keyEnumName = top.getName().append("block","keys").toUpperCamel();
+//		m_consumerInterfaceName = top.getName().append("consumer").toUpperCamel();
+//		m_consumerManagerName = top.getName().append("consumer","manager").toUpperCamel();
+//		m_packetRecieverName = top.getName().append("Receiver").toUpperCamel();
+//
+//
+//		writeConstantsFile(top, headers);
+//		writePacketBuilder(top, headers);
+//		writeBlockParsers(top, headers);
+//		writeParserInterface(top, headers);
+//		writeConsumerManager(top, headers);
+//		writePacketReceiver(top, headers);
 
 
 	}

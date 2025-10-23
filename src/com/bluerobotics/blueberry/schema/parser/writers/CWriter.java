@@ -24,8 +24,10 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 import java.io.File;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
@@ -42,11 +44,11 @@ public class CWriter extends SourceWriter {
 	}
 
 	@Override
-	public void write(StructField bf, String... headers) {
+	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
 
 
-			makeHeaderFile(bf, headers);
-			makeSourceFile(bf, headers);
+//			makeHeaderFile(bf, headers);
+//			makeSourceFile(bf, headers);
 
 
 	}
