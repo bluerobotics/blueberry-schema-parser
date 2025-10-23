@@ -115,10 +115,25 @@ public abstract class SourceWriter {
 	protected StringBuffer getBuffer() {
 		return m_buffer;
 	}
+	/**
+	 * adds the specified line and adds indents as appropriate
+	 * @param s
+	 */
 	protected void addLine(String s) {
 		addIndent();
 		add(s);
 		addLine();
+	}
+	/**
+	 * adds multiple lines - assuming that specified string includes newline characters
+	 * Indents to each line will be added as appropriate
+	 * @param s
+	 */
+	protected void addLines(String lines) {
+		String[] ss = lines.split("\\n");
+		for(String s : ss) {
+			addLine(s);
+		}
 	}
 	protected void addLineComment(String c) {
 		addLine("//"+c);
