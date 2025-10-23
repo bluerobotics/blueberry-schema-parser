@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
@@ -39,21 +40,21 @@ import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
  */
 public class CWriter extends SourceWriter {
 
-	public CWriter(File dir) {
-		super(dir);
+	public CWriter(File dir, BlueberrySchemaParser parser, String header) {
+		super(dir, parser, header);
 	}
 
 	@Override
-	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+	public void write() {
 
 
-//			makeHeaderFile(bf, headers);
+			makeHeaderFile();
 //			makeSourceFile(bf, headers);
 
 
 	}
-	private void makeHeaderFile(StructField top, String... hs) {
-		startFile(hs);
+	private void makeHeaderFile() {
+		startFile(getHeader());
 
 
 
@@ -62,44 +63,38 @@ public class CWriter extends SourceWriter {
 		addLine("#include <stdint.h>");
 		addLine("#include <blueberry-transcoder.h>");
 
-		addSectionDivider("Defines");
-		writeBlockValueDefine(top);
-//		addBlockKeyDefines(top);
+//		addSectionDivider("Defines");
+//		writeBlockValueDefine();
+//
+//
+//		addSectionDivider("Types");
+//
+//		addFirstBlockDefine();
+//
+//		writeEnums();
+//
+//		addSectionDivider("Function Prototypes");
+//		addHeaderFieldGetters(top,true);
+//
+//		addBytesPerRepeatGetter(top, true);
+//
+//		addBaseFieldGetters(top, true);
+//
+//		addPacketStartFinish(top, true);
+//
+//		addBlockFunctionGetters(top, true);
+//
+//		addBlockAdders(top, true);
+//
+//		addArrayAdders(top, true);
+//
+//		addCompactArrayAdders(top, true);
+//
+//
+//
 
 
-		addSectionDivider("Types");
-//		addBlockKeyEnum(top);
-
-		addFirstBlockDefine(top);
-
-		writeEnums(top);
-//		addLine("typedef BlueberryBlock Bb;");
-//		writeCompounds(top);
-
-		addSectionDivider("Function Prototypes");
-		addHeaderFieldGetters(top,true);
-
-		addBytesPerRepeatGetter(top, true);
-
-		addBaseFieldGetters(top, true);
-
-		addPacketStartFinish(top, true);
-
-		addBlockFunctionGetters(top, true);
-
-		addBlockAdders(top, true);
-
-		addArrayAdders(top, true);
-
-		addCompactArrayAdders(top, true);
-//		addArrayGetters(top, true);
-
-//		addArrayElementAdders(top, true);
-
-
-
-
-		writeToFile("inc/"+top.getName().toLowerCamel(),"h");
+//		writeToFile("inc/"+top.getName().toLowerCamel(),"h");
 
 	}
 

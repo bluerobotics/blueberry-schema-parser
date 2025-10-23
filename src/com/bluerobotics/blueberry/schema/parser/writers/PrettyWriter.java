@@ -28,6 +28,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 
 /**
  * A SourceWriter to generate a pretty version of the schema
@@ -36,12 +37,12 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
  */
 public class PrettyWriter extends SourceWriter {
 
-	public PrettyWriter(File dir) {
-		super(dir);
+	public PrettyWriter(File dir, BlueberrySchemaParser parser, String header) {
+		super(dir, parser, header);
 	}
 
 	@Override
-	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+	public void write() {
 //		startFile(headers);
 //
 //		writeDefinedTypes(bf);

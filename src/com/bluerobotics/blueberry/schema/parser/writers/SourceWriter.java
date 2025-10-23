@@ -33,6 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 
 /**
@@ -44,15 +45,20 @@ public abstract class SourceWriter {
 
 
 	protected StringBuffer m_buffer = new StringBuffer();
+	protected final String m_fileHeader;
+	protected final BlueberrySchemaParser m_parser;
 	protected int m_indent = 0;
-	public SourceWriter(File dir) {
+	public SourceWriter(File dir, BlueberrySchemaParser parser, String header) {
 		if(!dir.exists()) {
 			dir.mkdir();
 			m_directory = dir;
 		} else if(!dir.isDirectory()) {
 			throw new RuntimeException("Specified file location is not a directory!");
-		} else
-		m_directory = dir;
+		} else {
+			m_directory = dir;
+		}
+		m_parser = parser;
+		m_fileHeader = header;
 	}
 	/**
 	 * Main method that triggers the generation of all files for the specified messages and defines
@@ -61,7 +67,7 @@ public abstract class SourceWriter {
 	 * @param defines
 	 * @param headers
 	 */
-	public abstract void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers);
+	public abstract void write();
 
 	protected void indent() {
 		++m_indent;
@@ -213,6 +219,12 @@ public abstract class SourceWriter {
 			}
 		});
 		return afs;
+	}
+	protected BlueberrySchemaParser getParser() {
+		return m_parser;
+	}
+	protected String getHeader() {
+		return m_fileHeader;
 	}
 
 

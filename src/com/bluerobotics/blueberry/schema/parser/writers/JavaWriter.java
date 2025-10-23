@@ -28,6 +28,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
@@ -47,12 +48,12 @@ public class JavaWriter extends SourceWriter {
 	private String m_consumerManagerName;
 	private String m_packetRecieverName;
 
-	public JavaWriter(File dir) {
-		super(dir);
+	public JavaWriter(File dir, BlueberrySchemaParser parser, String header) {
+		super(dir, parser, header);
 	}
 
 	@Override
-	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+	public void write() {
 //		m_constantsName = top.getName().append("constants").toUpperCamel();
 //		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
 //		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();

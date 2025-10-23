@@ -30,20 +30,21 @@ import com.bluerobotics.blueberry.schema.parser.fields.AbstractField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 
 /**
  * A class to test writing something useful from the computed schema packet format
  */
 public class TestWriter extends SourceWriter {
-	public TestWriter(File dir) {
-		super(dir);
+	public TestWriter(File dir, BlueberrySchemaParser parser, String header) {
+		super(dir, parser, header);
 	}
 	StringWriter m_writer = new StringWriter();
 	public String getOutput() {
 		return m_writer.toString();
 	}
 	@Override
-	public void write(FieldList messages, FieldList defines, List<Constant<?>> constants, String... headers) {
+	public void write() {
 //		write(0, bf);
 	}
 	private void start(AbstractField f) {

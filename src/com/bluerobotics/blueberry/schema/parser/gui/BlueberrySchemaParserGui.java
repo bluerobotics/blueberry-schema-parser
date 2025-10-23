@@ -59,6 +59,7 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextArea m_text = new JTextArea();
+	private String m_header;
 	/**
 	 * Constructs the GUI, maps actions
 	 * @param s - a settings object for persistence
@@ -80,7 +81,9 @@ public class BlueberrySchemaParserGui implements Constants {
 
 		cp.setLayout(new BorderLayout());
 		
-		
+		m_settings.addSettingsListener(e -> {
+			m_header = readHeader();
+		}, Key.HEADER_FILE_PATH, true);
 
 
 		int x = s.getInt(Key.APP_POS_X);
@@ -161,7 +164,11 @@ public class BlueberrySchemaParserGui implements Constants {
 
 		resizer.addMoveComponent(toolbar);
 		cp.add(toolbar, BorderLayout.NORTH);
-		Key[] keys = new Key[] {Key.SCHEMA_DIRECTORY, Key.JAVA_DIRECTORY, Key.JAVA_PACKAGE_NAME, Key.C_DIRECTORY, Key.HEADER_FILE_PATH };
+		Key[] keys = new Key[] {Key.SCHEMA_DIRECTORY,
+				Key.JAVA_DIRECTORY,
+				Key.JAVA_PACKAGE_NAME,
+				Key.C_DIRECTORY,
+				Key.HEADER_FILE_PATH };
 
 		JTable setTable = new JTable(new SettingsTableModel(m_settings, keys));
 
@@ -229,8 +236,9 @@ public class BlueberrySchemaParserGui implements Constants {
 		}
 
 
-		JavaWriter w = new JavaWriter(dir);
-		w.write(m_parser.getMessages(), m_parser.getDefines(), m_parser.getConstants(), readHeader());		m_text.append("Done");
+		JavaWriter w = new JavaWriter(dir, m_parser, m_header);
+		w.write();
+		m_text.append("Done");
 	}
 
 	private void generateC() {
@@ -241,8 +249,8 @@ public class BlueberrySchemaParserGui implements Constants {
 			parse();
 		}
 
-		CWriter w = new CWriter(dir);
-		w.write(m_parser.getMessages(), m_parser.getDefines(), m_parser.getConstants(), readHeader());
+		CWriter w = new CWriter(dir, m_parser, m_header);
+		w.write();
 		m_text.append("Done");
 	}
 	private String readHeader() {
@@ -266,7 +274,7 @@ public class BlueberrySchemaParserGui implements Constants {
 //		}
 
 
-		PrettyWriter pw = new PrettyWriter(dir);
+		PrettyWriter pw = new PrettyWriter(dir, m_parser, m_header);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}
