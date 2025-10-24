@@ -41,10 +41,10 @@ public class SymbolName {
 	}
 	public static final SymbolName EMPTY = new SymbolName(Case.UNSPECIFIED, new String[0]);
 	private final Case m_case;
-	private final String[] name;
+	protected final String[] m_name;
 	
-	private SymbolName(Case c, String... ss) {
-		name = ss;
+	protected SymbolName(Case c, String... ss) {
+		m_name = ss;
 		m_case = c;
 	}
 	public static SymbolName make(List<String> ss) {
@@ -135,7 +135,7 @@ public class SymbolName {
 	private String toSnake(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
-		for(String w : name) {
+		for(String w : m_name) {
 			if(!firstTime) {
 				result += "_";
 			}
@@ -150,7 +150,7 @@ public class SymbolName {
 	private String toCamel(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
-		for(String s : name) {
+		for(String s : m_name) {
 			if((!upperNotLower) && firstTime) {
 				result += s.substring(0, 1).toLowerCase();
 			} else {
@@ -177,7 +177,7 @@ public class SymbolName {
 	 * Indicates the case of the string this was derived from
 	 * @return
 	 */
-	private Case getCase() {
+	protected Case getCase() {
 		return m_case;
 	}
 	/**
@@ -186,15 +186,15 @@ public class SymbolName {
 	 * @return
 	 */
 	public SymbolName append(SymbolName f) {
-		int m = name.length;
-		int n = f.name.length;
+		int m = m_name.length;
+		int n = f.m_name.length;
 		int mm = m + n;
 		String[] ss = new String[mm];
 		for(int i = 0; i < mm; ++i) {
 			if(i < m) {
-				ss[i] = name[i];
+				ss[i] = m_name[i];
 			} else {
-				ss[i] = f.name[i - m];
+				ss[i] = f.m_name[i - m];
 			}
 		}
 		return new SymbolName(getCase(), ss);
@@ -216,15 +216,15 @@ public class SymbolName {
 		if(f == null) {
 			return this;
 		}
-		int m = f.name.length;
-		int n = name.length;
+		int m = f.m_name.length;
+		int n = m_name.length;
 		int mm = m + n;
 		String[] ss = new String[mm];
 		for(int i = 0; i < mm; ++i) {
 			if(i < m) {
-				ss[i] = f.name[i];
+				ss[i] = f.m_name[i];
 			} else {
-				ss[i] = name[i - m];
+				ss[i] = m_name[i - m];
 			}
 		}
 		return new SymbolName(getCase(), ss);
@@ -261,7 +261,7 @@ public class SymbolName {
 	}
 	public String toLowerCase() {
 		String result = "";
-		for(String w : name) {
+		for(String w : m_name) {
 			result += w;
 		}
 
@@ -270,7 +270,7 @@ public class SymbolName {
 	public String toDot() {
 		String result = "";
 		boolean firstTime = true;
-		for(String w : name) {
+		for(String w : m_name) {
 			if(!firstTime) {
 				result += ".";
 			}
@@ -282,7 +282,7 @@ public class SymbolName {
 	}
 	public String toPath() {
 		String result = "";
-		for(String w : name) {
+		for(String w : m_name) {
 
 
 			result += w;
@@ -329,83 +329,12 @@ public class SymbolName {
 	private static boolean isDot(String s) {
 		return s.contains(".");
 	}
-	/**
-	 * removes all elements that occur after the specified separator. It also removes the separator
-	 * @param separator - the character sequence that is used to separate the scope from the name
-	 * @return
-	 */
-	public SymbolName getScope(String separator) {
-		if(!contains(separator)) {
-			return EMPTY;
-		}
-		ArrayList<String> result = new ArrayList<>();
-		for(String s : name) {
-			if(s.equals(separator)) {
-				
-				break;
-			} else {
-				result.add(s);
-			}
-		}
-		return make(result);
-	}
-	/**
-	 * Removes any elements that occur to the left of the specified separator. It also removes the separator.
-	 * @param separator - the character sequence that is used to separate the scope from the name
-	 * @return
-	 */
-	public SymbolName deScope(String separator) {
-		ArrayList<String> result = new ArrayList<>();
-		
-		for(int i = name.length - 1; i >= 0; --i) {
-			String s = name[i];
-			if(s.equals(separator)) {
-				break;
-			} else {
-				result.add(0, s);
-			}
-		}
-		return make(result);
-	}
-	/**
-	 * checks to see if this symbol name is a match for the specified name and list of imported scope
-	 * @param separator - the character sequence that is used to separate the scope from the name
-	 * @param imports - an array of scope names, any one of which might match the scope of this symbol name
-	 * @param name - the local name that is being compared to this symbol name.
-	 * @return
-	 */
-	public boolean isMatchWithScope(String separator, List<SymbolName> imports, SymbolName name) {
-		boolean result = false;
-		SymbolName thisScope = getScope(separator);
-		SymbolName thisName = deScope(separator);
-		SymbolName thatScope = name.getScope(separator);
-		SymbolName thatName = name.deScope(separator);
-		
-		
-		if(thisScope == EMPTY && thatScope == EMPTY) {
-			if(thisName.equals(thatName)) {
-				//an unscoped match
-				result = true;
-			}
-		} else if(thisScope.equals(thatScope)) {
-			if(thisName.equals(thatName)) {
-			//	a perfect match
-				result = true;
-			}
-		} else if(thatScope == EMPTY) {
-			for(SymbolName i : imports) {
-				if(i.equals(thisScope) && thisName.equals(thatName)){
-					result = true;
-					break;
-				}
-			}
-		}
-		return result;
-	}
+
+	
 	
 	public boolean contains(String s) {
 		boolean result = false;
-		for(String st : name) {
+		for(String st : m_name) {
 			if(st.equals(s.toLowerCase().trim())) {
 				result = true;
 				break;
@@ -413,36 +342,10 @@ public class SymbolName {
 		}
 		return result;
 	}
-	public SymbolName addScope(String separator, SymbolName scope) {
-		SymbolName result = this;
-		if(scope != null) {
-			result = result.prepend(separator).prepend(scope);
-		}
-		return result;
-	}
-	/**
-	 * removes the rightmost scoping term, i.e. the rightmost parts of the name before the first scoping separator
-	 * @return
-	 */
-	public SymbolName removeScope(String separator) {
-		SymbolName result = this;
-		//find leftmost separator
-		int i = name.length - 1;
-		for(;i >= 0; --i) {
-			if(name[i].equals(separator)) {
-				//break;
-			}
-		}
-		
-		if(i >= 0) {
-			String[] ss = new String[i];
-			for(int j = 0; j < i; ++j) {
-				ss[j] = name[j];
-			}
-			result = new SymbolName(getCase(), ss);
-		} 
-		return result;
-	}
+
+	
+
+
 
 
 }

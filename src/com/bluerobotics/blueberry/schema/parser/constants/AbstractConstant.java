@@ -60,13 +60,6 @@ public abstract class AbstractConstant<T> implements Constant<T> {
 	public String getFileName() {
 		return m_fileName;
 	}
-	@Override
-	public void setNamespace(SymbolName name) {
-		m_namespace = name;
-	}
-	@Override
-	public SymbolName getNamespace() {
-		return m_namespace;
-	}
+	
 	
 }
