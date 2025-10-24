@@ -414,14 +414,30 @@ public class SymbolName {
 		return result;
 	}
 	public SymbolName addScope(String separator, SymbolName scope) {
-		if(contains(separator)) {
-			throw new RuntimeException("This symbol name already seems to have scope.");
-		}
 		SymbolName result = this;
 		if(scope != null) {
 			result = result.prepend(separator).prepend(scope);
 		}
 		return result;
+	}
+	/**
+	 * removes the rightmost scoping term, i.e. the rightmost parts of the name before the first scoping separator
+	 * @return
+	 */
+	public SymbolName removeScope(String separator) {
+		//find leftmost separator
+		int i = name.length - 1;
+		for(;i >= 0; --i) {
+			if(name[i].equals(separator)) {
+				//break;
+			}
+		}
+		
+		if(i >= 0) {
+			String[] ss = new String[i];
+			for(j = 0; j < i)
+		}
+		
 	}
 
 

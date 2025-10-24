@@ -34,7 +34,7 @@ public abstract class AbstractField implements Field {
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
-	private SymbolName m_namespace = null;
+
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
@@ -144,14 +144,7 @@ public abstract class AbstractField implements Field {
 	public String getFileName() {
 		return m_fileName;
 	}
-	@Override
-	public void setNamespace(SymbolName name) {
-		m_namespace = name;
-	}
-	@Override
-	public SymbolName getNamespace() {
-		return m_namespace;
-	}
+
 
 	@Override
 	public void scanAnnotations(Consumer<Annotation> c) {

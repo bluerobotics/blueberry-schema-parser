@@ -23,7 +23,9 @@ package com.bluerobotics.blueberry.schema.parser.parsing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
@@ -75,11 +77,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final FieldList m_defines = new FieldList();//all defines end up here
 	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();//all parsed constants will be stored here
 	private final FieldList m_messages = new FieldList();//all parsed messages will be stored here
+	private final HashMap<SymbolName, Integer> m_namespaces = new HashMap<>();//keep track of all namespaces
 	
 	private final ArrayList<SymbolName> m_imports = new ArrayList<>();//temporary storage of imported module names
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();//temporary storage of annotations
-	private SymbolName m_module = null;//keeps track of the current module that the token being currently processed is within. Null if none.
-	private Token m_moduleEnd = null;//indicates the closing brace of the module that we are currently in. Null if none.
+	private SymbolName m_module = SymbolName.EMPTY;//keeps track of the current module that the token being currently processed is within.
+	private ArrayList<IdentifierToken> m_moduleEnd = new ArrayList<>();
 	private String m_fileName = null;//indicates the filename that the present tokens are from
 	private String m_lastComment = null;//temporary storage for the last processed comment
 
@@ -486,9 +489,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		while(m_tokens.isMore()) {
 			Token t = m_tokens.getCurrent();
 			//check if we've hit the closing brace of the current module - if there is one
-			if(!m_tokens.isCurrentBefore(m_moduleEnd)) {
-				m_module = null;
-				m_moduleEnd = null;
+			if(!m_tokens.isCurrentBefore(m_moduleEnd.getLast())) {
+				m_module.removeLast();
+				m_moduleEnd.removeLast();
 			}
 			IdentifierToken it = m_tokens.relative(0,IdentifierToken.class);
 			if(it != null) {
@@ -939,7 +942,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), comment);
 			c.setFileName(m_fileName);
-			c.setNamespace(m_module);
+		
 			m_constants.add(c);
 			m_tokens.setIndex(nvt);
 		} else if(stringType != null) {
@@ -970,9 +973,30 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
-			m_module = SymbolName.fromCamel(moduleName.getName());
+			m_module.add(SymbolName.guess(moduleName.getName()));
 
-			m_moduleEnd = braceEnd;
+			m_moduleEnd.add(braceEnd);
+//			Integer mk = null;
+//			if(m_annotations.size() > 0) {
+//				Annotation a = m_annotations.get(0);
+//				Number n = a.getParameter(0, Number.class);
+//				if(n != null) {
+//					mk = n.asInt();
+//					
+//				}
+//			}
+//			Integer i = m_namespaces.get(m_module);
+//			if(i != null) {
+//				if(mk != null && mk != i) {
+//					throw new SchemaParserException("Module key is different from previously defined one.",it.getEnd());
+//				}
+//			} else {
+//				m_namespaces.put(m_module, mk);
+//			}
+//			
+				
+			
+			
 			m_tokens.setIndex(braceStart);
 
 		}
@@ -1017,95 +1041,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			ef.fillInMissingValues();
 		});
 	}
-	/**
-	 * constructs a hierarchy of fields to represent all the packets
-	 * This applies all defined types
-	 * @param t
-	 * @param parentField
-	 * @throws SchemaParserException
-	 */
-//	private void buildPackets(FieldAllocationToken t, ParentField parentField) throws SchemaParserException {
-//		TypeToken tt = t.getType();
-//		AbstractField f = null;
-//		if(tt instanceof BlockTypeToken) {
-//			BlockTypeToken btt = (BlockTypeToken)tt;
-//			DefinedTypeToken type = lookupType(tt.getName());
-//			if(type != null) {
-//				f = makeField(t);
-////				f = makeField(type, fieldName, ct == null ? type.getComment() : ct.combine(type.getComment()));
-//
-//				if(f instanceof StructField) {
-//					//if this is a block type then add header stuff
-//					StructField bf = (StructField)f;
-//					if(type instanceof FieldAllocationOwner) {
-//						FieldAllocationOwner fao = (FieldAllocationOwner)type;
-//						for(FieldAllocationToken fat : fao.getFields()) {
-//							BaseField f2 = (BaseField)makeField(fat);
-//							if(f2.isInt()) {
-//								NameValueToken nvt = btt.getValue(fat.getFieldName());
-//								if(nvt != null) {
-//									f2 = new FixedIntField(f2, nvt.getValue());
-//								}
-//							}
-//							bf.addToHeader(f2);
-//						}
-//					}
-//
-//				} else if(f instanceof CompoundField) {
-//					CompoundField cf = (CompoundField)f;
-//					if(type instanceof FieldAllocationOwner) {
-//						FieldAllocationOwner fao = (FieldAllocationOwner)type;
-//						for(FieldAllocationToken fat : fao.getFields()) {
-//							if(fat instanceof NestedFieldAllocationToken) {
-//								buildPackets(fat, cf);
-//							} else {
-//								cf.add(makeField(fat));
-//							}
-//
-//						}
-//					}
-//
-//				}
-//
-//			} else {
-//				throw new SchemaParserException("Could not find defined type: \"" + tt.getName() + "\"", tt.getStart());
-//			}
-//		} else {
-//			//it's not a clock type token, which means it's not a defined type
-//			f = makeField(t);
-//
-//		}
-//		if(t instanceof NestedFieldAllocationToken) {
-//			NestedFieldAllocationToken nfat = (NestedFieldAllocationToken)t;
-//			if(f instanceof ParentField) {
-//				//add child fields
-//				ParentField pf = (ParentField)f;
-//
-//
-//				List<FieldAllocationToken> list = nfat.getFields();
-//				for(FieldAllocationToken fat : list) {
-//					buildPackets(fat, pf);//recurse into nested token
-//
-//				}
-//
-//
-////			} else {
-////				//it should always be that if its a nested token it should be a parent field
-////				throw new RuntimeException("This should never have happened - I think.");
-//			}
-//		}
-//
-//		if(f != null) {
-//			if(parentField == null) {
-//				m_topLevelField = (StructField)f;
-//			} else {
-//				parentField.add(f);
-//			}
-//		} else {
-//			throw new SchemaParserException("Couldn't make a field for some reason", null);
-//		}
-//	}
-
 
 
 	/**
@@ -1376,80 +1311,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 	}
-	/**
-	 * processes the name value pairs defined for an enum
-	 * They are identified as being contained in a following block of braces
-	 * @throws SchemaParserException
-	 */
-	private void collapseEnumValues() throws SchemaParserException {
-		m_tokens.resetIndex();
-		while(true){
-//			//first find next define element
-//			EnumToken et = m_tokens.gotoNext(EnumToken.class);
-//
-//			if(et != null) {
-//				//this should be safe because of how j was determined
-//
-//				int k = findToken(j, true, BraceStartToken.class);
-//				int m = findToken(k, true, BraceEndToken.class);
-//
-//				if(k < 0) {
-//					throw new SchemaParserException("Could not find a block start after enum keyword", et.getStart());
-//				}
-//
-//				if(m < 0) {
-//					throw new SchemaParserException("Could not find a matching block end after enum block start",m_tokens.get(k).getStart());
-//				}
-//
-//				i = k;
-//
-//				//everything inside the block should be part of the enum
-//
-//				for(int x = k+1; x < m; ++x) {
-//					Token t = m_tokens.get(x);
-//
-//					if(t instanceof NameValueToken) {
-//						NameValueToken nvt = (NameValueToken)t;
-//						et.addNameValue(nvt);
-//					} else if(t instanceof EolToken) {
-//						//don't do anything here. It will all be fine!
-//					} else if(t instanceof SingleWordToken) {
-//						//this is likely an enum element that has not been assigned a value
-//						//should probably check that next and previous token are EOLs
-//						SingleWordToken swt = (SingleWordToken)t;
-//						Token nextT = m_tokens.get(x + 1);
-//						Token prevT = m_tokens.get(x - 1);
-//						if(nextT instanceof EolToken) {
-//							if(prevT instanceof EolToken) {
-//								NameValueToken nvt = new NameValueToken(swt, null, null);
-//								et.addNameValue(nvt);
-//							} else {
-//								throw new SchemaParserException("Unexpected input while parsing enum elements", prevT.getStart());
-//							}
-//
-//
-//						} else {
-//							throw new SchemaParserException("Unexpected input while parsing enum elements", nextT.getStart());
-//
-//						}
-//					} else {
-//						throw new SchemaParserException("Did not expect "+t.toString() + "in enum block!", t.getStart());
-//					}
-//				}
-//
-//				//now remove the stuff in the block
-//				for(int x = m; x >= k; --x) {
-//					m_tokens.remove(x);
-//				}
-//
-//
-//
-//			} else {
-//				break;
-//			}
-		}
-
-	}
 
 	/**
 	 * Finds the next token of the specified type
@@ -1490,68 +1351,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		return result;
 	}
-	/**
-	 * now any single word token at the end of a line is a fieldname or before a block start
-	 * @throws SchemaParserException
-	 */
-	private void identifyFieldNames() throws SchemaParserException {
-		int i = 0;
-		int n = m_tokens.size();
-		while(i < n) {
-//			int eol = findToken(i, true, EolToken.class);
-//			int fnti = eol;
-//			if(eol >= 0) {
-//				//rewind to the previous open bracket
-//				int bracket = findToken(eol, false, BracketStartToken.class);
-//				if(bracket > i) {//only valid if it occurs after the point that we started looking
-//					fnti = bracket;
-//				}
-//				//rewind to the first single word token. This should be a field
-//				fnti = findToken(fnti, false, SingleWordToken.class);
-//				if(fnti > i) {
-//
-//					FieldNameToken fnt = new FieldNameToken((SingleWordToken)m_tokens.get(fnti));
-//					m_tokens.set(fnti, fnt);//this will replace the swt
-//				}
-//				i = eol+1;
-//			} else {
-//				break;
-//			}
-		}
-
-	}
 
 
 
-	/**
-	 * Collapse all the define tokens and the following single word tokens together
-	 * @throws SchemaParserException
-	 */
-	private void collapseDefines() throws SchemaParserException {
-		int i = 0;
-
-		while(i < m_tokens.size()){
-//			//first find next define element
-//			int j = findToken(i, true, DefineToken.class);
-//
-//			if(j >= 0) {
-//				//this should be safe because of how j was determined
-//				DefineToken dt = (DefineToken)(m_tokens.get(j));
-//				//now get next token
-//				int k = findToken(j, true, SingleWordToken.class);
-//				if(k == j + 1) {//it better be the very next token
-//					SingleWordToken swt = (SingleWordToken)(m_tokens.get(k));
-//					dt.setTypeName(swt.getName());
-//					m_tokens.remove(k);
-//				} else {
-//					throw new SchemaParserException("Define keyword must be followed by a type name!", dt.getStart());
-//				}
-//				i = k;
-//			} else {
-//				break;
-//			}
-		}
-	}
 	/**
 	 * Scan through all
 	 */
@@ -1571,93 +1373,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
-	/**
-	 * Collapse all the enum tokens and the following base type together
-	 * The base type becomes the type of the enum
-	 * @throws SchemaParserException
-	 */
-	private void collapseEnums() throws SchemaParserException {
 
-//		m_tokens.resetIndex();
-//
-//		while(m_tokens.isMore()){
-//			//first find next define element
-//			IdentifierToken it = m_tokens.gotoNextId(TokenIdentifier.ENUM);
-//
-//			if(it != null) {
-//
-//				//replace with enum token
-//				EnumToken et = new EnumToken(it);
-//				m_tokens.replace(it,  et);
-//				et.setBaseType(TokenIdentifier.UINT32);//this is the default
-//
-//
-//
-//				IdentifierToken it2 = m_tokens.relative(1, IdentifierToken.class);
-//				BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);
-//
-//				if(it2 != null && btt != null && it2.getKeyword() == TokenIdentifier.COLON) {
-//					et.setBaseType(btt.getKeyword());
-//				}
-//
-//
-//				CommentToken ct = m_tokens.relative(-1, CommentToken.class);
-//
-//
-//				if(ct != null) {
-//					m_tokens.setIndex(ct);
-//					FilePathToken fpt = m_tokens.relative(-1, FilePathToken.class);
-//					if(fpt == null) {
-//						//we're ok to use the comment
-//
-//					}
-//				}
-//
-//				FilePathToken t = m_tokens.relative(, FilePathToken.class, CommentToken.class);
-//				if(t instanceof FilePathToken) {
-//
-//				}
-//				if(tm1 instanceof CommentToken) {
-//					//if this is the first comment of the file then it's probably not the comment for this enum
-//					int h = findToken(j - 1, false, FilePathToken.class);
-//					h = findToken(h, true, CommentToken.class);
-//					if(h < j - 1) {
-//						et.setComment((CommentToken)tm1);
-//					} else {
-//						tm1 = null;
-//					}
-//				}
-//
-//
-//				//now check for a type definition
-//				int k = findToken(j, true, BaseTypeToken.class);
-//				if(k == j + 3) {
-//					//so far so good
-//					//now check for colon and base type
-//					Token t1 = m_tokens.get(j + 1);//should be the name
-//					Token t2 = m_tokens.get(j + 2);//should be a colon
-//					Token t3 = m_tokens.get(j + 3);//should be a base type
-//					if(t1 instanceof SingleWordToken && IdentifierToken.check(t2, TokenIdentifier.COLON)) {
-//						et.setBaseType(((BaseTypeToken)t3).getKeyword());
-//						m_tokens.remove(j + 3);
-//						m_tokens.remove(j + 2);
-//					}
-//
-//
-//
-//				}
-//				if(tm1 != null) {
-//					m_tokens.remove(j - 1);
-//					--j;
-//				}
-//
-//
-//				i = j + 1;
-//			} else {
-//				break;
-//			}
-//		}
-	}
 	private Coord processEol(Coord c) {
 		Coord result = c;
 		if(result.remainingString().isBlank()) {
@@ -1884,6 +1600,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	public List<Constant<?>> getConstants(){
 		return m_constants;
+	}
+	public SymbolName[] getNamespaces(){
+		Set<SymbolName> ks = m_namespaces.keySet();
+		return ks.toArray(new SymbolName[ks.size()]);
+	}
+	public int getNamespaceValue(SymbolName s) {
+		return m_namespaces.get(s);
 	}
 
 

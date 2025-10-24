@@ -29,6 +29,5 @@ public interface ThingFromFile {
 	String getComment();
 	void setFileName(String name);
 	String getFileName();
-	void setNamespace(SymbolName name);
-	SymbolName getNamespace();
+
 }

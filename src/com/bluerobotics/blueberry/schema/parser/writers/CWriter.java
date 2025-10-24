@@ -54,6 +54,7 @@ public class CWriter extends SourceWriter {
 
 	}
 	private void makeHeaderFile() {
+		
 		startFile(getHeader());
 
 
@@ -63,17 +64,17 @@ public class CWriter extends SourceWriter {
 		addLine("#include <stdint.h>");
 		addLine("#include <blueberry-transcoder.h>");
 
-//		addSectionDivider("Defines");
+		addSectionDivider("Defines");
 //		writeBlockValueDefine();
-//
-//
-//		addSectionDivider("Types");
-//
+
+
+		addSectionDivider("Types");
+
 //		addFirstBlockDefine();
 //
 //		writeEnums();
 //
-//		addSectionDivider("Function Prototypes");
+		addSectionDivider("Function Prototypes");
 //		addHeaderFieldGetters(top,true);
 //
 //		addBytesPerRepeatGetter(top, true);
