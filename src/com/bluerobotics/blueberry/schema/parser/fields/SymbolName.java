@@ -425,6 +425,7 @@ public class SymbolName {
 	 * @return
 	 */
 	public SymbolName removeScope(String separator) {
+		SymbolName result = this;
 		//find leftmost separator
 		int i = name.length - 1;
 		for(;i >= 0; --i) {
@@ -435,9 +436,12 @@ public class SymbolName {
 		
 		if(i >= 0) {
 			String[] ss = new String[i];
-			for(j = 0; j < i)
-		}
-		
+			for(int j = 0; j < i; ++j) {
+				ss[j] = name[j];
+			}
+			result = new SymbolName(getCase(), ss);
+		} 
+		return result;
 	}
 
 
