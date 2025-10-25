@@ -30,7 +30,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 public abstract class AbstractField implements Field {
 	private final SymbolName m_name;
-	private final SymbolName m_typeName;
+	private final ScopeName m_typeName;
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
@@ -38,7 +38,7 @@ public abstract class AbstractField implements Field {
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	protected AbstractField(SymbolName name, SymbolName type, TypeId id, String comment) {
+	protected AbstractField(SymbolName name, ScopeName type, TypeId id, String comment) {
 		m_name = name;
 		m_typeName = type;
 		m_comment = comment;
@@ -63,7 +63,7 @@ public abstract class AbstractField implements Field {
 
 
 	@Override
-	public SymbolName getTypeName() {
+	public ScopeName getTypeName() {
 		return m_typeName;
 	}
 	@Override

@@ -30,8 +30,8 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * 
  */
 public class DeferredField extends AbstractField {
-	private final ArrayList<SymbolName> m_imports = new ArrayList<>();;
-	public DeferredField(SymbolName name, SymbolName type, List<SymbolName> imports, String comment) {
+	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
+	public DeferredField(SymbolName name, ScopeName type, List<ScopeName> imports, String comment) {
 		super(name, type, TypeId.DEFERRED, comment);
 		m_imports.addAll(imports);
 	}
@@ -41,10 +41,10 @@ public class DeferredField extends AbstractField {
 		return new DeferredField(name, getTypeName(), getImports(), getComment());
 	}
 	
-	public List<SymbolName> getImports() {
+	public List<ScopeName> getImports() {
 		return m_imports;
 	}
-	public void addImport(SymbolName s) {
+	public void addImport(ScopeName s) {
 		if(s == null) {
 			return;
 		}

@@ -82,11 +82,16 @@ public class ScopeName extends SymbolName {
 	public SymbolName removeLastScope() {
 		List<SymbolName> ss = splitScope();
 		ss.removeLast();
-		return new SymbolName(getCase(), m_separator, ss);
+		List<String> result = new ArrayList<String>();
+		for(SymbolName s : ss) {
+			result.addAll(Arrays.asList(s.m_name));
+			result.add(m_separator);
+		}
+		return new ScopeName(getCase(), m_separator, result);
 		
 	}
 	public ScopeName getLastScope() {
-		
+		return null;
 	}
 	/**
 	 * adds a new level of scope to the end (right) of this ScopeName
@@ -100,40 +105,54 @@ public class ScopeName extends SymbolName {
 		}
 		return result;
 	}
+	public boolean isAbsolute() {
+		boolean result = false;
+		if(m_name.length > 0) {
+			if(m_name[0].equals(m_separator)) {
+				result = true;
+			}
+		}
+		return result;
+	}
+	
+	
 	/**
-	 * checks to see if this symbol name is a match for the specified name and list of imported scope
+	 * checks to see if this symbol name is a match for the specified name and list of imported scope.
+	 * This assumes that ScopeName is absolute in scope (starts with separator)
 	 * @param separator - the character sequence that is used to separate the scope from the name
 	 * @param imports - an array of scope names, any one of which might match the scope of this symbol name
-	 * @param name - the local name that is being compared to this symbol name.
+	 * @param name - the local name that is being compared to this symbol name. This can be absolute or relative
 	 * @return
 	 */
-	public boolean isMatchWithScope(String separator, List<SymbolName> imports, SymbolName name) {
+	public boolean isMatch(List<ScopeName> imports, SymbolName name) {
+		if(!isAbsolute()) {
+			throw new RuntimeException("This scope name must be absolute!");
+		}
 		boolean result = false;
-		SymbolName thisScope = getScope();
-		SymbolName thisName = deScope();
-		SymbolName thatScope = name.getScope();
-		SymbolName thatName = name.deScope();
-		
-		
-		if(thisScope == EMPTY && thatScope == EMPTY) {
-			if(thisName.equals(thatName)) {
-				//an unscoped match
-				result = true;
-			}
-		} else if(thisScope.equals(thatScope)) {
-			if(thisName.equals(thatName)) {
-			//	a perfect match
-				result = true;
-			}
-		} else if(thatScope == EMPTY) {
-			for(SymbolName i : imports) {
-				if(i.equals(thisScope) && thisName.equals(thatName)){
+		ScopeName sn = ScopeName.wrap(name, m_separator);
+		if(sn.isAbsolute()) {
+			result = equals(name);
+		} else {
+			for(ScopeName n : imports) {
+				if(n.addScopeLevel(name).equals(this)) {
 					result = true;
 					break;
 				}
 			}
+			if(!result) {
+				if(sn.addRoot().equals(this)) {
+					result  = true;
+				}
+			}
 		}
+		
 		return result;
+	}
+	public static ScopeName makeRoot(String separator) {
+		return new ScopeName(Case.LOWER_SNAKE, separator, separator);
+	}
+	public ScopeName addRoot() {
+		return wrap(prepend(m_separator), m_separator);
 	}
 	/**
 	 * Removes any elements that occur to the left of the specified separator. It also removes the separator.

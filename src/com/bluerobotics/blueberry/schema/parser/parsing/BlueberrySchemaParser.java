@@ -41,6 +41,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -79,9 +80,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final FieldList m_messages = new FieldList();//all parsed messages will be stored here
 	private final HashMap<SymbolName, Integer> m_namespaces = new HashMap<>();//keep track of all namespaces
 	
-	private final ArrayList<SymbolName> m_imports = new ArrayList<>();//temporary storage of imported module names
+	private final ArrayList<ScopeName> m_imports = new ArrayList<>();//temporary storage of imported module names
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();//temporary storage of annotations
-	private SymbolName m_module = SymbolName.EMPTY;//keeps track of the current module that the token being currently processed is within.
+	private ScopeName m_module = ScopeName.makeRoot(SEP);//keeps track of the current module that the token being currently processed is within.
 	private final ArrayList<IdentifierToken> m_moduleEnd = new ArrayList<>();
 	private String m_fileName = null;//indicates the filename that the present tokens are from
 	private String m_lastComment = null;//temporary storage for the last processed comment
@@ -98,7 +99,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_imports.clear();
 		m_annotations.clear();
 		
-		m_module = SymbolName.EMPTY;
+		m_module = ScopeName.makeRoot(SEP);
 		m_moduleEnd.clear();
 		m_fileName = null;
 		m_lastComment = null;
@@ -380,13 +381,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(int i = 0; i < fs.size(); ++i) {
 			Field f = fs.get(i);
 			if(f instanceof DeferredField) {
-				List<SymbolName> imports = ((DeferredField) f).getImports();
+				List<ScopeName> imports = ((DeferredField) f).getImports();
 				SymbolName typeName = f.getTypeName();
 				Field dft = null;
 				
 			
 				for(Field df : defines.getList()) {
-					if(df.getTypeName().isMatchWithScope(TokenIdentifier.SCOPE_SEPARATOR.id(), imports, typeName)) {
+					if(df.getTypeName().isMatch(imports, typeName)) {
 						if(dft != null) {
 							throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
 						} else {
