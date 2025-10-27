@@ -19,36 +19,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package com.bluerobotics.blueberry.schema.parser.fields;
+package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 
 /**
  * 
  */
-public class DeferredField extends AbstractField {
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
-	public DeferredField(SymbolName name, SymbolName type, List<ScopeName> imports, String comment) {
-		super(name, type, TypeId.DEFERRED, comment);
-		m_imports.addAll(imports);
-	}
+public class ScopeNameToken extends SymbolNameToken {
 
-	@Override
-	public Field makeInstance(SymbolName name) {
-		return new DeferredField(name, getTypeName(), getImports(), getComment());
+	public ScopeNameToken(Coord start, Coord end, ScopeName name) {
+		super(start, end, name);
+	}
+	public ScopeName getScopeName() {
+		return (ScopeName)getSymbolName();
 	}
 	
-	public List<ScopeName> getImports() {
-		return m_imports;
-	}
-	public void addImport(ScopeName s) {
-		if(s == null) {
-			return;
-		}
-		m_imports.add(s);
-	}
-
 }

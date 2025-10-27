@@ -38,16 +38,15 @@ public class ScopeName extends SymbolName {
 	private ScopeName(Case c, String separator, List<String> ss) {
 		this(c, separator, ss.toArray(new String[ss.size()]));
 	}
-	
-	private static ScopeName make(Case c, SymbolName[] names, String separator) {
+	protected ScopeName makeFromSymbols(List<SymbolName> sns) {
+		
 		ArrayList<String> result = new ArrayList<>();
-		for(SymbolName sn : names) {
-			result.add(separator);
+		for(SymbolName sn : sns) {
 			result.addAll(Arrays.asList(sn.m_name));
 		}
-		return new ScopeName(c, separator, result);
+		return new ScopeName(getCase(), m_separator, result);
 	}
-	private static ScopeName wrap(SymbolName sn, String separator) {
+	public static ScopeName wrap(SymbolName sn, String separator) {
 		if(sn instanceof ScopeName) {
 			return (ScopeName)sn;
 		}
@@ -55,21 +54,25 @@ public class ScopeName extends SymbolName {
 	}
 	/**
 	 * Splits this name by the specified scope separator
+	 * result includes the separators
 	 * @param separator
 	 * @return
 	 */
-	private List<SymbolName> splitScope() {
+	private ArrayList<SymbolName> splitScope() {
 		ArrayList<SymbolName> result = new ArrayList<>();
 		ArrayList<String> ss = new ArrayList<>();
-		for(int i = 0; i < m_name.length; ++i) {
+		int n = m_name.length;
+		for(int i = 0; i < n; ++i) {
 			String s = m_name[i];
-			if(s.equals(m_separator) || (i == m_name.length - 1)) {
+			boolean isS = s.equals(m_separator);
+			ss.add(s);
+			
+			
+			if(isS || i == n -1){
 				if(ss.size() > 0) {
 					result.add(new SymbolName(getCase(), ss.toArray(new String[ss.size()])));
 					ss.clear();
 				}
-			} else {
-				ss.add(s);
 			}
 		}
 		return result;
@@ -79,9 +82,12 @@ public class ScopeName extends SymbolName {
 	 * removes the rightmost scoping term, i.e. the rightmost parts of the name before the first scoping separator
 	 * @return
 	 */
-	public SymbolName removeLastScope() {
+	public ScopeName removeLastLevel() {
 		List<SymbolName> ss = splitScope();
 		ss.removeLast();
+		if(ss.getLast().equals(m_separator) &&  ss.size() > 1) {
+			ss.removeLast();
+		}
 		List<String> result = new ArrayList<String>();
 		for(SymbolName s : ss) {
 			result.addAll(Arrays.asList(s.m_name));
@@ -98,10 +104,23 @@ public class ScopeName extends SymbolName {
 	 * @param scope
 	 * @return
 	 */
-	public ScopeName addScopeLevel(SymbolName scope) {
+	public ScopeName addLevel(SymbolName scope) {
 		ScopeName result = this;
+		ScopeName s = ScopeName.wrap(scope, m_separator);
 		if(scope != null) {
-			result = wrap(result.append(m_separator).append(scope), m_separator);
+			List<SymbolName> nms = splitScope();
+			int n = nms.size();
+			if(n > 0) {
+				if(nms.get(0).equals(m_separator)) {
+					
+				} else if(n == 1) {
+				} else {
+					nms.add(new SymbolName(Case.UNSPECIFIED, m_separator));
+				}
+			
+			}
+			nms.add(scope);
+			result = makeFromSymbols(nms);
 		}
 		return result;
 	}
@@ -134,7 +153,7 @@ public class ScopeName extends SymbolName {
 			result = equals(name);
 		} else {
 			for(ScopeName n : imports) {
-				if(n.addScopeLevel(name).equals(this)) {
+				if(n.addLevel(name).equals(this)) {
 					result = true;
 					break;
 				}
@@ -155,7 +174,7 @@ public class ScopeName extends SymbolName {
 		return wrap(prepend(m_separator), m_separator);
 	}
 	/**
-	 * Removes any elements that occur to the left of the specified separator. It also removes the separator.
+	 * Removes any elements that occur to the left of the last separator. It also removes the separator.
 	 * @param separator - the character sequence that is used to separate the scope from the name
 	 * @return
 	 */
@@ -171,6 +190,20 @@ public class ScopeName extends SymbolName {
 			}
 		}
 		return wrap(make(result), m_separator);
+	}
+	public static ScopeName combine(String separator, SymbolName sn1, SymbolName sn2) {
+		return ScopeName.wrap(sn1, separator).addLevel(sn2);
+	}
+	public String toString() {
+		List<SymbolName> sns = splitScope();
+		String result = getClass().getSimpleName() + "(";
+		
+		for(SymbolName sn : sns) {
+			
+			result += sn.toLowerSnake();
+		}
+		result += ")";
+		return result;
 	}
 
 
