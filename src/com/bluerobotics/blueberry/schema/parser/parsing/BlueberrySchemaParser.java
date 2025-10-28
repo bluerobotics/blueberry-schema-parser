@@ -589,9 +589,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 				String comment = ct != null ? ct.combineLines() : null;
 				SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
+				if(typeNameToken == null) {
+					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
+				}
 				BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
 				nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
-				
+				if(nameToken == null) {
+					throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
+				}
 				if(btt != null) {
 					
 					
@@ -602,9 +607,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 					} else {
 						
-						if(nameToken == null) {
-							throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
-						}
+						
 					
 						//add a base type field
 						TypeId tid = lookupBaseType(btt.getKeyword());
