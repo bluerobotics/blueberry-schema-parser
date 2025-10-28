@@ -91,7 +91,7 @@ public class ScopeName extends SymbolName {
 		List<String> result = new ArrayList<String>();
 		for(SymbolName s : ss) {
 			result.addAll(Arrays.asList(s.m_name));
-			result.add(m_separator);
+			
 		}
 		return new ScopeName(getCase(), m_separator, result);
 		
@@ -111,9 +111,8 @@ public class ScopeName extends SymbolName {
 			List<SymbolName> nms = splitScope();
 			int n = nms.size();
 			if(n > 0) {
-				if(nms.get(0).equals(m_separator)) {
+				if(nms.get(0).toString().equals(m_separator) && n == 1) {
 					
-				} else if(n == 1) {
 				} else {
 					nms.add(new SymbolName(Case.UNSPECIFIED, m_separator));
 				}

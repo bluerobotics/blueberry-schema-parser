@@ -736,7 +736,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_tokens.setIndex(braceStart);
 
 		while(m_tokens.isCurrentBefore(braceEnd)) {
-			Token t = m_tokens.gotoNextOfThese(braceEnd, SymbolNameToken.class, BaseTypeToken.class);
+			Token t = m_tokens.gotoNextOfThese(braceEnd, ScopeNameToken.class, SymbolNameToken.class, BaseTypeToken.class);
 			if(t == null || t == braceEnd) {
 				break;
 			}
@@ -745,6 +745,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 			String comment = ct != null ? ct.combineLines() : null;
 			SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
+			ScopeNameToken snt = m_tokens.relative(0, ScopeNameToken.class);
+			if(typeNameToken == null && snt != null) {
+				typeNameToken = snt;
+			}
 			BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
 			nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 			
@@ -766,7 +770,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				}
 
 			} else if(typeNameToken != null) {
-				DeferredField df = new DeferredField(name, ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports,comment);
+				DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports,comment);
 				df.addImport(m_module);
 				m.add(df);
 				m_tokens.setIndex(nameToken);
