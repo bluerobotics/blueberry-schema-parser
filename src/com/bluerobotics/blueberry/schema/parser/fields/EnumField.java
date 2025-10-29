@@ -62,13 +62,14 @@ public class EnumField extends AbstractField {
 	}
 
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
-	public EnumField(SymbolName name, SymbolName type, TypeId id, String comment) {
+	public EnumField(SymbolName name, ScopeName type, TypeId id, String comment) {
 		super(name, type, id, comment);
 	}
 	
 	public void addNameValue(SymbolName name, Number value, String comment) {
 		m_nameValues.add(new NameValue(name,value, comment));
 	}
+	
 
 
 	public List<NameValue> getNameValues(){

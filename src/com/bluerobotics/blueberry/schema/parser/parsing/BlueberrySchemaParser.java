@@ -35,6 +35,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueberryFieldPacker;
 import com.bluerobotics.blueberry.schema.parser.fields.DeferredField;
+import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
@@ -174,6 +175,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			processDeferredFields(m_defines, m_defines);	
 			processDeferredFields(m_messages, m_defines);
+			
+			
+			
+			
 			
 			applyDeferredParameters(m_defines);
 			applyDeferredParameters(m_messages);
@@ -391,20 +396,23 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolName typeName = f.getTypeName();
 				Field dft = null;
 				
-			
-				for(Field df : defines.getList()) {
-					if(ScopeName.wrap(df.getTypeName(), SEP).isMatch(imports, typeName)) {
-						if(dft != null) {
-							throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
-						} else {
-							dft = df;
-						}	
+				if(typeName != null) {
+				
+				
+					for(Field df : defines.getList()) {
+						if(ScopeName.wrap(df.getTypeName(), SEP).isMatch(imports, typeName)) {
+							if(dft != null) {
+								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
+							} else {
+								dft = df;
+							}	
+						}
 					}
+					if(dft == null) {
+						throw new SchemaParserException("Could not find a type definition for "+typeName.toUpperCamel(), null);
+					}
+					fs.set(i, dft.makeInstance(f.getName()));
 				}
-				if(dft == null) {
-					throw new SchemaParserException("Could not find a type definition for "+typeName.toUpperCamel(), null);
-				}
-				fs.set(i, dft.makeInstance(f.getName()));
 			} else if(f instanceof ParentField) {
 				processDeferredFields(((ParentField)f).getChildren(), defines);
 			}
@@ -570,7 +578,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceStart == null) {
 			throw new SchemaParserException("Message stament has no opening brace.", it.getEnd());
 		}
-		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
 
 
 		MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment);
@@ -620,7 +628,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						m_tokens.setIndex(nameToken);
 					}
 				} else if(typeNameToken != null) {
-					DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
+					DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
 					df.addImport(m_module.getLast());
 					m.add(df);
 					m_tokens.setIndex(nameToken);	
@@ -651,7 +659,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			cf = new BaseField(null, tid, null);
 		} else if(snt != null) {
-			cf = new DeferredField(null, ScopeName.wrap(snt.getSymbolName(), SEP) , m_imports, null);
+			cf = new DefinedTypeField(null, ScopeName.wrap(snt.getSymbolName(), SEP) , m_imports, null);
 		} else {
 			throw new SchemaParserException("Sequence must be defined with a type for its elements.", it.getEnd());
 		}
@@ -672,7 +680,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
 		}
 		m_tokens.setIndex(angleBracketEnd);
-		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
 		SequenceField sf = new SequenceField(null, name, m_lastComment);
 		sf.setFileName(m_fileName);
 		sf.add(cf);
@@ -731,7 +739,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceStart == null) {
 			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
 		}
-		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
 
 
 		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment);
@@ -770,15 +778,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(nameToken == null) {
 						throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
 					}
-					name = nameToken.getSymbolName();
+					SymbolName sn = nameToken.getSymbolName();
 					//add a base type field
 					TypeId tid = lookupBaseType(btt.getKeyword());
-					m.add(new BaseField(name, tid, comment));
+					m.add(new BaseField(sn, tid, comment));
 					m_tokens.setIndex(nameToken);
 				}
 
 			} else if(typeNameToken != null) {
-				DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports,comment);
+				DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports,comment);
 				df.addImport(m_module.getLast());
 				m.add(df);
 				m_tokens.setIndex(nameToken);
@@ -795,18 +803,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void processTypedef(IdentifierToken it) throws SchemaParserException {
 
-		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
-		BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);//either this
-		SymbolNameToken typeName = m_tokens.relative(2, SymbolNameToken.class);//name of new type
+		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//or this
+		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//either this
+		SymbolNameToken name = m_tokens.relative(2, SymbolNameToken.class);//name of new type
 		IdentifierToken squareBracketStart = m_tokens.relativeId(3, TokenIdentifier.SQUARE_BRACKET_START);
 		
 		
-		if(nameToken == null) {
+		if(name == null) {
 			throw new SchemaParserException("No type name specified for this typedef.",it.getEnd());
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName scopedName = typeName != null ? m_module.getLast().addLevel(typeName.getSymbolName()) : null;
 		
 		if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
 			throw new SchemaParserException("Typedef doesn't work with Strings yet.", btt.getStart());
@@ -818,7 +826,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 			//this is a normal base type
 
-			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, name, id, m_lastComment);
+			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
 			tdf.setFileName(m_fileName);
 			m_defines.add(tdf);
 			m_tokens.setIndex(btt != null ? btt : typeName );
@@ -838,7 +846,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			//FieldName name, FieldName typeName, TypeId typeId, int number, String comment
 
 			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(SymbolName.fromSnake(arraySizeConst.getName()));
-			ArrayField af = new ArrayField(SymbolName.EMPTY, name, id, n, m_lastComment);
+
+			ArrayField af = new ArrayField(SymbolName.EMPTY, scopedName, m_imports, id, n, m_lastComment);
 			af.setFileName(m_fileName);
 			m_defines.add(af);
 			m_tokens.setIndex(squareBracketEnd);
@@ -886,7 +895,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		TypeId bt = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.UINT32;
-		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
 		EnumField et = new EnumField(SymbolName.EMPTY, name, bt, m_lastComment);
 		et.setFileName(m_fileName);
 		m_lastComment = null;

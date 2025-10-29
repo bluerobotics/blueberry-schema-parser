@@ -21,21 +21,38 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-/**
- *
- */
-public class StructField extends ParentField {
+import java.util.ArrayList;
+import java.util.List;
 
-	public StructField(SymbolName name, ScopeName typeName, String comment) {
-		super(name, typeName, TypeId.STRUCT, comment);
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+
+/**
+ * 
+ */
+public class DefinedTypeField extends AbstractField implements DeferredField {
+	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
+	public DefinedTypeField(SymbolName name, ScopeName type, List<ScopeName> imports, String comment) {
+		super(name, type, TypeId.DEFERRED, comment);
+		m_imports.addAll(imports);
 	}
+
 	@Override
 	public Field makeInstance(SymbolName name) {
-		StructField result = new StructField(name, getTypeName(), getComment());
-		result.copyChildrenFrom(this);
-		return result;
+		return new DefinedTypeField(name, getTypeName(), getImports(), getComment());
 	}
 	
+	
+	@Override
+	public List<ScopeName> getImports() {
+		return m_imports;
+	}
+	
+	@Override
+	public void addImport(ScopeName s) {
+		if(s == null) {
+			return;
+		}
+		m_imports.add(s);
+	}
 
 }

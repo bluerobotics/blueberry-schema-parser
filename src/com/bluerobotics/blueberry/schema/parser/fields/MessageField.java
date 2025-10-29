@@ -27,7 +27,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class MessageField extends ParentField {
 
-	public MessageField(SymbolName name, SymbolName typeName, String comment) {
+	public MessageField(SymbolName name, ScopeName typeName, String comment) {
 		super(name, typeName, TypeId.MESSAGE, comment);
 	}
 
@@ -37,5 +37,6 @@ public class MessageField extends ParentField {
 		result.copyChildrenFrom(this);
 		return result;
 	}
+	
 
 }

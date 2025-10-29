@@ -21,34 +21,13 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.types.TypeId;
-
 /**
- * 
+ * An interface for a deferred field. That means the type must be looked up later
  */
-public class DeferredField extends AbstractField {
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
-	public DeferredField(SymbolName name, SymbolName type, List<ScopeName> imports, String comment) {
-		super(name, type, TypeId.DEFERRED, comment);
-		m_imports.addAll(imports);
-	}
-
-	@Override
-	public Field makeInstance(SymbolName name) {
-		return new DeferredField(name, getTypeName(), getImports(), getComment());
-	}
+public interface DeferredField {
 	
-	public List<ScopeName> getImports() {
-		return m_imports;
-	}
-	public void addImport(ScopeName s) {
-		if(s == null) {
-			return;
-		}
-		m_imports.add(s);
-	}
-
+	public List<ScopeName> getImports() ;
+	public void addImport(ScopeName s);
 }

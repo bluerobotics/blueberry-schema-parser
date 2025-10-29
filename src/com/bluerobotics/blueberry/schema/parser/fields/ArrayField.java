@@ -21,23 +21,61 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  *
  */
-public class ArrayField extends AbstractField {
+public class ArrayField extends ParentField implements DeferredField {
 	private final int m_number;
-	public ArrayField(SymbolName name, SymbolName typeName, TypeId typeId, int number, String comment) {
+	private int m_itemByteNum = -1;
+	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
+
+	public ArrayField(SymbolName name, ScopeName typeName,  List<ScopeName> imports, TypeId typeId, int number, String comment) {
 		super(name, typeName, TypeId.ARRAY, comment);
 		m_number = number;
+		m_imports.addAll(imports);
 	}
 	public int getNumber() {
 		return m_number;
 	}
+	public void setItemByteNum(int i) {
+		m_itemByteNum = i;
+	}
+	public int getItemByteNum() {
+		return m_itemByteNum;
+	}
+	
+	
+	
+	@Override
+	public void add(Field f) {
+		if(size() > 0) {
+			throw new RuntimeException("Cannot add more than one child field to an array.");
+		}
+		super.add(f);
+	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment());
+		return new ArrayField(name, getTypeName(), m_imports, getTypeId(), getNumber(), getComment());
 	}
+
+
+	@Override
+	public List<ScopeName> getImports() {
+		return m_imports;
+	}
+	
+	@Override
+	public void addImport(ScopeName s) {
+		if(s == null) {
+			return;
+		}
+		m_imports.add(s);
+	}
+	
 
 }

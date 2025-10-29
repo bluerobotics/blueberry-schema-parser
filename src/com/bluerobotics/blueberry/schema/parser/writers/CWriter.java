@@ -22,16 +22,15 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 
-import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
-import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
-import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
-import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
-import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType;
 import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
 
@@ -46,14 +45,34 @@ public class CWriter extends SourceWriter {
 
 	@Override
 	public void write() {
+			FieldList messages = getParser().getMessages();
+			ArrayList<ScopeName> modules = new ArrayList<>();
+			messages.forEachOfType(MessageField.class, false, mf -> {
+				ScopeName module = mf.getTypeName().removeLastLevel();
+				if(!modules.contains(module)) {
+					modules.add(module);
+				}
+				
+			});
+			FieldList defines = getParser().getDefines();
+			
+			defines.forEachOfType(EnumField.class, false, ef -> {
+				ScopeName module = ef.getTypeName().removeLastLevel();
+				if(!modules.contains(module)) {
+					modules.add(module);
+				}
+			});
 
-
-			makeHeaderFile();
+			//now modules contains a list of all unique modules.
+//			//mow make a header file for each message
+			
+//			makeHeaderFile();
 //			makeSourceFile(bf, headers);
 
 
 	}
 	private void makeHeaderFile() {
+		
 		
 		startFile(getHeader());
 
