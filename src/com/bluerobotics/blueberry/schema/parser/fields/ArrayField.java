@@ -27,7 +27,8 @@ import java.util.List;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
- *
+ * This defines an array field
+ * Note that in this case, the name of the array type is the field name. The type that this field is an array of is the type name
  */
 public class ArrayField extends ParentField implements DeferredField {
 	private final int m_number;

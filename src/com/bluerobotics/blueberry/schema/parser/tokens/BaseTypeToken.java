@@ -56,13 +56,21 @@ public class BaseTypeToken extends IdentifierToken {
 	}
 	public static BaseTypeToken makeNew(IdentifierToken it) {
 		BaseTypeToken result = null;
-		for(TokenIdentifier ti : BASE_TYPES) {
-			if(it.getKeyword() == ti) {
-				result = new BaseTypeToken(it);
+		if(isValid(it.getKeyword())) {
+			result = new BaseTypeToken(it);
+		}
+		
+
+		return result;
+	}
+	public static boolean isValid(TokenIdentifier ti) {
+		boolean result = false;
+		for(TokenIdentifier tit : BASE_TYPES) {
+			if(tit == ti) {
+				result = true;
 				break;
 			}
 		}
-
 		return result;
 	}
 

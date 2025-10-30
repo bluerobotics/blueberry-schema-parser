@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
@@ -173,8 +174,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			fillInMissingMessageKeyValues();
 			checkForDuplicateMessageKeys();
 			
-			processDeferredFields(m_defines, m_defines);	
-			processDeferredFields(m_messages, m_defines);
+			processDeferredFields(m_defines.getIterator(), m_defines);	
+			processDeferredFields(m_messages.getIterator(), m_defines);
 			
 			
 			
@@ -388,25 +389,25 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param defines - the defines that hopefully contains the definition for those fields
 	 * @throws SchemaParserException 
 	 */
-	private <T extends Field> void processDeferredFields(FieldList fs, FieldList defines) throws SchemaParserException {
-		for(int i = 0; i < fs.size(); ++i) {
-			Field f = fs.get(i);
+	private <T extends Field> void processDeferredFields(ListIterator<Field> fi, FieldList defines) throws SchemaParserException {
+		
+		while(fi.hasNext()) {
+			Field f = fi.next();
 			if(f instanceof DeferredField) {
 				List<ScopeName> imports = ((DeferredField) f).getImports();
 				SymbolName typeName = f.getTypeName();
 				Field dft = null;
-				
-				if(typeName != null) {
+				if(typeName == null && f.getTypeId() == null) {
+					throw new SchemaParserException("BlueberrySchemaParser.processDeferredFields type is somehow not defined.", null);
+				} else if(typeName != null) {
 				
 				
 					for(Field df : defines.getList()) {
 						if(df instanceof DeferredField) {
 							//TODO: should I recurse into this?
 						}
-						if(df.getTypeName() == null) {
-							throw new SchemaParserException("Type name is null", null);
-						}
-						if(ScopeName.wrap(df.getTypeName(), SEP).isMatch(imports, typeName)) {
+						
+						if(df.getTypeName() != null && ScopeName.wrap(df.getTypeName(), SEP).isMatch(imports, typeName)) {
 							if(dft != null) {
 								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
 							} else {
@@ -417,10 +418,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(dft == null) {
 						throw new SchemaParserException("Could not find a type definition for "+typeName.toUpperCamel(), null);
 					}
-					fs.set(i, dft.makeInstance(f.getName()));
+					fi.set(dft.makeInstance(f.getName()));
 				}
 			} else if(f instanceof ParentField) {
-				processDeferredFields(((ParentField)f).getChildren(), defines);
+				processDeferredFields(((ParentField)f).getChildren().getIterator(), defines);
 			}
 		}
 		
@@ -649,38 +650,39 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 				String comment = ct != null ? ct.combineLines() : null;
 				SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
-				if(typeNameToken == null) {
-					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
-				}
+//				if(typeNameToken == null) {
+//					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
+//				}
 				BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
-				SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
-				if(nameToken == null) {
-					throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
-				}
-				
-				if(btt != null) {
-					//there's a base type identifier so we're either adding a string or a numerical base type
+				if(btt == null && typeNameToken == null) {
+					throw new SchemaParserException("Expecting a type name.", m_tokens.getCurrent().getStart());
+				} else if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
+
+					StringField sf = processString(btt);
+					m.add(sf);
+				} else {
+					SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
+					if(nameToken == null) {
+						throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
+					}
 					
-					if(btt.getKeyword() == TokenIdentifier.STRING) {
-						m_tokens.setIndex(btt);
-						StringField sf = processString(btt);
-						m.add(sf);
-						
-					} else {
-						
+					if(btt != null) {
+						//there's a base type identifier so we're either adding a string or a numerical base type
 						
 					
+						
 						//add a base type field
 						TypeId tid = lookupBaseType(btt.getKeyword());
 						m.add(new BaseField(nameToken.getSymbolName(), tid, comment));
 						m_tokens.setIndex(nameToken);
+						
+					} else {//must be a defined type field
+						//it's a defined type that we're adding
+						DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
+						df.addImport(m_module.getLast());
+						m.add(df);
+						m_tokens.setIndex(nameToken);	
 					}
-				} else if(typeNameToken != null) {
-					//it's a defined type that we're adding
-					DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
-					df.addImport(m_module.getLast());
-					m.add(df);
-					m_tokens.setIndex(nameToken);	
 				}
 				
 				m_tokens.next();
@@ -746,7 +748,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @return
 	 */
 	private StringField processString(IdentifierToken it)  throws SchemaParserException {
-
+		m_tokens.setIndex(it);
 		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
 		int maxSize = 65536;
@@ -787,10 +789,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void processTypedef(IdentifierToken it) throws SchemaParserException {
 
-		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//or this
-		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//either this
+		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//this is the original type that this typedef is based on 
+		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//this could also be the original type depending on whether it's a base type or not
 		SymbolNameToken name = m_tokens.relative(2, SymbolNameToken.class);//name of new type
 		IdentifierToken squareBracketStart = m_tokens.relativeId(3, TokenIdentifier.SQUARE_BRACKET_START);
+	
 		
 		
 		if(name == null) {
@@ -798,20 +801,21 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		ScopeName scopedName = typeName != null ? m_module.getLast().addLevel(typeName.getSymbolName()) : null;
+		ScopeName scopedName = typeName != null ? m_module.getLast().addLevel(name.getSymbolName()) : null;
 		
 		if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
 			throw new SchemaParserException("Typedef doesn't work with Strings yet.", btt.getStart());
 		}
 		
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
+		
 
 		if(squareBracketStart == null) {
 		
 			//this is a normal base type
-			DefinedTypeField tdf = new DefinedTypeField(name.getSymbolName(), scopedName, m_imports, m_lastComment);
+			DefinedTypeField tdf = new DefinedTypeField(null, scopedName, m_imports, m_lastComment);
 //			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
-			
+		
 			tdf.setFileName(m_fileName);
 			m_defines.add(tdf);
 			m_tokens.setIndex(btt != null ? btt : typeName );
@@ -832,7 +836,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(SymbolName.fromSnake(arraySizeConst.getName()));
 
-			ArrayField af = new ArrayField(SymbolName.EMPTY, scopedName, m_imports, id, n, m_lastComment);
+			ArrayField af = new ArrayField(null, scopedName, m_imports, id, n, m_lastComment);
 			af.setFileName(m_fileName);
 			m_defines.add(af);
 			m_tokens.setIndex(squareBracketEnd);
@@ -1141,9 +1145,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(ti.id().toLowerCase().equals(swt.getName().toLowerCase())) {
 						IdentifierToken it = new IdentifierToken(swt.getStart(), swt.getEnd(), ti);
 						m_tokens.replace(swt, it);
-						m_tokens.next();
+						
+						break;
 					}
+					
 				}
+				m_tokens.next();
 				
 			}
 
@@ -1427,17 +1434,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		
 		
-		addToken(start, end);
-		
-		return result;
-	}
-	/**
-	 * creates a new token from the specified start and end coordinates and the specified string
-	 * @param start
-	 * @param end
-	 * @param s
-	 */
-	private void addToken(Coord start, Coord end) {
 		String s = start.fromThisToThatString(end);
 		if(s.isBlank()) {
 			//this should allow whitespace to be tokenized
@@ -1448,18 +1444,16 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				
 		TokenIdentifier tif = null;
 		if(s.isEmpty()) {
-			return;
 		} else if(s.isBlank()) {
 			m_tokens.add(new IdentifierToken(start, end, TokenIdentifier.SPACE));
 		} else {
 			m_tokens.add(new SingleWordToken(start, end));
 			
 		}
-
-
-
-
+		
+		return result;
 	}
+
 	/**
 	 * find all line comments and insert the token at the start of the line they are on in the token list
 	 * @param c

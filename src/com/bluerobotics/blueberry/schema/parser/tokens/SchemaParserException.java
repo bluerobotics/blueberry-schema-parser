@@ -24,7 +24,7 @@ public class SchemaParserException extends RuntimeException {
 	private static String addLineAndPointer(String s, Coord c) {
 		
 		if(c != null) {
-		
+			s += " in \""+c.filePath+"\" ";
 			s +=  " at line "+ (c.line + 1) + "\n";
 			s += c.getString() + "\n";
 			s += " ".repeat(c.index);
