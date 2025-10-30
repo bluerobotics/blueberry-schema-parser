@@ -831,8 +831,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(squareBracketStart == null) {
 		
 			//this is a normal base type
-
-			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
+			DefinedTypeField tdf = new DefinedTypeField(name.getSymbolName(), scopedName, m_imports, m_lastComment);
+//			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
+			
 			tdf.setFileName(m_fileName);
 			m_defines.add(tdf);
 			m_tokens.setIndex(btt != null ? btt : typeName );
@@ -943,8 +944,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void processConst(IdentifierToken it) throws SchemaParserException {
-		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
-		String comment = ct != null ? ct.combineLines() : null;
+//		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
+//		String comment = ct != null ? ct.combineLines() : null;
 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
 		IdentifierToken stringType = m_tokens.relativeId(1,  TokenIdentifier.STRING);
@@ -966,8 +967,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			SymbolName fn = m_module.getLast().addLevel(nvt.getSymbolName());
 
-			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), comment);
+			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), m_lastComment);
 			c.setFileName(m_fileName);
+			m_lastComment = null;
 		
 			m_constants.add(c);
 			m_tokens.setIndex(nvt);
@@ -976,8 +978,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
 			}
 			SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
-			StringConstant c = new StringConstant(name, string.getString(), comment);
+			StringConstant c = new StringConstant(name, string.getString(), m_lastComment);
 			c.setFileName(m_fileName);
+			m_lastComment = null;
 			m_constants.add(c);
 			m_tokens.setIndex(string);
 		} else {
