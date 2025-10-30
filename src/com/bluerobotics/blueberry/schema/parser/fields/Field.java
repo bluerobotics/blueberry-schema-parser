@@ -33,7 +33,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public interface Field extends ThingFromFile {
 
-	SymbolName getTypeName();
+	ScopeName getTypeName();
 
 	TypeId getTypeId();
 	

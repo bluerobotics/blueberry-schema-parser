@@ -400,6 +400,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				
 				
 					for(Field df : defines.getList()) {
+						if(df instanceof DeferredField) {
+							//TODO: should I recurse into this?
+						}
+						if(df.getTypeName() == null) {
+							throw new SchemaParserException("Type name is null", null);
+						}
 						if(ScopeName.wrap(df.getTypeName(), SEP).isMatch(imports, typeName)) {
 							if(dft != null) {
 								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), null);
