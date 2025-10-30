@@ -672,8 +672,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					
 						
 						//add a base type field
-						TypeId tid = lookupBaseType(btt.getKeyword());
-						m.add(new BaseField(nameToken.getSymbolName(), tid, comment));
+						m.add(new BaseField(nameToken.getSymbolName(), lookupBaseType(btt.getKeyword()), comment));
 						m_tokens.setIndex(nameToken);
 						
 					} else {//must be a defined type field
@@ -809,15 +808,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
 		
-
+		ParentField pf;
 		if(squareBracketStart == null) {
 		
 			//this is a normal base type
-			DefinedTypeField tdf = new DefinedTypeField(null, scopedName, m_imports, m_lastComment);
+			pf = new DefinedTypeField(null, scopedName, m_imports, m_lastComment);
 //			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
 		
-			tdf.setFileName(m_fileName);
-			m_defines.add(tdf);
+			pf.setFileName(m_fileName);
+			
 			m_tokens.setIndex(btt != null ? btt : typeName );
 
 
@@ -836,12 +835,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(SymbolName.fromSnake(arraySizeConst.getName()));
 
-			ArrayField af = new ArrayField(null, scopedName, m_imports, id, n, m_lastComment);
-			af.setFileName(m_fileName);
-			m_defines.add(af);
+			pf = new ArrayField(null, scopedName, m_imports, id, n, m_lastComment);
+			pf.setFileName(m_fileName);
 			m_tokens.setIndex(squareBracketEnd);
 
 
+		}
+		m_defines.add(pf);
+		//now add a field to contain the target type of this define
+		if(btt != null) {
+			pf.add(new BaseField(null, lookupBaseType(btt.getKeyword()), null));
+
+		} else {
+			//we must defer this
+			pf.add(new DefinedTypeField(null, ScopeName.wrap(typeName.getSymbolName(), SEP), m_imports, m_lastComment));
 		}
 
 		m_lastComment = null;
