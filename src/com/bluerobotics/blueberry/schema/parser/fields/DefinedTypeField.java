@@ -27,10 +27,15 @@ import java.util.List;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
- * 
+ * This represents a field whose contents are determined by a defined type.
+ * Defined types are defined with one of the following commands: typedef, struct, sequence, message
+ * As usual the name is the name of the field and the type name is the name of the defined type (that must be looked up to figure out what it is)
+ * When the defined type is looked up it can be added to this field as a child.
+ * This sort of field can be added to a struct, a message, or used in an array
+ * Note that if this turns out to be referencing an array type then probably this field will get replaced later by an array field
  */
-public class DefinedTypeField extends AbstractField implements DeferredField {
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
+public class DefinedTypeField extends ParentField implements DeferredField {
+	private final ArrayList<ScopeName> m_imports = new ArrayList<>();
 	public DefinedTypeField(SymbolName name, ScopeName type, List<ScopeName> imports, String comment) {
 		super(name, type, TypeId.DEFERRED, comment);
 		m_imports.addAll(imports);

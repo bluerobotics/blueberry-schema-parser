@@ -36,7 +36,7 @@ public class FieldList {
 	}
 	public <T extends Field> void forEachOfType(Class<T> c, boolean deep, Consumer<T> con) {
 		for(Field f : m_fields) {
-			if(f.getClass() == c) {
+			if(c.isInstance(f)) {
 				T cf = c.cast(f);
 				con.accept(cf);
 			} else if(f instanceof ParentField) {

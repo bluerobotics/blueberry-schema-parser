@@ -148,7 +148,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	public void parse() throws SchemaParserException {
 		try {
-			
+			collapseIdentifiers();
 			collapseNumbers();
 			collapseSymbolNames();
 			collapseBaseTypes();
@@ -199,6 +199,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
+
 	/**
 	 * scans all messages and checks for any duplicate message keys
 	 * this should be called after fillInMessageKeyValues()
@@ -298,13 +299,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void collapseSymbolNames() {
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()) {
-			SingleWordToken swt = m_tokens.relative(0, SingleWordToken.class);
+			SingleWordToken swt = m_tokens.gotoNext(SingleWordToken.class);
 			if(swt != null) {
 				SymbolName sn = SymbolName.guess(swt.getName());
 				SymbolNameToken snt = new SymbolNameToken(swt.getStart(), swt.getEnd(), sn);
 				m_tokens.replace(swt, snt);
 			}
-			m_tokens.next();
 		}
 	}
 	/**
@@ -574,7 +574,43 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_imports.add(ScopeName.wrap(nameToken.getSymbolName(), SEP));
 		m_tokens.setIndex(nameToken);
 	}
-	
+	/**
+	 * process a struct statement and all the fields in the following braces
+	 * The fields are actually processed by a helper method
+	 * @param it
+	 * @throws SchemaParserException
+	 */
+	private void processStructs(IdentifierToken it) throws SchemaParserException {
+
+		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
+		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
+		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+		if(nameToken == null) {
+			throw new SchemaParserException("Struct has no specified name.", it.getEnd());
+		} else if(braceStart == null) {
+			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
+		}
+		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+
+
+		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment);
+		m.setFileName(m_fileName);
+		m_lastComment = null;
+
+		m_defines.add(m);
+		m.addAnnotation(m_annotations);
+		m_annotations.clear();
+		processMessageOrStructFields(m, braceStart, braceEnd);
+
+		
+	}
+	/**
+	 * process a message statement and all the fields in the following braces
+	 * The fields are actually processed by a helper method
+	 * A message is like a strut whose purpose is to be sent over the network
+	 * @param it
+	 * @throws SchemaParserException
+	 */
 	private void processMessage(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
@@ -582,7 +618,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(nameToken == null) {
 			throw new SchemaParserException("Message has no specified name.", it.getEnd());
 		} else if(braceStart == null) {
-			throw new SchemaParserException("Message stament has no opening brace.", it.getEnd());
+			throw new SchemaParserException("Message statement has no opening brace.", it.getEnd());
+		} else if(braceEnd == null) {
+			throw new SchemaParserException("Message statement has no closing brace.", braceStart.getEnd());
 		}
 		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
 
@@ -594,6 +632,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_messages.add(m);
 		m.addAnnotation(m_annotations);
 		m_annotations.clear();
+		processMessageOrStructFields(m, braceStart, braceEnd);
+	}
+	private void processMessageOrStructFields(ParentField m, IdentifierToken braceStart, IdentifierToken braceEnd) {
 		m_tokens.setIndex(braceStart);
 		m_tokens.next();
 		while(m_tokens.isCurrentBefore(braceEnd)) {
@@ -612,12 +653,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
 				}
 				BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
-				nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
+				SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 				if(nameToken == null) {
 					throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
 				}
+				
 				if(btt != null) {
-					
+					//there's a base type identifier so we're either adding a string or a numerical base type
 					
 					if(btt.getKeyword() == TokenIdentifier.STRING) {
 						m_tokens.setIndex(btt);
@@ -634,6 +676,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						m_tokens.setIndex(nameToken);
 					}
 				} else if(typeNameToken != null) {
+					//it's a defined type that we're adding
 					DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
 					df.addImport(m_module.getLast());
 					m.add(df);
@@ -643,6 +686,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				m_tokens.next();
 			}
 		}
+		
 	}
 	/**
 	 * of the form <comment?><sequence><angle bracket start><constituentTypeName><comma?><number?><angle bracket end><sequenceTypeName>
@@ -735,73 +779,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return sf;
 	}
 
-	private void processStructs(IdentifierToken it) throws SchemaParserException {
 
-		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
-		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
-		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
-		if(nameToken == null) {
-			throw new SchemaParserException("Struct has no specified name.", it.getEnd());
-		} else if(braceStart == null) {
-			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
-		}
-		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
-
-
-		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment);
-		m.setFileName(m_fileName);
-		m_lastComment = null;
-
-		m_defines.add(m);
-		m.addAnnotation(m_annotations);
-		m_annotations.clear();
-		m_tokens.setIndex(braceStart);
-
-		while(m_tokens.isCurrentBefore(braceEnd)) {
-			Token t = m_tokens.gotoNextOfThese(braceEnd, ScopeNameToken.class, SymbolNameToken.class, BaseTypeToken.class);
-			if(t == null || t == braceEnd) {
-				break;
-			}
-			
-			//reuse a bunch of fields from above for the sub-field
-			CommentToken ct = m_tokens.relative(-1, CommentToken.class);
-			String comment = ct != null ? ct.combineLines() : null;
-			SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
-			ScopeNameToken snt = m_tokens.relative(0, ScopeNameToken.class);
-			if(typeNameToken == null && snt != null) {
-				typeNameToken = snt;
-			}
-			BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
-			nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
-			
-			if(btt != null) {
-				
-				if(btt.getKeyword() == TokenIdentifier.STRING) {
-					m_tokens.setIndex(btt);
-					StringField sf = processString(btt);
-					m.add(sf);
-				} else {
-					if(nameToken == null) {
-						throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
-					}
-					SymbolName sn = nameToken.getSymbolName();
-					//add a base type field
-					TypeId tid = lookupBaseType(btt.getKeyword());
-					m.add(new BaseField(sn, tid, comment));
-					m_tokens.setIndex(nameToken);
-				}
-
-			} else if(typeNameToken != null) {
-				DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports,comment);
-				df.addImport(m_module.getLast());
-				m.add(df);
-				m_tokens.setIndex(nameToken);
-			}
-			
-			m_tokens.next();
-
-		}
-	}
 	/**
 	 * of the form <comment?><typedef><constituentTypeName><typeName><square bracket start?><number?><square bracket end>
 	 * @param it
@@ -1151,6 +1129,29 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 	/**
+	 * replace any single word tokens that match token identifiers with identifier tokens
+	 */
+	private void collapseIdentifiers() {
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()){
+			//first find next define element
+			SingleWordToken swt = m_tokens.gotoNext(SingleWordToken.class);
+			if(swt != null) {
+				for(TokenIdentifier ti : TokenIdentifier.values()) {
+					if(ti.id().toLowerCase().equals(swt.getName().toLowerCase())) {
+						IdentifierToken it = new IdentifierToken(swt.getStart(), swt.getEnd(), ti);
+						m_tokens.replace(swt, it);
+						m_tokens.next();
+					}
+				}
+				
+			}
+
+		}
+	}
+	
+	
+	/**
 	 * Tests all single word tokens and replaces with a Number token if it's formatted like a number
 	 * @throws SchemaParserException
 	 */
@@ -1451,23 +1452,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(s.isBlank()) {
 			m_tokens.add(new IdentifierToken(start, end, TokenIdentifier.SPACE));
 		} else {
-			for(TokenIdentifier ti : TokenIdentifier.values()) {
-				//Note that identifiers are case-insensitive
-				//technically they should match the specified case
-				if(ti.id().toLowerCase().equals(s.toLowerCase())) {
-					if(!ti.id().equals(s)) {
-						throw new SchemaParserException("Keyword \""+s+"\" collides with \""+ti.id()+"\" but has wrong case", start);
-					}
-					tif = ti;
-					break;
-				}
-			}
-			if(tif != null) {
-	
-				m_tokens.add(new IdentifierToken(start, end, tif));
-			} else {
-				m_tokens.add(new SingleWordToken(start, end));
-			}
+			m_tokens.add(new SingleWordToken(start, end));
+			
 		}
 
 

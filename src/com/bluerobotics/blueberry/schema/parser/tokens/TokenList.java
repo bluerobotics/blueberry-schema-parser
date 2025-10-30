@@ -358,7 +358,7 @@ public class TokenList {
 	public <T extends Token> T relative(int i, Class<T> type){
 		T result = null;
 		Token t = relative(i);
-		if(t != null && t.getClass() == type) {
+		if(t != null && type.isInstance(t)) {
 			result = type.cast(t);
 		}
 		return result;
