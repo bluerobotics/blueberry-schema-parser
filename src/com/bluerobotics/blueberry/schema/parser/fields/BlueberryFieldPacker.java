@@ -163,7 +163,7 @@ public class BlueberryFieldPacker {
 						bff.add(bf);
 						li.remove();
 					} else {
-						bff = new BoolFieldField();
+						bff = new BoolFieldField(bf.getCoord());
 						bff.add(bf);
 						li.set(bff);
 					}
