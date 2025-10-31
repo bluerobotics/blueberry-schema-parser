@@ -21,19 +21,20 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
 public class SequenceField extends ParentField {
 	private int m_limit;
-	public SequenceField(SymbolName name, ScopeName typeName, String comment) {
-		super(name, typeName, TypeId.SEQUENCE, comment);
+	public SequenceField(SymbolName name, ScopeName typeName, String comment, Coord c) {
+		super(name, typeName, TypeId.SEQUENCE, comment, c);
 	}
 	
 	@Override
 	public Field makeInstance(SymbolName name) {
-		SequenceField result = new SequenceField(name, getTypeName(), getComment());
+		SequenceField result = new SequenceField(name, getTypeName(), getComment(), getCoord());
 		result.copyChildrenFrom(this);
 		return result;
 	}

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 
@@ -62,6 +63,8 @@ public interface Field extends ThingFromFile {
 	 * @param i
 	 */
 	public void setIndex(int i);
+	
+	public Coord getCoord();
 	
 	
 	

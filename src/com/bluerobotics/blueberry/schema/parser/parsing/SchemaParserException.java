@@ -1,7 +1,9 @@
 /**
  * 
  */
-package com.bluerobotics.blueberry.schema.parser.tokens;
+package com.bluerobotics.blueberry.schema.parser.parsing;
+
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 
 /**
  * 

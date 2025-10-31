@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 /**
  * 
  */
@@ -62,8 +63,8 @@ public class EnumField extends AbstractField {
 	}
 
 	private final ArrayList<NameValue> m_nameValues = new ArrayList<NameValue>();
-	public EnumField(SymbolName name, ScopeName type, TypeId id, String comment) {
-		super(name, type, id, comment);
+	public EnumField(SymbolName name, ScopeName type, TypeId id, String comment, Coord c) {
+		super(name, type, id, comment, c);
 	}
 	
 	public void addNameValue(SymbolName name, Number value, String comment) {
@@ -85,7 +86,7 @@ public class EnumField extends AbstractField {
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		EnumField result = new EnumField(name, getTypeName(), getTypeId(), getComment());
+		EnumField result = new EnumField(name, getTypeName(), getTypeId(), getComment(), getCoord());
 		result.m_nameValues.addAll(m_nameValues);
 		return result;
 	}

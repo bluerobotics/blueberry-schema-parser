@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
@@ -33,8 +34,8 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public abstract class ParentField extends AbstractField {
 	private final FieldList m_children = new FieldList();
-	protected ParentField(SymbolName name, ScopeName typeName, TypeId typeId, String comment) {
-		super(name, typeName, typeId, comment);
+	protected ParentField(SymbolName name, ScopeName typeName, TypeId typeId, String comment, Coord c) {
+		super(name, typeName, typeId, comment, c);
 	}
 	public void add(Field f) {
 		m_children.add(f);
@@ -46,7 +47,7 @@ public abstract class ParentField extends AbstractField {
 	public String toString() {
 		String result = getClass().getSimpleName();
 		result += "(";
-		result += getTypeName() != null ? "???" : getTypeName().toUpperCamel();
+		result += getTypeName() == null ? "???" : getTypeName().toUpperCamel();
 		result += ")";
 		return result;
 	}

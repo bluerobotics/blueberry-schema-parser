@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -35,14 +36,14 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * Note that if this turns out to be referencing an array type then probably this field will get replaced later by an array field
  */
 public class DefinedTypeField extends ParentField {
-	public DefinedTypeField(SymbolName name, ScopeName type, String comment) {
-		super(name, type, TypeId.DEFERRED, comment);
+	public DefinedTypeField(SymbolName name, ScopeName type, String comment, Coord c) {
+		super(name, type, TypeId.DEFERRED, comment, c);
 		
 	}
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new DefinedTypeField(name, getTypeName(), getComment());
+		return new DefinedTypeField(name, getTypeName(), getComment(), getCoord());
 	}
 	
 

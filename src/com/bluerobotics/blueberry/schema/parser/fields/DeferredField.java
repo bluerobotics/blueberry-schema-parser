@@ -21,32 +21,41 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  * An interface for a deferred field. That means the type must be looked up later
  */
 public class DeferredField extends AbstractField {
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();
-	public DeferredField(SymbolName name, ScopeName type, String comment) {
-		super(name, type, TypeId.DEFERRED, comment);
-		// TODO Auto-generated constructor stub
+	private final ScopeName[] m_imports;
+	public DeferredField(SymbolName name, ScopeName type, ScopeName[] imports, String comment, Coord c) {
+		super(name, type, TypeId.DEFERRED, comment, c);
+		m_imports = imports;
 	}
 
-	public List<ScopeName> getImports(){
+	public ScopeName[] getImports(){
 		return m_imports;
 	}
-	public void addImport(ScopeName s) {
-		m_imports.add(s);
-	}
+	
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new DeferredField(getName(), getTypeName(), getComment());
+		return new DeferredField(getName(), getTypeName(), getImports(), getComment(), getCoord());
 	}
+	
+	@Override
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		result += getTypeName().toLowerSnake();
+		result += " ";
+		result += getName().toLowerCamel();
+		result += ")";
+		return result;
+	}
+
+	
 	
 	
 }

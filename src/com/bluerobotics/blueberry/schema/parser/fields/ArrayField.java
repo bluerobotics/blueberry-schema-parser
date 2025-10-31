@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -34,8 +35,8 @@ public class ArrayField extends ParentField {
 	private final int m_number;
 	private int m_itemByteNum = -1;
 
-	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int number, String comment) {
-		super(name, typeName, TypeId.ARRAY, comment);
+	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int number, String comment, Coord c) {
+		super(name, typeName, TypeId.ARRAY, comment, c);
 		m_number = number;
 	}
 	public int getNumber() {
@@ -59,7 +60,7 @@ public class ArrayField extends ParentField {
 	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment());
+		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment(), getCoord());
 	}
 
 

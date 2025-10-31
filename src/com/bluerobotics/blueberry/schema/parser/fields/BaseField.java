@@ -21,18 +21,19 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  *
  */
 public class BaseField extends AbstractField {
-	public BaseField(SymbolName name, TypeId id, String comment) {
-		super(name, null, id, comment);
+	public BaseField(SymbolName name, TypeId id, String comment, Coord c) {
+		super(name, null, id, comment, c);
 	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new BaseField(name, getTypeId(), getComment());
+		return new BaseField(name, getTypeId(), getComment(), getCoord());
 	}
 
 

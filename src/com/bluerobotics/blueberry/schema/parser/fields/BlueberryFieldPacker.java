@@ -24,7 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 
 /**
  * A packing algorithm for the Blueberry protocol
@@ -56,7 +56,7 @@ public class BlueberryFieldPacker {
 		} else if(f instanceof StringField) {
 			pack((StringField)f);
 		} else {
-			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), null);
+			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), f.getCoord());
 		}
 	}
 	public void pack(MessageField f) {

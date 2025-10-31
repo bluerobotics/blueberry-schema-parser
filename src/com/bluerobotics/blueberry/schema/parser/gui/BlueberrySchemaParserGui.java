@@ -33,7 +33,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
-import com.bluerobotics.blueberry.schema.parser.tokens.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.PrettyWriter;

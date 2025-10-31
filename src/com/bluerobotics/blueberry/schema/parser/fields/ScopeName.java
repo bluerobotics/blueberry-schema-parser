@@ -142,7 +142,7 @@ public class ScopeName extends SymbolName {
 	 * @param name - the local name that is being compared to this symbol name. This can be absolute or relative
 	 * @return
 	 */
-	public boolean isMatch(List<ScopeName> imports, SymbolName name) {
+	public boolean isMatch(ScopeName[] imports, SymbolName name) {
 		if(!isAbsolute()) {
 			throw new RuntimeException("This scope name must be absolute!");
 		}
@@ -152,14 +152,10 @@ public class ScopeName extends SymbolName {
 			result = equals(name);
 		} else {
 			for(ScopeName n : imports) {
-				if(n.addLevel(name).equals(this)) {
+				ScopeName nn = n.addLevel(name);
+				if(nn.equals(this)) {
 					result = true;
 					break;
-				}
-			}
-			if(!result) {
-				if(sn.addRoot().equals(this)) {
-					result  = true;
 				}
 			}
 		}

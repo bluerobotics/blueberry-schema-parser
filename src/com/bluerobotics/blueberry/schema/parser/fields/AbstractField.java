@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 public abstract class AbstractField implements Field {
@@ -34,15 +35,17 @@ public abstract class AbstractField implements Field {
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
+	private final Coord m_coord;
 
 	private final TypeId m_typeId;
 	private ParentField m_parent = null;
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	protected AbstractField(SymbolName name, ScopeName type, TypeId id, String comment) {
+	protected AbstractField(SymbolName name, ScopeName type, TypeId id, String comment, Coord c) {
 		m_name = name;
 		m_typeName = type;
 		m_comment = comment;
 		m_typeId = id;
+		m_coord = c;
 	}
 	
 	
@@ -162,6 +165,21 @@ public abstract class AbstractField implements Field {
 	public void setIndex(int i) {
 		m_index = i;
 	}
+
+
+
+
+
+
+
+	@Override
+	public Coord getCoord() {
+		return m_coord;
+	}
+
+
+
+
 	
 	
 

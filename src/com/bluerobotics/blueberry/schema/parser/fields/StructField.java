@@ -21,18 +21,19 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
 public class StructField extends ParentField {
 
-	public StructField(SymbolName name, ScopeName typeName, String comment) {
-		super(name, typeName, TypeId.STRUCT, comment);
+	public StructField(SymbolName name, ScopeName typeName, String comment, Coord c) {
+		super(name, typeName, TypeId.STRUCT, comment, c);
 	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		StructField result = new StructField(name, getTypeName(), getComment());
+		StructField result = new StructField(name, getTypeName(), getComment(), getCoord());
 		result.copyChildrenFrom(this);
 		return result;
 	}

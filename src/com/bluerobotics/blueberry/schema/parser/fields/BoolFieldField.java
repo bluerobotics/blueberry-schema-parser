@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -28,13 +29,13 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class BoolFieldField extends ParentField {
 
-	protected BoolFieldField() {
-		super(null, null, TypeId.BOOLFIELD, null);
+	protected BoolFieldField(Coord c) {
+		super(null, null, TypeId.BOOLFIELD, null, c);
 	}
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		BoolFieldField bf = new BoolFieldField();
+		BoolFieldField bf = new BoolFieldField(getCoord());
 		return bf;
 	}
 

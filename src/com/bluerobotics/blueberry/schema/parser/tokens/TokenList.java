@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 import java.util.ArrayList;
 import java.util.function.Function;
 
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 
 /**

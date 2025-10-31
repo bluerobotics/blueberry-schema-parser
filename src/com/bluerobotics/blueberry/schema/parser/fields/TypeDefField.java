@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -28,13 +29,13 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class TypeDefField extends AbstractField {
 
-	public TypeDefField(SymbolName name, ScopeName typeName, TypeId typeId, String comment) {
-		super(name, typeName, typeId, comment);
+	public TypeDefField(SymbolName name, ScopeName typeName, TypeId typeId, String comment, Coord c) {
+		super(name, typeName, typeId, comment, c);
 	}
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new TypeDefField(name, getTypeName(), getTypeId(), getComment());
+		return new TypeDefField(name, getTypeName(), getTypeId(), getComment(), getCoord());
 	}
 	
 
