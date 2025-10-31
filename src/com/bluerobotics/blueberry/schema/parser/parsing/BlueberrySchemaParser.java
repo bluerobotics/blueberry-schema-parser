@@ -1252,6 +1252,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(includeModule) {
 			result.add(m_module.getLast());
 		}
+		result.add(m_module.getFirst());
 		return result.toArray(new ScopeName[result.size()]);
 	}
 	/**
