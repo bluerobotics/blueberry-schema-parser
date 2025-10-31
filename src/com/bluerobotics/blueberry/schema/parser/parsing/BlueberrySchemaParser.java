@@ -519,31 +519,31 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(it != null) {
 				switch(it.getKeyword()) {
 				case CONST:
-					processConst(it);
+					assembleConst(it);
 					break;
 				case ENUM:
-					processEnum(it);
+					assembleEnum(it);
 					break;
 				case IMPORT:
-					processImport(it);
+					assembleImport(it);
 					break;
 				case MESSAGE:
-					processMessage(it);
+					assembleMessage(it);
 					break;
 				case MODULE:
-					processModule(it);
+					assembleModule(it);
 					break;
 				case SEQUENCE:
-					processSequence(it);
+					assembleSequence(it);
 					break;
 				case STRUCT:
-					processStructs(it);
+					assembletructs(it);
 					break;
 				case TYPEDEF:
-					processTypedef(it);
+					assembleTypedef(it);
 					break;
 				case ANNOTATION_START:
-					processAnnotation(it);
+					assembleAnnotation(it);
 					break;
 				default:
 					System.out.println("Did not process "+it);
@@ -567,7 +567,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	}
 
-	private void processImport(IdentifierToken it) throws SchemaParserException {
+	private void assembleImport(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
 			throw new SchemaParserException("Import statement does not have a name specified", null);
@@ -581,7 +581,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @throws SchemaParserException
 	 */
-	private void processStructs(IdentifierToken it) throws SchemaParserException {
+	private void assembletructs(IdentifierToken it) throws SchemaParserException {
 
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
@@ -612,7 +612,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @throws SchemaParserException
 	 */
-	private void processMessage(IdentifierToken it) throws SchemaParserException {
+	private void assembleMessage(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
@@ -657,7 +657,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(btt == null && typeNameToken == null) {
 					throw new SchemaParserException("Expecting a type name.", m_tokens.getCurrent().getStart());
 				} else if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
-
 					StringField sf = processString(btt);
 					m.add(sf);
 				} else {
@@ -676,9 +675,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						m_tokens.setIndex(nameToken);
 						
 					} else {//must be a defined type field
-						//it's a defined type that we're adding
-						DefinedTypeField df = new DefinedTypeField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), m_imports, comment);
-						df.addImport(m_module.getLast());
+						//we have to defer looking this up for now
+						DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName(), SEP), comment);
 						m.add(df);
 						m_tokens.setIndex(nameToken);	
 					}
@@ -694,7 +692,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @throws SchemaParserException
 	 */
-	private void processSequence(IdentifierToken it) throws SchemaParserException {
+	private void assembleSequence(IdentifierToken it) throws SchemaParserException {
 
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
 		if(angleBracketStart == null) {
@@ -710,7 +708,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			cf = new BaseField(null, tid, null);
 		} else if(snt != null) {
-			cf = new DefinedTypeField(null, ScopeName.wrap(snt.getSymbolName(), SEP) , m_imports, null);
+			cf = new DeferredField(null, ScopeName.wrap(snt.getSymbolName(), SEP), null);
 		} else {
 			throw new SchemaParserException("Sequence must be defined with a type for its elements.", it.getEnd());
 		}
@@ -786,7 +784,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @throws SchemaParserException
 	 */
-	private void processTypedef(IdentifierToken it) throws SchemaParserException {
+	private void assembleTypedef(IdentifierToken it) throws SchemaParserException {
 
 		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//this is the original type that this typedef is based on 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//this could also be the original type depending on whether it's a base type or not
@@ -812,7 +810,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(squareBracketStart == null) {
 		
 			//this is a normal base type
-			pf = new DefinedTypeField(null, scopedName, m_imports, m_lastComment);
+			pf = new DefinedTypeField(null, scopedName, m_lastComment);
 //			TypeDefField tdf = new TypeDefField(SymbolName.EMPTY, scopedName, id, m_lastComment);
 		
 			pf.setFileName(m_fileName);
@@ -835,7 +833,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(SymbolName.fromSnake(arraySizeConst.getName()));
 
-			pf = new ArrayField(null, scopedName, m_imports, id, n, m_lastComment);
+			pf = new ArrayField(null, scopedName, id, n, m_lastComment);
 			pf.setFileName(m_fileName);
 			m_tokens.setIndex(squareBracketEnd);
 
@@ -848,7 +846,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		} else {
 			//we must defer this
-			pf.add(new DefinedTypeField(null, ScopeName.wrap(typeName.getSymbolName(), SEP), m_imports, m_lastComment));
+			pf.add(new DeferredField(null, ScopeName.wrap(typeName.getSymbolName(), SEP), m_lastComment));
 		}
 
 		m_lastComment = null;
@@ -874,7 +872,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result != null ? result.getValue().asInt() : -1;
 	}
 	
-	private void processEnum(IdentifierToken enumT) throws SchemaParserException {
+	private void assembleEnum(IdentifierToken enumT) throws SchemaParserException {
 
 
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
@@ -932,7 +930,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 * @throws SchemaParserException
 	 */
-	private void processConst(IdentifierToken it) throws SchemaParserException {
+	private void assembleConst(IdentifierToken it) throws SchemaParserException {
 //		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 //		String comment = ct != null ? ct.combineLines() : null;
 
@@ -981,7 +979,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
-	private void processModule(IdentifierToken it) throws SchemaParserException {
+	private void assembleModule(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken moduleName = m_tokens.relative(1, SymbolNameToken.class);
 		if(moduleName == null) {
 			moduleName = m_tokens.relative(1, ScopeNameToken.class);
@@ -1191,7 +1189,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * scans for annotation starting tokens and makes annotation tokens of the next single word token
 	 * @throws SchemaParserException
 	 */
-	private void processAnnotation(IdentifierToken at) throws SchemaParserException {
+	private void assembleAnnotation(IdentifierToken at) throws SchemaParserException {
 
 		if(at != null) {
 			SymbolNameToken swt = m_tokens.relative(1, SymbolNameToken.class);

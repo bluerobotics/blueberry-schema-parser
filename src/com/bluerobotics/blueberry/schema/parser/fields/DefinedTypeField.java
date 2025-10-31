@@ -34,30 +34,17 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * This sort of field can be added to a struct, a message, or used in an array
  * Note that if this turns out to be referencing an array type then probably this field will get replaced later by an array field
  */
-public class DefinedTypeField extends ParentField implements DeferredField {
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();
-	public DefinedTypeField(SymbolName name, ScopeName type, List<ScopeName> imports, String comment) {
+public class DefinedTypeField extends ParentField {
+	public DefinedTypeField(SymbolName name, ScopeName type, String comment) {
 		super(name, type, TypeId.DEFERRED, comment);
-		m_imports.addAll(imports);
+		
 	}
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new DefinedTypeField(name, getTypeName(), getImports(), getComment());
+		return new DefinedTypeField(name, getTypeName(), getComment());
 	}
 	
-	
-	@Override
-	public List<ScopeName> getImports() {
-		return m_imports;
-	}
-	
-	@Override
-	public void addImport(ScopeName s) {
-		if(s == null) {
-			return;
-		}
-		m_imports.add(s);
-	}
+
 
 }

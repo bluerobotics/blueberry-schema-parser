@@ -46,7 +46,7 @@ public abstract class ParentField extends AbstractField {
 	public String toString() {
 		String result = getClass().getSimpleName();
 		result += "(";
-		result += getTypeName().toUpperCamel();
+		result += getTypeName() != null ? "???" : getTypeName().toUpperCamel();
 		result += ")";
 		return result;
 	}

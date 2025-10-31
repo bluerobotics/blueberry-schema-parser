@@ -30,15 +30,13 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * This defines an array field
  * Note that in this case, the name of the array type is the field name. The type that this field is an array of is the type name
  */
-public class ArrayField extends ParentField implements DeferredField {
+public class ArrayField extends ParentField {
 	private final int m_number;
 	private int m_itemByteNum = -1;
-	private final ArrayList<ScopeName> m_imports = new ArrayList<>();;
 
-	public ArrayField(SymbolName name, ScopeName typeName,  List<ScopeName> imports, TypeId typeId, int number, String comment) {
+	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int number, String comment) {
 		super(name, typeName, TypeId.ARRAY, comment);
 		m_number = number;
-		m_imports.addAll(imports);
 	}
 	public int getNumber() {
 		return m_number;
@@ -61,22 +59,9 @@ public class ArrayField extends ParentField implements DeferredField {
 	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new ArrayField(name, getTypeName(), m_imports, getTypeId(), getNumber(), getComment());
+		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment());
 	}
 
 
-	@Override
-	public List<ScopeName> getImports() {
-		return m_imports;
-	}
-	
-	@Override
-	public void addImport(ScopeName s) {
-		if(s == null) {
-			return;
-		}
-		m_imports.add(s);
-	}
-	
 
 }
