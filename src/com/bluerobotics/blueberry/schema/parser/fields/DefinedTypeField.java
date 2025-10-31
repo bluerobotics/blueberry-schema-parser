@@ -43,7 +43,9 @@ public class DefinedTypeField extends ParentField {
 
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new DefinedTypeField(name, getTypeName(), getComment(), getCoord());
+		DefinedTypeField f = new DefinedTypeField(name, getTypeName(), getComment(), getCoord());
+		f.copyChildrenFrom(this);
+		return f;
 	}
 	
 

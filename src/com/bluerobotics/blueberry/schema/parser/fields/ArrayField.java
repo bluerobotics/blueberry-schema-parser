@@ -60,7 +60,9 @@ public class ArrayField extends ParentField {
 	}
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment(), getCoord());
+		ArrayField f = new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment(), getCoord());
+		f.copyChildrenFrom(this);
+		return f;
 	}
 
 

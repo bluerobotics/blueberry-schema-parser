@@ -55,10 +55,24 @@ public class BlueberryFieldPacker {
 			pack((TypeDefField)f);
 		} else if(f instanceof StringField) {
 			pack((StringField)f);
+		} else if(f instanceof DefinedTypeField) {
+			pack((DefinedTypeField)f);
 		} else {
 			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), f.getCoord());
 		}
 	}
+	
+	public void pack(DefinedTypeField f) {
+		Field f2 = null;
+		if(f.getChildren().size() > 0) {
+			f2 = f.getChildren().get(0);
+		}
+		if(f2 == null) {
+			throw new SchemaParserException("Defined type has not properly referenced an actual type.", f.getCoord());
+		}
+		pack(f2);
+	}
+	
 	public void pack(MessageField f) {
 		//first make sure all bools are contained in bool field fields.
 		organizeBools(f);

@@ -36,6 +36,7 @@ public class BoolFieldField extends ParentField {
 	@Override
 	public Field makeInstance(SymbolName name) {
 		BoolFieldField bf = new BoolFieldField(getCoord());
+		bf.copyChildrenFrom(this);
 		return bf;
 	}
 

@@ -189,8 +189,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} catch (SchemaParserException e) {
 			e.printStackTrace();
 		}
-		System.out.println("************* Defines ***************");
-		m_defines.forEach(f -> {
+		System.out.println("************* Messages ***************");
+		m_messages.forEach(f -> {
 			
 			System.out.println(f.toString());
 		});
@@ -995,7 +995,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				throw new SchemaParserException("Module statement open brace is never closed.", braceStart.getEnd());
 			}
 			m_module.add(m_module.getLast().addLevel(moduleName.getSymbolName()));
-			System.out.println("blueberrySchemaParser.processModule "+m_module.getLast());
 			m_moduleEnd.add(braceEnd);
 			
 			m_tokens.setIndex(braceStart);

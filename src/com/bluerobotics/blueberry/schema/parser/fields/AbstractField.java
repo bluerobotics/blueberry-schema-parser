@@ -107,10 +107,15 @@ public abstract class AbstractField implements Field {
 			result = true;
 		} else if(obj != null && obj.getClass().equals(getClass())) {
 			Field f = (Field)obj;
-			if(f.getTypeName().equals(getTypeName()) && f.getTypeId() == getTypeId()) {
-				if(f.getParent() == getParent() || (f.getParent() != null && f.getParent().equals(getParent()))) {
-					if(f.getName() == getName() || (f.getName() != null && f.getName().equals(getName()))){
-						result = true;
+			ScopeName ftn = f.getTypeName();
+			ScopeName tn = getTypeName();
+			
+			if(f.getTypeName() == getTypeName() || (f.getTypeName() != null && f.getTypeName().equals(getTypeName()))) {
+				if(f.getTypeId() == getTypeId() || (f.getTypeId() != null && f.getTypeId().equals(getTypeId()))) {
+					if(f.getParent() == getParent() || (f.getParent() != null && f.getParent().equals(getParent()))) {
+						if(f.getName() == getName() || (f.getName() != null && f.getName().equals(getName()))){
+							result = true;
+						}
 					}
 				}
 			}
