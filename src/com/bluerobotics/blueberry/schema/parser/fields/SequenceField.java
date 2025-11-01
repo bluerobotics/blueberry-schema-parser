@@ -39,6 +39,8 @@ public class SequenceField extends ParentField {
 		return result;
 	}
 	
+	
+	
 	public void setLimit(int n) {
 		m_limit = n;
 	}

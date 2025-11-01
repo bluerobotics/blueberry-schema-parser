@@ -38,7 +38,7 @@ public enum TypeId {
 	FLOAT32        (32),
 	INT64		   (64),
 	UINT64         (64),
-	FLOAT64         (64),
+	FLOAT64        (64),
 	STRING         (32),
 	SEQUENCE       (32),
 	STRUCT         (0),

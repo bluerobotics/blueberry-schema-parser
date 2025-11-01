@@ -33,23 +33,60 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * A class to represent both a data type and an instance of that type
  */
 public interface Field extends ThingFromFile {
-
+	/**
+	 * This is the name of the type that this field consists
+	 * @return
+	 */
 	ScopeName getTypeName();
-
+	/**
+	 * This is the type of field this is
+	 * @return
+	 */
 	TypeId getTypeId();
 	
-
+	/**
+	 * gets the number of bits taken up by this field
+	 * @return
+	 */
 	int getBitCount();
+	/**
+	 * gets the number of bytes taken up by this field
+	 * @return
+	 */
 	int getByteCount();
+	/**
+	 * gets the parent of this field. Don't know if this is necessary
+	 * @return
+	 */
 	Field getParent();
+	/**
+	 * sets the parent of this field. Don't know if this is necessary
+	 * @param p
+	 */
 	void setParent(ParentField p);
-	
+	/**
+	 * replicates this field for use in another struct, message, etc.
+	 * @param name
+	 * @return
+	 */
 	Field makeInstance(SymbolName name);
-
+	/**
+	 * adds an annotation to this field.
+	 * Only messages currently use this so far
+	 * @param as
+	 */
 	void addAnnotation(List<Annotation> as);
-
+	/**
+	 * gets the annotation value for the specified name
+	 * @param name
+	 * @return
+	 */
 	Annotation getAnnotation(SymbolName name);
 	
+	/**
+	 * scans through the annotations and applies the specified consumer to each
+	 * @param c
+	 */
 	void scanAnnotations(Consumer<Annotation> c);
 	/**
 	 * Gets the byte index of this element within the message bytes
@@ -63,7 +100,10 @@ public interface Field extends ThingFromFile {
 	 * @param i
 	 */
 	public void setIndex(int i);
-	
+	/**
+	 * gets the coordinate (essentially a reference to the location in the schema file that this field was defined 
+	 * @return
+	 */
 	public Coord getCoord();
 	
 	

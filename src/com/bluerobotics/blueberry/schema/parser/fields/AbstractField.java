@@ -55,7 +55,7 @@ public abstract class AbstractField implements Field {
 
 
 	@Override
-	public int getByteCount() {
+	public final int getByteCount() {
 		return getBitCount()/8;
 	}
 

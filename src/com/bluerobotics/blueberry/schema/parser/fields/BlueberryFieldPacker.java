@@ -51,8 +51,6 @@ public class BlueberryFieldPacker {
 			pack((EnumField)f);
 		} else if(f instanceof BoolFieldField) {
 			pack((BoolFieldField)f);
-		} else if(f instanceof TypeDefField) {
-			pack((TypeDefField)f);
 		} else if(f instanceof StringField) {
 			pack((StringField)f);
 		} else if(f instanceof DefinedTypeField) {
@@ -96,14 +94,9 @@ public class BlueberryFieldPacker {
 			f.setIndex(findAndAssignSpot(f.getByteCount()));
 		}
 	}
-	private void addBool(BaseField f) {
-		//find first bool field field
-		
-	}
-	private void pack(TypeDefField f) {
-		f.setIndex(findAndAssignSpot(f.getByteCount()));	
-	}
+
 	public void pack(ArrayField f) {
+		f.getChildren().forEach(f2 -> pack(f2));
 		f.setIndex(findAndAssignSpot(f.getByteCount()));	
 	}
 	public void pack(EnumField f) {

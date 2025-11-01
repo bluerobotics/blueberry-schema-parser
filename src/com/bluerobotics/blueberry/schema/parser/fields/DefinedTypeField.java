@@ -40,6 +40,23 @@ public class DefinedTypeField extends ParentField {
 		super(name, type, TypeId.DEFERRED, comment, c);
 		
 	}
+	
+	@Override
+	public int getBitCount() {
+		int result = -1;
+		if(getChildren().size() > 0) {
+			result = getChildren().get(0).getBitCount();
+		}
+		return result;
+	}
+	@Override
+	public void add(Field f) {
+		if(size() > 0) {
+			throw new RuntimeException("Cannot add more than one child field to an array.");
+		}
+		super.add(f);
+	}
+	
 
 	@Override
 	public Field makeInstance(SymbolName name) {

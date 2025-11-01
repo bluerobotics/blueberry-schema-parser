@@ -21,9 +21,6 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -33,23 +30,35 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class ArrayField extends ParentField {
 	private final int m_number;
-	private int m_itemByteNum = -1;
 
 	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int number, String comment, Coord c) {
 		super(name, typeName, TypeId.ARRAY, comment, c);
 		m_number = number;
 	}
+	/**
+	 * the size of this array, i.e. the number of elements
+	 * @return
+	 */
 	public int getNumber() {
 		return m_number;
 	}
-	public void setItemByteNum(int i) {
-		m_itemByteNum = i;
-	}
-	public int getItemByteNum() {
-		return m_itemByteNum;
+
+	/**
+	 * gets the number of bytes per element of this array
+	 * @return
+	 */
+	public int getBytesPerElement() {
+		int result = -1;
+		if(getChildren().size() > 0) {
+			result = getChildren().get(0).getByteCount();
+		}
+		return result;
 	}
 	
-	
+	@Override
+	public int getBitCount() {
+		return getNumber()*getBytesPerElement()*8;
+	}
 	
 	@Override
 	public void add(Field f) {

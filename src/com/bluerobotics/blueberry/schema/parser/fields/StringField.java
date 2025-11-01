@@ -36,7 +36,6 @@ public class StringField extends AbstractField {
 	
 	@Override
 	public Field makeInstance(SymbolName name) {
-		// TODO Auto-generated method stub
 		return new StringField(name, getMaxSize(), getComment(), getCoord());
 	}
 
