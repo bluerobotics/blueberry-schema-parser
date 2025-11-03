@@ -30,11 +30,20 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 public abstract class AbstractField implements Field {
+
+
+
+
+
+
+
+
 	private final SymbolName m_name;
 	private final ScopeName m_typeName;
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
+
 	private final Coord m_coord;
 
 	private final TypeId m_typeId;
@@ -170,11 +179,10 @@ public abstract class AbstractField implements Field {
 	public void setIndex(int i) {
 		m_index = i;
 	}
-
-
-
-
-
+	@Override
+	public int getNextIndex() {
+		return m_index + getByteCount();
+	}
 
 
 	@Override

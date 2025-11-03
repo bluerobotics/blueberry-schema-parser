@@ -68,4 +68,10 @@ public class FieldList {
 	public ListIterator<Field> getIterator(){
 		return m_fields.listIterator();
 	}
+	public Field getFirst() {
+		return m_fields.getFirst();
+	}
+	public Field getLast() {
+		return m_fields.getLast();
+	}
 }

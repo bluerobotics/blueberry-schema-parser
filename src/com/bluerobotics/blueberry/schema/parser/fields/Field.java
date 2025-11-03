@@ -106,7 +106,11 @@ public interface Field extends ThingFromFile {
 	 */
 	public Coord getCoord();
 	
-	
+	/**
+	 * gets the index for the location after this field
+	 * @return
+	 */
+	public int getNextIndex();
 	
 	
 

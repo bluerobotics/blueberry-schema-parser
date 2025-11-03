@@ -38,6 +38,5 @@ public class MessageField extends ParentField {
 		result.copyChildrenFrom(this);
 		return result;
 	}
-	
 
 }

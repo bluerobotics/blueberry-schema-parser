@@ -30,12 +30,17 @@ import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
  * A packing algorithm for the Blueberry protocol
  * It will pack elements in order and appropriately byte-aligned but -
  * if a smaller word is packed it will be placed in the first available empty spot
+ * Note that packing simply means assigning the index and next index of each field
  */
 public class BlueberryFieldPacker {
 	/**
 	 * An array of booleans used to keep track of the message packing. Used bytes are true. Unused bytes are false.
 	 */
 	ArrayList<Boolean> m_bytes = new ArrayList<>();
+	/**
+	 * Recursively computes the index of the specified field and all of its children
+	 * @param f
+	 */
 	public void pack(Field f) {
 		if(f instanceof MessageField) {
 			pack((MessageField)f);
@@ -59,16 +64,9 @@ public class BlueberryFieldPacker {
 			throw new SchemaParserException("Don't know how to pack a "+f.getClass().getSimpleName(), f.getCoord());
 		}
 	}
-	
-	public void pack(DefinedTypeField f) {
-		Field f2 = null;
-		if(f.getChildren().size() > 0) {
-			f2 = f.getChildren().get(0);
-		}
-		if(f2 == null) {
-			throw new SchemaParserException("Defined type has not properly referenced an actual type.", f.getCoord());
-		}
-		pack(f2);
+
+	public void pack(DefinedTypeField f) {		
+		pack(f.getFirstChild());
 	}
 	
 	public void pack(MessageField f) {
@@ -84,6 +82,12 @@ public class BlueberryFieldPacker {
 	public void pack(SequenceField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
 		//TODO: pack children
+		BlueberryFieldPacker p = new BlueberryFieldPacker();
+		p.pack(f.getFirstChild());
+		
+	}
+	public void pack(StringField f) {
+		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
 	public void pack(BoolFieldField f) {
 		f.setIndex(findAndAssignSpot(1));
@@ -97,7 +101,7 @@ public class BlueberryFieldPacker {
 	}
 
 	public void pack(ArrayField f) {
-		Field fc = f.getChildren().get(0);
+		Field fc = f.getFirstChild();
 		pack(fc);
 		int m = fc.getByteCount();
 		int n = f.getNumber() - 1;
@@ -110,9 +114,7 @@ public class BlueberryFieldPacker {
 	public void pack(EnumField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
-	public void pack(StringField f) {
-		f.setIndex(findAndAssignSpot(f.getByteCount()));
-	}
+	
 	private int findAndAssignSpot(int byteNum) {
 		//TODO: check that bytenum is only either 1, 2, 4, 8
 		

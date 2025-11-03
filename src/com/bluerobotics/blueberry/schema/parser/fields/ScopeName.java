@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * 
@@ -61,18 +62,22 @@ public class ScopeName extends SymbolName {
 	private ArrayList<SymbolName> splitScope() {
 		ArrayList<SymbolName> result = new ArrayList<>();
 		ArrayList<String> ss = new ArrayList<>();
-		int n = m_name.length;
-		for(int i = 0; i < n; ++i) {
-			String s = m_name[i];
+		ListIterator<String> li = Arrays.asList(m_name).listIterator();
+		while(li.hasNext()) {
+			String s = li.next();
 			boolean isS = s.equals(m_separator);
-			ss.add(s);
-			
-			
-			if(isS || i == n -1){
-				if(ss.size() > 0) {
+			if(!isS) {
+				ss.add(s);
+			}
+			if(isS || !li.hasNext()) {
+				if(!ss.isEmpty()) {
 					result.add(new SymbolName(getCase(), ss.toArray(new String[ss.size()])));
 					ss.clear();
 				}
+			}
+			
+			if(isS) {
+				result.add(new SymbolName(getCase(), s));
 			}
 		}
 		return result;
@@ -85,7 +90,7 @@ public class ScopeName extends SymbolName {
 	public ScopeName removeLastLevel() {
 		List<SymbolName> ss = splitScope();
 		ss.removeLast();
-		if(ss.getLast().equals(m_separator) &&  ss.size() > 1) {
+		if(ss.getLast().toLowerCamel().equals(m_separator) &&  ss.size() > 1) {
 			ss.removeLast();
 		}
 		List<String> result = new ArrayList<String>();

@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.BaseType;
 import com.bluerobotics.blueberry.schema.parser.types.Type;
@@ -61,5 +62,43 @@ public abstract class ParentField extends AbstractField {
 	}
 	public int size() {
 		return m_children.size();
+	}
+	/**
+	 * Gets the first assigned child field
+	 * @return
+	 * @throws SchemaParserException - if no children have been added yet
+	 */
+	public Field getFirstChild() throws SchemaParserException {
+		checkSize();
+		return m_children.getFirst();
+	}
+	/**
+	 * Gets the last assigned child field
+	 * @return
+	 * @throws SchemaParserException - if no children have been added yet
+	 */
+	public Field getLastChild() throws SchemaParserException {
+		checkSize();
+		return m_children.getLast();
+	}
+	/**
+	 * Checks to be sure there have been children-fields added
+	 * @throws SchemaParserException - if there are no children
+	 */
+	protected void checkSize() throws SchemaParserException {
+		if(m_children.size() <= 0) {
+			throw new SchemaParserException(getClass().getSimpleName() + " has not had a child assigned.", getCoord());
+		}
+	}
+	
+
+	@Override
+	public int getIndex() {
+		return getFirstChild().getIndex();
+	}
+
+	@Override
+	public int getNextIndex() {		
+		return getLastChild().getNextIndex();
 	}
 }
