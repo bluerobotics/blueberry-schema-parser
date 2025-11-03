@@ -82,7 +82,8 @@ public class BlueberryFieldPacker {
 		f.getChildren().forEach(ft -> pack(ft));
 	}
 	public void pack(SequenceField f) {
-		
+		f.setIndex(findAndAssignSpot(f.getByteCount()));
+		//TODO: pack children
 	}
 	public void pack(BoolFieldField f) {
 		f.setIndex(findAndAssignSpot(1));
