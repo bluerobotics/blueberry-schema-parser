@@ -58,7 +58,7 @@ public interface Field extends ThingFromFile {
 	 * gets the parent of this field. Don't know if this is necessary
 	 * @return
 	 */
-	Field getParent();
+	ParentField getParent();
 	/**
 	 * sets the parent of this field. Don't know if this is necessary
 	 * @param p

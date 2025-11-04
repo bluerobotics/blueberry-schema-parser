@@ -342,6 +342,9 @@ public class SymbolName {
 		}
 		return result;
 	}
+	public boolean isEmpty() {
+		return equals(SymbolName.EMPTY);
+	}
 
 	
 

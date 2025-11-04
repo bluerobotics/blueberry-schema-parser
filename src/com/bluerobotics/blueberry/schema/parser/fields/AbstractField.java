@@ -102,7 +102,7 @@ public abstract class AbstractField implements Field {
 
 
 	@Override
-	public Field getParent() {
+	public ParentField getParent() {
 		return m_parent;
 	}
 	@Override

@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -34,6 +35,13 @@ public class FieldList {
 	public void add(Field f){
 		m_fields.add(f);
 	}
+	/**
+	 * Applies the specified consumer to all members of this list that are of the specified type
+	 * @param <T>
+	 * @param c
+	 * @param deep
+	 * @param con
+	 */
 	public <T extends Field> void forEachOfType(Class<T> c, boolean deep, Consumer<T> con) {
 		for(Field f : m_fields) {
 			if(c.isInstance(f)) {
@@ -45,6 +53,50 @@ public class FieldList {
 			}
 		}
 	}
+	/**
+	 * Applies the specified consumer to all members of this list that are of the specified type and whose type name is in the specified scope
+	 * @param <T>
+	 * @param c
+	 * @param deep
+	 * @param module
+	 * @param con
+	 */
+	public <T extends Field> void forEachOfTypeInScope(Class<T> c, boolean deep, ScopeName module, Consumer<T> con) {
+		for(Field f : m_fields) {
+			if(c.isInstance(f) && f.getTypeName().removeLastLevel().equals(module)) {
+				T cf = c.cast(f);
+				con.accept(cf);
+			} else if(f instanceof ParentField && deep) {
+				ParentField pf = (ParentField)f;
+				pf.getChildren().forEachOfTypeInScope(c, deep, module, con);
+			}
+		}
+	}
+	
+	/**
+	 * Applies the specified consumer to all members of this list that are of the specified type and whose type name is in the specified scope
+	 * Also propagates a parent name down the recursive call chain by appending the same of the current field
+	 * @param <T>
+	 * @param c
+	 * @param deep
+	 * @param module
+	 * @param 
+	 * @param con
+	 */
+	public <T extends Field> void forEachOfTypeInScopePlusName(Class<T> c, boolean deep, ScopeName module, SymbolName parent, BiConsumer<SymbolName, T> con) {
+		for(Field f : m_fields) {
+			if(c.isInstance(f) && f.getTypeName().removeLastLevel().equals(module)) {
+				T cf = c.cast(f);
+				con.accept(parent, cf);
+			} else if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				pf.getChildren().forEachOfTypeInScopePlusName(c, deep, module, parent.append(pf.getName()), con);
+				
+			}
+		}
+	}
+	
+	
 	public void forEach(Consumer<Field> con) {
 		for(Field f : m_fields) {
 			con.accept(f);

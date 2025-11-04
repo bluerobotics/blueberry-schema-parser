@@ -59,9 +59,7 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextArea m_text = new JTextArea();
-	private String m_codeHeader;
-	private String m_idlHeader;
-
+	
 	/**
 	 * 
 	 * Constructs the GUI, maps actions
@@ -84,12 +82,7 @@ public class BlueberrySchemaParserGui implements Constants {
 
 		cp.setLayout(new BorderLayout());
 		
-		m_settings.addSettingsListener(e -> {
-			m_codeHeader = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-		}, Key.CODE_HEADER_FILE_PATH, true);
-		m_settings.addSettingsListener(e -> {
-			m_idlHeader = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
-		}, Key.IDL_HEADER_FILE_PATH, true);
+		
 
 		int x = s.getInt(Key.APP_POS_X);
 		int y = s.getInt(Key.APP_POS_Y);
@@ -242,8 +235,8 @@ public class BlueberrySchemaParserGui implements Constants {
 			parse();
 		}
 
-
-		JavaWriter w = new JavaWriter(dir, m_parser, m_codeHeader);
+		String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+		JavaWriter w = new JavaWriter(dir, m_parser, h);
 		w.write();
 		m_text.append("Done");
 	}
@@ -256,7 +249,8 @@ public class BlueberrySchemaParserGui implements Constants {
 			parse();
 		}
 
-		CWriter w = new CWriter(dir, m_parser, m_codeHeader);
+		String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+		CWriter w = new CWriter(dir, m_parser, h);
 		w.write();
 		m_text.append("Done");
 	}
@@ -286,8 +280,8 @@ public class BlueberrySchemaParserGui implements Constants {
 //			parse();
 //		}
 
-
-		PrettyWriter pw = new PrettyWriter(dir, m_parser, m_idlHeader);
+		String h = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
+		PrettyWriter pw = new PrettyWriter(dir, m_parser, h);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		m_text.append("Done");
 	}

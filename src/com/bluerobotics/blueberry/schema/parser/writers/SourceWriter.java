@@ -146,10 +146,14 @@ public abstract class SourceWriter {
 	}
 
 	protected void addDocComment(String... cs) {
-		addBlockComment(true, cs);
+		if(cs != null) {
+			addBlockComment(true, cs);
+		}
 	}
 	protected void addBlockComment(String... cs) {
-		addBlockComment(false, cs);
+		if(cs != null) {
+			addBlockComment(false, cs);
+		}
 	}
 	/**
 	 * Adds some block comments
@@ -159,7 +163,7 @@ public abstract class SourceWriter {
 	private void addBlockComment(boolean docNotBlock, String... cs) {
 		String c = "";
 		for(String ct : cs) {
-			if(!ct.isBlank()) {
+			if(ct != null && !ct.isBlank()) {
 				c += ct + "\n";
 			}
 		}

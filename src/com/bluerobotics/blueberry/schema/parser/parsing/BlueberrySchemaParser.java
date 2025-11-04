@@ -183,6 +183,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			applyDeferredParameters(m_messages);
 			
 			computeIndeces();
+			
+			computeParents(m_defines, null);
+			computeParents(m_messages, null);
 
 
 		} catch (SchemaParserException e) {
@@ -198,7 +201,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
-
+	/**
+	 * Traverse the higherarchy and set parents.
+	 * @param fl
+	 * @param pf
+	 */
+	private void computeParents(FieldList fl, ParentField pf) {
+		fl.forEach(f -> {
+			f.setParent(pf);
+			if(f instanceof ParentField) {
+				ParentField pf2 = (ParentField)f;
+				computeParents(pf2.getChildren(), pf2);
+			}
+		});
+	}
 	/**
 	 * scans all messages and checks for any duplicate message keys
 	 * this should be called after fillInMessageKeyValues()

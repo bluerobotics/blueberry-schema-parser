@@ -24,15 +24,21 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 import java.io.File;
 import java.util.ArrayList;
 
+import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
+import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
+import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
+import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
+import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
-import com.bluerobotics.blueberry.schema.parser.types.EnumType;
-import com.bluerobotics.blueberry.schema.parser.types.EnumType.NameValue;
 
 /**
  * This class implements the autogeneration of C code based on a parsed field structure
@@ -47,6 +53,7 @@ public class CWriter extends SourceWriter {
 	public void write() {
 			FieldList messages = getParser().getMessages();
 			ArrayList<ScopeName> modules = new ArrayList<>();
+			
 			messages.forEachOfType(MessageField.class, false, mf -> {
 				ScopeName module = mf.getTypeName().removeLastLevel();
 				if(!modules.contains(module)) {
@@ -64,15 +71,19 @@ public class CWriter extends SourceWriter {
 			});
 
 			//now modules contains a list of all unique modules.
-//			//mow make a header file for each message
+//			//mow make a header and source files for each message
 			
-//			makeHeaderFile();
-//			makeSourceFile(bf, headers);
+			modules.forEach(mod -> {
+				makeHeaderFile(mod);
+				makeSourceFile(mod);
+			});
+			
+
 
 
 	}
-	private void makeHeaderFile() {
-		
+	private void makeHeaderFile(ScopeName module) {
+		String moduleFileRoot = module.deScope().toLowerCamel();
 		
 		startFile(getHeader());
 
@@ -84,18 +95,26 @@ public class CWriter extends SourceWriter {
 		addLine("#include <blueberry-transcoder.h>");
 
 		addSectionDivider("Defines");
-//		writeBlockValueDefine();
-
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			addMessageAdder(mf);	
+		});
 
 		addSectionDivider("Types");
 
 //		addFirstBlockDefine();
 //
-//		writeEnums();
+		m_parser.getDefines().forEachOfTypeInScope(EnumField.class, false, module, ef -> {
+			writeEnum(ef);
+		});
 //
 		addSectionDivider("Function Prototypes");
-//		addHeaderFieldGetters(top,true);
-//
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			addMessageAdder(mf);
+		});
+		
+		
+		
 //		addBytesPerRepeatGetter(top, true);
 //
 //		addBaseFieldGetters(top, true);
@@ -114,26 +133,57 @@ public class CWriter extends SourceWriter {
 //
 
 
-//		writeToFile("inc/"+top.getName().toLowerCamel(),"h");
+		writeToFile("inc/"+moduleFileRoot,"h");
 
 	}
 
+	
 
+	private void addMessageAdder(MessageField mf) {
+		
+	}
+	
+	private SymbolName makeName(Field f) {
+		SymbolName result = f.getName();
+		if(result == null) {
+			throw new RuntimeException("Result is null!");
+		}
+		ParentField pf = f.getParent();
+		while(pf != null) {
+			SymbolName pn = pf.getName();
+			if(pn == null || pn.isEmpty()) {
+				pn = pf.getTypeName().deScope();
+			}
+			result = result.prepend(pn);
+			pf = pf.getParent();
+		}
+		return result;
+	}
 
-	private void makeSourceFile(StructField top, String... hs) {
-		startFile(hs);
+	private void makeSourceFile(ScopeName module) {
+		String moduleFileRoot = module.deScope().toLowerCamel();
+
+		startFile(getHeader());
 
 
 
 		addSectionDivider("Includes");
-		addLine("#include <"+top.getName().toLowerCamel()+".h>");
+		addLine("#include <"+moduleFileRoot+".h>");
 
 		addSectionDivider("Defines");
+		
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			mf.getChildren().forEach(f -> {
+				if(f.getIndex() >= 0) {
+					if(!(f instanceof BoolFieldField)) {
+						addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getIndex()+")");
+					}
+					
+				}
+			});
+		});
 
-		writeHeaderDefines(top);
-		addLine();
-		addLine();
-		writeBaseFieldDefines(top);
 
 		addSectionDivider("Types");
 
@@ -145,29 +195,29 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Source");
 
-		addHeaderFieldGetters(top,false);
+//		addHeaderFieldGetters(top,false);
+//
+//		addBytesPerRepeatGetter(top, false);
+//
+//
+//		addBaseFieldGetters(top, false);
+//
+//		addPacketStartFinish(top, false);
+//
+//		addBlockFunctionGetters(top, false);
+////		addBlockFunctionAdder(top, false);
+//
+//		addBlockAdders(top, false);
+//
+//		addArrayAdders(top, false);
+//		addCompactArrayAdders(top, false);
+//
+////		addArrayGetters(top, false);
+////		addArrayElementAdders(top, true);
 
-		addBytesPerRepeatGetter(top, false);
 
 
-		addBaseFieldGetters(top, false);
-
-		addPacketStartFinish(top, false);
-
-		addBlockFunctionGetters(top, false);
-//		addBlockFunctionAdder(top, false);
-
-		addBlockAdders(top, false);
-
-		addArrayAdders(top, false);
-		addCompactArrayAdders(top, false);
-
-//		addArrayGetters(top, false);
-//		addArrayElementAdders(top, true);
-
-
-
-		writeToFile("src/"+top.getName().toLowerCamel(),"c");
+		writeToFile("src/"+moduleFileRoot,"c");
 
 	}
 
@@ -216,54 +266,35 @@ public class CWriter extends SourceWriter {
 
 	}
 
-	private void writeEnums(StructField top) {
-//		//first make a list of all unique enums
-//		ArrayList<EnumField> es = new ArrayList<EnumField>();
-//		top.scanThroughBaseFields((f) -> {
-//			if(f instanceof EnumField) {
-//				EnumField e = (EnumField)f;
-//				boolean found = false;
-//				//check that this new one isn't the same as an existing one
-//				for(EnumField ef : es) {
-//					if(ef.getTypeName().equals(e.getTypeName())) {
-//						found = true;
-//						break;
-//					}
-//				}
-//				if(!found) {
-//					es.add(e);
-//				}
-//			}
-//		}, true);
-//		for(EnumField ef : es) {
-//			addDocComment(ef.getComment());
-//			addLine("typedef enum {");
-//
-//			indent();
-//			for(NameValue nv : ef.getNameValues()) {
-//
-//
-//				String c = nv.getComment();
-//				if(c != null && !c.isBlank()) {
-//					c = "// "+c;
-//				} else {
-//					c = "";
-//				}
-//				addLine(makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue())+", " + c);
-//
-//
-//			}
-//			outdent();
-//
-//			addLine("} "+ef.getTypeName().toUpperCamel()+";");
-//
-//			addLine();
-//
-//		}
+	private void writeEnum(EnumField ef) {
+
+		addDocComment(ef.getComment());
+		addLine("typedef enum {");
+
+		indent();
+		for(NameValue nv : ef.getNameValues()) {
+
+
+			String c = nv.getComment();
+			if(c != null && !c.isBlank()) {
+				c = "// "+c;
+			} else {
+				c = "";
+			}
+			addLine(makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue().asLong())+", " + c);
+
+
+		}
+		outdent();
+
+		addLine("} "+ef.getTypeName().deScope().toUpperCamel()+";");
+
+		addLine();
+	
 	}
 
-	private String makeEnumName(EnumType ef, NameValue nv) {
-		return nv.getName().prepend(ef.getTypeName()).toUpperSnake();
+	private String makeEnumName(EnumField ef, NameValue nv) {
+		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnake();
 	}
 
 	private void writeBaseFieldDefines(StructField top) {
@@ -729,10 +760,7 @@ public class CWriter extends SourceWriter {
 //	}
 
 
-	private String getEnumTypeName(EnumType f) {
-		return f.getTypeName().toUpperCamel();
-	}
-
+	
 //	private void addBlockKeyDefines(StructField top) {
 //		List<FixedIntField> keys = getBlockKeys(top);
 //
@@ -755,15 +783,15 @@ public class CWriter extends SourceWriter {
 //		addLine("} BlockKeys;");
 //		addLine();
 //	}
-	private void addBlockAdders(StructField top, boolean protoNotDeclaration) {
-//		//first get all blocks that we want to make adders for
-//		List<StructField> bfs = top.getAllBlockFields();
-//
-//		for(StructField bf : bfs) {
-//			addBlockAdder(bf, true, protoNotDeclaration);
-//			addBlockAdder(bf, false, protoNotDeclaration);
-//		}
-	}
+//	private void addBlockAdders(StructField top, boolean protoNotDeclaration) {
+////		//first get all blocks that we want to make adders for
+////		List<StructField> bfs = top.getAllBlockFields();
+////
+////		for(StructField bf : bfs) {
+////			addBlockAdder(bf, true, protoNotDeclaration);
+////			addBlockAdder(bf, false, protoNotDeclaration);
+////		}
+//	}
 
 	private void addArrayGetters(StructField top, boolean protoNotDeclaration) {
 //		List<ArrayField> afs = top.getAllArrayFields();
