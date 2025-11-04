@@ -192,7 +192,10 @@ public abstract class AbstractField implements Field {
 
 
 
-
+	@Override
+	public final boolean inScope(ScopeName s) {
+		return getTypeName().removeLastLevel().equals(s);
+	}
 	
 	
 

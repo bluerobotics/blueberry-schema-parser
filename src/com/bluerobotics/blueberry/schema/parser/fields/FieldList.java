@@ -39,7 +39,7 @@ public class FieldList {
 	 * Applies the specified consumer to all members of this list that are of the specified type
 	 * @param <T>
 	 * @param c
-	 * @param deep
+	 * @param deep - if true then will recurse through all parent fields in structure
 	 * @param con
 	 */
 	public <T extends Field> void forEachOfType(Class<T> c, boolean deep, Consumer<T> con) {
@@ -47,9 +47,9 @@ public class FieldList {
 			if(c.isInstance(f)) {
 				T cf = c.cast(f);
 				con.accept(cf);
-			} else if(f instanceof ParentField) {
+			} else if(f instanceof ParentField && deep) {
 				ParentField pf = (ParentField)f;
-				
+				pf.getChildren().forEachOfType(c, deep, con);
 			}
 		}
 	}
@@ -88,7 +88,7 @@ public class FieldList {
 			if(c.isInstance(f) && f.getTypeName().removeLastLevel().equals(module)) {
 				T cf = c.cast(f);
 				con.accept(parent, cf);
-			} else if(f instanceof ParentField) {
+			} else if(f instanceof ParentField && deep) {
 				ParentField pf = (ParentField)f;
 				pf.getChildren().forEachOfTypeInScopePlusName(c, deep, module, parent.append(pf.getName()), con);
 				
@@ -97,9 +97,27 @@ public class FieldList {
 	}
 	
 	
+	/**
+	 * shallow scan through each element of list
+	 * @param con
+	 */
 	public void forEach(Consumer<Field> con) {
 		for(Field f : m_fields) {
 			con.accept(f);
+		}
+	}
+	/**
+	 * shallow or deep scan through list elements
+	 * @param con - consumer to apply to each element
+	 * @param deep - when true, the a full recursive scan is done, down through each parent field
+	 */
+	public void forEach(Consumer<Field> con, boolean deep) {
+		for(Field f : m_fields) {
+			con.accept(f);
+			if(f instanceof ParentField && deep) {
+				ParentField pf = (ParentField)f;
+				pf.getChildren().forEach(con, deep);
+			}
 		}
 	}
 	public void clear() {

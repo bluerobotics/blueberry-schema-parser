@@ -128,6 +128,7 @@ public class ScopeName extends SymbolName {
 		}
 		return result;
 	}
+	
 	public boolean isAbsolute() {
 		boolean result = false;
 		if(m_name.length > 0) {

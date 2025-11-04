@@ -112,7 +112,7 @@ public interface Field extends ThingFromFile {
 	 */
 	public int getNextIndex();
 	
-	
+	public boolean inScope(ScopeName s);
 
 
 }

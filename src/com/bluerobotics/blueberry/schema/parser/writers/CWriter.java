@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
@@ -146,20 +147,22 @@ public class CWriter extends SourceWriter {
 	private SymbolName makeName(Field f) {
 		SymbolName result = f.getName();
 		if(result == null) {
-			throw new RuntimeException("Result is null!");
+			result = SymbolName.EMPTY;
 		}
 		ParentField pf = f.getParent();
 		while(pf != null) {
 			SymbolName pn = pf.getName();
 			if(pn == null || pn.isEmpty()) {
-				pn = pf.getTypeName().deScope();
+				if(pf.getTypeName() != null) {
+					pn = pf.getTypeName().deScope();
+				}
 			}
 			result = result.prepend(pn);
 			pf = pf.getParent();
 		}
 		return result;
 	}
-
+	boolean m_bools = false;
 	private void makeSourceFile(ScopeName module) {
 		String moduleFileRoot = module.deScope().toLowerCamel();
 
@@ -171,18 +174,46 @@ public class CWriter extends SourceWriter {
 		addLine("#include <"+moduleFileRoot+".h>");
 
 		addSectionDivider("Defines");
-		
+		addLineComment("Add message field indeces");
+		//add defines for field indeces
+		//also keep track of any boolfieldfields
 		
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+
 			mf.getChildren().forEach(f -> {
 				if(f.getIndex() >= 0) {
 					if(!(f instanceof BoolFieldField)) {
-						addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getIndex()+")");
+						if(f.getBitCount() == 1) {
+							addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getParent().getIndex()+")");
+							m_bools = true;
+						} else {
+							addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getIndex()+")");
+						}
 					}
 					
 				}
-			});
+			}, true);
 		});
+		
+		if(m_bools) {
+			addLine();
+			addLineComment("Add message boolean field masks");
+
+			//now add defines for bit field indeces and bit masks
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+				mf.getChildren().forEach(f -> {
+					if(f.getIndex() >= 0) {
+						if(f instanceof BaseField && f.getBitCount() == 1) {
+						
+							addLine("#define " + makeName(f).append("mask").toUpperSnake() + " (1 << "+f.getIndex()+")");
+	
+						}
+						
+						
+					}
+				}, true);
+			});
+		}
 
 
 		addSectionDivider("Types");
