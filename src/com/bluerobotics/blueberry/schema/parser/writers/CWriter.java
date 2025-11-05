@@ -164,7 +164,10 @@ public class CWriter extends SourceWriter {
 				String stuff = "";
 				ParentField pf = f.getParent();
 				if(pf instanceof ArrayField) {
-					stuff += "[static " + pf.asType(ArrayField.class).getNumber()+ "]";
+					for(int i : pf.asType(ArrayField.class).getNumber()) {
+						stuff += "[static " + i + "]";	
+					}
+					
 				
 				}
 				String paramName = makeName(f, false).toLowerCamel();
@@ -263,7 +266,7 @@ public class CWriter extends SourceWriter {
 	 * 
 	 * 
 	 * 
-	 * @param f
+	 * @param f - the field to name
 	 * @param includeMessage - if true will include the message name it the final name
 	 * @return
 	 */
@@ -276,9 +279,8 @@ public class CWriter extends SourceWriter {
 		ParentField pf = f.getParent();
 		while((pf != null) && (includeMessage || !(pf instanceof MessageField))) {
 			SymbolName pn = null;
-			if(pf.getTypeName() != null) {
-				pn = pf.getTypeName().deScope();
-			}
+			pn = pf.getName();
+			
 			
 			result = result.prepend(pn);
 			pf = pf.getParent();
