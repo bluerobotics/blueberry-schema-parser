@@ -23,11 +23,12 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
+import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
@@ -35,11 +36,12 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
-import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 
 /**
  * This class implements the autogeneration of C code based on a parsed field structure
@@ -97,8 +99,9 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Defines");
 		
+		addLineComment("Add message keys");
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			addMessageAdder(mf);	
+			addMessageKey(mf);	
 		});
 
 		addSectionDivider("Types");
@@ -140,23 +143,143 @@ public class CWriter extends SourceWriter {
 
 	
 
+	private void addMessageKey(MessageField mf) {
+		Number n = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION).getParameter(0, Number.class);
+		addLine("#define "+mf.getTypeName().deScope().append("key").toUpperSnake() + "("+n.asInt()+")");
+	}
+	private String m_paramList = "";
 	private void addMessageAdder(MessageField mf) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("A function to add a "+mf.getTypeName().deScope().toTitle());
+		comments.add(mf.getComment());
+		m_paramList = "";
+		mf.getChildren().forEach(f -> {
+			
+			String tp = getType(f);
+			if(tp != null) {
+				if(m_paramList.length() > 0) {
+					m_paramList += ",";
+				}
+				
+				String stuff = "";
+				ParentField pf = f.getParent();
+				if(pf instanceof ArrayField) {
+					stuff += "[static " + pf.asType(ArrayField.class).getNumber()+ "]";
+				
+				}
+				String paramName = makeName(f, false).toLowerCamel();
+				m_paramList += " " + getType(f)+" " + paramName+stuff;
+				
+				comments.add("@param " + paramName + " " + getFieldComment(f));
+			}
+		}, true);
 		
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		addLine("void "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+");");
 	}
 	
-	private SymbolName makeName(Field f) {
-		SymbolName result = f.getName();
-		if(result == null) {
-			result = SymbolName.EMPTY;
+	private String getFieldComment(Field f) {
+		String result = "";
+		if(f.getComment() != null) {
+			result = f.getComment();
 		}
 		ParentField pf = f.getParent();
-		while(pf != null) {
-			SymbolName pn = pf.getName();
-			if(pn == null || pn.isEmpty()) {
-				if(pf.getTypeName() != null) {
-					pn = pf.getTypeName().deScope();
-				}
+		while(pf != null && (!(pf instanceof MessageField))) {
+			if(pf.getComment() != null) {
+				result = pf.getComment() + " " + result;
 			}
+			pf = pf.getParent();
+		}
+		return result;
+	}
+
+	private String getType(Field f) {
+		String result = null;
+		if(true) {
+		
+		
+			switch(f.getTypeId()) {
+			
+			case BOOL:
+				result = "bool";
+				break;
+			case FLOAT32:
+				result = "float";
+				break;
+			case FLOAT64:
+				result = "double";
+				break;
+			case INT16:
+				result = "int16_t";
+				break;
+			case INT32:
+				result = "int32_t";
+				break;
+			case INT64:
+				result = "int64_t";
+				break;
+			case INT8:
+				result = "int8_t";
+				break;
+			case STRING:
+				result = "char*";
+				break;
+			case UINT16:
+				result = "uint16_t";
+				break;
+			case UINT32:
+				result = "uint32_t";
+				break;
+			case UINT64:
+				result = "uint64";
+				break;
+			case UINT8:
+				result = "uint8_t";
+				break;
+			case ARRAY:
+			case BOOLFIELD:
+			case DEFERRED:
+			case MESSAGE:
+			case SEQUENCE:
+			case STRUCT:
+			case DEFINED:
+
+				
+				result = null;
+				break;
+			
+			}
+		}
+		return result;
+	}
+	/**
+	 * Constructs a name for this field.
+	 * Basefields that are children of the message should just be named by their name
+	 * BaseFields that are children of structs should have the struct name prepended
+	 * Types that are in an Array type should have the array name prepended
+	 * Same with types that are in a sequence
+	 * 
+	 * 
+	 * 
+	 * @param f
+	 * @param includeMessage - if true will include the message name it the final name
+	 * @return
+	 */
+	private SymbolName makeName(Field f, boolean includeMessage) {
+		SymbolName result = f.getName();
+		if(result == null) {
+			result = f.getParent().getName();
+			
+		}
+		ParentField pf = f.getParent();
+		while((pf != null) && (includeMessage || !(pf instanceof MessageField))) {
+			SymbolName pn = null;
+			if(pf.getTypeName() != null) {
+				pn = pf.getTypeName().deScope();
+			}
+			
 			result = result.prepend(pn);
 			pf = pf.getParent();
 		}
@@ -177,17 +300,16 @@ public class CWriter extends SourceWriter {
 		addLineComment("Add message field indeces");
 		//add defines for field indeces
 		//also keep track of any boolfieldfields
-		
+		m_bools = false;
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-
 			mf.getChildren().forEach(f -> {
 				if(f.getIndex() >= 0) {
 					if(!(f instanceof BoolFieldField)) {
 						if(f.getBitCount() == 1) {
-							addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getParent().getIndex()+")");
+							addLine("#define " + makeName(f, true).append("index").toUpperSnake() + " ("+f.getParent().getIndex()+")");
 							m_bools = true;
 						} else {
-							addLine("#define " + makeName(f).append("index").toUpperSnake() + " ("+f.getIndex()+")");
+							addLine("#define " + makeName(f, true).append("index").toUpperSnake() + " ("+f.getIndex()+")");
 						}
 					}
 					
@@ -205,7 +327,7 @@ public class CWriter extends SourceWriter {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
 						
-							addLine("#define " + makeName(f).append("mask").toUpperSnake() + " (1 << "+f.getIndex()+")");
+							addLine("#define " + makeName(f, true).append("mask").toUpperSnake() + " (1 << "+f.getIndex()+")");
 	
 						}
 						

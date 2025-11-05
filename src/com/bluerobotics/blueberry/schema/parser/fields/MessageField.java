@@ -21,6 +21,9 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
@@ -36,6 +39,17 @@ public class MessageField extends ParentField {
 	public Field makeInstance(SymbolName name) {
 		MessageField result = new MessageField(name, getTypeName(), getComment(), getCoord());
 		result.copyChildrenFrom(this);
+		return result;
+	}
+
+	public List<Field> getFlatFields() {
+		ArrayList<Field> result = new ArrayList<>();
+		scanThroughDeepFields(f -> {
+			if(f.isNamed() && f.getIndex() >= 0) {
+				result.add(f);
+			}
+		});
+		
 		return result;
 	}
 

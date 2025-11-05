@@ -42,8 +42,25 @@ public abstract class ParentField extends AbstractField {
 		m_children.add(f);
 	}
 
+	/**
+	 * Applies this specified consumer to all children of only the first level of this parental hierarchy
+	 * @param c
+	 */
 	public void scanThroughFields(Consumer<Field> c) {
 		m_children.forEach(c);
+	}
+	/**
+	 * Applies the specified consumer to all children of this parent field, recursively.
+	 * @param c
+	 */
+	public void scanThroughDeepFields(Consumer<Field> c) {
+		m_children.forEach(f -> {
+			if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				pf.scanThroughDeepFields(c);
+			}
+			c.accept(f);
+		});
 	}
 	public String toString() {
 		String result = getClass().getSimpleName();

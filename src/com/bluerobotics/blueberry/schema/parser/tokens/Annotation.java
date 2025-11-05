@@ -102,7 +102,7 @@ public class Annotation  {
 	public <C extends Object> C getParameter(int i, Class<C> t) {
 		C result = null;
 		Object c = m_parameters.get(i);
-		if(c.getClass() == t) {
+		if(t.isInstance(c)) {
 			result = t.cast(c);
 		}
 		return result;

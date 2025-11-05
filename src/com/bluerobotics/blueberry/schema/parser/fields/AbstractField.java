@@ -149,6 +149,7 @@ public abstract class AbstractField implements Field {
 		for(Annotation a : m_annotations) {
 			if(a.getName().equals(name)){
 				result = a;
+				break;
 			}
 		}
 		return result;
@@ -196,6 +197,39 @@ public abstract class AbstractField implements Field {
 	public final boolean inScope(ScopeName s) {
 		return getTypeName().removeLastLevel().equals(s);
 	}
+
+
+
+
+
+
+
+	@Override
+	public boolean isNamed() {
+		boolean result = false;
+		SymbolName name = getName();
+		if(name != null && !name.isEmpty()) {
+			result = true;
+		}
+		return result;
+	}
+
+
+
+
+
+
+
+	@Override
+	public <T extends Field> T asType(Class<T> c) {
+		T result = null;
+		if(c.isInstance(this)) {
+			result = c.cast(this);
+		}
+		return result;
+	}
+	
+	
 	
 	
 

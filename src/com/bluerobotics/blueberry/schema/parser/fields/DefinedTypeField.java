@@ -37,7 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class DefinedTypeField extends ParentField {
 	public DefinedTypeField(SymbolName name, ScopeName type, String comment, Coord c) {
-		super(name, type, TypeId.DEFERRED, comment, c);
+		super(name, type, TypeId.DEFINED, comment, c);
 		
 	}
 	

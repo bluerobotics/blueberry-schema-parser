@@ -152,19 +152,15 @@ public class SymbolName {
 		boolean firstTime = true;
 		for(String s : m_name) {
 			if((!upperNotLower) && firstTime) {
-				result += s.substring(0, 1).toLowerCase();
+				result += s.toLowerCase();
 			} else {
-				result += s.substring(0, 1).toUpperCase();
+				result += toFirstCap(s);
 			}
 			firstTime = false;
-			if(s.length() > 1) {
-				result += s.substring(1).toLowerCase();
-			} else {
-
-			}
 		}
 		return result;
 	}
+	
 	/**
 	 * Make a new SymbolName by adding the specified array of Strings to the end of this SymbolName
 	 * @param ss
@@ -247,6 +243,33 @@ public class SymbolName {
 
 	public String toLowerCamel() {
 		return toCamel(false);
+	}
+	private String toFirstCap(String s) {
+		if(s.length() == 0) {
+			return "";
+		}
+		String result = s.substring(0,1).toUpperCase();
+		if(s.length() > 1) {
+			result += s.substring(1);
+		}
+		return result;
+		
+	}
+	/**
+	 * Creates a string of the capitalized, separate words of this name, separated by spaces
+	 * @return
+	 */
+	public String toTitle() {
+		String result = "";
+		boolean firstTime = true;
+		for(String s : m_name) {
+			if(!firstTime) {
+				result += " ";
+			}
+			result += toFirstCap(s);
+			firstTime = false;
+		}
+		return result;
 	}
 
 	public String toUpperCamel() {

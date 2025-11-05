@@ -29,9 +29,9 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * Note that in this case, the name of the array type is the field name. The type that this field is an array of is the type name
  */
 public class ArrayField extends ParentField {
-	private final int m_number;
+	private final int[] m_number;
 
-	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int number, String comment, Coord c) {
+	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int[] number, String comment, Coord c) {
 		super(name, typeName, TypeId.ARRAY, comment, c);
 		m_number = number;
 	}
@@ -39,7 +39,7 @@ public class ArrayField extends ParentField {
 	 * the size of this array, i.e. the number of elements
 	 * @return
 	 */
-	public int getNumber() {
+	public int[] getNumber() {
 		return m_number;
 	}
 
@@ -57,7 +57,12 @@ public class ArrayField extends ParentField {
 	
 	@Override
 	public int getBitCount() {
-		return getNumber()*getBytesPerElement()*8;
+		int n = 1;
+		
+		for(int i : m_number) {
+			n *= i;
+		}
+		return n*getBytesPerElement()*8;
 	}
 	
 	@Override

@@ -101,14 +101,7 @@ public class BlueberryFieldPacker {
 	}
 
 	public void pack(ArrayField f) {
-		Field fc = f.getFirstChild();
-		pack(fc);
-		int m = fc.getByteCount();
-		int n = f.getNumber() - 1;
-		//could probably do this with math but this should work too
-		for(int i = 0; i < n; ++i) {
-			findAndAssignSpot(m);
-		}
+		findAndAssignSpot(f.getByteCount());
 		
 	}
 	public void pack(EnumField f) {

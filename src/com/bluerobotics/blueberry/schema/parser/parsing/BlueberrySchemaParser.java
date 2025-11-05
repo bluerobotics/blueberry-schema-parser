@@ -803,16 +803,54 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//this is the original type that this typedef is based on 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//this could also be the original type depending on whether it's a base type or not
 		SymbolNameToken name = m_tokens.relative(2, SymbolNameToken.class);//name of new type
-		IdentifierToken squareBracketStart = m_tokens.relativeId(3, TokenIdentifier.SQUARE_BRACKET_START);
-	
 		
-		
+		//check for valid name and type
 		if(name == null) {
 			throw new SchemaParserException("No type name specified for this typedef.",it.getEnd());
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
 		ScopeName scopedName = m_module.getLast().addLevel(name.getSymbolName());
+		
+		
+		//check for arrays and keep track of the dimensions
+		ArrayList<Integer> dims = new ArrayList<>();
+		boolean keepGoing = true;
+		
+		IdentifierToken squareBracketStart  = null;	
+		NumberToken arraySize = null;
+		SymbolNameToken arraySizeConst = null;	
+		IdentifierToken squareBracketEnd = null;
+		Token lastValidEnd = name;
+		
+		int i = 3;
+		
+		while(keepGoing) {
+			squareBracketStart = m_tokens.relativeId(i, TokenIdentifier.SQUARE_BRACKET_START);
+			arraySize = m_tokens.relative(i + 1, NumberToken.class);
+			arraySizeConst = m_tokens.relative(i + 1,SymbolNameToken.class);
+			squareBracketEnd = m_tokens.relativeId(i + 2, TokenIdentifier.SQUARE_BRACKET_END);
+			i += 3;
+			
+			
+			if(squareBracketStart != null) {
+				if(squareBracketEnd == null) {
+					throw new SchemaParserException("Starting square bracket does not have a closing bracket.", squareBracketStart.getEnd());
+				} else if(arraySize == null && arraySizeConst == null) {
+					throw new SchemaParserException("Array definition needs a size specified.", squareBracketStart.getEnd());
+				}
+				
+				
+				int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(arraySizeConst.getSymbolName(), getImports(true));
+				dims.add(n);
+				lastValidEnd = squareBracketEnd;
+				
+			} else {
+				keepGoing = false;
+			}
+		}
+		
+		
 		
 		if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
 			throw new SchemaParserException("Typedef doesn't work with Strings yet.", btt.getStart());
@@ -821,7 +859,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		TypeId id = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.DEFERRED;
 		
 		ParentField pf;
-		if(squareBracketStart == null) {
+		if(dims.size() == 0) {
 		
 			//this is a normal base type
 			pf = new DefinedTypeField(null, scopedName, m_lastComment, it.getEnd());
@@ -829,27 +867,21 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 			pf.setFileName(m_fileName);
 			
-			m_tokens.setIndex(btt != null ? btt : typeName );
+			
 
 
 		} else {
+			
 			//this is an array type
-			NumberToken arraySize = m_tokens.relative(4, NumberToken.class);
-			SymbolNameToken arraySizeConst = m_tokens.relative(4,SymbolNameToken.class);
-			IdentifierToken squareBracketEnd = m_tokens.relativeId(5, TokenIdentifier.SQUARE_BRACKET_END);
-			//this is an array
-			if(squareBracketEnd == null) {
-				throw new SchemaParserException("No closing square-bracket found.",squareBracketStart.getEnd());
-			} else if(arraySize == null && arraySizeConst == null) {
-				throw new SchemaParserException("No valid array size specified.",squareBracketStart.getEnd());
+
+		
+			int[] ds = new int[dims.size()];
+			for(int j = 0; j < dims.size(); ++j) {
+				ds[j] = dims.get(j);
 			}
-			//FieldName name, FieldName typeName, TypeId typeId, int number, String comment
-
-			int n = arraySize != null ? arraySize.getNumber().asInt() : lookupConstInt(arraySizeConst.getSymbolName(), getImports(true));
-
-			pf = new ArrayField(null, scopedName, id, n, m_lastComment, name.getEnd());
+			pf = new ArrayField(null, scopedName, id, ds, m_lastComment, name.getEnd());
 			pf.setFileName(m_fileName);
-			m_tokens.setIndex(squareBracketEnd);
+			
 
 
 		}
@@ -864,6 +896,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		m_lastComment = null;
+		m_tokens.setIndex(lastValidEnd);
 
 
 	}

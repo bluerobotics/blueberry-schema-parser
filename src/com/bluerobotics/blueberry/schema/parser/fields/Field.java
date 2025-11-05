@@ -113,6 +113,15 @@ public interface Field extends ThingFromFile {
 	public int getNextIndex();
 	
 	public boolean inScope(ScopeName s);
+	boolean isNamed();
+	/**
+	 * Convenience method to cast as specified type.
+	 * 
+	 * @param <T>
+	 * @param c
+	 * @return null if this type does not match the specified one
+	 */
+	public <T extends Field> T asType(Class<T> c);
 
 
 }
