@@ -230,9 +230,33 @@ public abstract class AbstractField implements Field {
 	}
 	
 	
-	
-	
-
+	public <T extends ParentField> T getAncestor(Class<T> c) {
+		T result = null;
+		Field f = this;
+		while(f != null && result == null) {
+			f = f.getParent();
+			if(c.isInstance(f)) {
+				result = c.cast(c);
+			}
+		}
+		return result;
+	}
+	/**
+	 * traverses upward through this fields parent hierarchy until a field of the specified class is found
+	 * Resulting list is ordered from most distant ancestor in index 0 and this field in spot (n - 1) where n is the size of the list
+	 */
+	public <T extends ParentField> List<Field> getAncestors(Class<T> c){
+		ArrayList<Field> result = new ArrayList<>();
+		Field f = this;
+		while(f != null) {
+			result.add(0, f);
+			if(c.isInstance(f)) {
+				break;
+			}
+			f = f.getParent();
+		}
+		return result;
+	}
 
 
 

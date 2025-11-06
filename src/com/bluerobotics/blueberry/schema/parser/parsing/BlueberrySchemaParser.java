@@ -365,7 +365,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m_tokens.remove(s);
 					m_tokens.remove(tName);
 				} else if(tScope == null && tName != null){
-					ScopeName sn = ScopeName.makeRoot(SEP).addLevel(tName.getSymbolName());
+					ScopeName sn = ScopeName.makeRoot(SEP).addLevelBelow(tName.getSymbolName());
 					ScopeNameToken swt = new ScopeNameToken(s.getStart(), tName.getEnd(), sn);
 
 					m_tokens.replace(s, swt);
@@ -586,7 +586,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(nameToken == null) {
 			throw new SchemaParserException("Import statement does not have a name specified", null);
 		}
-		m_imports.add(ScopeName.wrap(nameToken.getSymbolName(), SEP));
+		ScopeName scope = ScopeName.wrap(nameToken.getSymbolName(), SEP);
+		if(!scope.isAbsolute()) {
+			scope = scope.addRoot();
+		}
+		m_imports.add(scope);
 		m_tokens.setIndex(nameToken);
 	}
 	/**
@@ -605,7 +609,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceStart == null) {
 			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
 		}
-		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevelBelow(nameToken.getSymbolName());
 
 
 		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment, it.getStart());
@@ -637,7 +641,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceEnd == null) {
 			throw new SchemaParserException("Message statement has no closing brace.", braceStart.getEnd());
 		}
-		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevelBelow(nameToken.getSymbolName());
 
 
 		MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment, it.getEnd());
@@ -743,7 +747,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
 		}
 		m_tokens.setIndex(angleBracketEnd);
-		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevelBelow(nameToken.getSymbolName());
 		SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
 		sf.setFileName(m_fileName);
 		sf.add(cf);
@@ -810,7 +814,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		ScopeName scopedName = m_module.getLast().addLevel(name.getSymbolName());
+		ScopeName scopedName = m_module.getLast().addLevelBelow(name.getSymbolName());
 		
 		
 		//check for arrays and keep track of the dimensions
@@ -937,7 +941,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		TypeId bt = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.UINT32;
-		ScopeName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+		ScopeName name = m_module.getLast().addLevelBelow(nameToken.getSymbolName());
 		EnumField et = new EnumField(SymbolName.EMPTY, name, bt, m_lastComment, enumT.getEnd());
 		et.setFileName(m_fileName);
 		m_lastComment = null;
@@ -1000,7 +1004,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
 
-			SymbolName fn = m_module.getLast().addLevel(nvt.getSymbolName());
+			SymbolName fn = m_module.getLast().addLevelBelow(nvt.getSymbolName());
 
 			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), m_lastComment);
 			c.setFileName(m_fileName);
@@ -1012,7 +1016,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(equals == null) {
 				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
 			}
-			SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
+			SymbolName name = m_module.getLast().addLevelBelow(nameToken.getSymbolName());
 			StringConstant c = new StringConstant(name, string.getString(), m_lastComment);
 			c.setFileName(m_fileName);
 			m_lastComment = null;
@@ -1042,7 +1046,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(braceEnd == null) {
 				throw new SchemaParserException("Module statement open brace is never closed.", braceStart.getEnd());
 			}
-			m_module.add(m_module.getLast().addLevel(moduleName.getSymbolName()));
+			m_module.add(m_module.getLast().addLevelBelow(moduleName.getSymbolName()));
 			m_moduleEnd.add(braceEnd);
 			
 			m_tokens.setIndex(braceStart);

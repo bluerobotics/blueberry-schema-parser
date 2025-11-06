@@ -39,10 +39,14 @@ public class ScopeName extends SymbolName {
 	private ScopeName(Case c, String separator, List<String> ss) {
 		this(c, separator, ss.toArray(new String[ss.size()]));
 	}
-	protected ScopeName makeFromSymbols(List<SymbolName> sns) {
+	protected ScopeName makeFromSymbols(List<SymbolName> sns, String separator) {
 		
 		ArrayList<String> result = new ArrayList<>();
+
 		for(SymbolName sn : sns) {
+			if(result.size() != 0) {
+				result.add(separator);
+			}
 			result.addAll(Arrays.asList(sn.m_name));
 		}
 		return new ScopeName(getCase(), m_separator, result);
@@ -50,6 +54,8 @@ public class ScopeName extends SymbolName {
 	public static ScopeName wrap(SymbolName sn, String separator) {
 		if(sn instanceof ScopeName) {
 			return (ScopeName)sn;
+		} else if(sn == null) {
+			return null;
 		}
 		return new ScopeName(sn.getCase(), separator, sn.m_name);
 	}
@@ -109,26 +115,35 @@ public class ScopeName extends SymbolName {
 	 * @param scope
 	 * @return
 	 */
-	public ScopeName addLevel(SymbolName scope) {
+	public ScopeName addLevelBelow(SymbolName scope) {
 		ScopeName result = this;
 		ScopeName s = ScopeName.wrap(scope, m_separator);
-		if(scope != null) {
+		if(scope == null || scope.isEmpty()) {
+		} else if(isEmpty()) {
+			result = s;
+		} else {
 			List<SymbolName> nms = splitScope();
-			int n = nms.size();
-			if(n > 0) {
-				if(nms.get(0).toString().equals(m_separator) && n == 1) {
-					
-				} else {
-					nms.add(new SymbolName(Case.UNSPECIFIED, m_separator));
-				}
-			
-			}
-			nms.add(scope);
-			result = makeFromSymbols(nms);
+			nms.addAll(s.splitScope());
+		
+			result = makeFromSymbols(nms, m_separator);
 		}
 		return result;
 	}
-	
+	/**
+	 * adds a new level of scope to the start (left) of this ScopeName
+	 * @param scope
+	 * @return
+	 */
+	public ScopeName addLevelAbove(SymbolName scope) {
+		ScopeName result = this;
+		ScopeName s = ScopeName.wrap(scope, m_separator);
+		if(s != null) {
+			result = s.addLevelBelow(this);	
+		}
+		
+		
+		return result;
+	}
 	public boolean isAbsolute() {
 		boolean result = false;
 		if(m_name.length > 0) {
@@ -158,7 +173,7 @@ public class ScopeName extends SymbolName {
 			result = equals(name);
 		} else {
 			for(ScopeName n : imports) {
-				ScopeName nn = n.addLevel(name);
+				ScopeName nn = n.addLevelBelow(name);
 				if(nn.equals(this)) {
 					result = true;
 					break;
@@ -172,7 +187,12 @@ public class ScopeName extends SymbolName {
 		return new ScopeName(Case.LOWER_SNAKE, separator, separator);
 	}
 	public ScopeName addRoot() {
-		return wrap(prepend(m_separator), m_separator);
+		ScopeName result = this;
+	
+		if(!isAbsolute()) {
+			result = wrap(prepend(m_separator), m_separator);
+		}
+		return result;
 	}
 	/**
 	 * Removes any elements that occur to the left of the last separator. It also removes the separator.
@@ -193,7 +213,7 @@ public class ScopeName extends SymbolName {
 		return wrap(make(result), m_separator);
 	}
 	public static ScopeName combine(String separator, SymbolName sn1, SymbolName sn2) {
-		return ScopeName.wrap(sn1, separator).addLevel(sn2);
+		return ScopeName.wrap(sn1, separator).addLevelBelow(sn2);
 	}
 	public String toString() {
 		List<SymbolName> sns = splitScope();
@@ -205,6 +225,19 @@ public class ScopeName extends SymbolName {
 		}
 		result += ")";
 		return result;
+	}
+	/**
+	 * Strips out the separators and makes a symbol name of all other terms
+	 * @return
+	 */
+	public SymbolName toSymbolName() {
+		ArrayList<String> result = new ArrayList<>();
+		for(String s : m_name) {
+			if(!s.equals(m_separator)) {
+				result.add(s);
+			}
+		}
+		return SymbolName.make(result);
 	}
 
 

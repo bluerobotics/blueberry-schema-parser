@@ -123,5 +123,6 @@ public interface Field extends ThingFromFile {
 	 */
 	public <T extends Field> T asType(Class<T> c);
 
-
+	public <T extends ParentField> T getAncestor(Class<T> c);
+	public <T extends ParentField> List<Field> getAncestors(Class<T> c);
 }

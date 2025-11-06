@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
@@ -36,12 +37,11 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
-import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
-import com.bluerobotics.blueberry.schema.parser.constants.Number;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  * This class implements the autogeneration of C code based on a parsed field structure
@@ -114,9 +114,15 @@ public class CWriter extends SourceWriter {
 //
 		addSectionDivider("Function Prototypes");
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			addMessageAdder(mf);
+			makeMessageAdderSignature(mf, true);
 		});
-		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			mf.getChildren().forEach(f -> {
+				
+				makeMessageGetterSignatures(f, true);	
+			}, true);
+			
+		});
 		
 		
 //		addBytesPerRepeatGetter(top, true);
@@ -148,40 +154,100 @@ public class CWriter extends SourceWriter {
 		addLine("#define "+mf.getTypeName().deScope().append("key").toUpperSnake() + "("+n.asInt()+")");
 	}
 	private String m_paramList = "";
-	private void addMessageAdder(MessageField mf) {
+	private void makeMessageAdderSignature(MessageField mf, boolean semiNotBrace) {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("A function to add a "+mf.getTypeName().deScope().toTitle());
 		comments.add(mf.getComment());
-		m_paramList = "";
+		comments.add("@param message - the message buffer to add the message to");
+		m_paramList = "Bb * message";
+		ArrayList<Field> fs = new ArrayList<>();
+		
 		mf.getChildren().forEach(f -> {
 			
 			String tp = getType(f);
-			if(tp != null) {
-				if(m_paramList.length() > 0) {
-					m_paramList += ",";
-				}
+			
+			
+		
+			if(tp != null && f.getTypeId() != TypeId.STRING) {
+				fs.add(f);
 				
-				String stuff = "";
-				ParentField pf = f.getParent();
-				if(pf instanceof ArrayField) {
-					for(int i : pf.asType(ArrayField.class).getNumber()) {
-						stuff += "[static " + i + "]";	
-					}
-					
-				
-				}
-				String paramName = makeName(f, false).toLowerCamel();
-				m_paramList += " " + getType(f)+" " + paramName+stuff;
-				
-				comments.add("@param " + paramName + " " + getFieldComment(f));
+			} else if(f instanceof BoolFieldField) {
+				fs.addAll(f.asType(BoolFieldField.class).getChildren().getList());
 			}
-		}, true);
+		}, false);
+		
+		for(Field f : fs) {
+			String stuff = "";
+			ParentField pf = f.getParent();
+			if(m_paramList.length() > 0) {
+				m_paramList += ", ";
+			}
+			
+			String paramName = makeName(f, false).toLowerCamel();
+			String type = getType(f);
+			if(f instanceof EnumField) {
+				type = f.getTypeName().deScope().toUpperCamel();
+			}
+			m_paramList += type+" " + paramName+stuff;
+			
+			comments.add("@param " + paramName + " " + getFieldComment(f));
+		}
+	
+		
+	
 		
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
-		addLine("void "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+");");
+		addLine("void "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (semiNotBrace ? ";" : "{"));
 	}
+	
+	private void makeMessageGetterSignatures(Field f, boolean semiNotBrace) {
+		String tf = getType(f);
+		if(tf == null) {
+			return;
+		}
+		List<Field> fs = f.getAncestors(MessageField.class);
+	
+		ScopeName name = makeScopeName(f);
+		String comment[] = {"A getter for the "+f.getName()+" field", f.getComment()};
+		
+		addDocComment(comment);
+		addLine(tf + " get"+name.toSymbolName().toUpperCamel()+"(Bb * message, "+")"+(semiNotBrace ? ";" : "{"));
+	
+		
+	
+		
+		
+	}
+	/**
+	 * Traverse the parent hierarchy of this field until a message field is reached
+	 * Construts a scope name from all the names up to the message and prepends the message type
+	 * the rightmost scope level should be the field name
+	 * the leftmost scope level should be the message name
+	 * @param f
+	 * @return
+	 */
+	private ScopeName makeScopeName(Field f) {
+		ScopeName result = ScopeName.wrap(SymbolName.EMPTY, ":");
+		MessageField mf = null;
+		Field ft = f;
+		while(ft != null && mf == null) {
+			SymbolName n = ft.getName();
+			result = result.addLevelAbove(n);
+			ft = ft.getParent();
+			mf = ft.asType(MessageField.class);
+			
+		}
+		
+		if(mf == null) {
+			throw new RuntimeException("Could not determine the message that this field is part of "+f);
+		}
+		result = result.addLevelAbove(mf.getTypeName().deScope());
+		return result;
+	}
+	
+
 	
 	private String getFieldComment(Field f) {
 		String result = "";
@@ -241,15 +307,20 @@ public class CWriter extends SourceWriter {
 			case UINT8:
 				result = "uint8_t";
 				break;
+			case DEFINED:
+				//check if it's a defined type of a base type
+				Field f2 = f;
+				while(f2 instanceof DefinedTypeField) {
+					f2 = ((DefinedTypeField)f2).getFirstChild();
+				}
+				result = getType(f2);
+				break;
 			case ARRAY:
 			case BOOLFIELD:
 			case DEFERRED:
 			case MESSAGE:
 			case SEQUENCE:
 			case STRUCT:
-			case DEFINED:
-
-				
 				result = null;
 				break;
 			
@@ -349,6 +420,12 @@ public class CWriter extends SourceWriter {
 
 
 		addSectionDivider("Source");
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			makeMessageAdderSignature(mf, false);
+			addLine("}");
+		});
+		
 
 //		addHeaderFieldGetters(top,false);
 //
