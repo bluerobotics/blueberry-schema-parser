@@ -145,6 +145,9 @@ public abstract class SourceWriter {
 		addLine("//"+c);
 	}
 
+	protected void addDocComment(List<String> cs) {
+		addDocComment(cs.toArray(new String[cs.size()]));
+	}
 	protected void addDocComment(String... cs) {
 		if(cs != null) {
 			addBlockComment(true, cs);

@@ -119,7 +119,8 @@ public class CWriter extends SourceWriter {
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			mf.getChildren().forEach(f -> {
 				
-				makeMessageGetterSignatures(f, true);	
+				makeMessageGetterSetterSignatures(f, true, true);
+				makeMessageGetterSetterSignatures(f, false, true);
 			}, true);
 			
 		});
@@ -161,20 +162,19 @@ public class CWriter extends SourceWriter {
 		comments.add("@param message - the message buffer to add the message to");
 		m_paramList = "Bb * message";
 		ArrayList<Field> fs = new ArrayList<>();
-		
+		//first make a list of all top-level fields that are not strings or parent fields
+		//but also add contents of boolfieldfields
 		mf.getChildren().forEach(f -> {
 			
 			String tp = getType(f);
 			
 			
 		
-			if(tp != null && f.getTypeId() != TypeId.STRING) {
+			if(tp != null && f.getTypeId() != TypeId.STRING && getArrays(f).size() == 0) {
 				fs.add(f);
 				
-			} else if(f instanceof BoolFieldField) {
-				fs.addAll(f.asType(BoolFieldField.class).getChildren().getList());
-			}
-		}, false);
+			} 
+		}, true);
 		
 		for(Field f : fs) {
 			String stuff = "";
@@ -190,7 +190,7 @@ public class CWriter extends SourceWriter {
 			}
 			m_paramList += type+" " + paramName+stuff;
 			
-			comments.add("@param " + paramName + " " + getFieldComment(f));
+			comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
 		}
 	
 		
@@ -201,25 +201,91 @@ public class CWriter extends SourceWriter {
 		addDocComment(comments.toArray(new String[comments.size()]));
 		addLine("void "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (semiNotBrace ? ";" : "{"));
 	}
-	
-	private void makeMessageGetterSignatures(Field f, boolean semiNotBrace) {
+	/**
+	 * make getters and settings for all base types except strings
+	 * @param f
+	 * @param getNotSet
+	 * @param semiNotBrace
+	 * @return true if a line was added
+	 */
+	private boolean makeMessageGetterSetterSignatures(Field f, boolean getNotSet, boolean semiNotBrace) {
 		String tf = getType(f);
-		if(tf == null) {
-			return;
+		if(tf == null || f.getTypeId() == TypeId.STRING) {
+			return false;
 		}
-		List<Field> fs = f.getAncestors(MessageField.class);
+		List<ArrayField> as = getArrays(f);
+		if((!getNotSet) && as.size() == 0) {
+			return false;
+		}
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("A "+(getNotSet ? "g" : "s") + "etter for the "+fn+" field");
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+		
+//		List<Field> fs = f.getAncestors(MessageField.class);
+		String paramList = "Bb * message";
+		int j = 0;
+		for(ArrayField af : as) {
+			int[] ns = af.getNumber();
+			for(int i = 0; i < ns.length; ++i) {
+				int n = ns[i];
+				comments.add("@param i"+j+" - index "+i+" of "+ af.getName().toLowerCamel()+" array.Valid values: 0 to "+(n - 1));
+				paramList += ", int i"+j;
+				++j;
+				
+			}
+		}
+		if(!getNotSet) {
+			paramList += ", "+ tf + " "+fn;
+			
+			comments.add("@param "+fn+prependHyphen(f.getComment()));
+			
+		}
+		
+
 	
 		ScopeName name = makeScopeName(f);
-		String comment[] = {"A getter for the "+f.getName()+" field", f.getComment()};
-		
-		addDocComment(comment);
-		addLine(tf + " get"+name.toSymbolName().toUpperCamel()+"(Bb * message, "+")"+(semiNotBrace ? ";" : "{"));
-	
-		
-	
 		
 		
+		addDocComment(comments);
+		String line = (getNotSet ? tf + " get" : "void set")+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(semiNotBrace ? ";" : "{");
+		addLine(line);	
+		return true;
 	}
+	
+
+	private String prependHyphen(String s) {
+		String result = "";
+		if(s != null && !s.isBlank()) {
+			result = " - "+s;
+		}
+		return result;
+	}
+	
+	/**
+	 * Scans upward from the specified field to a message field and note any array fields along the way
+	 * @param f
+	 * @return
+	 */
+	private List<ArrayField> getArrays(Field f) {
+		ArrayList<ArrayField> result = new ArrayList<>();
+		Field pf = f;
+		while(pf != null) {
+			if(pf instanceof ArrayField) {
+				result.add((ArrayField)pf);
+			}
+			pf = pf.getParent();
+		}
+		return result;
+	}
+
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
 	 * Construts a scope name from all the names up to the message and prepends the message type
@@ -229,7 +295,7 @@ public class CWriter extends SourceWriter {
 	 * @return
 	 */
 	private ScopeName makeScopeName(Field f) {
-		ScopeName result = ScopeName.wrap(SymbolName.EMPTY, ":");
+		ScopeName result = ScopeName.wrap(SymbolName.EMPTY);
 		MessageField mf = null;
 		Field ft = f;
 		while(ft != null && mf == null) {
@@ -424,6 +490,19 @@ public class CWriter extends SourceWriter {
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			makeMessageAdderSignature(mf, false);
 			addLine("}");
+		});
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			mf.getChildren().forEach(f -> {
+				
+				if(makeMessageGetterSetterSignatures(f, true, false)) {
+					addLine("}");
+				}
+				if(makeMessageGetterSetterSignatures(f, false, false)) {
+					addLine("}");
+				}
+			}, true);
+			
 		});
 		
 
