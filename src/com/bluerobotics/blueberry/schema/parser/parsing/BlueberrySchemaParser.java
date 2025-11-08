@@ -175,18 +175,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			processDeferredFields(m_defines.getIterator(), m_defines);	
 			processDeferredFields(m_messages.getIterator(), m_defines);
 			
-			
-			
-			
-			
 			applyDeferredParameters(m_defines);
 			applyDeferredParameters(m_messages);
 			
-			computeIndeces();
-			
 			computeParents(m_defines, null);
 			computeParents(m_messages, null);
-
+			
+			computeIndeces();
 
 		} catch (SchemaParserException e) {
 			e.printStackTrace();

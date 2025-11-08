@@ -79,7 +79,7 @@ public class EnumField extends AbstractField {
 	public String toString() {
 		String result = getClass().getSimpleName();
 		result += "(";
-		result += getTypeName().toUpperCamel();
+		result += getTypeName();
 		result += ")";
 		return result;
 	}

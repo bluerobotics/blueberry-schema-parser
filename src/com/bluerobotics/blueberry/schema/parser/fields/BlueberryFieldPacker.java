@@ -67,6 +67,7 @@ public class BlueberryFieldPacker {
 
 	private void pack(DefinedTypeField f) {		
 		pack(f.getFirstChild());
+		f.setIndex(f.getFirstChild().getIndex());
 	}
 	
 	public static void pack(MessageField f) {
@@ -74,11 +75,16 @@ public class BlueberryFieldPacker {
 		//first make sure all bools are contained in boolfield fields.
 		bfp.organizeBools(f);
 		//now go through all children and compute the indeces
-		f.getChildren().forEach(ft -> bfp.pack(ft));
+		f.getChildren().forEach(ft -> {
+			bfp.pack(ft);
+		});
 	}
 
 	private void pack(StructField f) {
-		f.getChildren().forEach(ft -> pack(ft));
+		f.getChildren().forEach(ft -> {
+			pack(ft);
+		});
+		f.setIndex(f.getFirstChild().getIndex());
 	}
 	private void pack(SequenceField f) {
 		BlueberryFieldPacker bfp = new BlueberryFieldPacker();
@@ -86,20 +92,20 @@ public class BlueberryFieldPacker {
 		bfp.pack(c);
 		
 		
-		f.setIndex(findAndAssignSpot(f.getByteCount()));
+		assignIndex(f);
 		
 	}
 	private void pack(StringField f) {
-		f.setIndex(findAndAssignSpot(f.getByteCount()));
+		assignIndex(f);
 	}
 	private void pack(BoolFieldField f) {
-		f.setIndex(findAndAssignSpot(1));
+		assignIndex(f);
 	}
 	private void pack(BaseField f) {
 		if(f.getBitCount() == 1) {
 			throw new RuntimeException("All bit fields should have been moved out of the message by now and added to a bool field field.");
 		} else {
-			f.setIndex(findAndAssignSpot(f.getByteCount()));
+			assignIndex(f);
 		}
 	}
 
@@ -107,14 +113,17 @@ public class BlueberryFieldPacker {
 		BlueberryFieldPacker bfp = new BlueberryFieldPacker();
 		Field c = f.getFirstChild();
 		bfp.pack(c);
-		findAndAssignSpot(f.getByteCount());
+		assignIndex(f);
 		
 	}
 	private void pack(EnumField f) {
-		f.setIndex(findAndAssignSpot(f.getByteCount()));
+		assignIndex(f);
 	}
 	
-	private int findAndAssignSpot(int byteNum) {
+
+	private void assignIndex(Field f) {
+		int byteNum = f.getByteCount();
+		int alignment = f.getMinAlignment();
 		//TODO: check that bytenum is only either 1, 2, 4, 8
 		
 		int i = 0;
@@ -122,7 +131,7 @@ public class BlueberryFieldPacker {
 			if(isEmpty(i, byteNum)) {
 				break;
 			} else {
-				i += byteNum;
+				i += alignment;
 			}
 		}
 		
@@ -131,7 +140,6 @@ public class BlueberryFieldPacker {
 		while(m_bytes.size() < i) {
 			m_bytes.add(false);
 		}
-		
 		//fill in assigned bytes
 		for(int j = i; j < byteNum + i; ++j) {
 			if(j == m_bytes.size()) {
@@ -142,8 +150,12 @@ public class BlueberryFieldPacker {
 				m_bytes.set(j, true);
 			}
 		}
-		return i;
+		
+		//now set the result as the index to the field in question
+		f.setIndex(i);
 	}
+
+
 	private boolean isEmpty(int i, int byteNum) {
 		boolean result = true;
 		for(int j = 0; j < byteNum; ++j) {

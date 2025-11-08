@@ -43,11 +43,7 @@ public class DefinedTypeField extends ParentField {
 	
 	@Override
 	public int getBitCount() {
-		int result = -1;
-		if(getChildren().size() > 0) {
-			result = getChildren().get(0).getBitCount();
-		}
-		return result;
+		return getFirstChild().getBitCount();
 	}
 	@Override
 	public void add(Field f) {

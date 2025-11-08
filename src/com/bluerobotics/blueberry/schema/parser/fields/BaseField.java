@@ -43,6 +43,18 @@ public class BaseField extends AbstractField {
 	public int getPaddedByteCount() {
 		return getByteCount();
 	}
+	@Override
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		result += getTypeId().getTypeName();
+		if(getName() != null) {
+			result += " " + getName();
+		}
+		result += ")";
+		
+		return result;
+	}
 
 
 	

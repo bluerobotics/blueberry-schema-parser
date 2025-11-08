@@ -109,13 +109,7 @@ public abstract class ParentField extends AbstractField {
 	}
 	
 
-	@Override
-	public int getIndex() {
-		return getFirstChild().getIndex();
-	}
+	
 
-	@Override
-	public int getNextIndex() {		
-		return getLastChild().getNextIndex();
-	}
+	
 }
