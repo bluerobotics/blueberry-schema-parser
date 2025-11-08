@@ -64,6 +64,16 @@ public class DefinedTypeField extends ParentField {
 		f.copyChildrenFrom(this);
 		return f;
 	}
+
+	@Override
+	public int getMinAlignment() {
+		return getFirstChild().getMinAlignment();
+	}
+
+	@Override
+	public int getPaddedByteCount() {
+		return getFirstChild().getPaddedByteCount();
+	}
 	
 
 

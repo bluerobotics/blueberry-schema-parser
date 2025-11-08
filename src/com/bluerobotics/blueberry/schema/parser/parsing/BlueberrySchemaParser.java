@@ -252,8 +252,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				}
 			}
 				
-			BlueberryFieldPacker p = new BlueberryFieldPacker();
-			p.pack(mf);
+			
+			
+			BlueberryFieldPacker.pack(mf);
+			
 		});
 		
 	}

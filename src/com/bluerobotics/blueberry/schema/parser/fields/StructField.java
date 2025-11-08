@@ -37,7 +37,27 @@ public class StructField extends ParentField {
 		result.copyChildrenFrom(this);
 		return result;
 	}
+	@Override
+	public int getMinAlignment() {
+		int result = 1;
+		for(Field f : getChildren().getList()) {
+			int m = f.getMinAlignment();
+			if(m > result) {
+				result = m;
+			}
+		}
+		return result;
+	}
+	@Override
+	public int getPaddedByteCount() {
+		int result = getByteCount();
+		int m = result % getMinAlignment();
+		result += m;
+		return result;
+	}
 	
-
+	
+	
+	
 
 }

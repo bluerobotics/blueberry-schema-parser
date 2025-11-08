@@ -43,17 +43,7 @@ public class ArrayField extends ParentField {
 		return m_number;
 	}
 
-	/**
-	 * gets the number of bytes per element of this array
-	 * @return
-	 */
-	public int getBytesPerElement() {
-		int result = -1;
-		if(getChildren().size() > 0) {
-			result = getChildren().get(0).getByteCount();
-		}
-		return result;
-	}
+
 	
 	@Override
 	public int getBitCount() {
@@ -62,7 +52,7 @@ public class ArrayField extends ParentField {
 		for(int i : m_number) {
 			n *= i;
 		}
-		return n*getBytesPerElement()*8;
+		return n*getPaddedByteCount()*8;
 	}
 	
 	@Override
@@ -77,6 +67,14 @@ public class ArrayField extends ParentField {
 		ArrayField f = new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment(), getCoord());
 		f.copyChildrenFrom(this);
 		return f;
+	}
+	@Override
+	public int getMinAlignment() {
+		return getFirstChild().getMinAlignment();
+	}
+	@Override
+	public int getPaddedByteCount() {
+		return getFirstChild().getPaddedByteCount();
 	}
 
 

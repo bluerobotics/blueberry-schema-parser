@@ -50,6 +50,16 @@ public class BoolFieldField extends ParentField {
 			throw new RuntimeException("Can only add 1 bit fields to this type.");
 		}
 	}
+
+	@Override
+	public int getMinAlignment() {
+		return 0;
+	}
+
+	@Override
+	public int getPaddedByteCount() {
+		return 0;
+	}
 	
 	
 	

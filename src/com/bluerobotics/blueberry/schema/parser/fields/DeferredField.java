@@ -59,6 +59,17 @@ public class DeferredField extends AbstractField {
 		return result;
 	}
 
+	@Override
+	public int getMinAlignment() {
+		throw new RuntimeException("Cannot align a deferred field.");
+	}
+
+	@Override
+	public int getPaddedByteCount() {
+		throw new RuntimeException("Cannot align or pack a deferred field.");
+
+	}
+
 	
 	
 	

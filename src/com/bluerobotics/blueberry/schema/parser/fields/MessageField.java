@@ -53,4 +53,16 @@ public class MessageField extends ParentField {
 		return result;
 	}
 
+	@Override
+	public int getMinAlignment() {
+		return 4;
+	}
+	@Override
+	public int getPaddedByteCount() {
+		int result = getByteCount();
+		int m = result % getMinAlignment();
+		result += m;
+		return result;
+	}
+
 }

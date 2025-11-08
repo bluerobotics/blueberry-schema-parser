@@ -41,7 +41,7 @@ public class BlueberryFieldPacker {
 	 * Recursively computes the index of the specified field and all of its children
 	 * @param f
 	 */
-	public void pack(Field f) {
+	private void pack(Field f) {
 		if(f instanceof MessageField) {
 			pack((MessageField)f);
 		} else if(f instanceof StructField) {
@@ -65,34 +65,37 @@ public class BlueberryFieldPacker {
 		}
 	}
 
-	public void pack(DefinedTypeField f) {		
+	private void pack(DefinedTypeField f) {		
 		pack(f.getFirstChild());
 	}
 	
-	public void pack(MessageField f) {
-		//first make sure all bools are contained in bool field fields.
-		organizeBools(f);
+	public static void pack(MessageField f) {
+		BlueberryFieldPacker bfp = new BlueberryFieldPacker();
+		//first make sure all bools are contained in boolfield fields.
+		bfp.organizeBools(f);
 		//now go through all children and compute the indeces
-		f.getChildren().forEach(ft -> pack(ft));
+		f.getChildren().forEach(ft -> bfp.pack(ft));
 	}
 
-	public void pack(StructField f) {
+	private void pack(StructField f) {
 		f.getChildren().forEach(ft -> pack(ft));
 	}
-	public void pack(SequenceField f) {
+	private void pack(SequenceField f) {
+		BlueberryFieldPacker bfp = new BlueberryFieldPacker();
+		Field c = f.getFirstChild();
+		bfp.pack(c);
+		
+		
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
-		//TODO: pack children
-		BlueberryFieldPacker p = new BlueberryFieldPacker();
-		p.pack(f.getFirstChild());
 		
 	}
-	public void pack(StringField f) {
+	private void pack(StringField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
-	public void pack(BoolFieldField f) {
+	private void pack(BoolFieldField f) {
 		f.setIndex(findAndAssignSpot(1));
 	}
-	public void pack(BaseField f) {
+	private void pack(BaseField f) {
 		if(f.getBitCount() == 1) {
 			throw new RuntimeException("All bit fields should have been moved out of the message by now and added to a bool field field.");
 		} else {
@@ -100,11 +103,14 @@ public class BlueberryFieldPacker {
 		}
 	}
 
-	public void pack(ArrayField f) {
+	private void pack(ArrayField f) {
+		BlueberryFieldPacker bfp = new BlueberryFieldPacker();
+		Field c = f.getFirstChild();
+		bfp.pack(c);
 		findAndAssignSpot(f.getByteCount());
 		
 	}
-	public void pack(EnumField f) {
+	private void pack(EnumField f) {
 		f.setIndex(findAndAssignSpot(f.getByteCount()));
 	}
 	

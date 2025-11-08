@@ -43,4 +43,14 @@ public class StringField extends AbstractField {
 		return m_maxSize;
 	}
 
+	@Override
+	public int getMinAlignment() {
+		return 4;
+	}
+
+	@Override
+	public int getPaddedByteCount() {
+		return 4;
+	}
+
 }

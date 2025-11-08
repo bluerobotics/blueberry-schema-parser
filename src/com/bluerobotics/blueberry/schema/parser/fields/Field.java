@@ -125,4 +125,19 @@ public interface Field extends ThingFromFile {
 
 	public <T extends ParentField> T getAncestor(Class<T> c);
 	public <T extends ParentField> List<Field> getAncestors(Class<T> c);
+	/**
+	 * get the minimum byte alginment that this field requires
+	 * 1 .. can align on any byte, 
+	 * 2 .. must be aligned to an even byte
+	 * 4 .. must be aligned to a 32 bit word boundary
+	 * 8 .. must be aligned to a 64 bit word boundary 
+	 * @return
+	 */
+	public int getMinAlignment();
+	/**
+	 * This is the number of bytes that this field needs if it were to be placed end to end with itself
+	 * This is only useful for packing arrays and things
+	 * @return
+	 */
+	public int getPaddedByteCount();
 }

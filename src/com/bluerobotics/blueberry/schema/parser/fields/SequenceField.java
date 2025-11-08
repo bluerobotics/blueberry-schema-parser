@@ -47,4 +47,13 @@ public class SequenceField extends ParentField {
 	public int getLimit() {
 		return m_limit;
 	}
+
+	@Override
+	public int getMinAlignment() {	
+		return getFirstChild().getMinAlignment();
+	}
+	@Override
+	public int getPaddedByteCount() {
+		return getFirstChild().getPaddedByteCount();
+	}
 }

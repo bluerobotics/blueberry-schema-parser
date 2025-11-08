@@ -141,6 +141,16 @@ public class EnumField extends AbstractField {
 		}
 		return v;
 	}
+
+	@Override
+	public int getMinAlignment() {
+		return getByteCount();
+	}
+
+	@Override
+	public int getPaddedByteCount() {
+		return getByteCount();
+	}
 	
 	
 

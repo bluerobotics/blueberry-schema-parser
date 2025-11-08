@@ -35,6 +35,14 @@ public class BaseField extends AbstractField {
 	public Field makeInstance(SymbolName name) {
 		return new BaseField(name, getTypeId(), getComment(), getCoord());
 	}
+	@Override
+	public int getMinAlignment() {
+		return getBitCount()/8;
+	}
+	@Override
+	public int getPaddedByteCount() {
+		return getByteCount();
+	}
 
 
 	

@@ -172,7 +172,7 @@ public class CWriter extends SourceWriter {
 			
 			
 		
-			if(tp != null && f.getTypeId() != TypeId.STRING && getArraysOrSequences(f).size() == 0) {
+			if(tp != null && f.getTypeId() != TypeId.STRING && getIndeces(f).size() == 0) {
 				fs.add(f);
 				
 			} 
@@ -214,10 +214,10 @@ public class CWriter extends SourceWriter {
 		if(tf == null || f.getTypeId() == TypeId.STRING) {
 			return;
 		}
-		List<ParentField> ps = getArraysOrSequences(f);
-		HashMap<ParentField, String> indeces = new HashMap<>();
+		List<Index> pis = getIndeces(f);
+		
 		//don't need a setter if it's a simple field not in an array
-		if((!getNotSet) && ps.size() == 0) {
+		if((!getNotSet) && pis.size() == 0) {
 			return;
 		}
 		ArrayList<String> comments = new ArrayList<>();
@@ -234,26 +234,20 @@ public class CWriter extends SourceWriter {
 		
 //		List<Field> fs = f.getAncestors(MessageField.class);
 		String paramList = "Bb * message";
-		int j = 0;
-		for(ParentField pf : ps) {
-			ArrayField af = pf.asType(ArrayField.class);
-			SequenceField sf = pf.asType(SequenceField.class);
-			String type = af != null ? "array" : "sequence";
-			int[] ns = af != null ? af.getNumber() : new int[] {-1};
-			for(int i = 0; i < ns.length; ++i) {
-				int n = ns[i];
-				String index = "i"+j;
-				indeces.put(pf, index);
-				
-				if(n >= 0) {
-					comments.add("@param "+index+" - index "+i+" of "+ pf.getName().toLowerCamel()+" "+type+". Valid values: 0 to "+(n - 1));
-				} else {
-					comments.add("@param "+index+" - index "+i+" of "+ pf.getName().toLowerCamel()+" "+type+".");
-				}
-				paramList += ", int i"+j;
-				++j;
-				
+		for(Index pi : pis) {
+			
+			
+		
+			
+			if(pi.n >= 0) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pi.p.getName().toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pi.p.getName().toLowerCamel()+" "+pi.type+".");
 			}
+			paramList += ", int "+pi.name;
+	
+				
+			
 		}
 		if(!getNotSet) {
 			paramList += ", "+ tf + " "+fn;
@@ -280,6 +274,7 @@ public class CWriter extends SourceWriter {
 		return;
 	}
 	
+	
 
 	private String prependHyphen(String s) {
 		String result = "";
@@ -289,20 +284,69 @@ public class CWriter extends SourceWriter {
 		return result;
 	}
 	
+	private class Index {
+		final ParentField p;
+		final int i;
+		final int n;
+		final String type;
+		final boolean arrayNotSequence;
+		final String name;
+		int mult = -1;
+		Index(ParentField pf, int j, int num, String nm){
+			p = pf;
+			i = j;
+			n = num;
+			arrayNotSequence =  pf instanceof ArrayField;
+			type = arrayNotSequence ? "array" : "sequence";
+			name = nm;
+		}
+		
+	}
+	
 	/**
 	 * Scans upward from the specified field to a message field and note any array fields along the way
 	 * @param f
 	 * @return
 	 */
-	private List<ParentField> getArraysOrSequences(Field f) {
-		ArrayList<ParentField> result = new ArrayList<>();
+	private List<Index> getIndeces(Field f) {
+		
+		
+		
+		ArrayList<Index> result = new ArrayList<>();
 		Field pf = f;
+		int k = 0;
 		while(pf != null) {
-			if(pf instanceof ArrayField || pf instanceof SequenceField) {
-				result.add((ParentField)pf);
+			if(pf instanceof ArrayField) {
+				ArrayField af = (ArrayField)pf;
+				for(int i = 0; i < af.getNumber().length; ++i) {
+					result.add(new Index(af, i, af.getNumber()[i], "i"+k));
+					++k;
+				}
+			} else if(pf instanceof SequenceField) {
+				result.add(new Index((ParentField)pf, 0, -1, "i"+k));
+				++k;
 			}
 			pf = pf.getParent();
+			
 		}
+		
+		if(result.size() >= 3) {
+			System.out.println("Blah");
+		}
+		//now compute multipliers
+		int mult = 1;
+		Field last = null;
+		for(int j = result.size() - 1; j >= 0; --j) {
+			Index i = result.get(j);
+			if(last != i.p) {
+				mult = 1;
+				last = i.p;
+			} 
+			i.mult = mult;
+			mult *= i.n;
+		}
+		
+		
 		return result;
 	}
 
