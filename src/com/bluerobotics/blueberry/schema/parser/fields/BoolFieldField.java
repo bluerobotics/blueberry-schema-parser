@@ -53,13 +53,16 @@ public class BoolFieldField extends ParentField {
 
 	@Override
 	public int getMinAlignment() {
-		return 0;
+		return 1;
 	}
 
 	@Override
 	public int getPaddedByteCount() {
-		return 0;
+		return getByteCount();
 	}
+
+	
+	
 	
 	
 	

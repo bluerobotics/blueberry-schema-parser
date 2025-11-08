@@ -125,7 +125,9 @@ public class BlueberryFieldPacker {
 		int byteNum = f.getByteCount();
 		int alignment = f.getMinAlignment();
 		//TODO: check that bytenum is only either 1, 2, 4, 8
-		
+		if(alignment <= 0) {
+			throw new RuntimeException("Field alginement cannot be zero or less ("+alignment+") "+f);
+		}
 		int i = 0;
 		while(i < m_bytes.size()) {
 			if(isEmpty(i, byteNum)) {

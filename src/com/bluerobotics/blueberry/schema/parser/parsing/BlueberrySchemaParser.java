@@ -117,14 +117,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public void append(String filePath, String[] schemaLines) throws SchemaParserException {
 		//split into lines
 
-		Coord c = new Coord(filePath, 0,0, schemaLines);	/**
-		 * scan a range of tokens to resolve field allocaations in defined types
-		 * this will recurse and close all braces from deepest level outwards
-		 * @param start - the first index to scan
-		 * @param owner - the owner of the block of field allocations
-		 * @return the index of a closing brace token
-		 * @throws SchemaParserException
-		 */
+		Coord c = new Coord(filePath, 0,0, schemaLines);	
 
 
 		m_tokens.add(new FilePathToken(c, filePath));
