@@ -236,7 +236,7 @@ public abstract class AbstractField implements Field {
 		while(f != null && result == null) {
 			f = f.getParent();
 			if(c.isInstance(f)) {
-				result = c.cast(c);
+				result = c.cast(f);
 			}
 		}
 		return result;

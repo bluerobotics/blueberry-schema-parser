@@ -29,7 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class BoolFieldField extends ParentField {
 
-	protected BoolFieldField(Coord c) {
+	public BoolFieldField(Coord c) {
 		super(null, null, TypeId.BOOLFIELD, null, c);
 	}
 

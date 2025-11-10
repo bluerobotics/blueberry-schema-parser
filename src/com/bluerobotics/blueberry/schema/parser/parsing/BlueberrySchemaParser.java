@@ -35,6 +35,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueberryFieldPacker;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.DeferredField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
@@ -170,9 +171,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			applyDeferredParameters(m_defines);
 			applyDeferredParameters(m_messages);
+		
+			organizeBools(m_messages);
+
 			
 			computeParents(m_defines, null);
 			computeParents(m_messages, null);
+			
 			
 			computeIndeces();
 
@@ -188,6 +193,45 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	private void organizeBools(FieldList ms) {
+		ms.forEachOfType(MessageField.class, false, mf -> {
+			organizeBools(mf);
+		});
+	}
+	
+	/**
+	 * recurse through the specified parent and make sure all one bit fields are contained within bool field fields
+	 * @param pf
+	 */
+	private void organizeBools(ParentField pf) {
+		ListIterator<Field> li = pf.getChildren().getIterator();
+		BoolFieldField bff = null;
+		while(li.hasNext()) {
+			Field f = li.next();
+			if(f instanceof BoolFieldField) {
+				bff = (BoolFieldField)f;
+				if(bff.getChildren().size() >= 8) {
+					bff = null;
+				}
+				
+			} else if(f instanceof BaseField) {
+				BaseField bf = (BaseField)f;
+				if(bf.getBitCount() == 1) {
+					if(bff != null) {
+						bff.add(bf);
+						li.remove();
+					} else {
+						bff = new BoolFieldField(bf.getCoord());
+						bff.add(bf);
+						li.set(bff);
+					}
+				}
+			} else if(f instanceof ParentField) {
+				ParentField pf2 = (ParentField)f;
+				organizeBools(pf2);
+			}
+		}
 	}
 	/**
 	 * Traverse the higherarchy and set parents.
