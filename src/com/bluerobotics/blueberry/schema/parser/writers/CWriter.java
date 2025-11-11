@@ -128,6 +128,7 @@ public class CWriter extends SourceWriter {
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 				makeStringCopier(sf, true, true);
 				makeStringCopier(sf, false, true);
+				makeStringLengthGetter(sf, true);
 			});
 			
 		});
@@ -272,8 +273,9 @@ public class CWriter extends SourceWriter {
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
-				makeStringCopier(sf, true, true);
-				makeStringCopier(sf, false, true);
+				makeStringCopier(sf, true,  false);
+				makeStringCopier(sf, false, false);
+				makeStringLengthGetter(sf, false);
 			});
 			
 		});
@@ -309,6 +311,8 @@ public class CWriter extends SourceWriter {
 
 
 	
+
+
 
 	private String makeFieldIndexName(Field f) {
 		return makeName(f, true).append("index").toUpperSnake();
@@ -418,8 +422,8 @@ public class CWriter extends SourceWriter {
 			
 			
 		}
-		
-		addLine("return msg + "+makeMessageLengthName(mf) + ";");
+		addLine("buf->length = msg + "+makeMessageLengthName(mf));
+		addLine("return buf->length;");
 		
 		outdent();
 		addLine("}");
@@ -533,13 +537,17 @@ public class CWriter extends SourceWriter {
 			fn = f.getParent().getName();
 		}
 		comments.add("A function to copy a string "+(toNotFrom ? "to" : "from") + " a message.");
+		
 
 		if(f.getComment() != null) {
 			comments.add(f.getComment());
 		}
 		
 		
-		String paramList = "Bb * buf, BbBlock msg ";
+		String paramList = "Bb * buf, BbBlock msg";
+		comments.add("@param buf - the buffer that the message is being read/written from/to");
+		comments.add("@param msg - the index to the start of the message in the buffer.");
+		
 		for(Index pi : pis) {
 			
 			SymbolName pName = pi.p.getName(); 
@@ -558,7 +566,7 @@ public class CWriter extends SourceWriter {
 			
 		}
 
-		paramList = ", char * string";
+		paramList += ", char * string";
 		
 	
 		
@@ -574,9 +582,151 @@ public class CWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
+		addLine("void copy"+(toNotFrom ? "To" : "From")+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		
+		if(protoNotDef) {
+			return;
+		}
+		
+		indent();
+		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
+		for(Index pi : pis) {
+			String n = "XXXX";
+			if(pi.p instanceof ArrayField) {
+				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+			} else if(pi.p instanceof SequenceField) {
+				
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				
+			}
+			
+		}
+		
+
+		
+		if(toNotFrom) {
+			//we're copying to the message
+			addLine("uint32_t lenW = buf->length;//the current end of the message which will now be the length word of the string");
+			addLine("uint32_t si = lenW + 4;//this will be the start of the string data");
+			addLine("uint32_t j = 0;//this will be the string length by the time we're done");
+			addLine("for(; j < "+makeStringMaxLengthName(f)+"; ++j){");
+			indent();
+			addLine("char c = string[j]");
+			addLine("if(c == 0){");
+			indent();
+			addLine("break;");
+			
+			closeBrace();
+			addLine("setUint8(buf, msg, si, c);");
+			addLine("++si;");
+			closeBrace();
+			
+			
+			
+			addLineComment("Update the string length and the buffer length");
+			addLine("setUint32(buf, msg, lenW, j);");
+			addLine("buf->length = si;");
+			
+		} else {
+			//we're copying from the message
+			addLine("uint32_t len = getUint16(buf, msg, i);");
+			addLine("for(uint32_t j; j < len; ++j){");
+			indent();
+			addLine("string[j] = getUint8(buf, msg, si);");
+			addLine("++si;");
+			closeBrace();
+		}
+		
+
+		closeBrace();
+		
+	}
+	
+	private void makeStringLengthGetter(StringField f, boolean protoNotDef) {
+		List<Index> pis = getIndeces(f);
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("A function to retrieve the length of a string in a message.");
+		
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+		
+		String paramList = "Bb * buf, BbBlock msg";
+		comments.add("@param buf - the buffer that the message is being read/written from/to");
+		comments.add("@param msg - the index to the start of the message in the buffer.");
+		
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			if(pi.n >= 0) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
+			}
+			paramList += ", int "+pi.name;
+	
+				
+			
+		}
+
+		
+	
+		
+
+	
+		ScopeName name = makeScopeName(f);
+		
+		
+		addDocComment(comments);
+		
+		addLine("uint32_t getStringLength"+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		
+		if(protoNotDef) {
+			return;
+		}
+		
+		indent();
+		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
+		for(Index pi : pis) {
+			String n = "XXXX";
+			if(pi.p instanceof ArrayField) {
+				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+			} else if(pi.p instanceof SequenceField) {
+				
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				
+			}
+			
+		}
+	
+			
+
+		//we're copying from the message
+		addLine("return (uint32_t)getUint16(buf, msg, i);");
+		
+		
+		
+
+		closeBrace();
+		
 	}
 	
 	
+	private String makeStringMaxLengthName(StringField f) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private String makeSequenceHeaderIndexName(SequenceField p) {
 		// TODO Auto-generated method stub
 		return null;
@@ -802,7 +952,7 @@ public class CWriter extends SourceWriter {
 				result = "int8_t";
 				break;
 			case STRING:
-				result = "char*";
+				result = "char *";
 				break;
 			case UINT16:
 				result = "uint16_t";
