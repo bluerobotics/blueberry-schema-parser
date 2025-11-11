@@ -55,6 +55,13 @@ public class StructField extends ParentField {
 		result += m;
 		return result;
 	}
+	@Override
+	public int getBitCount() {
+		// TODO Auto-generated method stub
+		return super.getBitCount();
+	}
+	
+	
 	
 	
 	

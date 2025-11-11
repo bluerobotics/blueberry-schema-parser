@@ -23,7 +23,6 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
@@ -150,19 +149,195 @@ public class CWriter extends SourceWriter {
 
 	}
 
+	private void makeSourceFile(ScopeName module) {
+		String moduleFileRoot = module.deScope().toLowerCamel();
+
+		startFile(getHeader());
+
+
+
+		addSectionDivider("Includes");
+		addLine("#include <"+moduleFileRoot+".h>");
+
+		addSectionDivider("Defines");
+		addLineComment("Add message field indeces");
+		//add defines for field indeces
+		//also keep track of any boolfieldfields
+		m_bools = false;
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			mf.getChildren().forEach(f -> {
+				if(getType(f) != null) {
+					if(!(f instanceof BoolFieldField)) {
+						if(f.getBitCount() == 1) {
+							addLine("#define " + makeFieldIndexName(f) + " ("+f.getParent().getIndex()+")");
+							m_bools = true;
+						} else {
+							addLine("#define " + makeFieldIndexName(f) + " ("+f.getIndex()+")");
+						}
+					}
+					
+				} else {
+					if(f instanceof ArrayField) {
+						m_arrays = true;
+					} else if(f instanceof SequenceField) {
+						m_sequences = true;
+						addLine("#define " + makeFieldIndexName(f) + " ("+f.getIndex()+")");
+					}
+				}
+			}, true);
+		});
+		
+		if(m_bools) {
+			addLine();
+			addLineComment("Add message boolean field masks");
+
+			//now add defines for bit field indeces and bit masks
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+				mf.getChildren().forEach(f -> {
+					if(f.getIndex() >= 0) {
+						if(f instanceof BaseField && f.getBitCount() == 1) {
+						
+							addLine("#define " + makeBooleanMaskName(f) + " (1 << "+f.getIndex()+")");
 	
+						}
+						
+						
+					}
+				}, true);
+			});
+		}
+		if(m_arrays) {
+			addLine();
+			addLineComment("Add array sizes and element byte count");
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
+					int[] is = af.getNumber();
+					if(is.length == 1) {
+						addLine("#define " + makeArraySizeName(af, -1) + " ("+is[0]+")");
+					} else {
+						for(int i = 0; i < is.length; ++i) {
+							addLine("#define " + makeArraySizeName(af, i) + " ("+is[i]+")");
+						}
+					}
+					addLine("#define " + makeArrayElementByteCountName(af) + " ("+af.getPaddedByteCount()+")");
+				});
+			});
+		}
+		if(m_sequences) {
+			addLine();
+			addLineComment("Add sequence element byte count");
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
+					if(sf.getPaddedByteCount() == 0) {
+						addLine("blahblah");
+					}
+					addLine("#define " + makeArrayElementByteCountName(sf) + " ("+sf.getPaddedByteCount()+")");
+
+				});
+			});
+			
+
+		}
+		addLine();
+		addLineComment("Add message lengths");
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			addLine("#define " + makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
+		});
+
+
+		addSectionDivider("Types");
+
+
+
+		addSectionDivider("Function Prototypes");
+//		addBlockFunctionAdder(top, true);
+
+
+		addSectionDivider("Source");
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			makeMessageAdderSignature(mf, false);
+		});
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			mf.getChildren().forEach(f -> {
+				
+				makeMessageGetterSetterSignatures(f, true, false);
+				makeMessageGetterSetterSignatures(f, false, false);
+			}, true);
+			
+		});
+		
+
+//		addHeaderFieldGetters(top,false);
+//
+//		addBytesPerRepeatGetter(top, false);
+//
+//
+//		addBaseFieldGetters(top, false);
+//
+//		addPacketStartFinish(top, false);
+//
+//		addBlockFunctionGetters(top, false);
+////		addBlockFunctionAdder(top, false);
+//
+//		addBlockAdders(top, false);
+//
+//		addArrayAdders(top, false);
+//		addCompactArrayAdders(top, false);
+//
+////		addArrayGetters(top, false);
+////		addArrayElementAdders(top, true);
+
+
+
+		writeToFile("src/"+moduleFileRoot,"c");
+
+	}
+
+
+	private String makeFieldIndexName(Field f) {
+		return makeName(f, true).append("index").toUpperSnake();
+	}
+
+	private String makeBooleanMaskName(Field f) {
+		if(f.getBitCount() != 1) {
+			throw new RuntimeException("This should only be used for boolean fields, not this one: "+f);
+		}
+		return makeName(f, true).append("mask").toUpperSnake();
+	}
+
+	private String makeArraySizeName(ArrayField af, int i) {
+		SymbolName result = makeName(af, true).append("size");
+		if(i >= 0) {
+			result = result.append("" + i);
+		}
+		return  result.toUpperSnake();
+	}
+	private String makeArrayElementByteCountName(ParentField af) {
+		SymbolName result = makeName(af, true).append("element", "byte", "count");
+	
+		return  result.toUpperSnake();
+	}
 
 	private void addMessageKey(MessageField mf) {
 		Number n = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION).getParameter(0, Number.class);
-		addLine("#define "+mf.getTypeName().deScope().append("key").toUpperSnake() + "("+n.asInt()+")");
+		addLine("#define "+makeMessageKeyName(mf) + "("+n.asInt()+")");
+	}
+	private String makeMessageKeyName(MessageField mf) {
+		return mf.getTypeName().deScope().append("key").toUpperSnake();
+	}
+	private String makeMessageLengthName(MessageField mf) {
+		return mf.getTypeName().deScope().append("length").toUpperSnake();
 	}
 	private String m_paramList = "";
-	private void makeMessageAdderSignature(MessageField mf, boolean semiNotBrace) {
+	
+	private void makeMessageAdderSignature(MessageField mf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("A function to add a "+mf.getTypeName().deScope().toTitle());
 		comments.add(mf.getComment());
 		comments.add("@param message - the message buffer to add the message to");
-		m_paramList = "Bb * message";
+		m_paramList = "Bb * buf, BbBlock msg";
 		ArrayList<Field> fs = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
@@ -181,9 +356,9 @@ public class CWriter extends SourceWriter {
 		for(Field f : fs) {
 			String stuff = "";
 			ParentField pf = f.getParent();
-			if(m_paramList.length() > 0) {
-				m_paramList += ", ";
-			}
+			
+			m_paramList += ", ";
+			
 			
 			String paramName = makeName(f, false).toLowerCamel();
 			String type = getType(f);
@@ -196,12 +371,42 @@ public class CWriter extends SourceWriter {
 		}
 	
 		
-	
+		comments.add("@returns - the index of the next byte after this message.");
 		
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
-		addLine("void "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (semiNotBrace ? ";" : "{"));
+		addLine("BbBlock "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		if(protoNotDef) {
+			return;
+		}
+		//now do contents of function
+		indent();
+		
+		for(Field f : fs) {
+			//add code for each field to set the appropriate bytes
+			String type = getType(f);
+			if(f instanceof EnumField) {
+				type = f.getTypeName().deScope().toUpperCamel();
+			}
+			String paramName = makeName(f, false).toLowerCamel();
+
+			
+			List<Index> pis = getIndeces(f);
+
+			
+			
+			
+			
+			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+makeFieldIndexName(f)+", "+paramName+");");
+			addLine("return msg + "+makeMessageLengthName(mf) + ";");
+			
+		}
+		
+		
+		
+		outdent();
+		addLine("}");
 	}
 	/**
 	 * make getter or setter for all base types except strings
@@ -236,21 +441,28 @@ public class CWriter extends SourceWriter {
 		String paramList = "Bb * buf, BbBlock msg ";
 		for(Index pi : pis) {
 			
-			
-		
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
 			
 			if(pi.n >= 0) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pi.p.getName().toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pi.p.getName().toLowerCamel()+" "+pi.type+".");
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
 			}
 			paramList += ", int "+pi.name;
 	
 				
 			
 		}
+		
+		String val = "";
+		
+	
 		if(!getNotSet) {
-			paramList += ", "+ tf + " "+fn;
+			val =", "+ tf + " "+fn;
+			paramList += val;
 			
 			comments.add("@param "+fn+prependHyphen(f.getComment()));
 			
@@ -268,27 +480,34 @@ public class CWriter extends SourceWriter {
 			return;
 		}
 		indent();
-		if(getNotSet) {
-			//getter guts
-			addLineComment("autogenerated getter content not done yet");
-			
-			addLine("uint32_t i = "+makeName(f, true).append("index").toUpperSnake() + ";" );
-			for(Index pi : pis) {
-				addLine("i += ");
+		
+		
+		addLine("uint32_t i = "+makeFieldIndexName(f) + ";" );
+		for(Index pi : pis) {
+			String n = "XXXX";
+			if(pi.p instanceof ArrayField) {
+				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+			} else if(pi.p instanceof SequenceField) {
+				
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				
 			}
-
-			addLine("return "+lookupBbGetSet(f, getNotSet)+"(buf, msg/*	 i);");
-		} else {
-			//setter guts
-			addLineComment("autogenerated setter content not done yet");
-
+			
 		}
+		
+		addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i"+ val + ");");
+		
 		outdent();
 		addLine("}");
 		return;
 	}
 	
 	
+	private String makeSequenceHeaderIndexName(SequenceField p) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	/**
 	 * looks up the name of the bb transcoder function 
 	 * @param f
@@ -391,24 +610,34 @@ public class CWriter extends SourceWriter {
 		ArrayList<Index> result = new ArrayList<>();
 		Field pf = f;
 		int k = 0;
+		List<ParentField> pfs = new ArrayList<>();
 		while(pf != null) {
-			if(pf instanceof ArrayField) {
-				ArrayField af = (ArrayField)pf;
+			if(pf instanceof ParentField) {
+				pfs.add((ParentField)pf);
+			}
+			pf = pf.getParent();
+		}
+		
+		//now re-order the fields so the go top to bottom instead of bottom-up
+		pfs = pfs.reversed();
+		
+		for(ParentField pft : pfs) {
+		
+			if(pft instanceof ArrayField) {
+				ArrayField af = (ArrayField)pft;
 				for(int i = 0; i < af.getNumber().length; ++i) {
 					result.add(new Index(af, i, af.getNumber()[i], "i"+k));
 					++k;
 				}
-			} else if(pf instanceof SequenceField) {
-				result.add(new Index((ParentField)pf, 0, -1, "i"+k));
+			} else if(pft instanceof SequenceField) {
+				result.add(new Index((ParentField)pft, 0, -1, "i"+k));
 				++k;
 			}
-			pf = pf.getParent();
+			
 			
 		}
 		
-		if(result.size() >= 3) {
-			System.out.println("Blah");
-		}
+		
 		//now compute multipliers
 		int mult = 1;
 		Field last = null;
@@ -571,130 +800,6 @@ public class CWriter extends SourceWriter {
 	boolean m_bools = false;
 	boolean m_arrays = false;
 	boolean m_sequences = false;
-	private void makeSourceFile(ScopeName module) {
-		String moduleFileRoot = module.deScope().toLowerCamel();
-
-		startFile(getHeader());
-
-
-
-		addSectionDivider("Includes");
-		addLine("#include <"+moduleFileRoot+".h>");
-
-		addSectionDivider("Defines");
-		addLineComment("Add message field indeces");
-		//add defines for field indeces
-		//also keep track of any boolfieldfields
-		m_bools = false;
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			mf.getChildren().forEach(f -> {
-				if(getType(f) != null) {
-					if(!(f instanceof BoolFieldField)) {
-						if(f.getBitCount() == 1) {
-							addLine("#define " + makeName(f, true).append("index").toUpperSnake() + " ("+f.getParent().getIndex()+")");
-							m_bools = true;
-						} else {
-							addLine("#define " + makeName(f, true).append("index").toUpperSnake() + " ("+f.getIndex()+")");
-						}
-					}
-					
-				} else {
-					if(f instanceof ArrayField) {
-						m_arrays = true;
-					} else if(f instanceof SequenceField) {
-						m_sequences = true;
-					}
-				}
-			}, true);
-		});
-		
-		if(m_bools) {
-			addLine();
-			addLineComment("Add message boolean field masks");
-
-			//now add defines for bit field indeces and bit masks
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-				mf.getChildren().forEach(f -> {
-					if(f.getIndex() >= 0) {
-						if(f instanceof BaseField && f.getBitCount() == 1) {
-						
-							addLine("#define " + makeName(f, true).append("mask").toUpperSnake() + " (1 << "+f.getIndex()+")");
-	
-						}
-						
-						
-					}
-				}, true);
-			});
-		}
-		if(m_arrays) {
-			addLine();
-			addLineComment("Add array sizes");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
-					int[] is = af.getNumber();
-					if(is.length == 1) {
-						addLine("#define " + makeName(af, true).append("size").toUpperSnake() + " ("+is[0]+")");
-					} else {
-						for(int i = 0; i < is.length; ++i) {
-							addLine("#define " + makeName(af, true).append("size").append(""+i).toUpperSnake() + " ("+is[i]+")");
-						}
-					}
-				});
-			});
-		}
-
-
-		addSectionDivider("Types");
-
-
-
-		addSectionDivider("Function Prototypes");
-//		addBlockFunctionAdder(top, true);
-
-
-		addSectionDivider("Source");
-		
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			makeMessageAdderSignature(mf, false);
-			addLine("}");
-		});
-		
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			mf.getChildren().forEach(f -> {
-				
-				makeMessageGetterSetterSignatures(f, true, false);
-				makeMessageGetterSetterSignatures(f, false, false);
-			}, true);
-			
-		});
-		
-
-//		addHeaderFieldGetters(top,false);
-//
-//		addBytesPerRepeatGetter(top, false);
-//
-//
-//		addBaseFieldGetters(top, false);
-//
-//		addPacketStartFinish(top, false);
-//
-//		addBlockFunctionGetters(top, false);
-////		addBlockFunctionAdder(top, false);
-//
-//		addBlockAdders(top, false);
-//
-//		addArrayAdders(top, false);
-//		addCompactArrayAdders(top, false);
-//
-////		addArrayGetters(top, false);
-////		addArrayElementAdders(top, true);
-
-
-
-		writeToFile("src/"+moduleFileRoot,"c");
-
-	}
 
 
 

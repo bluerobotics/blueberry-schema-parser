@@ -47,12 +47,13 @@ public class ArrayField extends ParentField {
 	
 	@Override
 	public int getBitCount() {
-		int n = 1;
+
+		int n = super.getBitCount();
 		
-		for(int i : m_number) {
+		for(int i : getNumber()) {
 			n *= i;
 		}
-		return n*getPaddedByteCount()*8;
+		return n;
 	}
 	
 	@Override

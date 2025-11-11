@@ -108,6 +108,17 @@ public abstract class ParentField extends AbstractField {
 		}
 	}
 	
+	@Override
+	public int getBitCount() {
+		//compute the size per element first
+		int n = -getFirstChild().getIndex();
+		n += getLastChild().getIndex();
+		n += getLastChild().getPaddedByteCount();
+		
+		
+		return n*8;
+	}
+	
 
 	
 
