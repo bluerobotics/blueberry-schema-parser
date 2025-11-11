@@ -466,10 +466,10 @@ public class CWriter extends SourceWriter {
 				pName = pi.p.getParent().getName();
 			}
 			
-			if(pi.n >= 0) {
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
 				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
 			paramList += ", int "+pi.name;
 	
@@ -555,10 +555,10 @@ public class CWriter extends SourceWriter {
 				pName = pi.p.getParent().getName();
 			}
 			
-			if(pi.n >= 0) {
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
 				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
 			paramList += ", int "+pi.name;
 	
@@ -668,10 +668,10 @@ public class CWriter extends SourceWriter {
 				pName = pi.p.getParent().getName();
 			}
 			
-			if(pi.n >= 0) {
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
 				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
 			paramList += ", int "+pi.name;
 	
