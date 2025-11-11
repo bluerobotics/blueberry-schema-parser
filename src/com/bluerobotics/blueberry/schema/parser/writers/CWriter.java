@@ -38,6 +38,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
+import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
@@ -115,14 +116,19 @@ public class CWriter extends SourceWriter {
 //
 		addSectionDivider("Function Prototypes");
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			makeMessageAdderSignature(mf, true);
+			makeMessageAdder(mf, true);
 		});
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			mf.getChildren().forEach(f -> {
 				
-				makeMessageGetterSetterSignatures(f, true, true);
-				makeMessageGetterSetterSignatures(f, false, true);
+				makeMessageGetterSetter(f, true, true);
+				makeMessageGetterSetter(f, false, true);
 			}, true);
+			
+			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
+				makeStringCopier(sf, true, true);
+				makeStringCopier(sf, false, true);
+			});
 			
 		});
 		
@@ -255,18 +261,24 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Source");
 		
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			makeMessageAdderSignature(mf, false);
-		});
+	
 		
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			makeMessageAdder(mf, false);
 			mf.getChildren().forEach(f -> {
 				
-				makeMessageGetterSetterSignatures(f, true, false);
-				makeMessageGetterSetterSignatures(f, false, false);
+				makeMessageGetterSetter(f, true, false);
+				makeMessageGetterSetter(f, false, false);
 			}, true);
 			
+			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
+				makeStringCopier(sf, true, true);
+				makeStringCopier(sf, false, true);
+			});
+			
 		});
+		
+		
 		
 
 //		addHeaderFieldGetters(top,false);
@@ -295,6 +307,8 @@ public class CWriter extends SourceWriter {
 
 	}
 
+
+	
 
 	private String makeFieldIndexName(Field f) {
 		return makeName(f, true).append("index").toUpperSnake();
@@ -332,11 +346,13 @@ public class CWriter extends SourceWriter {
 	}
 	private String m_paramList = "";
 	
-	private void makeMessageAdderSignature(MessageField mf, boolean protoNotDef) {
+	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("A function to add a "+mf.getTypeName().deScope().toTitle());
 		comments.add(mf.getComment());
-		comments.add("@param message - the message buffer to add the message to");
+		
+		comments.add("@param buf - the message buffer to add the message to");
+		comments.add("@param msg - the index of the start of the message");
 		m_paramList = "Bb * buf, BbBlock msg";
 		ArrayList<Field> fs = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
@@ -399,11 +415,11 @@ public class CWriter extends SourceWriter {
 			
 			
 			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+makeFieldIndexName(f)+", "+paramName+");");
-			addLine("return msg + "+makeMessageLengthName(mf) + ";");
+			
 			
 		}
 		
-		
+		addLine("return msg + "+makeMessageLengthName(mf) + ";");
 		
 		outdent();
 		addLine("}");
@@ -414,7 +430,7 @@ public class CWriter extends SourceWriter {
 	 * @param getNotSet
 	 * @param protoNotDef
 	 */
-	private void makeMessageGetterSetterSignatures(Field f, boolean getNotSet, boolean protoNotDef) {
+	private void makeMessageGetterSetter(Field f, boolean getNotSet, boolean protoNotDef) {
 		String tf = getType(f);
 		if(tf == null || f.getTypeId() == TypeId.STRING) {
 			return;
@@ -481,25 +497,83 @@ public class CWriter extends SourceWriter {
 		}
 		indent();
 		
+		if(pis.size() == 0) {
+			
+			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, "+ makeFieldIndexName(f) + ");");
+			
+		} else {
 		
-		addLine("uint32_t i = "+makeFieldIndexName(f) + ";" );
-		for(Index pi : pis) {
-			String n = "XXXX";
-			if(pi.p instanceof ArrayField) {
-				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
-			} else if(pi.p instanceof SequenceField) {
-				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+			addLine("uint32_t i = "+makeFieldIndexName(f) + ";" );
+			for(Index pi : pis) {
+				String n = "XXXX";
+				if(pi.p instanceof ArrayField) {
+					addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+				} else if(pi.p instanceof SequenceField) {
+					
+					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+					
+				}
 				
 			}
 			
+			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i"+ val + ");");
 		}
-		
-		addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i"+ val + ");");
 		
 		outdent();
 		addLine("}");
 		return;
+	}
+	
+	
+	private void makeStringCopier(StringField f, boolean toNotFrom, boolean protoNotDef) {
+		List<Index> pis = getIndeces(f);
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("A function to copy a string "+(toNotFrom ? "to" : "from") + " a message.");
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+		
+		String paramList = "Bb * buf, BbBlock msg ";
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			if(pi.n >= 0) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+".");
+			}
+			paramList += ", int "+pi.name;
+	
+				
+			
+		}
+
+		paramList = ", char * string";
+		
+	
+		
+			
+		comments.add("@param string - the string to copy "+(toNotFrom ? "to" : "from"));
+			
+	
+		
+
+	
+		ScopeName name = makeScopeName(f);
+		
+		
+		addDocComment(comments);
+		
 	}
 	
 	
