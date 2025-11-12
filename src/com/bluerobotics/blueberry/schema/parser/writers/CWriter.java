@@ -359,6 +359,7 @@ public class CWriter extends SourceWriter {
 		comments.add("@param msg - the index of the start of the message");
 		m_paramList = "Bb * buf, BbBlock msg";
 		ArrayList<Field> fs = new ArrayList<>();
+		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		mf.getChildren().forEach(f -> {
@@ -370,7 +371,21 @@ public class CWriter extends SourceWriter {
 			if(tp != null && f.getTypeId() != TypeId.STRING && getIndeces(f).size() == 0) {
 				fs.add(f);
 				
-			} 
+			} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
+				//build a list of all sequences and strings that are not in sequences
+				boolean notInSequence = true;
+				for(Index i : getIndeces(f)) {
+					if(!i.arrayNotSequence) {
+						notInSequence = false;
+						break;
+					}
+				}
+					
+					
+				if(notInSequence) {
+					ss.add(f);
+				}
+			}
 		}, true);
 		
 		for(Field f : fs) {
@@ -416,10 +431,19 @@ public class CWriter extends SourceWriter {
 
 			
 			
-			
-			
 			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+makeFieldIndexName(f)+", "+paramName+");");
 			
+			
+		}
+		for(Field f : ss) {
+			List<Index> pi = getIndeces(f);
+			if(pi.size() == 0) {
+				//zero the index field of each string and sequence
+				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
+				addLine("setUint16(buf, msg, "+makeFieldIndexName(f)+", 0);//clear "+s+" header");
+			} else {
+				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
+			}
 			
 		}
 		addLine("buf->length = msg + "+makeMessageLengthName(mf));
@@ -832,13 +856,13 @@ public class CWriter extends SourceWriter {
 		
 		
 		ArrayList<Index> result = new ArrayList<>();
-		Field pf = f;
+		ParentField pf = f.getParent();
 		int k = 0;
 		List<ParentField> pfs = new ArrayList<>();
 		while(pf != null) {
-			if(pf instanceof ParentField) {
-				pfs.add((ParentField)pf);
-			}
+			
+			pfs.add((ParentField)pf);
+			
 			pf = pf.getParent();
 		}
 		
