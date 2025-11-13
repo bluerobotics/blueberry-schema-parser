@@ -75,7 +75,7 @@ public class ArrayField extends ParentField {
 	}
 	@Override
 	public int getPaddedByteCount() {
-		return getFirstChild().getPaddedByteCount();
+		return getBitCount()/8;
 	}
 
 

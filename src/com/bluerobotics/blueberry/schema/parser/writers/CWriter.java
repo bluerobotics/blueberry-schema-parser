@@ -848,21 +848,26 @@ public class CWriter extends SourceWriter {
 		return result;
 	}
 	
+	/**
+	 * A class to contain useful information about an array or sequence dimension
+	 */
 	private class Index {
-		final ParentField p;
-		final int i;
-		final int n;
-		final String type;
-		final boolean arrayNotSequence;
-		final String name;
+		final ParentField p;//the sequence or array that this is a dimension for
+		final int i;//the number of the dimension - only useful for multidimensional arrays
+		final int n;//the number of elements in this dimension
+		final String type;//either "array" or "sequence"
+		final boolean arrayNotSequence;//true if p is an array, false if p is a sequence
+		final String name;//the variable name assigned to this dimension
 		int mult = -1;
-		Index(ParentField pf, int j, int num, String nm){
+		final int bytesPerElement;
+		Index(ParentField pf, int j, int num, String nm, int bpe){
 			p = pf;
 			i = j;
 			n = num;
 			arrayNotSequence =  pf instanceof ArrayField;
 			type = arrayNotSequence ? "array" : "sequence";
 			name = nm;
+			bytesPerElement = bpe;
 		}
 		
 	}
@@ -901,11 +906,11 @@ public class CWriter extends SourceWriter {
 			if(pft instanceof ArrayField) {
 				ArrayField af = (ArrayField)pft;
 				for(int i = 0; i < af.getNumber().length; ++i) {
-					result.add(new Index(af, i, af.getNumber()[i], "i"+k));
+					result.add(new Index(af, i, af.getNumber()[i], "i"+k, af.getFirstChild().getPaddedByteCount()));
 					++k;
 				}
 			} else if(pft instanceof SequenceField) {
-				result.add(new Index((ParentField)pft, 0, -1, "i"+k));
+				result.add(new Index((ParentField)pft, 0, -1, "i"+k, pft.getPaddedByteCount()));
 				++k;
 			}
 			
