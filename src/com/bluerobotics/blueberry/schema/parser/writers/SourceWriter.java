@@ -27,14 +27,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
-import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
+import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
-import com.bluerobotics.blueberry.schema.parser.fields.StructField;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
  * This class provides useful functionality for generating source files, without any specific language implementation
@@ -246,6 +249,13 @@ public abstract class SourceWriter {
 	protected String getHeader() {
 		return m_fileHeader;
 	}
+	
+	
+	
+	
+
+	
+
 
 
 

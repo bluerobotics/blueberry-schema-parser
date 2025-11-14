@@ -21,6 +21,10 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -28,17 +32,30 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * This defines an array field
  * Note that in this case, the name of the array type is the field name. The type that this field is an array of is the type name
  */
-public class ArrayField extends ParentField {
+public class ArrayField extends ParentField implements MultipleField {
+	@Override
+	public List<Index> getIndeces() {
+		List<Index> result = new ArrayList<>();
+		int byteCount = getPaddedByteCount();
+		int ni = getNumber().length;
+		for(int i = 0; i < ni; ++i) {
+			int n = getNumber()[i];
+			byteCount /= n;
+			SymbolName name = getName().append("Index");
+			if(ni > 1) {
+				name = name.append(""+i);
+			}
+			result.add(new Index(this, i, ni, n, name.toLowerCamel(), byteCount));
+		}
+		return result;
+	}
 	private final int[] m_number;
 
 	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int[] number, String comment, Coord c) {
 		super(name, typeName, TypeId.ARRAY, comment, c);
 		m_number = number;
 	}
-	/**
-	 * the size of this array, i.e. the number of elements
-	 * @return
-	 */
+	@Override
 	public int[] getNumber() {
 		return m_number;
 	}

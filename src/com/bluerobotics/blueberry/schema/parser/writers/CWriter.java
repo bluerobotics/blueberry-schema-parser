@@ -24,7 +24,6 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
@@ -36,6 +35,8 @@ import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
@@ -133,25 +134,7 @@ public class CWriter extends SourceWriter {
 			
 		});
 		
-		
-//		addBytesPerRepeatGetter(top, true);
-//
-//		addBaseFieldGetters(top, true);
-//
-//		addPacketStartFinish(top, true);
-//
-//		addBlockFunctionGetters(top, true);
-//
-//		addBlockAdders(top, true);
-//
-//		addArrayAdders(top, true);
-//
-//		addCompactArrayAdders(top, true);
-//
-//
-//
-
-
+	
 		writeToFile("inc/"+moduleFileRoot,"h");
 
 	}
@@ -181,6 +164,9 @@ public class CWriter extends SourceWriter {
 						} else {
 							addLine("#define " + makeFieldIndexName(f) + " ("+f.getIndex()+")");
 						}
+					}
+					if(f.getTypeId() == TypeId.STRING) {
+						m_strings = true;
 					}
 					
 				} else {
@@ -218,15 +204,20 @@ public class CWriter extends SourceWriter {
 			addLineComment("Add array sizes and element byte count");
 			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
-					int[] is = af.getNumber();
-					if(is.length == 1) {
-						addLine("#define " + makeArraySizeName(af, -1) + " ("+is[0]+")");
+					List<Index> is = af.getIndeces();
+					int n = is.size();
+					if(n == 1) {
+						Index pi = is.get(0);
+						addLine("#define " + makeArraySizeName(pi) + " ("+pi.n+")");
+						addLine("#define " + makeArrayElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 					} else {
-						for(int i = 0; i < is.length; ++i) {
-							addLine("#define " + makeArraySizeName(af, i) + " ("+is[i]+")");
+						for(int i = 0; i < n; ++i) { 
+							Index pi = is.get(i);
+							addLine("#define " + makeArraySizeName(pi) + " ("+pi.n+")");
+							addLine("#define " + makeArrayElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 						}
 					}
-					addLine("#define " + makeArrayElementByteCountName(af) + " ("+af.getPaddedByteCount()+")");
+					
 				});
 			});
 		}
@@ -235,16 +226,28 @@ public class CWriter extends SourceWriter {
 			addLineComment("Add sequence element byte count");
 			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
-					if(sf.getPaddedByteCount() == 0) {
-						addLine("blahblah");
-					}
-					addLine("#define " + makeArrayElementByteCountName(sf) + " ("+sf.getPaddedByteCount()+")");
+					
+					addLine("#define " + makeArrayElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
 
 				});
 			});
 			
 
 		}
+		if(m_strings) {
+			addLine();
+			addLineComment("Add string max length constants");
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+				mf.getChildren().forEachOfType(StringField.class, true, sf -> {
+					
+					addLine("#define " + makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
+
+				});
+			});
+		}
+		
+		
+		
 		addLine();
 		addLineComment("Add message lengths");
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
@@ -325,15 +328,20 @@ public class CWriter extends SourceWriter {
 		return makeName(f, true).append("mask").toUpperSnake();
 	}
 
-	private String makeArraySizeName(ArrayField af, int i) {
-		SymbolName result = makeName(af, true).append("size");
-		if(i >= 0) {
-			result = result.append("" + i);
+	private String makeArraySizeName(Index pi) {
+		SymbolName result = makeName(pi.p, true).append("size");
+		if(pi.ofN >= 0) {
+			result = result.append("" + pi.i);
 		}
 		return  result.toUpperSnake();
 	}
-	private String makeArrayElementByteCountName(ParentField af) {
-		SymbolName result = makeName(af, true).append("element", "byte", "count");
+	private String makeArrayElementByteCountName(Index pi) {
+		
+		
+		SymbolName result = makeName(pi.p, true).append("element", "byte", "count");
+		if(pi.ofN > 1) {
+			result = result.append("" + pi.i);
+		}
 	
 		return  result.toUpperSnake();
 	}
@@ -367,14 +375,14 @@ public class CWriter extends SourceWriter {
 			String tp = getType(f);
 			
 			
-		
-			if(tp != null && f.getTypeId() != TypeId.STRING && getIndeces(f).size() == 0) {
+			
+			if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
 				fs.add(f);
 				
 			} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
 				//build a list of all sequences and strings that are not in sequences
 				boolean notInSequence = true;
-				for(Index i : getIndeces(f)) {
+				for(Index i : MultipleField.getIndeces(f)) {
 					if(!i.arrayNotSequence) {
 						notInSequence = false;
 						break;
@@ -430,7 +438,7 @@ public class CWriter extends SourceWriter {
 			
 		}
 		for(Field f : ss) {
-			List<Index> pis = getIndeces(f);
+			List<Index> pis = MultipleField.getIndeces(f);
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
@@ -449,8 +457,9 @@ public class CWriter extends SourceWriter {
 					boolean carry = true;
 					int offset = 0;
 					for(int j = pis.size() - 1; j >= 0; --j) {
-						offset += ii[j] * m;
-						m *= pis.get(j).n;
+						Index pi = pis.get(j);
+						offset += ii[j] * pi.bytesPerElement;
+				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
 					addLine("setUint16(buf, msg, "+makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
@@ -490,7 +499,7 @@ public class CWriter extends SourceWriter {
 		if(tf == null || f.getTypeId() == TypeId.STRING) {
 			return;
 		}
-		List<Index> pis = getIndeces(f);
+		List<Index> pis = MultipleField.getIndeces(f);
 		
 		//don't need a setter if it's a simple field not in an array
 		if((!getNotSet) && pis.size() == 0) {
@@ -501,7 +510,7 @@ public class CWriter extends SourceWriter {
 		if(fn == null) {
 			fn = f.getParent().getName();
 		}
-		comments.add("A "+(getNotSet ? "g" : "s") + "etter for the "+fn+" field");
+		comments.add("A "+(getNotSet ? "g" : "s") + "etter for the "+fn.toLowerCamel()+" field");
 
 		if(f.getComment() != null) {
 			comments.add(f.getComment());
@@ -532,10 +541,10 @@ public class CWriter extends SourceWriter {
 		
 	
 		if(!getNotSet) {
-			val =", "+ tf + " "+fn;
+			val =", "+ tf + " "+fn.toLowerCamel();
 			paramList += val;
 			
-			comments.add("@param "+fn+prependHyphen(f.getComment()));
+			comments.add("@param "+fn.toLowerCamel()+prependHyphen(f.getComment()));
 			
 		}
 		
@@ -561,7 +570,7 @@ public class CWriter extends SourceWriter {
 			addLine("uint32_t i = "+makeFieldIndexName(f) + ";" );
 			for(Index pi : pis) {
 				if(pi.p instanceof ArrayField) {
-					addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+					addLine("i += "+makeArrayElementByteCountName(pi) + " * " + pi.name + ";");
 				} else if(pi.p instanceof SequenceField) {
 					
 					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
@@ -580,7 +589,7 @@ public class CWriter extends SourceWriter {
 	
 	
 	private void makeStringCopier(StringField f, MessageField mf, boolean toNotFrom, boolean protoNotDef) {
-		List<Index> pis = getIndeces(f);
+		List<Index> pis = MultipleField.getIndeces(f);
 		ArrayList<String> comments = new ArrayList<>();
 		SymbolName fn = f.getName();
 		if(fn == null) {
@@ -621,7 +630,7 @@ public class CWriter extends SourceWriter {
 	
 		
 			
-		comments.add("@param string - the string to copy "+(toNotFrom ? "to" : "from"));
+		comments.add("@param string - the string to copy "+(toNotFrom ? "from" : "to"));//note that when we're copying to the message, we copy from the string parameter
 			
 	
 		
@@ -642,7 +651,7 @@ public class CWriter extends SourceWriter {
 		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+				addLine("i += "+makeArrayElementByteCountName(pi) + " * " + pi.name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
 				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
@@ -658,6 +667,7 @@ public class CWriter extends SourceWriter {
 			addLine("uint32_t lenW = buf->length;//the current end of the message which will now be the length word of the string");
 			addLine("uint32_t si = lenW + 4;//this will be the start of the string data");
 			addLine("uint32_t j = 0;//this will be the string length by the time we're done");
+			
 			addLine("for(; j < "+makeStringMaxLengthName(f)+"; ++j){");
 			indent();
 			addLine("char c = string[j]");
@@ -692,7 +702,7 @@ public class CWriter extends SourceWriter {
 	}
 	
 	private void makeStringLengthGetter(StringField f, MessageField mf, boolean protoNotDef) {
-		List<Index> pis = getIndeces(f);
+		List<Index> pis = MultipleField.getIndeces(f);
 		ArrayList<String> comments = new ArrayList<>();
 		SymbolName fn = f.getName();
 		if(fn == null) {
@@ -748,7 +758,7 @@ public class CWriter extends SourceWriter {
 		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+makeArraySizeName((ArrayField)pi.p, pi.i) + " * " + pi.name + ";");
+				addLine("i += "+makeArraySizeName(pi) + " * " + pi.name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
 				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
@@ -771,8 +781,7 @@ public class CWriter extends SourceWriter {
 	
 	
 	private String makeStringMaxLengthName(StringField f) {
-		// TODO Auto-generated method stub
-		return null;
+		return makeName(f, true).append("max", "length").toUpperSnake();
 	}
 
 
@@ -847,93 +856,10 @@ public class CWriter extends SourceWriter {
 		}
 		return result;
 	}
-	
-	/**
-	 * A class to contain useful information about an array or sequence dimension
-	 */
-	private class Index {
-		final ParentField p;//the sequence or array that this is a dimension for
-		final int i;//the number of the dimension - only useful for multidimensional arrays
-		final int n;//the number of elements in this dimension
-		final String type;//either "array" or "sequence"
-		final boolean arrayNotSequence;//true if p is an array, false if p is a sequence
-		final String name;//the variable name assigned to this dimension
-		int mult = -1;
-		final int bytesPerElement;
-		Index(ParentField pf, int j, int num, String nm, int bpe){
-			p = pf;
-			i = j;
-			n = num;
-			arrayNotSequence =  pf instanceof ArrayField;
-			type = arrayNotSequence ? "array" : "sequence";
-			name = nm;
-			bytesPerElement = bpe;
-		}
-		
-	}
+
 	
 	
-	private List<Index> getIndeces(Field f){
-		return getIndeces(f, ft -> (ft.getTypeId() != TypeId.MESSAGE));
-	}
-	
-	/**
-	 * Scans upward from the specified field to the specified ParentField and note any array fields along the way
-	 * @param f
-	 * @param keepGoing - a function that checks the current field and returns true if it should keep scanning upwards, false if it should stop
-	 * @return
-	 */
-	private List<Index> getIndeces(Field f, Function<Field, Boolean> keepGoing) {
-		
-		
-		
-		ArrayList<Index> result = new ArrayList<>();
-		ParentField pf = f.getParent();
-		int k = 0;
-		List<ParentField> pfs = new ArrayList<>();
-		while(pf != null && keepGoing.apply(pf)) {
-			
-			pfs.add((ParentField)pf);
-			
-			pf = pf.getParent();
-		}
-		
-		//now re-order the fields so the go top to bottom instead of bottom-up
-		pfs = pfs.reversed();
-		
-		for(ParentField pft : pfs) {
-		
-			if(pft instanceof ArrayField) {
-				ArrayField af = (ArrayField)pft;
-				for(int i = 0; i < af.getNumber().length; ++i) {
-					result.add(new Index(af, i, af.getNumber()[i], "i"+k, af.getFirstChild().getPaddedByteCount()));
-					++k;
-				}
-			} else if(pft instanceof SequenceField) {
-				result.add(new Index((ParentField)pft, 0, -1, "i"+k, pft.getPaddedByteCount()));
-				++k;
-			}
-			
-			
-		}
-		
-		
-		//now compute multipliers
-		int mult = 1;
-		Field last = null;
-		for(int j = result.size() - 1; j >= 0; --j) {
-			Index i = result.get(j);
-			if(last != i.p) {
-				mult = 1;
-				last = i.p;
-			} 
-			i.mult = mult;
-			mult *= i.n;
-		}
-		
-		
-		return result;
-	}
+
 
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
@@ -1080,6 +1006,7 @@ public class CWriter extends SourceWriter {
 	boolean m_bools = false;
 	boolean m_arrays = false;
 	boolean m_sequences = false;
+	boolean m_strings = false;
 
 
 

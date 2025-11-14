@@ -21,12 +21,16 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  *
  */
-public class SequenceField extends ParentField {
+public class SequenceField extends ParentField implements MultipleField {
 	private int m_limit;
 	public SequenceField(SymbolName name, ScopeName typeName, String comment, Coord c) {
 		super(name, typeName, TypeId.SEQUENCE, comment, c);
@@ -55,5 +59,19 @@ public class SequenceField extends ParentField {
 	@Override
 	public int getPaddedByteCount() {
 		return getFirstChild().getPaddedByteCount();
+	}
+
+	@Override
+	public List<Index> getIndeces() {
+		ArrayList<Index> result = new ArrayList<>();
+		SymbolName name = getName();
+		name = SymbolName.fromCamel("index").prepend(name);
+		result.add(new Index(this, 0, 1, -1, name.toLowerCamel(), getPaddedByteCount()));
+		return result;
+	}
+
+	@Override
+	public int[] getNumber() {
+		return new int[] {-1};
 	}
 }

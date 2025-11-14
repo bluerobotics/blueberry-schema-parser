@@ -39,7 +39,7 @@ public class StringField extends AbstractField {
 		return new StringField(name, getMaxSize(), getComment(), getCoord());
 	}
 
-	private int getMaxSize() {
+	public int getMaxSize() {
 		return m_maxSize;
 	}
 
