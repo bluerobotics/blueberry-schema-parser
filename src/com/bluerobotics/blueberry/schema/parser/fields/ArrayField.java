@@ -41,11 +41,8 @@ public class ArrayField extends ParentField implements MultipleField {
 		for(int i = 0; i < ni; ++i) {
 			int n = getNumber()[i];
 			byteCount /= n;
-			SymbolName name = getName().append("Index");
-			if(ni > 1) {
-				name = name.append(""+i);
-			}
-			result.add(new Index(this, i, ni, n, name.toLowerCamel(), byteCount));
+			
+			result.add(new Index(this, i, ni, n, NameMaker.makeMultipleFieldIndexParamName(this, ni == 1 ? -1 : i), byteCount));
 		}
 		return result;
 	}

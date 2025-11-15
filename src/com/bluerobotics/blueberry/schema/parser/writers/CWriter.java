@@ -37,6 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
+import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
@@ -88,6 +89,10 @@ public class CWriter extends SourceWriter {
 
 
 	}
+	/**
+	 * writes the header file for the specified module
+	 * @param module
+	 */
 	private void makeHeaderFile(ScopeName module) {
 		String moduleFileRoot = module.deScope().toLowerCamel();
 		
@@ -122,14 +127,18 @@ public class CWriter extends SourceWriter {
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			mf.getChildren().forEach(f -> {
 				
-				makeMessageGetterSetter(f, mf, true, true);
-				makeMessageGetterSetter(f, mf, false, true);
+				makeMessageGetterSetter(f, true, true);
+				makeMessageGetterSetter(f, false, true);
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
-				makeStringCopier(sf, mf, true, true);
-				makeStringCopier(sf, mf, false, true);
+				makeStringCopier(sf, true, true);
+				makeStringCopier(sf, false, true);
 				makeStringLengthGetter(sf, mf, true);
+			});
+			mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
+				makeSequenceInit(sf, true);
+				makeSequenceLengthGetter(sf, true);
 			});
 			
 		});
@@ -138,7 +147,10 @@ public class CWriter extends SourceWriter {
 		writeToFile("inc/"+moduleFileRoot,"h");
 
 	}
-
+	/**
+	 * creates and writes to disk the C source file for the specified module
+	 * @param module
+	 */
 	private void makeSourceFile(ScopeName module) {
 		String moduleFileRoot = module.deScope().toLowerCamel();
 
@@ -159,10 +171,10 @@ public class CWriter extends SourceWriter {
 				if(getType(f) != null) {
 					if(!(f instanceof BoolFieldField)) {
 						if(f.getBitCount() == 1) {
-							addLine("#define " + makeFieldIndexName(f) + " ("+f.getParent().getIndex()+")");
+							addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getParent().getIndex()+")");
 							m_bools = true;
 						} else {
-							addLine("#define " + makeFieldIndexName(f) + " ("+f.getIndex()+")");
+							addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 						}
 					}
 					if(f.getTypeId() == TypeId.STRING) {
@@ -174,7 +186,7 @@ public class CWriter extends SourceWriter {
 						m_arrays = true;
 					} else if(f instanceof SequenceField) {
 						m_sequences = true;
-						addLine("#define " + makeFieldIndexName(f) + " ("+f.getIndex()+")");
+						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 					}
 				}
 			}, true);
@@ -190,7 +202,7 @@ public class CWriter extends SourceWriter {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
 						
-							addLine("#define " + makeBooleanMaskName(f) + " (1 << "+f.getIndex()+")");
+							addLine("#define " + NameMaker.makeBooleanMaskName(f) + " (1 << "+f.getIndex()+")");
 	
 						}
 						
@@ -208,13 +220,13 @@ public class CWriter extends SourceWriter {
 					int n = is.size();
 					if(n == 1) {
 						Index pi = is.get(0);
-						addLine("#define " + makeArraySizeName(pi) + " ("+pi.n+")");
-						addLine("#define " + makeArrayElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
+						addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+						addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 					} else {
 						for(int i = 0; i < n; ++i) { 
 							Index pi = is.get(i);
-							addLine("#define " + makeArraySizeName(pi) + " ("+pi.n+")");
-							addLine("#define " + makeArrayElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
+							addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+							addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 						}
 					}
 					
@@ -227,7 +239,7 @@ public class CWriter extends SourceWriter {
 			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
 					
-					addLine("#define " + makeArrayElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
+					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
 
 				});
 			});
@@ -240,7 +252,7 @@ public class CWriter extends SourceWriter {
 			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 				mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 					
-					addLine("#define " + makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
+					addLine("#define " + NameMaker.makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
 
 				});
 			});
@@ -251,7 +263,7 @@ public class CWriter extends SourceWriter {
 		addLine();
 		addLineComment("Add message lengths");
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			addLine("#define " + makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
+			addLine("#define " + NameMaker.makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
 		});
 
 
@@ -271,14 +283,18 @@ public class CWriter extends SourceWriter {
 			makeMessageAdder(mf, false);
 			mf.getChildren().forEach(f -> {
 				
-				makeMessageGetterSetter(f, mf, true, false);
-				makeMessageGetterSetter(f, mf, false, false);
+				makeMessageGetterSetter(f, true, false);
+				makeMessageGetterSetter(f, false, false);
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
-				makeStringCopier(sf, mf, true,  false);
-				makeStringCopier(sf, mf, false, false);
+				makeStringCopier(sf, true,  false);
+				makeStringCopier(sf, false, false);
 				makeStringLengthGetter(sf, mf, false);
+			});
+			mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
+				makeSequenceInit(sf, false);
+				makeSequenceLengthGetter(sf, false);
 			});
 			
 		});
@@ -317,45 +333,189 @@ public class CWriter extends SourceWriter {
 
 
 
-	private String makeFieldIndexName(Field f) {
-		return makeName(f, true).append("index").toUpperSnake();
-	}
-
-	private String makeBooleanMaskName(Field f) {
-		if(f.getBitCount() != 1) {
-			throw new RuntimeException("This should only be used for boolean fields, not this one: "+f);
-		}
-		return makeName(f, true).append("mask").toUpperSnake();
-	}
-
-	private String makeArraySizeName(Index pi) {
-		SymbolName result = makeName(pi.p, true).append("size");
-		if(pi.ofN >= 0) {
-			result = result.append("" + pi.i);
-		}
-		return  result.toUpperSnake();
-	}
-	private String makeArrayElementByteCountName(Index pi) {
-		
-		
-		SymbolName result = makeName(pi.p, true).append("element", "byte", "count");
-		if(pi.ofN > 1) {
-			result = result.append("" + pi.i);
-		}
 	
-		return  result.toUpperSnake();
+
+	
+
+	
+	private void makeSequenceLengthGetter(SequenceField sf, boolean protoNotDef) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("Gets the defined length of a sequence "+sf.getTypeName().deScope().toTitle());
+		comments.add(sf.getComment());
+		
+		List<Index> pis = MultipleField.getIndeces(sf);
+		
+		
+		comments.add("@param buf - the message buffer to add the message to");
+		comments.add("@param msg - the index of the start of the message");
+
+		m_paramList = "Bb * buf, BbBlock msg";
+				
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+			}
+			m_paramList += ", int "+pi.name;
+	
+				
+			
+		}
+		
+		comments.add("@return - the number of elements in the sequence");
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		
+		
+	
+		
+		addLine("uint32_t get"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel()+"SequenceLength("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		if(protoNotDef) {
+			return;
+		}
+		//now do contents of function
+		indent();
+
+		
+		
+		
+		
+		
+		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
+		for(Index pi : pis) {
+			if(pi.p instanceof ArrayField) {
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+			} else if(pi.p instanceof SequenceField) {
+				
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("if(i == 0){");
+				indent();
+				addLine("return 0;//bail because an upstream sequence was not initialized");
+				closeBrace();
+				
+				
+				
+			}
+			
+		}
+		addLineComment("i is now the index of this sequence field header");
+		
+		addLine("return getUint16(buf, msg, i);//get the length field of the sequence");
+		
+		
+		
+		
+		outdent();
+		addLine("}");
+	}
+
+	/**
+	 * makes the sequence initialize function
+	 * this allocates bytes in the buffer for the contents of the sequence
+	 * this must be called on all sequences before any of the contained fields can be assigned values
+	 * @param sf
+	 * @param protoNotDef
+	 */
+	private void makeSequenceInit(SequenceField sf, boolean protoNotDef) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("A function to initialize a "+sf.getTypeName().deScope().toTitle());
+		comments.add(sf.getComment());
+		
+		List<Index> pis = MultipleField.getIndeces(sf);
+		
+		
+		comments.add("@param buf - the message buffer to add the message to");
+		comments.add("@param msg - the index of the start of the message");
+		comments.add("@param n - the number of elements of this sequence");
+		m_paramList = "Bb * buf, BbBlock msg";
+				
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+			}
+			m_paramList += ", int "+pi.name;
+	
+				
+			
+		}
+		
+		m_paramList += ", uint32_t n";
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		
+		
+	
+		
+		addLine("void init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		if(protoNotDef) {
+			return;
+		}
+		//now do contents of function
+		indent();
+
+		addLine("uint32_t is = buf->length;//this is the next free byte of the message");
+		addLine("uint32_t dis = is % 4;");
+		addLine("is += dis == 0 ? 0 : 4 - (is % 4);//advance to the next4 byte alignment");
+		
+		addLine("setUint32(buf, msg, is, n);//set the length field of the header sequence");
+		addLine("++is;");
+		
+		
+		
+		
+		
+		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
+		for(Index pi : pis) {
+			if(pi.p instanceof ArrayField) {
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+			} else if(pi.p instanceof SequenceField) {
+				
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("if(i == 0){");
+				indent();
+				addLine("return;//bail because an upstream sequence was not initialized");
+				closeBrace();
+				
+				
+				
+			}
+			
+		}
+		addLineComment("i is now the index of this sequence field header");
+		
+		addLine("setUint16(buf, msg, i, is);//set the header to the location of the sequence data");
+		
+		
+		
+		addLine("buf->length += "+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+" + 1; //the 1 is to account for the length field that precedes the sequence data");
+		
+		outdent();
+		addLine("}");
 	}
 
 	private void addMessageKey(MessageField mf) {
 		Number n = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION).getParameter(0, Number.class);
-		addLine("#define "+makeMessageKeyName(mf) + "("+n.asInt()+")");
+		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+n.asInt()+")");
 	}
-	private String makeMessageKeyName(MessageField mf) {
-		return mf.getTypeName().deScope().append("key").toUpperSnake();
-	}
-	private String makeMessageLengthName(MessageField mf) {
-		return mf.getTypeName().deScope().append("length").toUpperSnake();
-	}
+	
+	
 	private String m_paramList = "";
 	
 	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {
@@ -402,7 +562,7 @@ public class CWriter extends SourceWriter {
 			m_paramList += ", ";
 			
 			
-			String paramName = makeName(f, false).toLowerCamel();
+			String paramName = NameMaker.makeParamName(f);
 			String type = getType(f);
 			if(f instanceof EnumField) {
 				type = f.getTypeName().deScope().toUpperCamel();
@@ -427,13 +587,13 @@ public class CWriter extends SourceWriter {
 		
 		for(Field f : fs) {
 				
-			String paramName = makeName(f, false).toLowerCamel();
+			String paramName = NameMaker.makeParamName(f);
 
 			
 
 			
 			
-			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+makeFieldIndexName(f)+", "+paramName+");");
+			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
 			
 			
 		}
@@ -442,7 +602,7 @@ public class CWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("setUint16(buf, msg, "+makeFieldIndexName(f)+", 0);//clear "+s+" header");
+				addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -462,7 +622,7 @@ public class CWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("setUint16(buf, msg, "+makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
+					addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -482,7 +642,7 @@ public class CWriter extends SourceWriter {
 			}
 			
 		}
-		addLine("buf->length = msg + "+makeMessageLengthName(mf));
+		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
 		addLine("return buf->length;");
 		
 		outdent();
@@ -494,7 +654,7 @@ public class CWriter extends SourceWriter {
 	 * @param getNotSet
 	 * @param protoNotDef
 	 */
-	private void makeMessageGetterSetter(Field f, MessageField mf, boolean getNotSet, boolean protoNotDef) {
+	private void makeMessageGetterSetter(Field f, boolean getNotSet, boolean protoNotDef) {
 		String tf = getType(f);
 		if(tf == null || f.getTypeId() == TypeId.STRING) {
 			return;
@@ -550,7 +710,7 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = makeScopeName(f);
+		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
@@ -563,17 +723,23 @@ public class CWriter extends SourceWriter {
 		
 		if(pis.size() == 0) {
 			
-			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, "+ makeFieldIndexName(f) + ");");
+			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, "+ NameMaker.makeFieldIndexName(f) + ");");
 			
 		} else {
 		
-			addLine("uint32_t i = "+makeFieldIndexName(f) + ";" );
+			addLine("uint32_t i = "+NameMaker.makeFieldIndexName(f) + ";" );
 			for(Index pi : pis) {
 				if(pi.p instanceof ArrayField) {
-					addLine("i += "+makeArrayElementByteCountName(pi) + " * " + pi.name + ";");
+					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
 				} else if(pi.p instanceof SequenceField) {
 					
 					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+					if(!getNotSet) {
+						addLine("if(i == 0){");
+						indent();
+						addLine("return;//bail because a sequence was not initialized");
+						closeBrace();
+					}
 					
 				}
 				
@@ -588,7 +754,7 @@ public class CWriter extends SourceWriter {
 	}
 	
 	
-	private void makeStringCopier(StringField f, MessageField mf, boolean toNotFrom, boolean protoNotDef) {
+	private void makeStringCopier(StringField f, boolean toNotFrom, boolean protoNotDef) {
 		List<Index> pis = MultipleField.getIndeces(f);
 		ArrayList<String> comments = new ArrayList<>();
 		SymbolName fn = f.getName();
@@ -636,7 +802,7 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = makeScopeName(f);
+		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
@@ -648,10 +814,10 @@ public class CWriter extends SourceWriter {
 		}
 		
 		indent();
-		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
+		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+makeArrayElementByteCountName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
 				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
@@ -668,7 +834,7 @@ public class CWriter extends SourceWriter {
 			addLine("uint32_t si = lenW + 4;//this will be the start of the string data");
 			addLine("uint32_t j = 0;//this will be the string length by the time we're done");
 			
-			addLine("for(; j < "+makeStringMaxLengthName(f)+"; ++j){");
+			addLine("for(; j < "+NameMaker.makeStringMaxLengthName(f)+"; ++j){");
 			indent();
 			addLine("char c = string[j]");
 			addLine("if(c == 0){");
@@ -743,7 +909,7 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = makeScopeName(f);
+		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
@@ -755,10 +921,10 @@ public class CWriter extends SourceWriter {
 		}
 		
 		indent();
-		addLine("uint32_t i = " + makeFieldIndexName(f) + ";");
+		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+makeArraySizeName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeArraySizeName(pi) + " * " + pi.name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
 				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
@@ -780,10 +946,7 @@ public class CWriter extends SourceWriter {
 	}
 	
 	
-	private String makeStringMaxLengthName(StringField f) {
-		return makeName(f, true).append("max", "length").toUpperSnake();
-	}
-
+	
 
 
 	/**
@@ -861,32 +1024,7 @@ public class CWriter extends SourceWriter {
 	
 
 
-	/**
-	 * Traverse the parent hierarchy of this field until a message field is reached
-	 * Construts a scope name from all the names up to the message and prepends the message type
-	 * the rightmost scope level should be the field name
-	 * the leftmost scope level should be the message name
-	 * @param f
-	 * @return
-	 */
-	private ScopeName makeScopeName(Field f) {
-		ScopeName result = ScopeName.wrap(SymbolName.EMPTY);
-		MessageField mf = null;
-		Field ft = f;
-		while(ft != null && mf == null) {
-			SymbolName n = ft.getName();
-			result = result.addLevelAbove(n);
-			ft = ft.getParent();
-			mf = ft.asType(MessageField.class);
-			
-		}
-		
-		if(mf == null) {
-			throw new RuntimeException("Could not determine the message that this field is part of "+f);
-		}
-		result = result.addLevelAbove(mf.getTypeName().deScope());
-		return result;
-	}
+
 	
 
 	
@@ -969,40 +1107,7 @@ public class CWriter extends SourceWriter {
 		}
 		return result;
 	}
-	/**
-	 * Constructs a name for this field.
-	 * Basefields that are children of the message should just be named by their name
-	 * BaseFields that are children of structs should have the struct name prepended
-	 * Types that are in an Array type should have the array name prepended
-	 * Same with types that are in a sequence
-	 * 
-	 * 
-	 * 
-	 * @param f - the field to name
-	 * @param includeMessage - if true will include the message name it the final name
-	 * @return
-	 */
-	private SymbolName makeName(Field f, boolean includeMessage) {
-		SymbolName result = f.getName();
-		if(result == null) {
-			result = f.getParent().getName();
-			
-		}
-		ParentField pf = f.getParent();
-		while((pf != null) && !(pf instanceof MessageField)) {
-			SymbolName pn = null;
-			pn = pf.getName();
-			
-			
-			result = result.prepend(pn);
-			pf = pf.getParent();
-		}
-		MessageField mf = f.getAncestor(MessageField.class);
-		if(mf != null) {
-			result = result.prepend(mf.getTypeName().deScope());
-		}
-		return result;
-	}
+
 	boolean m_bools = false;
 	boolean m_arrays = false;
 	boolean m_sequences = false;
@@ -1025,7 +1130,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				c = "";
 			}
-			addLine(makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue().asLong())+", " + c);
+			addLine(NameMaker.makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue().asLong())+", " + c);
 
 
 		}
@@ -1037,9 +1142,7 @@ public class CWriter extends SourceWriter {
 	
 	}
 
-	private String makeEnumName(EnumField ef, NameValue nv) {
-		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnake();
-	}
+	
 
 
 

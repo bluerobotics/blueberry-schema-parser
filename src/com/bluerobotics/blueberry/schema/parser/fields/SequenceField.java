@@ -64,9 +64,8 @@ public class SequenceField extends ParentField implements MultipleField {
 	@Override
 	public List<Index> getIndeces() {
 		ArrayList<Index> result = new ArrayList<>();
-		SymbolName name = getName();
-		name = SymbolName.fromCamel("index").prepend(name);
-		result.add(new Index(this, 0, 1, -1, name.toLowerCamel(), getPaddedByteCount()));
+
+		result.add(new Index(this, 0, 1, -1, NameMaker.makeMultipleFieldIndexParamName(this, -1), getPaddedByteCount()));
 		return result;
 	}
 
