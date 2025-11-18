@@ -43,6 +43,7 @@ public abstract class AbstractField implements Field {
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
+	private int m_order = -1;
 
 	private final Coord m_coord;
 
@@ -60,6 +61,28 @@ public abstract class AbstractField implements Field {
 	
 	
 	
+
+
+
+	@Override
+	public int getOrder() {
+		return m_order;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setOrder(int o) {
+		m_order = o;
+	}
+
+
+
+
 
 
 

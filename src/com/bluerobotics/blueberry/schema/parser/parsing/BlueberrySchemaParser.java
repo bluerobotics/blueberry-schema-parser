@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.parsing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -171,6 +172,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			applyDeferredParameters(m_defines);
 			applyDeferredParameters(m_messages);
+			
+			computeOrder(m_messages);
 		
 			organizeBools(m_messages);
 
@@ -193,6 +196,30 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	/**
+	 * scan through all messages and compute the field order
+	 * any children of message fields will be assigned the same value as their parent
+	 * @param m_messages2
+	 */
+	private void computeOrder(FieldList ms) {
+		ms.forEachOfType(MessageField.class, false, m -> {
+			Iterator<Field> fs = m.getChildren().getIterator();
+			int order = 0;
+			while(fs.hasNext()) {
+				Field f = fs.next();
+				f.setOrder(order);
+				if(f instanceof ParentField) {
+					ParentField pf = (ParentField)f;
+					int o = order;
+					pf.getChildren().forEach(ft -> {
+						ft.setOrder(o);
+					}, true);
+				}
+				++order;
+			}
+		});
+		
 	}
 	private void organizeBools(FieldList ms) {
 		ms.forEachOfType(MessageField.class, false, mf -> {
