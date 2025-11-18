@@ -143,12 +143,14 @@ public interface Field extends ThingFromFile {
 	/**
 	 * gets the order value that this field was defined in the schema
 	 * This is used for determining if this field is included in a particular message version
+	 * This may turn out to not be necessary
 	 * @return
 	 */
 	public int getOrder();
 	/**
 	 * sets the order value. this is set during parsing
 	 * This is used for determining if this field is included in a particular message version
+	 * This may turn out to not be necessary
 	 * @param o
 	 */
 	public void setOrder(int o);
