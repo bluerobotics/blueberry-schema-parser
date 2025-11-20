@@ -1212,7 +1212,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()){
 			//first find next define element
-			Token equalsT = m_tokens.gotoNextId(TokenIdentifier.EQUALS);
+			IdentifierToken equalsT = m_tokens.gotoNextId(TokenIdentifier.EQUALS);
 
 			if(equalsT != null) {
 				CommentToken commentT = m_tokens.relative(-2, CommentToken.class);
@@ -1220,7 +1220,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				NumberToken numberT = m_tokens.relative(+1, NumberToken.class);
 
 				if(nameT != null && numberT != null) {
-					NameValueToken nvt = new NameValueToken(nameT, numberT, commentT);
+					NameValueToken nvt = new NameValueToken(commentT, nameT, equalsT, numberT);
 					m_tokens.replace(equalsT, nvt);
 					m_tokens.remove(numberT);
 					m_tokens.remove(nameT);

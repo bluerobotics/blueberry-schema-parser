@@ -21,15 +21,30 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.ListIterator;
 
 /**
  * A token class that combines a number of other tokens
  */
 public abstract class GroupToken implements Token {
-	private final TokenList m_children = new TokenList();
+	@Override
+	public boolean isAfter(Token t) {
+		return Token.inOrder(t, this);
+	}
+	private final TokenList m_children;
+	
+	
+	protected GroupToken(TokenList ts) {
+		m_children = new TokenList();
+		ListIterator<Token> tts = ts.getIterator();
+		while(tts.hasNext()) {
+			addChild(tts.next());
+		}
+	}
+	protected GroupToken(Token... ts) {
+		m_children = new TokenList(ts);
+	}
+	
 	@Override
 	public Coord getStart() {
 		Coord result = null;
@@ -61,20 +76,21 @@ public abstract class GroupToken implements Token {
 	 * @param ts
 	 */
 	public void addChild(Token ts) {
-		ListIterator<Token> ti = m_children.getIterator();
-		while(ti.hasNext()) {
-			Token tt = ti.next();
-			if(tt.isAfter(ts)){
-				int i = ti.previousIndex();
-				m_children.add(i, ts);//add before the element being tested
-				break;
-			} else if(!ti.hasNext()) {
-				m_children.add(ts);//add to the end of the list
-			}
-		}
+//		ListIterator<Token> ti = m_children.getIterator();
+//		while(ti.hasNext()) {
+//			Token tt = ti.next();
+//			if(tt.isAfter(ts)){
+//				int i = ti.previousIndex();
+//				m_children.add(i, ts);//add before the element being tested
+//				break;
+//			} else if(!ti.hasNext()) {
+//				m_children.add(ts);//add to the end of the list
+//			}
+//		}
+		m_children.add(ts);
 	}
-	public TokenList getChildren() {
-		return m_children;
-	}
+	
+	
+	
 
 }

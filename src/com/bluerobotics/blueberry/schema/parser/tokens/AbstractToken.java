@@ -27,14 +27,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 public abstract class AbstractToken implements Token {
 	@Override
 	public boolean isAfter(Token t) {
-		boolean result = false;
-		Coord e = t.getEnd();
-		Coord s = getStart();
-		if(e.isSameFile(s) && e.compareTo(s) < 0) {
-			result = true;
-		}
-			
-		return result;
+		return Token.inOrder(t, this);
 	}
 
 	private final Coord m_start;

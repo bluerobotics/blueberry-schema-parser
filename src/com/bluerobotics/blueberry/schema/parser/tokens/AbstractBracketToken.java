@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,43 +21,9 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-public interface Token {
-
-	/**
-	 * gets the coordinate in the source file of the first character of this token
-	 * @return
-	 */
-	Coord getStart();
-	/**
-	 * gets the coordinate in the source file of the last character of this token
-	 * @return
-	 */
-	Coord getEnd();
-	
-	/**
-	 * gets the text of the source file that this token represents
-	 * @return
-	 */
-	String getName();
-	
-	/**
-	 * checks if the specified token comes before this token
-	 * if they are not from the same source file then it should return false
-	 * @param t
-	 * @return
-	 */
-	boolean isAfter(Token t);
-	
-	
-	static boolean inOrder(Token t1, Token t2) {
-		boolean result = false;
-		Coord e = t1.getEnd();
-		Coord s = t2.getStart();
-		if(e.isSameFile(s) && e.compareTo(s) < 0) {
-			result = true;
-		}
-			
-		return result;
-	}
+/**
+ * 
+ */
+public abstract class AbstractBracketToken extends GroupToken {
 
 }

@@ -38,6 +38,12 @@ public class TokenList {
 	public TokenList() {
 
 	}
+	
+	public TokenList(Token... ts) {
+		for(Token t : ts) {
+			add(t);
+		}
+	}
 
 
 	public Token getCurrent() {
@@ -627,6 +633,16 @@ public class TokenList {
 
 	public Token getLast() {
 		return m_tokens.getLast();
+	}
+	
+	public TokenList getSublist(int start, int length) {
+		TokenList result = new TokenList();
+		
+		for(int i = start; i < start + length; ++i) {
+			result.add(get(i));
+		}
+		
+		return result;
 	}
 
 

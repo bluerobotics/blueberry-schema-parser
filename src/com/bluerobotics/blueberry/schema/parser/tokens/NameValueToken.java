@@ -27,31 +27,32 @@ import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 /**
  *
  */
-public class NameValueToken extends AbstractToken {
-	private Number value;
-	private final SymbolName name;
-	private final String comment;
-	public NameValueToken(SymbolNameToken n, NumberToken v, CommentToken c){
-		super(n.getStart().getFirst(v != null ? v.getStart() : null).getFirst(c != null ? c.getStart() : null),
-				n.getEnd().getLast(v != null ? v.getEnd() : null).getLast(c != null ? c.getEnd() : null));
-
-		name = n.getSymbolName();
-		value = v.getNumber();
-		comment = c == null ? null : c.combineLines();
+public class NameValueToken extends GroupToken {
+	private NumberToken value;
+	private final SymbolNameToken name;
+	private final CommentToken comment;
+	public NameValueToken(CommentToken c, SymbolNameToken n, IdentifierToken e, NumberToken v){
+		
+		super(c, n, e, v);
+		name = n;
+		value = v;
+		comment = c;
+		
+		
 	
 	}
 
 	public Number getValue() {
-		return value;
+		return value.getNumber();
 	}
 	public boolean isValue() {
 		return value != null;
 	}
 	public SymbolName getSymbolName() {
-		return name;
+		return name.getSymbolName();
 	}
 	public String getComment() {
-		return comment;
+		return comment == null ? "" : comment.combineLines();
 	}
 	public String toString() {
 		String s = getClass().getSimpleName();
@@ -64,6 +65,14 @@ public class NameValueToken extends AbstractToken {
 		s += ")";
 		return s;
 	}
+
+	@Override
+	public boolean isAfter(Token t) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	
 	
 
 }
