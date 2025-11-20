@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
@@ -62,6 +63,34 @@ public class MessageField extends ParentField {
 		int result = getByteCount();
 		int m = result % getMinAlignment();
 		result += m;
+		return result;
+	}
+	/**
+	 * looks for a serialization annotation and checks for a value of CDR
+	 * @return
+	 */
+	public boolean useCdrNotBlueberry() {
+		boolean result = false;
+		Annotation a = getAnnotation(Annotation.SERIALIZATION_ANNOTATION);
+		if(a != null) {
+			Object s = a.getParameter(0, Object.class);
+			if(s.toString().equals("CDR")) {
+				result = true;
+				
+			}
+		}
+		return result;
+	}
+	/**
+	 * looks for a topic annotation and returns the string value of the parameter
+	 * @return
+	 */
+	public String getTopic() {
+		String result = "";
+		Annotation a = getAnnotation(Annotation.TOPIC_ANNOTATION);
+		if(a != null) {
+			result = a.getParameter(0, Object.class).toString();
+		}
 		return result;
 	}
 

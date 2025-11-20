@@ -30,8 +30,8 @@ import java.util.ListIterator;
  * 
  */
 public class ScopeName extends SymbolName {
-	private static final String SEPARATOR = "%^&";//probably doesn't matter what this is so long as it's unique. Plus it's tested by reference equality, not value.
-	public static final ScopeName ROOT = new ScopeName(Case.UPPER_SNAKE, SEPARATOR); 
+	private static final String SEPARATOR = "%^&";//probably doesn't matter what this is so long as it's unique and unlikely to occur in a string.
+	public static final ScopeName ROOT = new ScopeName(Case.LOWER_SNAKE, SEPARATOR); 
 	private ScopeName(Case c, String... ss) {
 		super(c, ss);
 		
@@ -63,6 +63,7 @@ public class ScopeName extends SymbolName {
 	}
 	/**
 	 * Splits this name by the specified scope separator
+	 * and create a list of symbol names for each chunk
 	 * @param separator
 	 * @return
 	 */
@@ -72,20 +73,15 @@ public class ScopeName extends SymbolName {
 		ListIterator<String> li = Arrays.asList(m_name).listIterator();
 		while(li.hasNext()) {
 			String s = li.next();
-			boolean isS = s == SEPARATOR;
-			if(!isS) {
+			if(!s.equals(SEPARATOR)) {
 				ss.add(s);
-			}
-			if(isS || !li.hasNext()) {
+			} else if(!li.hasNext()) {
 				if(!ss.isEmpty()) {
 					result.add(new SymbolName(getCase(), ss.toArray(new String[ss.size()])));
 					ss.clear();
 				}
 			}
-			
-			if(isS) {
-//				result.add(new SymbolName(getCase(), s));
-			}
+		
 		}
 		return result;
 		
@@ -139,7 +135,7 @@ public class ScopeName extends SymbolName {
 	public boolean isAbsolute() {
 		boolean result = false;
 		if(m_name.length > 0) {
-			if(m_name[0] == SEPARATOR) {
+			if(m_name[0].equals(SEPARATOR)) {
 				result = true;
 			}
 		}
@@ -200,7 +196,7 @@ public class ScopeName extends SymbolName {
 		
 		for(int i = m_name.length - 1; i >= 0; --i) {
 			String s = m_name[i];
-			if(s == SEPARATOR) {
+			if(s.equals(SEPARATOR)) {
 				break;
 			} else {
 				result.add(0, s);
@@ -242,7 +238,7 @@ public class ScopeName extends SymbolName {
 	public SymbolName toSymbolName() {
 		ArrayList<String> result = new ArrayList<>();
 		for(String s : m_name) {
-			if(s != SEPARATOR) {
+			if(!s.equals(SEPARATOR)) {
 				result.add(s);
 			}
 		}

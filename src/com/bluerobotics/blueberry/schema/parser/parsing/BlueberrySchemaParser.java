@@ -301,20 +301,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
 			
-			boolean doCdr = false;
-			Annotation a = mf.getAnnotation(Annotation.SERIALIZATION_ANNOTATION);
-			if(a != null) {
-				Object s = a.getParameter(0, Object.class);
-				if(s.toString().equals("CDR")) {
-					doCdr = true;
-					throw new SchemaParserException("CDR serialization not supported yet", null);
-				}
+			
+			
+			if(mf.useCdrNotBlueberry()) {
+				throw new SchemaParserException("CDR serialization not supported yet", null);
+				//TODO: add a field packer for CDR packing
+			} else {
+				BlueberryFieldPacker.pack(mf);
 			}
-				
-			
-			
-			BlueberryFieldPacker.pack(mf);
-			
 		});
 		
 	}
@@ -1204,14 +1198,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return result;
 
 	}
-	/**
-	 * helper method to trap nulls
-	 * @param ct
-	 * @return
-	 */
-	private String getComment(CommentToken ct) {
-		return ct == null ? "" : ct.combineLines();
-	}
 
 
 
@@ -1401,6 +1387,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * removes any semicolon tokens that occur either right right after  the following tokens:
+	 * NameValueToken, CommmentToken, FilePathToken, closing brace, closing bracket, closing square bracket
+	 * Also removes if the token right after the semicolon is:
+	 * NameValueToken, CommentToken, FilePathToken, EolToken, BraceEnd, BracketEnd, SquareBracketEnd
+	 */
 	private void collapseSemicolons() {
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()){
@@ -1460,45 +1452,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 
-	/**
-	 * Finds the next token of the specified type
-	 * @param i - starting index
-	 * @param forwardNotReverse
-	 * @param cs
-	 * @return
-	 */
-	private int findToken(int i, boolean forwardNotReverse, Class<?>... cs) {
-		if(i < 0 || i >= m_tokens.size()) {
-			return -1;
-		}
-		int result = -1;
-		boolean notDone = true;
-		int n = m_tokens.size();
-		int j = i;
-		while(notDone) {
-			Token t = m_tokens.get(j);
-			for(Class<?> c : cs) {
-				if(t.getClass() == c) {
-					result = j;
-					break;
-				}
-			}
-			if(result >= 0) {
-				break;
-			} else if(forwardNotReverse) {
-				++j;
-				if(j >= n) {
-					notDone = false;
-				}
-			} else {
-				--j;
-				if(j < 0) {
-					notDone = false;
-				}
-			}
-		}
-		return result;
-	}
 
 
 
@@ -1568,7 +1521,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			s = start.fromThisToThatString(end);
 		}
 				
-		TokenIdentifier tif = null;
 		if(s.isEmpty()) {
 		} else if(s.isBlank()) {
 			m_tokens.add(new IdentifierToken(start, end, TokenIdentifier.SPACE));
