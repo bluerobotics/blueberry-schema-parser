@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,43 +21,60 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
+
 /**
- *
+ * A token class that combines a number of other tokens
  */
-public abstract class AbstractToken implements Token {
+public abstract class GroupToken implements Token {
+	private final TokenList m_children = new TokenList();
 	@Override
-	public boolean isAfter(Token t) {
-		boolean result = false;
-		Coord e = t.getEnd();
-		Coord s = getStart();
-		if(e.isSameFile(s) && e.compareTo(s) < 0) {
-			result = true;
+	public Coord getStart() {
+		Coord result = null;
+		Token t = m_children.getFirst();
+		if(t != null) {
+			result = t.getStart();
 		}
-			
 		return result;
 	}
 
-	private final Coord m_start;
-	private final Coord m_end;
-	public AbstractToken(Coord start, Coord end) {
-		m_start = start;
-		m_end = end;
-	}
-	@Override
-	public Coord getStart() {
-		return m_start;
-	}
 	@Override
 	public Coord getEnd() {
-		return m_end;
+		Coord result = null;
+		Token t = m_children.getLast();
+		if(t != null) {
+			result = t.getEnd();
+		}
+		return result;	
 	}
-	public String toString() {
-		return getClass().getSimpleName() + "()";
-	}
-	
+
 	@Override
-	public final String getName() {
-		return m_start.fromThisToThatString(m_end);
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	/**
+	 * adds a token to this group.
+
+	 * @param ts
+	 */
+	public void addChild(Token ts) {
+		ListIterator<Token> ti = m_children.getIterator();
+		while(ti.hasNext()) {
+			Token tt = ti.next();
+			if(tt.isAfter(ts)){
+				int i = ti.previousIndex();
+				m_children.add(i, ts);//add before the element being tested
+				break;
+			} else if(!ti.hasNext()) {
+				m_children.add(ts);//add to the end of the list
+			}
+		}
+	}
+	public TokenList getChildren() {
+		return m_children;
 	}
 
 }

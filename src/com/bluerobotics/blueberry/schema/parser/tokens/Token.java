@@ -23,10 +23,29 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 
 public interface Token {
 
+	/**
+	 * gets the coordinate in the source file of the first character of this token
+	 * @return
+	 */
 	Coord getStart();
-
+	/**
+	 * gets the coordinate in the source file of the last character of this token
+	 * @return
+	 */
 	Coord getEnd();
 	
+	/**
+	 * gets the text of the source file that this token represents
+	 * @return
+	 */
 	String getName();
+	
+	/**
+	 * checks if the specified token comes before this token
+	 * if they are not from the same source file then it should return false
+	 * @param t
+	 * @return
+	 */
+	boolean isAfter(Token t);
 
 }

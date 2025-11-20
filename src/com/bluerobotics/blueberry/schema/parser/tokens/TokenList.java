@@ -22,6 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.function.Function;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
@@ -613,6 +615,19 @@ public class TokenList {
 		return i;
 	}
 
+
+	public ListIterator<Token> getIterator() {
+		return m_tokens.listIterator();
+	}
+
+
+	public Token getFirst() {
+		return m_tokens.getFirst();
+	}
+
+	public Token getLast() {
+		return m_tokens.getLast();
+	}
 
 
 }

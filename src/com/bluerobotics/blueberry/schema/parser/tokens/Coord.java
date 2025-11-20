@@ -358,6 +358,9 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
+	public boolean isSameFile(Coord c) {
+		return c.filePath.equals(filePath);
+	}
 	
 
 }
