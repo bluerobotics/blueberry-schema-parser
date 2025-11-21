@@ -77,6 +77,13 @@ public interface TokenConstants {
 		public String id() {
 			return id;
 		}
+		public boolean matches(Token t) {
+			boolean result = false;
+			if(t instanceof IdentifierToken) {
+				result = ((IdentifierToken)t).getKeyword() == this;
+			}
+			return result;
+		}
 	}
 //	public static final String ANNOTATION_START = "@";
 //	public static final String ARRAY_MODIFIER = "array";

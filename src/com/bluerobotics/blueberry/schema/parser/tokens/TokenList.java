@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
@@ -59,7 +60,9 @@ public class TokenList {
 		m_tokens.clear();
 	}
 	public void add(Token t) {
-		m_tokens.add(t);
+		if(t != null) {
+			m_tokens.add(t);
+		}
 	}
 	public int size() {
 		return m_tokens.size();
@@ -417,7 +420,28 @@ public class TokenList {
 		return result;
 	}
 	public String toString() {
-		return getClass().getSimpleName() + "("+getCurrent()+", " + relative(1) + ", " + relative(2) + "...)";
+		
+		String result = getClass().getSimpleName() + "(";
+
+		int n = m_tokens.size();
+		boolean addLast = true;
+		if(n > 3) {
+			n = 2;
+			addLast = true;
+		}
+		
+		for(int i = 0; i < n; ++i) {
+			if(i != 0) {
+				result += ", ";
+			}
+			result += m_tokens.get(i);
+		}
+		
+		if(addLast) {
+			result += " ... " + m_tokens.getLast();
+		}
+		result += ")";
+		return result;
 	}
 
 
@@ -644,6 +668,19 @@ public class TokenList {
 		
 		return result;
 	}
+
+	public IdentifierToken getCurrentId(TokenIdentifier ti) {
+		IdentifierToken result = null;
+		if(getCurrent() instanceof IdentifierToken) {
+			IdentifierToken it = (IdentifierToken)getCurrent();
+			if(it.getKeyword() == ti) {
+				result = it;
+			}
+		}
+		return result;
+	}
+	
+	
 
 
 }

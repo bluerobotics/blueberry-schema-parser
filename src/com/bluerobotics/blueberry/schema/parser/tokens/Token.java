@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import java.util.function.Consumer;
+
 public interface Token {
 
 	/**
@@ -59,5 +61,11 @@ public interface Token {
 			
 		return result;
 	}
-
+	/**
+	 * Applies the specified consumer to this token
+	 * 
+	 * @param deep - if true will recurse into any group tokens
+	 * @param c
+	 */
+	public void consume(boolean deep, Consumer<Token> c);
 }

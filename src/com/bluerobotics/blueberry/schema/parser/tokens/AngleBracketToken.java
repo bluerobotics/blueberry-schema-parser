@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,44 +21,26 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import java.util.function.Consumer;
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 
 /**
- *
+ * 
  */
-public abstract class AbstractToken implements Token {
-	@Override
-	public boolean isAfter(Token t) {
-		return Token.inOrder(t, this);
+public class AngleBracketToken extends AbstractBracketToken {
+	
+
+	public AngleBracketToken(TokenList ts) {
+		super(ts);
 	}
 
-	private final Coord m_start;
-	private final Coord m_end;
-	public AbstractToken(Coord start, Coord end) {
-		m_start = start;
-		m_end = end;
-	}
 	@Override
-	public Coord getStart() {
-		return m_start;
+	protected TokenIdentifier getOpenBracket() {
+		return TokenIdentifier.ANGLE_BRACKET_START;
 	}
+
 	@Override
-	public Coord getEnd() {
-		return m_end;
+	protected TokenIdentifier getCloseBracket() {
+		return TokenIdentifier.ANGLE_BRACKET_END;
 	}
-	public String toString() {
-		return getClass().getSimpleName() + "()";
-	}
-	
-	@Override
-	public final String getName() {
-		return m_start.fromThisToThatString(m_end);
-	}
-	@Override
-	public void consume(boolean deep, Consumer<Token> c) {
-		c.accept(this);
-	}
-	
-	
 
 }

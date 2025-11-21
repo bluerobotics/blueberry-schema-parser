@@ -301,7 +301,24 @@ public class Coord implements Comparable<Coord> {
 		return getString().substring(0, index);
 	}
 	public String fromThisToThatString(Coord that) {
-		return getString().substring(index, that.index);
+		String result = "";
+		if(line == that.line) {
+			result = m_lines[line].substring(index, that.index);
+		} else if(line < that.line) {
+		
+			for(int i = line; i <= that.line; ++i) {
+				String s = m_lines[i];
+				if(i == line) {
+					result += s.substring(index);
+				} else if(i == that.line) {
+					result += "|"+s.substring(0, that.index).trim();
+				} else {
+					result += "|"+s.trim();
+				}
+			}
+		}
+		
+		return result;
 	}
 	public boolean isEol() {
 		return index == getString().length();
@@ -360,6 +377,10 @@ public class Coord implements Comparable<Coord> {
 	}
 	public boolean isSameFile(Coord c) {
 		return c.filePath.equals(filePath);
+	}
+	
+	public boolean isSameLine(Coord c) {
+		return line == c.line;
 	}
 	
 

@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 import java.util.ListIterator;
+import java.util.function.Consumer;
 
 /**
  * A token class that combines a number of other tokens
@@ -35,11 +36,8 @@ public abstract class GroupToken implements Token {
 	
 	
 	protected GroupToken(TokenList ts) {
-		m_children = new TokenList();
-		ListIterator<Token> tts = ts.getIterator();
-		while(tts.hasNext()) {
-			addChild(tts.next());
-		}
+		m_children = ts;
+		
 	}
 	protected GroupToken(Token... ts) {
 		m_children = new TokenList(ts);
@@ -67,8 +65,16 @@ public abstract class GroupToken implements Token {
 
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
+		String result = "";
+		ListIterator<Token> ti = m_children.getIterator();
+		while(ti.hasNext()) {
+			Token t = ti.next();
+			result += t.getName();
+		}
+		if(result.length() > 40) {
+			result = result.substring(0, 20) + " ... " + result.substring(result.length() - 20, result.length());
+		}
+		return result;
 	}
 	/**
 	 * adds a token to this group.
@@ -89,6 +95,51 @@ public abstract class GroupToken implements Token {
 //		}
 		m_children.add(ts);
 	}
+	
+	public void addChild(int i, Token t) {
+		m_children.add(i, t);
+	}
+	
+	public int getChildrenCount() {
+		return m_children.size();
+	}
+	@Override
+	public void consume(boolean deep, Consumer<Token> c) {
+		if(deep) {
+			ListIterator<Token> ts = m_children.getIterator();
+			while(ts.hasNext()) {
+				Token t = ts.next();
+				t.consume(deep, c);
+			}
+		}
+		c.accept(this);
+	}
+	
+	@Override
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		
+		if(m_children.size() > 0) {
+			Coord s = m_children.getFirst().getStart();
+			Coord e = m_children.getLast().getEnd();
+			
+			result += s.fromThisToThatString(e);
+		}
+		
+		
+		
+		
+		result += ")";
+		return result;
+	}
+	
+	public TokenList getChildren() {
+		return m_children;
+	}
+	
+	
+	
 	
 	
 	

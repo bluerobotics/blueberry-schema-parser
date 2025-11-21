@@ -50,15 +50,21 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.tokens.AbstractBracketToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.AnnotationToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.BraceToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.tokens.EnumToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.FilePathToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.GroupToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.IdentifierToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NameValueToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.NumberToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.RoundBracketToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.ScopeNameToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.SingleWordToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.StringToken;
@@ -158,8 +164,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			collapseSemicolons();
 			
-			//check all brackets of all kinds to be sure they all match
-			m_tokens.matchBrackets(null);
+			
+			collapseBrackets();
+			
+			collapseEnums(m_tokens);
+			collapseAnnotations(m_tokens);
+			
+
 
 			assembleFields();
 			fillInMissingEnumValues();
@@ -196,6 +207,133 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	/**
+	 * scan for enums
+	 */
+	private void collapseEnums(TokenList list) {
+		list.resetIndex();
+		while(list.isMore()) {
+			
+			Token t = list.getCurrent();
+			if(t instanceof GroupToken) {
+				GroupToken gt = (GroupToken)t;
+				collapseEnums(gt.getChildren());
+			} else {
+				IdentifierToken ei = list.getCurrentId(TokenIdentifier.ENUM);
+				if(ei != null) {
+					CommentToken commentT = list.relative(-1, CommentToken.class);
+					SymbolNameToken nameToken = list.relative(1, SymbolNameToken.class);
+					IdentifierToken colon = list.relativeId(2, TokenIdentifier.COLON);
+					BaseTypeToken btt = list.relative(3, BaseTypeToken.class);
+					BraceToken braceT = list.relative(colon == null ? 2 : 4, BraceToken.class);
+					
+					if(nameToken == null) {
+						throw new SchemaParserException("Enum name not specified.", ei.getEnd());
+					} else if(braceT == null){
+						throw new SchemaParserException("Enum needs a body with members.", ei.getEnd());
+					}
+					
+					EnumToken et = new EnumToken(commentT, ei, nameToken, btt, braceT);
+					list.remove(commentT);
+					list.remove(nameToken);
+					list.remove(colon);
+					list.remove(btt);
+					list.remove(braceT);
+					list.replace(ei, et);
+					
+				}
+			}
+			list.next();
+			
+		}
+		
+	}
+	/**
+	 * scan for enums
+	 */
+	private void collapseAnnotations(TokenList list) {
+		list.resetIndex();
+		while(list.isMore()) {
+			
+			Token t = list.getCurrent();
+			if(t instanceof GroupToken) {
+				GroupToken gt = (GroupToken)t;
+				collapseAnnotations(gt.getChildren());
+			} else {
+				IdentifierToken ai = list.getCurrentId(TokenIdentifier.ANNOTATION_START);
+				if(ai != null) {
+					SymbolNameToken nameToken = list.relative(1, SymbolNameToken.class);
+					RoundBracketToken bracketT = list.relative(2, RoundBracketToken.class);
+					
+					if(nameToken == null) {
+						throw new SchemaParserException("Annotation name not specified.", ai.getEnd());
+					} else if(bracketT == null){
+						throw new SchemaParserException("Annotation needs a body with members.", ai.getEnd());
+					}
+					
+					
+					AnnotationToken at = new AnnotationToken(nameToken,bracketT);
+					list.remove(nameToken);
+					list.remove(bracketT);
+					list.replace(ai, at);
+					
+				}
+			}
+			list.next();
+			
+		}
+		
+	}
+	
+	
+	
+	/**
+	 * scans through the token list and finds all matching brackets and indents the list accordingly
+	 */
+	private void collapseBrackets() {
+		ListIterator<Token> ti = m_tokens.getIterator();
+		ArrayList<Token> stack = new ArrayList<>();
+		while(ti.hasNext()) {
+			Token t = ti.next();
+			
+			if(AbstractBracketToken.isOpen(t)) {
+				//it's an open so add to stack
+				stack.add(t);
+				
+			} else if(stack.size() > 0 && AbstractBracketToken.isClose(stack.getLast(), t)){
+				//we've found the closing bracket to the opening on the top of the stack
+				//so consume it
+				Token s = stack.getLast();
+				Token e = t;
+				stack.removeLast();//remove this off the stack because we're going to use it
+				TokenList contents = new TokenList();
+				//backup to start and make a list of all items while simultaneously removing them
+				Token r = e;
+				do {
+					//should not be infinite - really!
+					ti.remove();
+					contents.add(0, r);
+					r = ti.previous();
+					
+				} while(contents.getFirst() != s);
+				
+				//contents should now contain opening and closing bracket plus everything in between
+				//so make a new bracket token and put it in the list instead
+				ti.next();
+				AbstractBracketToken b = AbstractBracketToken.makeBracket(contents);
+				System.out.println("BlueberrySchemaParser.collapseBrackets "+b);
+				ti.add(b);
+				
+				
+				
+				
+			}
+		}
+		if(stack.size() > 0) {
+			throw new SchemaParserException("Could not find closing bracket matching this one: "+stack.getLast().getName(), stack.getLast().getStart());
+		}
+		
 	}
 	/**
 	 * scan through all messages and compute the field order
