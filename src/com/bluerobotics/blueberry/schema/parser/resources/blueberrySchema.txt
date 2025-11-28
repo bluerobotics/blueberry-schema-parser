@@ -353,6 +353,8 @@ Packet brPacket(preamble = 0x45554c42) {
 		float32 period //sample time in seconds
 		float32 gain //gain that will convert the byte-sized sample data to real values
 		uint32 id //identifier for this capture. All channel data of the same capture will have the same ID.
+		float32 offset //offset that will be added to the sample
+		uint8 source //the sink source id where this data will be captured from
 		
 		/*
 		 * An array of scope data. This must be preceded by an oscopePayload to convey the channel and channel settings

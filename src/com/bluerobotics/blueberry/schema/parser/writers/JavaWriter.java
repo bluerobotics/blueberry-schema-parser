@@ -748,7 +748,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//add method to set key
-		String keyType = lookupTypeForFuncName(keyF);
+		String[] keyType = lookupTypeForFuncName(keyF);
 		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
 		String keyValue = makeKeyName(keyF);
 		String keyFuncName = FieldName.fromCamel("write").addSuffix(keyType).toLowerCamel();
@@ -757,7 +757,7 @@ public class JavaWriter extends SourceWriter {
 		
 
 		//add method to set length
-		String lengthType = lookupTypeForFuncName(lengthF);
+		String[] lengthType = lookupTypeForFuncName(lengthF);
 		int lengthValue = withParametersNotEmpty ? af.getBaseFieldByteLength() : 0;
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
 		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
@@ -774,7 +774,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//add method to set repeat
-		String repeatsType = lookupTypeForFuncName(repeatsF);
+		String[] repeatsType = lookupTypeForFuncName(repeatsF);
 		String repeatsValue = withParametersNotEmpty ? "n" : "0";
 		String repeatsIndex = makeBaseFieldNameRoot(repeatsF).toUpperSnake();
 		String repeatsFuncName = FieldName.fromCamel("write").addSuffix(repeatsType).toLowerCamel();
@@ -787,7 +787,7 @@ public class JavaWriter extends SourceWriter {
 			for(BaseField f : fs) {
 				boolean bit = f instanceof BoolField;
 				
-				String fType = bit ? "bool" : lookupTypeForFuncName(f);
+				String[] fType = bit ? new String[] {"bool"} : lookupTypeForFuncName(f);
 				String fValue = f.getName().addSuffix("Function").toLowerCamel();
 				if(f instanceof EnumField) {
 					fValue += ".getValue()";
@@ -836,7 +836,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//add method to set key
-		String keyType = lookupTypeForFuncName(keyF);
+		String[] keyType = lookupTypeForFuncName(keyF);
 		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
 		String keyValue = makeKeyName(keyF);
 		String keyFuncName = FieldName.fromCamel("write").addSuffix(keyType).toLowerCamel();
@@ -845,7 +845,7 @@ public class JavaWriter extends SourceWriter {
 		
 
 		//add method to set length
-		String lengthType = lookupTypeForFuncName(lengthF);
+		String[] lengthType = lookupTypeForFuncName(lengthF);
 		int lengthValue = withParametersNotEmpty ? fs.size() : 0;
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
 		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
@@ -855,7 +855,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		//add method to set repeat
-		String repeatsType = lookupTypeForFuncName(repeatsF);
+		String[] repeatsType = lookupTypeForFuncName(repeatsF);
 		String repeatsValue = withParametersNotEmpty ? "n" : "0";
 		String repeatsIndex = makeBaseFieldNameRoot(repeatsF).toUpperSnake();
 		String repeatsFuncName = FieldName.fromCamel("write").addSuffix(repeatsType).toLowerCamel();
@@ -868,7 +868,7 @@ public class JavaWriter extends SourceWriter {
 			for(BaseField f : fs) {
 				boolean bit = f instanceof BoolField;
 				
-				String fType = bit ? "bool" : lookupTypeForFuncName(f);
+				String[] fType = bit ? new String[] {"bool"} : lookupTypeForFuncName(f);
 				String fValue = f.getName().addSuffix("Function").toLowerCamel();
 				if(f instanceof EnumField) {
 					fValue += ".getValue()";
@@ -916,7 +916,7 @@ public class JavaWriter extends SourceWriter {
 	
 		
 		//add method to set key
-		String keyType = lookupTypeForFuncName(keyF);
+		String[] keyType = lookupTypeForFuncName(keyF);
 		String keyIndex = makeBaseFieldNameRoot(keyF).toUpperSnake();
 		String keyValue = makeKeyName(keyF);
 		String keyFuncName = FieldName.fromCamel("write").addSuffix(keyType).toLowerCamel();
@@ -925,7 +925,7 @@ public class JavaWriter extends SourceWriter {
 		
 
 		//add method to set length
-		String lengthType = lookupTypeForFuncName(lengthF);
+		String[] lengthType = lookupTypeForFuncName(lengthF);
 		int lengthValue = withParamsNotWithout ? fs.size() + 1 : 1;
 		String lengthIndex = makeBaseFieldNameRoot(lengthF).toUpperSnake();
 		String lengthFuncName = FieldName.fromCamel("write").addSuffix(lengthType).toLowerCamel();
@@ -940,7 +940,7 @@ public class JavaWriter extends SourceWriter {
 			for(BaseField f : fs) {
 				boolean bit = f instanceof BoolField;
 				
-				String fType = bit ? "bool" : lookupTypeForFuncName(f);
+				String[] fType = bit ? new String[] {"bool"} : lookupTypeForFuncName(f);
 				String fValue = f.getName().toLowerCamel();
 				if(f instanceof EnumField) {
 					fValue += ".getValue()";
@@ -1052,42 +1052,42 @@ public class JavaWriter extends SourceWriter {
 
 	}
 
-	private String lookupTypeForFuncName(BaseField f) {
-		String result = "";
+	private String[] lookupTypeForFuncName(BaseField f) {
+		String[] result = {};
 		switch(f.getType()) {
 		case ARRAY:
 			break;
 		case BLOCK:
 			break;
 		case BOOL:
-			result = "bool";
+			result = new String[] {"bool"};
 			break;
 		case BOOLFIELD:
-			result = "byte";
+			result = new String[] {"byte"};
 			break;
 		case COMPOUND:
-			result = "int";
+			result = new String[] {"int"};
 			break;
 		case FLOAT32:
-			result = "float";
+			result = new String[] {"float"};
 			break;
 		case INT16:
-			result = "short";
+			result = new String[] {"short"};
 			break;
 		case INT32:
-			result = "int";
+			result = new String[] {"int"};
 			break;
 		case INT8:
-			result = "byte";
+			result = new String[] {"byte"};
 			break;
 		case UINT16:
-			result = "short";
+			result = new String[] {"unsigned","short"};
 			break;
 		case UINT32:
-			result = "int";
+			result = new String[] {"int"};
 			break;
 		case UINT8:
-			result = "byte";
+			result = new String[] {"unsigned", "byte"};
 			break;
 	
 		}
