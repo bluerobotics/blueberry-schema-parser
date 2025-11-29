@@ -75,7 +75,8 @@ public class ScopeName extends SymbolName {
 			String s = li.next();
 			if(!s.equals(SEPARATOR)) {
 				ss.add(s);
-			} else if(!li.hasNext()) {
+			}
+			if(!li.hasNext()) {
 				if(!ss.isEmpty()) {
 					result.add(new SymbolName(getCase(), ss.toArray(new String[ss.size()])));
 					ss.clear();
@@ -159,7 +160,7 @@ public class ScopeName extends SymbolName {
 	 */
 	public boolean isMatch(ScopeName[] imports, SymbolName name) {
 		if(!isAbsolute()) {
-			throw new RuntimeException("This scope name must be absolute!");
+			throw new RuntimeException("This scope ("+toString()+") name must be absolute!");
 		}
 		boolean result = false;
 		ScopeName sn = ScopeName.wrap(name);

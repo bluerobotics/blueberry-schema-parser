@@ -80,7 +80,9 @@ public class NameMaker {
 			SymbolName n = ft.getName();
 			result = result.addLevelAbove(n);
 			ft = ft.getParent();
-			mf = ft.asType(MessageField.class);
+			if(ft != null) {
+				mf = ft.asType(MessageField.class);
+			}
 			
 		}
 		

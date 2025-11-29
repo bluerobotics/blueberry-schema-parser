@@ -466,7 +466,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			Field f = fi.next();
 			if(f instanceof DeferredField) {
 				ScopeName[] imports = ((DeferredField) f).getImports();
-				SymbolName typeName = f.getTypeName();
+				ScopeName typeName = f.getTypeName();
 				Field dft = null;
 				if(typeName == null && f.getTypeId() == null) {
 					throw new SchemaParserException("BlueberrySchemaParser.processDeferredFields type is somehow not defined.", f.getCoord());
@@ -487,7 +487,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						}
 					}
 					if(dft == null) {
-						throw new SchemaParserException("Could not find a type definition for "+typeName.toUpperCamel(), f.getCoord());
+						throw new SchemaParserException("Could not find a type definition for "+typeName, f.getCoord());
 					}
 					fi.set(dft.makeInstance(f.getName()));
 				}
