@@ -60,6 +60,10 @@ public class NameMaker {
 	public static String makeFieldIndexName(Field f) {
 		return makeName(f, true).append("index").toUpperSnake();
 	}
+	public static String makeFieldOrdinalName(Field f) {
+		return makeName(f, true).append("ordinal").toUpperSnake();
+
+	}
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
 	 * Construts a scope name from all the names up to the message and prepends the message type

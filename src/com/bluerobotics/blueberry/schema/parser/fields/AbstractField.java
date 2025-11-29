@@ -43,7 +43,7 @@ public abstract class AbstractField implements Field {
 	private final String m_comment;
 	private String m_fileName = null;
 	private int m_index = -1;
-	private int m_order = -1;
+	private int m_ordinal = -1;
 
 	private final Coord m_coord;
 
@@ -77,20 +77,9 @@ public abstract class AbstractField implements Field {
 
 
 
-//	@Override
-//	public boolean isFiller() {
-//		return false;
-//	}
-
-
-
-
-
-
-
 	@Override
-	public int getOrder() {
-		return m_order;
+	public boolean isNotFiller() {
+		return getTypeId() != TypeId.FILLER;
 	}
 
 
@@ -100,8 +89,19 @@ public abstract class AbstractField implements Field {
 
 
 	@Override
-	public void setOrder(int o) {
-		m_order = o;
+	public int getOrdinal() {
+		return m_ordinal;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setOrdinal(int o) {
+		m_ordinal = o;
 	}
 
 

@@ -144,4 +144,19 @@ public class FieldList {
 	public Field getLast() {
 		return m_fields.getLast();
 	}
+	/**
+	 * Looks for field with the specified name. This is not a deep lookkup
+	 * @param n - the name to look up
+	 * @return
+	 */
+	public Field getByName(SymbolName n) {
+		Field result = null;
+		for(Field f : m_fields) {
+			if(f.getName().equals(n)) {
+				result = f;
+				break;
+			}
+		}
+		return result;
+	}
 }

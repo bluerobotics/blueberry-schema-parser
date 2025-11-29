@@ -31,6 +31,7 @@ import java.util.function.Function;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
@@ -252,7 +253,22 @@ public abstract class SourceWriter {
 	
 	
 	
-	
+	/**
+	 * looks up the message ordinal field of the message that contains the specified field
+	 * @param f
+	 * @return
+	 */
+	protected Field getMaxOrdinalField(Field f) {
+		Field result = null;
+		ParentField pf = f.getParent();
+		while(!(pf instanceof MessageField) && pf != null) {
+			pf = pf.getParent();
+		}
+		if(pf != null) {
+			result = pf.getChildren().getByName(MessageField.MAX_ORDINAL_FIELD_NAME);
+		}
+		return result;
+	}	
 
 	
 

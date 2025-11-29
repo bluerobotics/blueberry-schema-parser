@@ -200,7 +200,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * scan through all messages and compute the field order
 	 * any children of message fields will be assigned the same value as their parent
-	 * @param m_messages2
+	 * @param ms - the field list to scan through
 	 */
 	private void computeOrder(FieldList ms) {
 		ms.forEachOfType(MessageField.class, false, m -> {
@@ -208,15 +208,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			int order = 0;
 			while(fs.hasNext()) {
 				Field f = fs.next();
-				f.setOrder(order);
-				if(f instanceof ParentField) {
-					ParentField pf = (ParentField)f;
-					int o = order;
-					pf.getChildren().forEach(ft -> {
-						ft.setOrder(o);
-					}, true);
+				if(f.isNotFiller()) {//don't include any filler because it was not in the original definition
+					f.setOrdinal(order);
+					if(f instanceof ParentField) {
+						ParentField pf = (ParentField)f;
+						int o = order;
+						pf.getChildren().forEach(ft -> {
+							ft.setOrdinal(o);
+						}, true);
+					}
+					++order;
 				}
-				++order;
 			}
 		});
 		

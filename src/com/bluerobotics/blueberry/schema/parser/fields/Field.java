@@ -99,7 +99,7 @@ public interface Field extends ThingFromFile {
 //	 * @return
 //	 */
 //	public boolean isSimpleField();
-//	public boolean isFiller();
+	public boolean isNotFiller();
 	/**
 	 * Sets the byte index of this element within the message bytes
 	 * If this is a single bit then it could represent the bit index within it's containing byte
@@ -152,12 +152,12 @@ public interface Field extends ThingFromFile {
 	 * This may turn out to not be necessary
 	 * @return
 	 */
-	public int getOrder();
+	public int getOrdinal();
 	/**
 	 * sets the order value. this is set during parsing
 	 * This is used for determining if this field is included in a particular message version
 	 * This may turn out to not be necessary
 	 * @param o
 	 */
-	public void setOrder(int o);
+	public void setOrdinal(int o);
 }

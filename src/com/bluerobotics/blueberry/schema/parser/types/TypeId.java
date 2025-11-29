@@ -31,7 +31,7 @@ public enum TypeId {
 	INT8           (8),
 	UINT8          (8),
 	BOOLFIELD      (8),
-	FILLER         (8),
+	FILLER         (8),//this indicates a 1 byte field with no assigned purpose other than being a placeholder
 	INT16          (16),
 	UINT16         (16),
 	INT32          (32),

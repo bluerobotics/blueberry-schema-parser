@@ -125,10 +125,12 @@ public class CWriter extends SourceWriter {
 			makeMessageAdder(mf, true);
 		});
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			makeMessageEmptyandFullTester(mf, true);
 			mf.getChildren().forEach(f -> {
 				
 				makeMessageGetterSetter(f, true, true);
 				makeMessageGetterSetter(f, false, true);
+				makeMessagePresenceTester(f, true);
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
@@ -147,6 +149,8 @@ public class CWriter extends SourceWriter {
 		writeToFile("inc/"+moduleFileRoot,"h");
 
 	}
+	
+
 	/**
 	 * creates and writes to disk the C source file for the specified module
 	 * @param module
@@ -281,10 +285,14 @@ public class CWriter extends SourceWriter {
 		
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			makeMessageAdder(mf, false);
+			makeMessageEmptyandFullTester(mf, true);
+
 			mf.getChildren().forEach(f -> {
 				
 				makeMessageGetterSetter(f, true, false);
 				makeMessageGetterSetter(f, false, false);
+				makeMessagePresenceTester(f, true);
+
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
@@ -338,6 +346,8 @@ public class CWriter extends SourceWriter {
 	
 
 	
+
+
 	private void makeSequenceLengthGetter(SequenceField sf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("Gets the defined length of a sequence "+sf.getTypeName().deScope().toTitle());
@@ -649,6 +659,90 @@ public class CWriter extends SourceWriter {
 		addLine("}");
 	}
 	/**
+	 * makes a function to test if a message contains no fields or if it contains all fields defined in this version of the schema
+	 * This is computed using the max ordinal field
+	 * @param mf
+	 * @param b
+	 */
+	private void makeMessageEmptyandFullTester(MessageField mf, boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
+	/**
+	 * makes a function to test if a message has the specified field or not
+	 * this uses the field number field to compare against the field's ordinal
+	 * @param f
+	 * @param b
+	 */
+	private void makeMessagePresenceTester(Field f, boolean protoNotDef) {
+		String tf = getType(f);
+		if(tf == null || f.getTypeId() == TypeId.STRING) {
+			return;
+		}
+		List<Index> pis = MultipleField.getIndeces(f);
+		
+		
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("Tests if the current message containts the "+fn.toLowerCamel()+" field");
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+		
+//		List<Field> fs = f.getAncestors(MessageField.class);
+		String paramList = "Bb * buf, BbBlock msg ";
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
+				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+			}
+			paramList += ", int "+pi.name;
+	
+				
+			
+		}
+		
+		String val = "";
+		
+	
+		
+	
+		ScopeName name = NameMaker.makeScopeName(f);
+		ScopeName ordinalName = NameMaker.makeScopeName(getMaxOrdinalField(f));
+		
+		
+		addDocComment(comments);
+		String line = ("bool is")+name.toSymbolName().toUpperCamel()+"Present("+paramList+")"+(protoNotDef ? ";" : "{");
+		addLine(line);
+		if(protoNotDef) {
+			return;
+		}
+		indent();
+		
+		if(pis.size() == 0) {//only need this for top level message fields
+			
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == get"+ordinalName+"(buf, msg);");
+			
+		}		
+		outdent();
+		addLine("}");
+		return;		
+	}
+
+
+	/**
 	 * make getter or setter for all base types except strings
 	 * @param f
 	 * @param getNotSet
@@ -750,7 +844,6 @@ public class CWriter extends SourceWriter {
 		
 		outdent();
 		addLine("}");
-		return;
 	}
 	
 	
