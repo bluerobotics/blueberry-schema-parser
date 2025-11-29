@@ -32,8 +32,12 @@ public class FillerByteField extends BaseField {
 	private static final int m_num = getNextNum();
 
 	public FillerByteField() {
-		super(SymbolName.guess("filler"+m_num), TypeId.UINT8, "", Coord.NULL);
+		super(SymbolName.guess("filler"+m_num), TypeId.FILLER, "", Coord.NULL);
 	}
+//	@Override
+//	public boolean isFiller() {
+//		return true;
+//	}
 	private static synchronized int getNextNum() {
 		int result = m_protoNum;
 		++m_protoNum;

@@ -991,7 +991,8 @@ public class CWriter extends SourceWriter {
 		case UINT8:
 			result += "Uint8";
 			break;
-			
+		case FILLER:
+			break;
 		case BOOLFIELD:
 			break;
 		case STRUCT:
@@ -1096,6 +1097,7 @@ public class CWriter extends SourceWriter {
 				break;
 			case ARRAY:
 			case BOOLFIELD:
+			case FILLER:
 			case DEFERRED:
 			case MESSAGE:
 			case SEQUENCE:

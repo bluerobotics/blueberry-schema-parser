@@ -94,6 +94,12 @@ public interface Field extends ThingFromFile {
 	 * @return
 	 */
 	public int getIndex();
+//	/**
+//	 * indicates that this is a field that is of fixed size, not a string, sequence, struct or filler
+//	 * @return
+//	 */
+//	public boolean isSimpleField();
+//	public boolean isFiller();
 	/**
 	 * Sets the byte index of this element within the message bytes
 	 * If this is a single bit then it could represent the bit index within it's containing byte

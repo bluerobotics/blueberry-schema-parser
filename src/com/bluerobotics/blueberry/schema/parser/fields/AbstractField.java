@@ -64,6 +64,30 @@ public abstract class AbstractField implements Field {
 
 
 
+//	@Override
+//	public boolean isSimpleField() {
+//		String tp = getType(this);
+//
+//		return tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0 && !f.isFiller();
+//	}
+
+
+
+
+
+
+
+//	@Override
+//	public boolean isFiller() {
+//		return false;
+//	}
+
+
+
+
+
+
+
 	@Override
 	public int getOrder() {
 		return m_order;
