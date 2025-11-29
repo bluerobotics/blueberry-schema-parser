@@ -24,6 +24,7 @@ package com.bluerobotics.blueberry.schema.parser.tokens;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
 
 public class Coord implements Comparable<Coord> {
+	public static final Coord NULL = new Coord("", 0, 0, new String[] {});
 	public final String filePath;
 	public final int line;
 	public final int index;

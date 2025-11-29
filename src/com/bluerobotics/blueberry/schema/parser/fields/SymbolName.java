@@ -86,10 +86,6 @@ public class SymbolName {
 		return new SymbolName(c, breakUpDot(n));
 	}
 	public static SymbolName fromCamel(String n) {
-		Case c = Case.LOWER_SNAKE;
-		if(Character.isUpperCase(n.charAt(0))) {
-			c = Case.UPPER_SNAKE;
-		}
 		return make(breakUpCamel(n));
 	}
 	public static SymbolName fromSnake(String n) {

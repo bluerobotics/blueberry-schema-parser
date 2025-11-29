@@ -34,6 +34,14 @@ public class MessageField extends ParentField {
 
 	public MessageField(SymbolName name, ScopeName typeName, String comment, Coord c) {
 		super(name, typeName, TypeId.MESSAGE, comment, c);
+		
+		//add default header fields
+		BaseField lenF = new BaseField(SymbolName.fromCamel("length"), TypeId.UINT16, "The length of this message", Coord.NULL);
+		BaseField fieldNumF = new BaseField(SymbolName.fromCamel("fieldCount"), TypeId.UINT8, "The number of fields in this message", Coord.NULL);
+		FillerByteField fillerF = new FillerByteField();
+		add(lenF);
+		add(fieldNumF);
+		add(fillerF);
 	}
 
 	@Override
