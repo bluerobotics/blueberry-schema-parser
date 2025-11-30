@@ -73,10 +73,17 @@ public class ScopeName extends SymbolName {
 		ListIterator<String> li = Arrays.asList(m_name).listIterator();
 		while(li.hasNext()) {
 			String s = li.next();
+			boolean addIt = false;
 			if(!s.equals(SEPARATOR)) {
 				ss.add(s);
+			} else {
+				addIt = true;
 			}
 			if(!li.hasNext()) {
+				addIt = true;
+			}
+				
+			if(addIt) {
 				if(!ss.isEmpty()) {
 					result.add(new SymbolName(getCase(), ss.toArray(new String[ss.size()])));
 					ss.clear();

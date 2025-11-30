@@ -285,13 +285,13 @@ public class CWriter extends SourceWriter {
 		
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			makeMessageAdder(mf, false);
-			makeMessageEmptyandFullTester(mf, true);
+			makeMessageEmptyandFullTester(mf, false);
 
 			mf.getChildren().forEach(f -> {
 				
 				makeMessageGetterSetter(f, true, false);
 				makeMessageGetterSetter(f, false, false);
-				makeMessagePresenceTester(f, true);
+				makeMessagePresenceTester(f, false);
 
 			}, true);
 			
@@ -373,7 +373,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", int "+pi.name;
+			m_paramList += ", uint32_t "+pi.name;
 	
 				
 			
@@ -459,7 +459,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", int "+pi.name;
+			m_paramList += ", uint32_t "+pi.name;
 	
 				
 			
@@ -680,6 +680,9 @@ public class CWriter extends SourceWriter {
 			return;
 		}
 		List<Index> pis = MultipleField.getIndeces(f);
+		if(pis.size() > 0) {//only need this for top level message fields
+			return;
+		}
 		
 		
 		ArrayList<String> comments = new ArrayList<>();
@@ -696,23 +699,7 @@ public class CWriter extends SourceWriter {
 		
 //		List<Field> fs = f.getAncestors(MessageField.class);
 		String paramList = "Bb * buf, BbBlock msg ";
-		for(Index pi : pis) {
-			
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", int "+pi.name;
-	
-				
-			
-		}
+		
 		
 		String val = "";
 		
@@ -731,11 +718,11 @@ public class CWriter extends SourceWriter {
 		}
 		indent();
 		
-		if(pis.size() == 0) {//only need this for top level message fields
+	
 			
 			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == get"+ordinalName+"(buf, msg);");
 			
-		}		
+				
 		outdent();
 		addLine("}");
 		return;		
@@ -785,7 +772,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", int "+pi.name;
+			paramList += ", uin32_t "+pi.name;
 	
 				
 			
@@ -878,7 +865,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", int "+pi.name;
+			paramList += ", uint32_t "+pi.name;
 	
 				
 			
@@ -991,7 +978,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", int "+pi.name;
+			paramList += ", uint32_t "+pi.name;
 	
 				
 			
