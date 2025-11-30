@@ -662,10 +662,19 @@ public class CWriter extends SourceWriter {
 	 * makes a function to test if a message contains no fields or if it contains all fields defined in this version of the schema
 	 * This is computed using the max ordinal field
 	 * @param mf
-	 * @param b
+	 * @param protoNotDef - makes a function prototype if true and a function definition if false
+	 * @param emptyNotFull - makes an empty test if true and a full tester if false
 	 */
-	private void makeMessageEmptyandFullTester(MessageField mf, boolean b) {
-		// TODO Auto-generated method stub
+	private void makeMessageEmptyandFullTester(MessageField mf, boolean protoNotDef, boolean emptyNotFull) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("Tests if the current message has"+(emptyNotFull ? " no fields present." : " all defined fields present."));
+
+		if(mf.getComment() != null) {
+			comments.add(mf.getComment());
+		}
+		
+		SymbolName functionName = mf.getTypeName().toSymbolName();
+	//	if(emptyNotFull)
 		
 	}
 	/**
@@ -720,7 +729,7 @@ public class CWriter extends SourceWriter {
 		
 	
 			
-			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == get"+ordinalName+"(buf, msg);");
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == get"+ordinalName.toSymbolName().toUpperCamel()+"(buf, msg);");
 			
 				
 		outdent();
