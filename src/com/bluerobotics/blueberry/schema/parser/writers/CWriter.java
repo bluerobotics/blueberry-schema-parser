@@ -125,7 +125,9 @@ public class CWriter extends SourceWriter {
 			makeMessageAdder(mf, true);
 		});
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
-			makeMessageEmptyandFullTester(mf, true);
+			makeMessageEmptyandFullTester(mf, true, true);
+			makeMessageEmptyandFullTester(mf, true, false);
+
 			mf.getChildren().forEach(f -> {
 				
 				makeMessageGetterSetter(f, true, true);
@@ -285,7 +287,8 @@ public class CWriter extends SourceWriter {
 		
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
 			makeMessageAdder(mf, false);
-			makeMessageEmptyandFullTester(mf, false);
+			makeMessageEmptyandFullTester(mf, false, true);
+			makeMessageEmptyandFullTester(mf, false, false);
 
 			mf.getChildren().forEach(f -> {
 				
@@ -673,9 +676,23 @@ public class CWriter extends SourceWriter {
 			comments.add(mf.getComment());
 		}
 		
-		SymbolName functionName = mf.getTypeName().toSymbolName();
-	//	if(emptyNotFull)
+		SymbolName functionName = mf.getTypeName().toSymbolName().prepend("is").append(emptyNotFull ? "empty" : "full");
 		
+		addDocComment(comments);
+		addLine("bool "+functionName.toLowerCamel()+"(Bb * buff, BbBlock msg)"+(protoNotDef ? ");" : "){"));
+		
+		if(!protoNotDef) {
+			indent();
+
+			if(emptyNotFull) {
+				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) <= 2);//will always be length and ordinal fields");
+			} else {
+				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) >= "+NameMaker.makeFieldOrdinalName(mf)+");");
+			}
+			
+			
+			closeBrace();
+		}
 	}
 	/**
 	 * makes a function to test if a message has the specified field or not
@@ -715,12 +732,10 @@ public class CWriter extends SourceWriter {
 	
 		
 	
-		ScopeName name = NameMaker.makeScopeName(f);
-		ScopeName ordinalName = NameMaker.makeScopeName(getMaxOrdinalField(f));
 		
 		
 		addDocComment(comments);
-		String line = ("bool is")+name.toSymbolName().toUpperCamel()+"Present("+paramList+")"+(protoNotDef ? ";" : "{");
+		String line = ("bool ")+NameMaker.makeFieldPresenceTesterName(f)+"("+paramList+")"+(protoNotDef ? ";" : "{");
 		addLine(line);
 		if(protoNotDef) {
 			return;
@@ -728,8 +743,8 @@ public class CWriter extends SourceWriter {
 		indent();
 		
 	
-			
-			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == get"+ordinalName.toSymbolName().toUpperCamel()+"(buf, msg);");
+			Field of = getMaxOrdinalField(f);
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == "+NameMaker.makeFieldGetterName(of)+"(buf, msg);");
 			
 				
 		outdent();

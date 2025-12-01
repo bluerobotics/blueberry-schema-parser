@@ -152,7 +152,7 @@ public class FieldList {
 	public Field getByName(SymbolName n) {
 		Field result = null;
 		for(Field f : m_fields) {
-			if(f.getName().equals(n)) {
+			if(f.getName() != null && f.getName().equals(n)) {
 				result = f;
 				break;
 			}

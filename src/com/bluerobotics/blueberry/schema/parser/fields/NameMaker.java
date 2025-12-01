@@ -153,6 +153,16 @@ public class NameMaker {
 		}
 		return name.toLowerCamel();
 	}
+	public static String  makeFieldGetterName(Field f) {
+		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel();
+	}
+	public static String  makeFieldSetterName(Field f) {
+		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel();
+	}
+	public static String  makeFieldPresenceTesterName(Field f) {
+		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel();
+	}
+
 
 
 }

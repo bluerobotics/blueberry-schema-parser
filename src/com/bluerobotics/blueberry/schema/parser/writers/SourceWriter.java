@@ -38,6 +38,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -260,12 +261,25 @@ public abstract class SourceWriter {
 	 */
 	protected Field getMaxOrdinalField(Field f) {
 		Field result = null;
-		ParentField pf = f.getParent();
+		
+		
+		ParentField pf;
+		if(f instanceof ParentField) {
+			pf = (ParentField)f;
+		} else {
+			pf = f.getParent();
+			
+		}
 		while(!(pf instanceof MessageField) && pf != null) {
 			pf = pf.getParent();
 		}
+		
 		if(pf != null) {
 			result = pf.getChildren().getByName(MessageField.MAX_ORDINAL_FIELD_NAME);
+		}
+		if(result == null) {
+			throw new SchemaParserException("Could not find max ordinal field for message with this field:"+f, f.getCoord());
+
 		}
 		return result;
 	}	
