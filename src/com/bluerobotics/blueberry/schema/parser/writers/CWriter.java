@@ -173,6 +173,7 @@ public class CWriter extends SourceWriter {
 		//also keep track of any boolfieldfields
 		m_bools = false;
 		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			
 			mf.getChildren().forEach(f -> {
 				if(getType(f) != null) {
 					if(!(f instanceof BoolFieldField)) {
@@ -196,6 +197,15 @@ public class CWriter extends SourceWriter {
 					}
 				}
 			}, true);
+		});
+		
+		addLine();
+		addLineComment("Add message ordinals - the number of fields in the message and the ordinal of the last field of the message");
+		
+		//add a line for the max ordinal
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+
+			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getLastChild().getOrdinal()+")");
 		});
 		
 		if(m_bools) {
@@ -390,7 +400,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		addLine("uint32_t get"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel()+"SequenceLength("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("uint32_t get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+m_paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -476,7 +486,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		addLine("void init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("void "+NameMaker.makeSequenceInitName(sf)+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -687,7 +697,7 @@ public class CWriter extends SourceWriter {
 			if(emptyNotFull) {
 				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) <= 2);//will always be length and ordinal fields");
 			} else {
-				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) >= "+NameMaker.makeFieldOrdinalName(mf)+");");
+				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) >= "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
 			}
 			
 			
@@ -815,11 +825,17 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
-		String line = (getNotSet ? tf + " get" : "void set")+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(protoNotDef ? ";" : "{");
+		
+		String line;
+		if(getNotSet) {
+			line =  tf + " " + NameMaker.makeFieldGetterName(f);
+		} else {
+			line =  "void " + NameMaker.makeFieldSetterName(f);
+		}
+		line += "("+paramList+")"+(protoNotDef ? ";" : "{");
 		addLine(line);
 		if(protoNotDef) {
 			return;
@@ -906,12 +922,11 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
 		
-		addLine("void copy"+(toNotFrom ? "To" : "From")+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		addLine("void "+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
 		
 		if(protoNotDef) {
 			return;
@@ -1013,12 +1028,11 @@ public class CWriter extends SourceWriter {
 		
 
 	
-		ScopeName name = NameMaker.makeScopeName(f);
 		
 		
 		addDocComment(comments);
 		
-		addLine("uint32_t getStringLength"+name.toSymbolName().toUpperCamel()+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		addLine("uint32_t "+NameMaker.makeStringLengthGetterName(f)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
 		
 		if(protoNotDef) {
 			return;

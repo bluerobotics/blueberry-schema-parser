@@ -64,6 +64,10 @@ public class NameMaker {
 		return makeName(f, true).append("ordinal").toUpperSnake();
 
 	}
+	public static String makeMessageMaxOrdinalName(MessageField mf) {
+		
+		return mf.getTypeName().deScope().append("max","ordinal").toUpperSnake();
+	}
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
 	 * Construts a scope name from all the names up to the message and prepends the message type
@@ -72,7 +76,7 @@ public class NameMaker {
 	 * @param f
 	 * @return
 	 */
-	public static ScopeName makeScopeName(Field f) {
+	protected static ScopeName makeScopeName(Field f) {
 		ScopeName result = ScopeName.wrap(SymbolName.EMPTY);
 		MessageField mf = null;
 		Field ft = f;
@@ -161,6 +165,20 @@ public class NameMaker {
 	}
 	public static String  makeFieldPresenceTesterName(Field f) {
 		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel();
+	}
+	public static String makeStringCopierName(StringField f, boolean toNotFrom) {
+		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f).toSymbolName().toUpperCamel();
+	}
+	public static String makeStringLengthGetterName(StringField f) {
+		ScopeName name = NameMaker.makeScopeName(f);
+
+		return "getStringLength"+name.toSymbolName().toUpperCamel();
+	}
+	public static String makeSequenceLengthGetterName(SequenceField sf) {
+		return makeScopeName(sf).toSymbolName().toUpperCamel()+"SequenceLength";
+	}
+	public static String makeSequenceInitName(SequenceField sf) {
+		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel();
 	}
 
 
