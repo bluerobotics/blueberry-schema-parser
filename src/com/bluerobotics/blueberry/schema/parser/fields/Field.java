@@ -32,7 +32,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 /**
  * A class to represent both a data type and an instance of that type
  */
-public interface Field extends ThingFromFile {
+public interface Field extends ThingFromFile, AnnotationOwner {
 	/**
 	 * This is the name of the type that this field consists
 	 * @return
@@ -70,24 +70,6 @@ public interface Field extends ThingFromFile {
 	 * @return
 	 */
 	Field makeInstance(SymbolName name);
-	/**
-	 * adds an annotation to this field.
-	 * Only messages currently use this so far
-	 * @param as
-	 */
-	void addAnnotation(List<Annotation> as);
-	/**
-	 * gets the annotation value for the specified name
-	 * @param name
-	 * @return
-	 */
-	Annotation getAnnotation(SymbolName name);
-	
-	/**
-	 * scans through the annotations and applies the specified consumer to each
-	 * @param c
-	 */
-	void scanAnnotations(Consumer<Annotation> c);
 	/**
 	 * Gets the byte index of this element within the message bytes
 	 * If this is a single bit then it could represent the bit index within it's containing byte

@@ -60,7 +60,7 @@ public class CWriter extends SourceWriter {
 	public void write() {
 			FieldList messages = getParser().getMessages();
 			ArrayList<ScopeName> modules = new ArrayList<>();
-			
+			//make a list of modules from messages
 			messages.forEachOfType(MessageField.class, false, mf -> {
 				ScopeName module = mf.getTypeName().removeLastLevel();
 				if(!modules.contains(module)) {
@@ -68,6 +68,7 @@ public class CWriter extends SourceWriter {
 				}
 				
 			});
+			//now add to the list from the defines list
 			FieldList defines = getParser().getDefines();
 			
 			defines.forEachOfType(EnumField.class, false, ef -> {

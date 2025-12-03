@@ -178,7 +178,7 @@ public abstract class AbstractField implements Field {
 		}
 		return result;
 	}
-	
+	@Override
 	public void addAnnotation(Annotation... as) {
 		for(Annotation a : as) {
 			m_annotations.add(a);
