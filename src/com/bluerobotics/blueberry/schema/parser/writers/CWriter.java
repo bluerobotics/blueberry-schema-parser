@@ -28,6 +28,7 @@ import java.util.List;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
@@ -59,31 +60,15 @@ public class CWriter extends SourceWriter {
 	@Override
 	public void write() {
 			FieldList messages = getParser().getMessages();
-			ArrayList<ScopeName> modules = new ArrayList<>();
-			//make a list of modules from messages
-			messages.forEachOfType(MessageField.class, false, mf -> {
-				ScopeName module = mf.getTypeName().removeLastLevel();
-				if(!modules.contains(module)) {
-					modules.add(module);
-				}
-				
-			});
-			//now add to the list from the defines list
-			FieldList defines = getParser().getDefines();
+			ArrayList<BlueModule> modules = getParser().getModules();
 			
-			defines.forEachOfType(EnumField.class, false, ef -> {
-				ScopeName module = ef.getTypeName().removeLastLevel();
-				if(!modules.contains(module)) {
-					modules.add(module);
-				}
-			});
 
 			//now modules contains a list of all unique modules.
 //			//mow make a header and source files for each message
 			
 			modules.forEach(mod -> {
-				makeHeaderFile(mod);
-				makeSourceFile(mod);
+				makeHeaderFile(mod.getName());
+				makeSourceFile(mod.getName());
 			});
 			
 

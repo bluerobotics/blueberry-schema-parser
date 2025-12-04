@@ -30,14 +30,15 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 /**
  * 
  */
-public class Module implements AnnotationOwner {
+public class BlueModule implements AnnotationOwner {
 	private final ScopeName m_name;
+	public static final BlueModule ROOT = new BlueModule(ScopeName.ROOT);
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
-	public Module(ScopeName name) {
+	public BlueModule(ScopeName name) {
 		m_name = name;
 	}
 	
-	ScopeName getScopeName() {
+	public ScopeName getName() {
 		return m_name;
 	}
 	@Override
@@ -69,5 +70,22 @@ public class Module implements AnnotationOwner {
 			c.accept(a);
 		}
 	}
+
+	public BlueModule scope(SymbolName symbolName) {
+		return new BlueModule(m_name.addLevelBelow(symbolName));
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		boolean result = false;
+		if(o instanceof BlueModule) {
+			BlueModule m = (BlueModule)o;
+			result = m.m_name.equals(m_name);
+		}
+		return result;
+	}
+	
+	
+	
 	
 }
