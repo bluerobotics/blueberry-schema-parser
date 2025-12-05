@@ -22,11 +22,15 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
+import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
+import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -54,6 +58,8 @@ public class JavaWriter extends SourceWriter {
 
 	@Override
 	public void write() {
+		ArrayList<BlueModule> modules = getParser().getModules();
+		FieldList messages = getParser().getMessages();
 //		m_constantsName = top.getName().append("constants").toUpperCamel();
 //		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
 //		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
@@ -63,8 +69,9 @@ public class JavaWriter extends SourceWriter {
 //		m_consumerManagerName = top.getName().append("consumer","manager").toUpperCamel();
 //		m_packetRecieverName = top.getName().append("Receiver").toUpperCamel();
 //
-//
-//		writeConstantsFile(top, headers);
+		modules.forEach(m -> {
+			writeConstantsFile(m);
+		});
 //		writePacketBuilder(top, headers);
 //		writeBlockParsers(top, headers);
 //		writeParserInterface(top, headers);
@@ -740,24 +747,27 @@ public class JavaWriter extends SourceWriter {
 //
 	}
 
-	private void writeConstantsFile(StructField top, String[] headers) {
-		startFile(headers);
+	private void writeConstantsFile(BlueModule m) {
+		startFile(getHeader());
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.EnumLookup;");
 		addLine();
 
-		addLine("public interface "+m_constantsName+" {");
+		addLine("public interface "+NameMaker.makeJavaConstantInterface(m)+" {");
 		indent();
-
-		writeConsants(top);
-//		writeKeyEnum(top);
-		writeFieldIndexEnum(top);
-		writeBitIndexEnum(top);
-		writeOtherEnums(top);
+		
+//		writeConsants(top);
+		
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, m.getName(), msg -> {
+			
+		});
+//		writeFieldIndexEnum(top);
+//		writeBitIndexEnum(top);
+//		writeOtherEnums(top);
 		closeBrace();
-		writeToFile(m_packageName.toPath() + m_constantsName,"java");
+		writeToFile(NameMaker.makeJavaConstantInterface(m)+".java");
 
 
 

@@ -59,7 +59,6 @@ public class CWriter extends SourceWriter {
 
 	@Override
 	public void write() {
-			FieldList messages = getParser().getMessages();
 			ArrayList<BlueModule> modules = getParser().getModules();
 			
 
@@ -67,8 +66,8 @@ public class CWriter extends SourceWriter {
 //			//mow make a header and source files for each message
 			
 			modules.forEach(mod -> {
-				makeHeaderFile(mod.getName());
-				makeSourceFile(mod.getName());
+				makeHeaderFile(mod);
+				makeSourceFile(mod);
 			});
 			
 
@@ -79,8 +78,8 @@ public class CWriter extends SourceWriter {
 	 * writes the header file for the specified module
 	 * @param module
 	 */
-	private void makeHeaderFile(ScopeName module) {
-		String moduleFileRoot = module.deScope().toLowerCamel();
+	private void makeHeaderFile(BlueModule module) {
+		String moduleFileRoot = module.getName().deScope().toLowerCamel();
 		
 		startFile(getHeader());
 
@@ -94,7 +93,7 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Defines");
 		
 		addLineComment("Add message keys");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			addMessageKey(mf);	
 		});
 
@@ -102,15 +101,15 @@ public class CWriter extends SourceWriter {
 
 //		addFirstBlockDefine();
 //
-		m_parser.getDefines().forEachOfTypeInScope(EnumField.class, false, module, ef -> {
+		m_parser.getDefines().forEachOfTypeInScope(EnumField.class, false, module.getName(), ef -> {
 			writeEnum(ef);
 		});
 //
 		addSectionDivider("Function Prototypes");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			makeMessageAdder(mf, true);
 		});
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			makeMessageEmptyandFullTester(mf, true, true);
 			makeMessageEmptyandFullTester(mf, true, false);
 
@@ -134,7 +133,7 @@ public class CWriter extends SourceWriter {
 		});
 		
 	
-		writeToFile("inc/"+moduleFileRoot,"h");
+		writeToFile("inc/"+NameMaker.makeCModuleFileName(module, true));
 
 	}
 	
@@ -143,22 +142,22 @@ public class CWriter extends SourceWriter {
 	 * creates and writes to disk the C source file for the specified module
 	 * @param module
 	 */
-	private void makeSourceFile(ScopeName module) {
-		String moduleFileRoot = module.deScope().toLowerCamel();
+	private void makeSourceFile(BlueModule module) {
+		
 
 		startFile(getHeader());
 
 
 
 		addSectionDivider("Includes");
-		addLine("#include <"+moduleFileRoot+".h>");
+		addLine("#include <"+NameMaker.makeCModuleFileName(module, true)+">");
 
 		addSectionDivider("Defines");
 		addLineComment("Add message field indeces");
 		//add defines for field indeces
 		//also keep track of any boolfieldfields
 		m_bools = false;
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			
 			mf.getChildren().forEach(f -> {
 				if(getType(f) != null) {
@@ -189,7 +188,7 @@ public class CWriter extends SourceWriter {
 		addLineComment("Add message ordinals - the number of fields in the message and the ordinal of the last field of the message");
 		
 		//add a line for the max ordinal
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 
 			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getLastChild().getOrdinal()+")");
 		});
@@ -199,7 +198,7 @@ public class CWriter extends SourceWriter {
 			addLineComment("Add message boolean field masks");
 
 			//now add defines for bit field indeces and bit masks
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 				mf.getChildren().forEach(f -> {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
@@ -216,7 +215,7 @@ public class CWriter extends SourceWriter {
 		if(m_arrays) {
 			addLine();
 			addLineComment("Add array sizes and element byte count");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
 					List<Index> is = af.getIndeces();
 					int n = is.size();
@@ -238,7 +237,7 @@ public class CWriter extends SourceWriter {
 		if(m_sequences) {
 			addLine();
 			addLineComment("Add sequence element byte count");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
 					
 					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
@@ -251,7 +250,7 @@ public class CWriter extends SourceWriter {
 		if(m_strings) {
 			addLine();
 			addLineComment("Add string max length constants");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 				mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 					
 					addLine("#define " + NameMaker.makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
@@ -264,7 +263,7 @@ public class CWriter extends SourceWriter {
 		
 		addLine();
 		addLineComment("Add message lengths");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			addLine("#define " + NameMaker.makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
 		});
 
@@ -281,7 +280,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module, mf -> {
+		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
 			makeMessageAdder(mf, false);
 			makeMessageEmptyandFullTester(mf, false, true);
 			makeMessageEmptyandFullTester(mf, false, false);
@@ -331,7 +330,7 @@ public class CWriter extends SourceWriter {
 
 
 
-		writeToFile("src/"+moduleFileRoot,"c");
+		writeToFile("src/"+NameMaker.makeCModuleFileName(module, false));
 
 	}
 

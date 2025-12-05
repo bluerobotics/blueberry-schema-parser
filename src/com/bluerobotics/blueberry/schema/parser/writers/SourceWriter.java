@@ -84,8 +84,8 @@ public abstract class SourceWriter {
 		outdent();
 		addLine("}");
 	}
-	protected void writeToFile(String name, String extension) {
-		File f = new File(m_directory, name+"."+extension);
+	protected void writeToFile(String name) {
+		File f = new File(m_directory, name);
 		File p = f.getParentFile();
 		if(!p.exists()) {
 			p.mkdirs();

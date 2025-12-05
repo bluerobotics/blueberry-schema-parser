@@ -180,7 +180,15 @@ public class NameMaker {
 	public static String makeSequenceInitName(SequenceField sf) {
 		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel();
 	}
-
+	public static String makeCModuleFileName(BlueModule m, boolean headerNotSource) {
+		String result = m.getName().deScope().toLowerCamel();
+		result += headerNotSource ? ".h" : ".c";
+		return result;
+	}
+	public static String makeJavaConstantInterface(BlueModule m) {
+		String result = m.getName().deScope().append("constants").toLowerCamel();
+		return result;
+	}
 
 
 }
