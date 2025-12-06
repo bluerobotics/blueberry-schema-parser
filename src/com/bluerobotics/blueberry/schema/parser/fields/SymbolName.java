@@ -286,7 +286,7 @@ public class SymbolName {
 
 		return result;
 	}
-	public String toDot() {
+	protected String toDot(boolean upperNotLower) {
 		String result = "";
 		boolean firstTime = true;
 		for(String w : m_name) {
@@ -294,10 +294,19 @@ public class SymbolName {
 				result += ".";
 			}
 			firstTime = false;
-			result += w;
+			result += upperNotLower ? w.toUpperCase() : w.toLowerCase();
 		}
 
 		return result;
+	}
+	public String toDot() {
+		return toDot(false);
+	}
+	public String toLowerDot() {
+		return toDot(false);
+	}
+	public String toUpperDot() {
+		return toDot(true);
 	}
 	public String toPath() {
 		String result = "";
@@ -363,6 +372,43 @@ public class SymbolName {
 	}
 	public boolean isEmpty() {
 		return equals(SymbolName.EMPTY);
+	}
+	protected String toCase(Case c) {
+		String result = "";
+		switch(c) {
+		case LOWER_CAMEL:
+			result = toLowerCamel();
+			break;
+		case LOWER_DOT:
+			result = toLowerDot();
+			break;
+		case LOWER_SNAKE:
+			result = toLowerSnake();
+			break;
+		case MIXED_DOT:
+			result = toLowerDot();
+			break;
+		case MIXED_SNAKE:
+			result = toLowerSnake();
+			break;
+		case UNSPECIFIED:
+			result = toLowerSnake();
+			break;
+		case UPPER_CAMEL:
+			result = toUpperCamel();
+			break;
+		case UPPER_DOT:
+			result = toUpperDot();
+			break;
+		case UPPER_SNAKE:
+			result = toUpperSnake();
+			break;
+		default:
+			result = toLowerSnake();
+			break;
+		
+		}
+		return result;
 	}
 
 	

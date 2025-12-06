@@ -80,9 +80,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	private final TokenList m_tokens = new TokenList();//this is where all tokens get assembled while parsing
 	private final FieldList m_defines = new FieldList();//all defines end up here
-	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();//all parsed constants will be stored here
+//	private final ArrayList<Constant<?>> m_constants = new ArrayList<>();//all parsed constants will be stored here
 	private final FieldList m_messages = new FieldList();//all parsed messages will be stored here
-	private final HashMap<SymbolName, Integer> m_namespaces = new HashMap<>();//keep track of all namespaces
 	
 	private final ArrayList<ScopeName> m_imports = new ArrayList<>();//temporary storage of imported module names
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();//temporary storage of annotations
@@ -98,7 +97,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public void clear() {
 		m_tokens.clear();
 		m_defines.clear();
-		m_constants.clear();
+
 		m_messages.clear();
 		
 		m_imports.clear();
@@ -438,18 +437,16 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 	}
 	/**
-	 * check all annotations of all 
+	 * check all annotations in the specified field list and replace any constants
 	 */
 	private void applyDeferredParameters(FieldList fs) {
 		fs.forEach(f -> {
 			f.scanAnnotations(a -> {
-				a.replaceDeferredParameters(fn -> {
+				a.replaceDeferredParameters(dp -> {
+					Constant<?> c = lookupConstant(dp.name, dp.imports);
 					Object result = null;
-					for(Constant<?> c : m_constants) {
-						if(c.getName().equals(fn)) {
-							result = c.getValue();
-							break;
-						}
+					if(c != null) {
+						result = c.getValue();
 					}
 					return result;
 				});
@@ -973,18 +970,40 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private int lookupConstInt(SymbolName name, ScopeName[] imports) {
 		NumberConstant result = null;
-		for(Constant<?> c : m_constants) {
-			if(c instanceof NumberConstant) {
-				NumberConstant nc = (NumberConstant)c;
-				if(nc.getName().equals(name)) {
-					result = nc;
-					break;
-				}
-			}
+		Constant<?> c = lookupConstant(name, imports);
+		if(c instanceof NumberConstant) {
+			result = (NumberConstant)c;
 		}
 		return result != null ? result.getValue().asInt() : -1;
 	}
 	
+	/**
+	 * scans through all known modules to find a constant with the specified name, given the list of imports
+	 * @param n
+	 * @param imports
+	 * @return
+	 */
+	private Constant<?> lookupConstant(SymbolName n, ScopeName[] imports){
+		Constant<?> result = null;
+		for(ScopeName sn : imports) {
+			BlueModule found = null;
+			for(int i = 0; i < m_modules.size(); ++i) {
+				BlueModule m = m_modules.get(i);
+				if(m.getName().equals(sn)) {
+					found = m;
+					break;
+				}
+			}
+			if(found != null) {
+				result = found.getConstant(n);
+				break;
+			}
+		}
+		if(result == null) {
+			throw new SchemaParserException("Cannot find constant of name: \""+n.toLowerSnake()+"\"", null);
+		}
+		return result;
+	}
 	private void assembleEnum(IdentifierToken enumT) throws SchemaParserException {
 
 
@@ -1071,7 +1090,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			c.setFileName(m_fileName);
 			m_lastComment = null;
 		
-			m_constants.add(c);
+	
+			m_moduleStack.getLast().addConstant(c);
 			m_tokens.setIndex(nvt);
 		} else if(stringType != null) {
 			if(equals == null) {
@@ -1081,7 +1101,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			StringConstant c = new StringConstant(name, string.getString(), m_lastComment);
 			c.setFileName(m_fileName);
 			m_lastComment = null;
-			m_constants.add(c);
+			m_moduleStack.getLast().addConstant(c);
 			m_tokens.setIndex(string);
 		} else {
 			throw new SchemaParserException("Only base types and Strings can be declared const.", it.getEnd());
@@ -1357,6 +1377,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	/**
+	 * builds an array of all names of modules, from any import statements and if specified, from the current module too
+	 * @param includeModule
+	 * @return
+	 */
 	private ScopeName[] getImports(boolean includeModule) {
 		ArrayList<ScopeName> result = new ArrayList<ScopeName>();
 		result.addAll(m_imports);
@@ -1686,16 +1711,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public ArrayList<BlueModule> getModules(){
 		return m_modules;
 	}
-	public List<Constant<?>> getConstants(){
-		return m_constants;
-	}
-	public SymbolName[] getNamespaces(){
-		Set<SymbolName> ks = m_namespaces.keySet();
-		return ks.toArray(new SymbolName[ks.size()]);
-	}
-	public int getNamespaceValue(SymbolName s) {
-		return m_namespaces.get(s);
-	}
+	
 
 
 

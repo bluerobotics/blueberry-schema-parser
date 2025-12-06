@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 
 /**
@@ -50,9 +51,9 @@ public class Annotation  {
 	
 	public class DeferredParameter {
 		
-		final SymbolName name; 
-		final SymbolName[] imports;
-		private DeferredParameter(SymbolName n, SymbolName[] ims) {
+		public final SymbolName name; 
+		public final ScopeName[] imports;
+		private DeferredParameter(SymbolName n, ScopeName[] ims) {
 			name = n;
 			imports = ims;
 		}
@@ -114,12 +115,12 @@ public class Annotation  {
 	 * replace any deferred parameters using a lookup function that will return a new parameter object based on the supplied field name
 	 * @param f
 	 */
-	public void replaceDeferredParameters(Function<SymbolName, Object> f) {
+	public void replaceDeferredParameters(Function<DeferredParameter, Object> f) {
 		for(int i = 0; i < m_parameters.size(); ++i) {
 			Object o = m_parameters.get(i);
 			if(o instanceof DeferredParameter) {
 				DeferredParameter df = (DeferredParameter)o;
-				Object ro = f.apply(df.name);
+				Object ro = f.apply(df);
 				if(ro == null) {
 					m_parameters.set(i, ro);
 				}
@@ -128,7 +129,7 @@ public class Annotation  {
 	}
 	
 	
-	public void addDeferredParameter(SymbolName n, SymbolName[] imports) {
+	public void addDeferredParameter(SymbolName n, ScopeName[] imports) {
 		m_parameters.add(new DeferredParameter(n, imports));
 	}
 

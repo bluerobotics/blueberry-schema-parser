@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
+import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 
 /**
@@ -34,6 +37,7 @@ public class BlueModule implements AnnotationOwner {
 	private final ScopeName m_name;
 	public static final BlueModule ROOT = new BlueModule(ScopeName.ROOT);
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
+	private ArrayList<Constant<?>> m_constants = new ArrayList<>();
 	public BlueModule(ScopeName name) {
 		m_name = name;
 	}
@@ -81,6 +85,24 @@ public class BlueModule implements AnnotationOwner {
 		if(o instanceof BlueModule) {
 			BlueModule m = (BlueModule)o;
 			result = m.m_name.equals(m_name);
+		}
+		return result;
+	}
+
+	public void addConstant(Constant<?> c) {
+		int i = m_constants.indexOf(c);
+		if(i >= 0) {
+			throw new SchemaParserException("Constant "+c.getName()+" already exists!", null);
+		}
+		m_constants.add(c);
+	}
+	public Constant<?> getConstant(SymbolName n) {
+		Constant<?> result = null;
+		for(Constant<?> c : m_constants) {
+			if(c.getName().equals(n)) {
+				result = c;
+				break;
+			}
 		}
 		return result;
 	}

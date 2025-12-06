@@ -252,6 +252,27 @@ public class ScopeName extends SymbolName {
 		}
 		return SymbolName.make(result);
 	}
+	public String toLowerSnake(String sep) {
+		return toCase(Case.LOWER_SNAKE, sep);
+	}
+	protected String toCase(Case c, String sep) {
+		List<SymbolName> sns = splitScope();
+		String result = "";
+		
+		boolean firstTime = !isAbsolute();
+		for(SymbolName sn : sns) {
+			
+			if(!firstTime) {
+				result += sep;
+			}
+			firstTime = false;
+	
+			result += sn.toCase(c);
+		
+		}
+
+		return result;
+	}
 
 
 }
