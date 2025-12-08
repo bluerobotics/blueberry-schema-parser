@@ -347,10 +347,10 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A payload to convey a single channel worth of oscilloscope data.
 	 * The actual data vector is conveyed by a compact array of bytes
+	 * Also used to configure a channel
 	 */
 	Payload oscopePayload(key = 0x0017) {
 		uint8 channel //identifies which scope channel this data is for
-		float32 period //sample time in seconds
 		float32 gain //gain that will convert the byte-sized sample data to real values
 		uint32 id //identifier for this capture. All channel data of the same capture will have the same ID.
 		float32 offset //offset that will be added to the sample
@@ -363,6 +363,17 @@ Packet brPacket(preamble = 0x45554c42) {
 			int8 sample
 		}
 		
+	}
+	/**
+	* A payload to configure the timebase of the oscope.
+	*/
+	Payload oscopeSetupPayload(key = 0x001a){
+		float32 period
+		uint8 triggerSource
+		float32 threshold
+		float32 holdoff
+		uint8 trigPos //indicates how much of series will be ahead of the trigger: 0..4 -> none, 1/4, 1/3, 3/4, all
+		bool risingNotFalling
 	}
 //	define ModuleId enum uint16 {
 //		GPIO                      = 0
