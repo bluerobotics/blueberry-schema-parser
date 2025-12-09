@@ -96,9 +96,13 @@ public class NameMaker {
 		result = result.addLevelAbove(mf.getTypeName().deScope());
 		return result;
 	}
-	public static String makeEnumName(EnumField ef, NameValue nv) {
+	public static String makeEnumName(EnumField ef) {
+		return ef.getTypeName().deScope().toUpperCamel();
+	}
+	public static String makeEnumItemName(EnumField ef, NameValue nv) {
 		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnake();
 	}
+	
 	/**
 	 * Constructs a name for this field.
 	 * Basefields that are children of the message should just be named by their name
@@ -189,6 +193,7 @@ public class NameMaker {
 		String result = m.getName().deScope().append("constants").toLowerCamel();
 		return result;
 	}
+	
 
 
 }

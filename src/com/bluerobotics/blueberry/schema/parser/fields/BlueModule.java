@@ -38,6 +38,8 @@ public class BlueModule implements AnnotationOwner {
 	public static final BlueModule ROOT = new BlueModule(ScopeName.ROOT);
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private ArrayList<Constant<?>> m_constants = new ArrayList<>();
+	private FieldList m_defines = new FieldList();
+	private FieldList m_messages = new FieldList();
 	public BlueModule(ScopeName name) {
 		m_name = name;
 	}
@@ -105,6 +107,14 @@ public class BlueModule implements AnnotationOwner {
 			}
 		}
 		return result;
+	}
+	
+	
+	public FieldList getDefines() {
+		return m_defines;
+	}
+	public FieldList getMessages() {
+		return m_messages;
 	}
 	
 	

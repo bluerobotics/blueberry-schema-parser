@@ -1235,13 +1235,13 @@ public class CWriter extends SourceWriter {
 			} else {
 				c = "";
 			}
-			addLine(NameMaker.makeEnumName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue().asLong())+", " + c);
+			addLine(NameMaker.makeEnumItemName(ef, nv) + " = " + WriterUtils.formatAsHex(nv.getValue().asLong())+", " + c);
 
 
 		}
 		outdent();
 
-		addLine("} "+ef.getTypeName().deScope().toUpperCamel()+";");
+		addLine("} "+NameMaker.makeEnumName(ef)+";");
 
 		addLine();
 	

@@ -675,6 +675,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_lastComment = null;
 
 		m_defines.add(m);
+		m_moduleStack.getLast().getDefines().add(m);
 		m.addAnnotation(m_annotations);
 		m_annotations.clear();
 		processMessageOrStructFields(m, braceStart, braceEnd);
@@ -707,6 +708,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_lastComment = null;
 
 		m_messages.add(m);
+		m_moduleStack.getLast().getMessages().add(m);
 		m.addAnnotation(m_annotations);
 		m_annotations.clear();
 		processMessageOrStructFields(m, braceStart, braceEnd);
@@ -812,6 +814,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		sf.setLimit(n);
 		m_lastComment = null;
 		m_defines.add(sf);
+		m_moduleStack.getLast().getDefines().add(sf);
 		m_tokens.setIndex(nameToken);
 		
 	}
@@ -948,6 +951,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		}
 		m_defines.add(pf);
+		m_moduleStack.getLast().getDefines().add(pf);
 		//now add a field to contain the target type of this define
 		if(btt != null) {
 			pf.add(new BaseField(null, lookupBaseType(btt.getKeyword()), null, btt.getEnd()));
@@ -1026,6 +1030,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		et.setFileName(m_fileName);
 		m_lastComment = null;
 		m_defines.add(et);
+		m_moduleStack.getLast().getDefines().add(et);
 
 		m_tokens.setIndex(braceStart);
 
