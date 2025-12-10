@@ -185,6 +185,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			
 			computeIndeces();
+			assignModuleAnnotations();
 
 		} catch (SchemaParserException e) {
 			e.printStackTrace();
@@ -198,6 +199,26 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	/**
+	 * put a reference to all module annotations into every message member of that module
+	 */
+	private void assignModuleAnnotations() {
+		ArrayList<Annotation> as = new ArrayList<>();
+		m_modules.forEach(m -> {
+			as.clear();
+			m.scanAnnotations(a -> {
+				as.add(a);
+			});
+			Annotation[] aa = as.toArray(new Annotation[as.size()]);
+//			m.getDefines().forEach(f -> {
+//				f.addAnnotation(aa);
+//			});
+			m.getMessages().forEach(mess -> {
+				mess.addAnnotation(aa);
+			});
+		});
+		
 	}
 	/**
 	 * scan through all messages and compute the field order
@@ -1136,6 +1157,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			int i = m_modules.indexOf(m);
 			if(i >= 0) {
 				m = m_modules.get(i);
+			} else {
+				m_modules.add(m);
 			}
 			m.addAnnotation(m_annotations);
 			m_annotations.clear();

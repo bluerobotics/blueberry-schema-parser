@@ -760,7 +760,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("public interface "+NameMaker.makeJavaConstantInterface(m)+" {");
 		indent();
 		
-		writeConsants(m);
+		writeConstants(m);
 		
 		
 //		writeFieldIndexEnum(top);
@@ -1056,7 +1056,7 @@ public class JavaWriter extends SourceWriter {
 	}
 
 
-	private void writeConsants(StructField top) {
+	private void writeConstants(BlueModule m) {
 //		ArrayList<FixedIntField> fifs = new ArrayList<FixedIntField>();
 //
 //		top.scanThroughHeaderFields(f -> {
