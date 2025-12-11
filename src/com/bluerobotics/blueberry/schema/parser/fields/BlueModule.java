@@ -117,6 +117,9 @@ public class BlueModule implements AnnotationOwner {
 		return m_messages;
 	}
 	
+	public String toString() {
+		return getClass().getSimpleName()+"("+m_name.toLowerSnake("\\")+")";
+	}
 	
 	
 	

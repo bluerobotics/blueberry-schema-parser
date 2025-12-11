@@ -45,6 +45,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -93,7 +94,7 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Defines");
 		
 		addLineComment("Add message keys");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			addMessageKey(mf);	
 		});
 
@@ -101,15 +102,15 @@ public class CWriter extends SourceWriter {
 
 //		addFirstBlockDefine();
 //
-		m_parser.getDefines().forEachOfTypeInScope(EnumField.class, false, module.getName(), ef -> {
+		module.getDefines().forEachOfType(EnumField.class, false, ef -> {
 			writeEnum(ef);
 		});
 //
 		addSectionDivider("Function Prototypes");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			makeMessageAdder(mf, true);
 		});
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			makeMessageEmptyandFullTester(mf, true, true);
 			makeMessageEmptyandFullTester(mf, true, false);
 
@@ -157,7 +158,7 @@ public class CWriter extends SourceWriter {
 		//add defines for field indeces
 		//also keep track of any boolfieldfields
 		m_bools = false;
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 			mf.getChildren().forEach(f -> {
 				if(getType(f) != null) {
@@ -188,7 +189,7 @@ public class CWriter extends SourceWriter {
 		addLineComment("Add message ordinals - the number of fields in the message and the ordinal of the last field of the message");
 		
 		//add a line for the max ordinal
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 
 			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getLastChild().getOrdinal()+")");
 		});
@@ -198,7 +199,7 @@ public class CWriter extends SourceWriter {
 			addLineComment("Add message boolean field masks");
 
 			//now add defines for bit field indeces and bit masks
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEach(f -> {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
@@ -215,7 +216,7 @@ public class CWriter extends SourceWriter {
 		if(m_arrays) {
 			addLine();
 			addLineComment("Add array sizes and element byte count");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
 					List<Index> is = af.getIndeces();
 					int n = is.size();
@@ -237,7 +238,7 @@ public class CWriter extends SourceWriter {
 		if(m_sequences) {
 			addLine();
 			addLineComment("Add sequence element byte count");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
 					
 					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
@@ -250,7 +251,7 @@ public class CWriter extends SourceWriter {
 		if(m_strings) {
 			addLine();
 			addLineComment("Add string max length constants");
-			m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 					
 					addLine("#define " + NameMaker.makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
@@ -263,7 +264,7 @@ public class CWriter extends SourceWriter {
 		
 		addLine();
 		addLineComment("Add message lengths");
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			addLine("#define " + NameMaker.makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
 		});
 
@@ -280,7 +281,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		m_parser.getMessages().forEachOfTypeInScope(MessageField.class, false, module.getName(), mf -> {
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			makeMessageAdder(mf, false);
 			makeMessageEmptyandFullTester(mf, false, true);
 			makeMessageEmptyandFullTester(mf, false, false);
@@ -519,8 +520,28 @@ public class CWriter extends SourceWriter {
 	}
 
 	private void addMessageKey(MessageField mf) {
-		Number n = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION).getParameter(0, Number.class);
-		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+n.asInt()+")");
+		Annotation messA =  mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+		Annotation modA = mf.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+		if(messA == null) {
+			throw new SchemaParserException("Message field is not annotated with a message key.", mf.getCoord());
+		}
+		if(modA == null) {
+			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key.", mf.getCoord());
+		}
+		Number messKey = messA.getParameter(0, Number.class);
+		Number modKey = modA.getParameter(0, Number.class);
+		if(messKey == null) {
+			throw new SchemaParserException("Message field annotation needs a parameter that is an integer.", mf.getCoord());
+		}
+		if(modKey == null) {
+			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key that has an integer parameter.", mf.getCoord());
+		}
+		int k = modKey.asInt() << 16;
+		k |= messKey.asInt();
+		String sk = Integer.toHexString(k);
+		sk = "00000000".substring(sk.length())+sk;
+		sk = "0x"+sk;
+		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+sk+")");
 	}
 	
 	

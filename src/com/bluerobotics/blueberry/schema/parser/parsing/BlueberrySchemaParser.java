@@ -167,6 +167,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			fillInMissingEnumValues();
 			checkForDuplicateEnumValues();
 			fillInMissingMessageKeyValues();
+			fillInMissingModuleKeyValues();
 			checkForDuplicateMessageKeys();
 			
 			processDeferredFields(m_defines.getIterator(), m_defines);	
@@ -337,6 +338,23 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		});
 		
 	}
+	
+	/**
+	 * scan through all messages and assign any message keys that have not been assigned.
+	 */
+	private void fillInMissingModuleKeyValues() {
+		m_modules.forEach(m -> {
+			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			if(a == null) {
+				 a = new Annotation(Annotation.MODULE_KEY_ANNOTATION);
+				 long n = getNextModuleKey();
+				a.addParameter(new Number(n));
+				m.addAnnotation(a);
+				System.out.println("BlueberrySchemaParser.fillInMissingModulekeyValues adding Module key: "+n+" for module "+m.getName().toLowerSnake("\\"));
+				
+			}
+		});
+	}
 	/**
 	 * scan through all messages and assign any message keys that have not been assigned.
 	 */
@@ -347,6 +365,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION);
 				a.addParameter(new Number(getNextMessageKey()));
 				mf.addAnnotation(a);
+				
 				
 			}
 		});
@@ -359,6 +378,42 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		final ArrayList<Integer> keys = new ArrayList<>();
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
 			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			if(a != null) {
+				Number an = a.getParameter(0, Number.class);
+				if(an != null) {
+					keys.add(an.asInt());
+				}
+			}
+			
+		});
+		Collections.sort(keys);
+		int i = 0;
+		if(keys.size() > 0) {
+			i = keys.get(0);
+		}
+		//find the first value that does not exist
+		boolean done = false;
+		while(!done) {
+			done = true;
+			for(Integer k : keys) {
+				if(i == k) {
+					++i;
+					done = false;
+					break;
+				}
+			}
+		}
+		
+		return i;
+	}
+	/**
+	 * picks the next available message key value
+	 * @return
+	 */
+	private long getNextModuleKey() {
+		final ArrayList<Integer> keys = new ArrayList<>();
+		m_modules.forEach(m -> {
+			Annotation a = m.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
 			if(a != null) {
 				Number an = a.getParameter(0, Number.class);
 				if(an != null) {

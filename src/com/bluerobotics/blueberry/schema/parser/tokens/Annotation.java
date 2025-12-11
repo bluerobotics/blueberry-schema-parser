@@ -62,7 +62,7 @@ public class Annotation  {
 	public static final SymbolName FILE_PATH_ANNOTATION = SymbolName.fromSnake("file_path");
 	public static final SymbolName TOPIC_ANNOTATION = SymbolName.fromSnake("topic");
 	public static final SymbolName MESSAGE_KEY_ANNOTATION      = SymbolName.fromSnake("message_key");
-	public static final SymbolName NAMESPACE_ANNOTATION      = SymbolName.fromSnake("namespace");
+	public static final SymbolName MODULE_KEY_ANNOTATION      = SymbolName.fromSnake("module_key");
 	public static final SymbolName SERIALIZATION_ANNOTATION      = SymbolName.fromSnake("serialization");
 	private final KnownAnnotation m_known;
 	private final SymbolName m_name;

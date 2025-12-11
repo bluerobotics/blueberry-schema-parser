@@ -122,7 +122,7 @@ public class ScopeName extends SymbolName {
 		
 			result = makeFromSymbols(nms, isAbsolute());
 		}
-		System.out.println("ScopeName.addLevelBelow "+result);
+		
 		return result;
 	}
 	/**
