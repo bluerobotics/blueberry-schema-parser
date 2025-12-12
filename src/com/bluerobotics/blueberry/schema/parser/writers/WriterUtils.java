@@ -26,7 +26,23 @@ package com.bluerobotics.blueberry.schema.parser.writers;
  */
 public class WriterUtils {
 	public static String formatAsHex(long v) {
-		return "0x"+ Long.toHexString(v);
+		String result = Long.toHexString(v);
+		int len = result.length();
+		int n = 0;
+		if(len <= 4) {
+			n = 4 - len;
+		} else if(len <= 8) {
+			n = 8 - len;
+		} else if(len <= 12){
+			n = 12 - len;
+		} else if(len <= 16) {
+			n = 16 - len;
+		}
+		
+		result = "0".repeat(n)+result;
+		result = "0x"+result;
+		
+		return result;
 	}
 	public static String formatAsHex(long v, int numDigits) {
 		String result = Long.toHexString(v);

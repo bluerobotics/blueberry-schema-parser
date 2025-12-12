@@ -193,7 +193,12 @@ public class NameMaker {
 		String result = m.getName().deScope().append("constants").toLowerCamel();
 		return result;
 	}
-	
+	public static String makePacketBuilderName(BlueModule m) {
+		return m.getName().deScope().append("builder").toUpperCamel();
+	}
+	public static ScopeName makePackageName(BlueModule m) {
+		return m.getName().makeRelative();
+	}
 
 
 }

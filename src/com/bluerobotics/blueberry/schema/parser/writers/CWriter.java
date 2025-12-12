@@ -82,7 +82,7 @@ public class CWriter extends SourceWriter {
 	private void makeHeaderFile(BlueModule module) {
 		String moduleFileRoot = module.getName().deScope().toLowerCamel();
 		
-		startFile(getHeader());
+		startFile(module, getHeader());
 
 
 
@@ -93,7 +93,7 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Defines");
 		
-		addLineComment("Add message keys");
+		addLineComment("Message keys");
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			addMessageKey(mf);	
 		});
@@ -146,7 +146,7 @@ public class CWriter extends SourceWriter {
 	private void makeSourceFile(BlueModule module) {
 		
 
-		startFile(getHeader());
+		startFile(module, getHeader());
 
 
 
@@ -520,31 +520,14 @@ public class CWriter extends SourceWriter {
 	}
 
 	private void addMessageKey(MessageField mf) {
-		Annotation messA =  mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
-		Annotation modA = mf.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-		if(messA == null) {
-			throw new SchemaParserException("Message field is not annotated with a message key.", mf.getCoord());
-		}
-		if(modA == null) {
-			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key.", mf.getCoord());
-		}
-		Number messKey = messA.getParameter(0, Number.class);
-		Number modKey = modA.getParameter(0, Number.class);
-		if(messKey == null) {
-			throw new SchemaParserException("Message field annotation needs a parameter that is an integer.", mf.getCoord());
-		}
-		if(modKey == null) {
-			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key that has an integer parameter.", mf.getCoord());
-		}
-		int k = modKey.asInt() << 16;
-		k |= messKey.asInt();
-		String sk = Integer.toHexString(k);
-		sk = "00000000".substring(sk.length())+sk;
-		sk = "0x"+sk;
-		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+sk+")");
+		String mk = makeFullMessageKey(mf);
+		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+mk+")");
 	}
 	
 	
+	
+
+
 	private String m_paramList = "";
 	
 	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {

@@ -105,6 +105,8 @@ public class ScopeName extends SymbolName {
 		return result;
 	}
 	
+	
+	
 	/**
 	 * adds a new level of scope to the end (right) of this ScopeName
 	 * @param scope
@@ -155,8 +157,19 @@ public class ScopeName extends SymbolName {
 		}
 		return this.addLevelAbove(ROOT);
 	}
+	public ScopeName makeRelative() {
+		if(!isAbsolute()) {
+			return this;
+		}
+		
+		List<SymbolName> ss = splitScope();
+		ScopeName result = makeFromSymbols(ss, false);
+		return result;
+		
+	}
 	
 	
+
 	/**
 	 * checks to see if this symbol name is a match for the specified name and list of imported scope.
 	 * This assumes that ScopeName is absolute in scope (starts with separator)
@@ -273,6 +286,7 @@ public class ScopeName extends SymbolName {
 
 		return result;
 	}
+	
 
 
 }

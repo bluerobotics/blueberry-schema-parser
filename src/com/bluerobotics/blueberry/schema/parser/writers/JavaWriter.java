@@ -34,6 +34,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
@@ -73,8 +74,10 @@ public class JavaWriter extends SourceWriter {
 //
 		modules.forEach(m -> {
 			writeConstantsFile(m);
+			writePacketBuilder(m);
 		});
-//		writePacketBuilder(top, headers);
+		
+		
 //		writeBlockParsers(top, headers);
 //		writeParserInterface(top, headers);
 //		writeConsumerManager(top, headers);
@@ -283,24 +286,24 @@ public class JavaWriter extends SourceWriter {
 		addLine("public void consume("+className+" p);");
 	}
 
-	private void writePacketBuilder(StructField top, String[] headers) {
-//		startFile(headers);
-//		addLine();
-//		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
-//		addLine("import java.util.function.Function;");
-//		addLine();
-//
-//
-//
-//		addLine("public class "+m_packetBuilderName+" extends BlueberryPacketBuilder implements "+m_constantsName+"{");
-//		indent();
-//
-//		addLine("public "+m_packetBuilderName + "(int size){");
-//		indent();
-//		addLine("super(size);");
-//		closeBrace();
-//
-//
+	private void writePacketBuilder(BlueModule m) {
+		startFile(m, getHeader());
+		addLine();
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryPacketBuilder;");
+		addLine("import java.util.function.Function;");
+		addLine();
+
+
+		String className = NameMaker.makePacketBuilderName(m);
+		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+m_constantsName+"{");
+		indent();
+
+		addLine("public "+className + "(int size){");
+		indent();
+		addLine("super(size);");
+		closeBrace();
+
+
 //		//first get length, preamble and crc fields
 //		FixedIntField preamble = (FixedIntField)top.getHeaderField("preamble");
 //		BaseField length = top.getHeaderField("length");
@@ -349,8 +352,8 @@ public class JavaWriter extends SourceWriter {
 //		addCompactArrayMethods(top);
 //
 //
-//		closeBrace();
-//		writeToFile(m_packageName.toPath() + m_packetBuilderName,"java");
+		closeBrace();
+		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/") + className+".java");
 	}
 
 	private void writeBlockParsers(StructField top, String[] headers) {
@@ -750,7 +753,7 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeConstantsFile(BlueModule m) {
-		startFile(getHeader());
+		startFile(m, getHeader());
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
@@ -793,7 +796,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		for(NameValue nv : nvs) {
 			String c = nv.getComment();
-			if(!c.isBlank()) {
+			if(c != null && !c.isBlank()) {
 				c = "//"+c;
 			} else {
 				c = "";
@@ -854,7 +857,7 @@ public class JavaWriter extends SourceWriter {
 //		case INT8:
 //			result = "byte";
 //			break;
-//		case UINT16:
+//		case UINT16:m_bitIndexEnumName
 //			result = "short";
 //			break;
 //		case UINT32:
@@ -1057,26 +1060,21 @@ public class JavaWriter extends SourceWriter {
 
 
 	private void writeConstants(BlueModule m) {
-//		ArrayList<FixedIntField> fifs = new ArrayList<FixedIntField>();
-//
-//		top.scanThroughHeaderFields(f -> {
-//			if(f instanceof FixedIntField && !f.getName().toLowerCamel().equals("key")) {
-//				fifs.add((FixedIntField)f);
-//			}
-//		}, true);
-//		for(FixedIntField fif : fifs) {
-//
-//			String name = makeBaseFieldNameRoot(fif).addSuffix("VALUE").toUpperSnake();
-//			addDocComment(fif.getComment());
-//			addLine("public static final int "+name+" = "+WriterUtils.formatAsHex(fif.getValue())+";");
-//		}
+
+		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
+			
+
+			String name = NameMaker.makeMessageKeyName(mf);
+			addDocComment(mf.getComment());
+			addLine("public static final int "+name+" = "+makeFullMessageKey(mf)+";");
+		
+		});
 	}
 
 	@Override
-	protected void startFile(String... hs) {
-		// TODO Auto-generated method stub
-		super.startFile(hs);
-		addLine("package " + m_packageName.toDot()+";");
+	protected void startFile(BlueModule m, String... hs) {
+		super.startFile(m, hs);
+		addLine("package " + NameMaker.makePackageName(m).toLowerSnake(".")+";");
 
 
 	}

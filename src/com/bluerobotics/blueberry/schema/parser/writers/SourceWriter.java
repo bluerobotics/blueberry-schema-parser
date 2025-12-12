@@ -29,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
@@ -39,6 +41,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -102,7 +105,7 @@ public abstract class SourceWriter {
 
 
 	}
-	protected void startFile(String... hs) {
+	protected void startFile(BlueModule m, String... hs) {
 		clear();
 		for(String h : hs) {
 			addBlockComment(h);
@@ -285,7 +288,28 @@ public abstract class SourceWriter {
 	}	
 
 	
+	protected String makeFullMessageKey(MessageField mf) {
+		Annotation messA =  mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+		Annotation modA = mf.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+		if(messA == null) {
+			throw new SchemaParserException("Message field is not annotated with a message key.", mf.getCoord());
+		}
+		if(modA == null) {
+			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key.", mf.getCoord());
+		}
+		Number messKey = messA.getParameter(0, Number.class);
+		Number modKey = modA.getParameter(0, Number.class);
+		if(messKey == null) {
+			throw new SchemaParserException("Message field annotation needs a parameter that is an integer.", mf.getCoord());
+		}
+		if(modKey == null) {
+			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key that has an integer parameter.", mf.getCoord());
+		}
+		int k = modKey.asInt() << 16;
+		k |= messKey.asInt();
 
+		return WriterUtils.formatAsHex(k);
+	}
 
 
 
