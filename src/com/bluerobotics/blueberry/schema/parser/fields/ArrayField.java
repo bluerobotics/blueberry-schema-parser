@@ -42,7 +42,7 @@ public class ArrayField extends ParentField implements MultipleField {
 			int n = getNumber()[i];
 			byteCount /= n;
 			
-			result.add(new Index(this, i, ni, n, NameMaker.makeMultipleFieldIndexParamName(this, ni == 1 ? -1 : i), byteCount));
+			result.add(new Index(this, i, ni, n,  byteCount));
 		}
 		return result;
 	}

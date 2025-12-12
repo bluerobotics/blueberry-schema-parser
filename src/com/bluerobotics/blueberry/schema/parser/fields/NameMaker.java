@@ -150,7 +150,9 @@ public class NameMaker {
 	 * @param i - the number of the index. -1 causes the index to be left off the name
 	 * @return
 	 */
-	public static String makeMultipleFieldIndexParamName(MultipleField f, int i) {
+	public static String makeIndexName(Index idx) {
+		MultipleField f = idx.p;
+		int i = idx.ofN == 1 ? -1 : idx.i;
 		SymbolName name = f.getName();
 		if(name == null) {
 			name = f.getParent().getName();

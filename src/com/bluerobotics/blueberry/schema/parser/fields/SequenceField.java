@@ -65,7 +65,7 @@ public class SequenceField extends ParentField implements MultipleField {
 	public List<Index> getIndeces() {
 		ArrayList<Index> result = new ArrayList<>();
 
-		result.add(new Index(this, 0, 1, -1, NameMaker.makeMultipleFieldIndexParamName(this, -1), getPaddedByteCount()));
+		result.add(new Index(this, 0, 1, -1, getPaddedByteCount()));
 		return result;
 	}
 

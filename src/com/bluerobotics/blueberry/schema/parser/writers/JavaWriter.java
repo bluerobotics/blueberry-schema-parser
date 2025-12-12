@@ -44,16 +44,15 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
  * Autogenerates Java code stubs based on a parsed field structure
  */
 public class JavaWriter extends SourceWriter {
-	private SymbolName m_packageName;
-	private String m_constantsName;
-	private String m_bitIndexEnumName;
-	private String m_fieldIndexEnumName;
-	private String m_packetBuilderName;
-//	private String m_packetDecoderName;
-	private String m_consumerInterfaceName;
-	private String m_keyEnumName;
-	private String m_consumerManagerName;
-	private String m_packetRecieverName;
+//	private SymbolName m_packageName;
+//	private String m_constantsName;
+//	private String m_bitIndexEnumName;
+//	private String m_fieldIndexEnumName;
+//	private String m_packetBuilderName;
+//	private String m_consumerInterfaceName;
+//	private String m_keyEnumName;
+//	private String m_consumerManagerName;
+//	private String m_packetRecieverName;
 
 	public JavaWriter(File dir, BlueberrySchemaParser parser, String header) {
 		super(dir, parser, header);
@@ -62,7 +61,6 @@ public class JavaWriter extends SourceWriter {
 	@Override
 	public void write() {
 		ArrayList<BlueModule> modules = getParser().getModules();
-		FieldList messages = getParser().getMessages();
 //		m_constantsName = top.getName().append("constants").toUpperCamel();
 //		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
 //		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
@@ -295,7 +293,7 @@ public class JavaWriter extends SourceWriter {
 
 
 		String className = NameMaker.makePacketBuilderName(m);
-		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+m_constantsName+"{");
+		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+NameMaker.makeJavaConstantInterface(m)+"{");
 		indent();
 
 		addLine("public "+className + "(int size){");
