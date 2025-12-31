@@ -577,7 +577,7 @@ public class CWriter extends SourceWriter {
 			String paramName = NameMaker.makeParamName(f);
 			String type = getType(f);
 			if(f instanceof EnumField) {
-				type = f.getTypeName().deScope().toUpperCamel();
+				type = f.getTypeName().deScope().toUpperCamelString();
 			}
 			m_paramList += type+" " + paramName+stuff;
 			

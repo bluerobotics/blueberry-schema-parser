@@ -281,7 +281,7 @@ public class JavaWriter extends SourceWriter {
 	}
 
 	private void writeInterfaceMethod(StructField bf) {
-		String className = bf.getName().append("parser").toUpperCamel();
+		String className = bf.getName().append("parser").toUpperCamelString();
 		addDocComment("consume the "+className+" block.\n"+bf.getComment());
 		addLine("public void consume("+className+" p);");
 	}
@@ -294,8 +294,8 @@ public class JavaWriter extends SourceWriter {
 		addLine();
 
 
-		String className = NameMaker.makePacketBuilderName(m);
-		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+m_constantsName+"{");
+		SymbolName className = NameMaker.makePacketBuilderName(m);
+		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+NameMaker.makeJavaConstantInterface(m)+" {");
 		indent();
 
 		addLine("public "+className + "(int size){");
@@ -353,7 +353,7 @@ public class JavaWriter extends SourceWriter {
 //
 //
 		closeBrace();
-		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/") + className+".java");
+		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/")+"/"+className+".java");
 	}
 
 	private void writeBlockParsers(StructField top, String[] headers) {
@@ -801,7 +801,7 @@ public class JavaWriter extends SourceWriter {
 			} else {
 				c = "";
 			}
-			addLine(nv.getName().toUpperSnake()+"(("+type+")"+nv.getValueAsHex()+"),"+c);
+			addLine(nv.getName().toUpperSnakeString()+"(("+type+")"+nv.getValueAsHex()+"),"+c);
 		}
 		addLine(";");
 		addLine("private static EnumLookup<"+name+"> m_lookup = new EnumLookup<"+name+">();");

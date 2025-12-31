@@ -29,23 +29,23 @@ import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
  */
 public class NameMaker {
 	public static String makeMessageKeyName(MessageField mf) {
-		return mf.getTypeName().deScope().append("key").toUpperSnake();
+		return mf.getTypeName().deScope().append("key").toUpperSnakeString();
 	}
 	public static String makeMessageLengthName(MessageField mf) {
-		return mf.getTypeName().deScope().append("length").toUpperSnake();
+		return mf.getTypeName().deScope().append("length").toUpperSnakeString();
 	}
 	public static String makeBooleanMaskName(Field f) {
 		if(f.getBitCount() != 1) {
 			throw new RuntimeException("This should only be used for boolean fields, not this one: "+f);
 		}
-		return makeName(f, true).append("mask").toUpperSnake();
+		return makeName(f, true).append("mask").toUpperSnakeString();
 	}
 	public static String makeArraySizeName(Index pi) {
 		SymbolName result = makeName(pi.p, true).append("size");
 		if(pi.ofN >= 0) {
 			result = result.append("" + pi.i);
 		}
-		return  result.toUpperSnake();
+		return  result.toUpperSnakeString();
 	}
 	public static String makeMultipleFieldElementByteCountName(Index pi) {
 		
@@ -55,18 +55,18 @@ public class NameMaker {
 			result = result.append("" + pi.i);
 		}
 	
-		return  result.toUpperSnake();
+		return  result.toUpperSnakeString();
 	}
 	public static String makeFieldIndexName(Field f) {
-		return makeName(f, true).append("index").toUpperSnake();
+		return makeName(f, true).append("index").toUpperSnakeString();
 	}
 	public static String makeFieldOrdinalName(Field f) {
-		return makeName(f, true).append("ordinal").toUpperSnake();
+		return makeName(f, true).append("ordinal").toUpperSnakeString();
 
 	}
 	public static String makeMessageMaxOrdinalName(MessageField mf) {
 		
-		return mf.getTypeName().deScope().append("max","ordinal").toUpperSnake();
+		return mf.getTypeName().deScope().append("max","ordinal").toUpperSnakeString();
 	}
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
@@ -97,10 +97,10 @@ public class NameMaker {
 		return result;
 	}
 	public static String makeEnumName(EnumField ef) {
-		return ef.getTypeName().deScope().toUpperCamel();
+		return ef.getTypeName().deScope().toUpperCamelString();
 	}
 	public static String makeEnumItemName(EnumField ef, NameValue nv) {
-		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnake();
+		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnakeString();
 	}
 	
 	/**
@@ -142,7 +142,7 @@ public class NameMaker {
 		return makeName(f, false).toLowerCamel();
 	}
 	public static String makeStringMaxLengthName(StringField f) {
-		return makeName(f, true).append("max", "length").toUpperSnake();
+		return makeName(f, true).append("max", "length").toUpperSnakeString();
 	}
 	/**
 	 * creates the name for the index for an array or sequence
@@ -171,18 +171,18 @@ public class NameMaker {
 		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel();
 	}
 	public static String makeStringCopierName(StringField f, boolean toNotFrom) {
-		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f).toSymbolName().toUpperCamel();
+		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f).toSymbolName().toUpperCamelString();
 	}
 	public static String makeStringLengthGetterName(StringField f) {
 		ScopeName name = NameMaker.makeScopeName(f);
 
-		return "getStringLength"+name.toSymbolName().toUpperCamel();
+		return "getStringLength"+name.toSymbolName().toUpperCamelString();
 	}
 	public static String makeSequenceLengthGetterName(SequenceField sf) {
-		return makeScopeName(sf).toSymbolName().toUpperCamel()+"SequenceLength";
+		return makeScopeName(sf).toSymbolName().toUpperCamelString()+"SequenceLength";
 	}
 	public static String makeSequenceInitName(SequenceField sf) {
-		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamel();
+		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamelString();
 	}
 	public static String makeCModuleFileName(BlueModule m, boolean headerNotSource) {
 		String result = m.getName().deScope().toLowerCamel();
@@ -190,10 +190,10 @@ public class NameMaker {
 		return result;
 	}
 	public static String makeJavaConstantInterface(BlueModule m) {
-		String result = m.getName().deScope().append("constants").toLowerCamel();
+		String result = m.getName().deScope().append("constants").toUpperCamelString();
 		return result;
 	}
-	public static String makePacketBuilderName(BlueModule m) {
+	public static SymbolName makePacketBuilderName(BlueModule m) {
 		return m.getName().deScope().append("builder").toUpperCamel();
 	}
 	public static ScopeName makePackageName(BlueModule m) {

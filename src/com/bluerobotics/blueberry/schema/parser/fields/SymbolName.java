@@ -44,7 +44,12 @@ public class SymbolName {
 	protected final String[] m_name;
 	
 	protected SymbolName(Case c, String... ss) {
-		m_name = ss;
+		int n = ss.length;
+		String[] ssn = new String[n];
+		for(int i = 0; i < n; ++i) {
+			ssn[i] = ss[i];
+		}
+		m_name = ssn;
 		m_case = c;
 	}
 	public static SymbolName make(List<String> ss) {
@@ -222,7 +227,7 @@ public class SymbolName {
 		return new SymbolName(getCase(), ss);
 	}
 	public String toString() {
-		return toLowerSnake();
+		return toCase(m_case);
 	}
 
 	@Override
@@ -268,17 +273,26 @@ public class SymbolName {
 		return result;
 	}
 
-	public String toUpperCamel() {
+	public SymbolName toUpperCamel() {
+		return new SymbolName(Case.UPPER_CAMEL, m_name);
+	}
+	public String toUpperCamelString() {
 		return toCamel(true);
 	}
-	public String toLowerSnake() {
+	public SymbolName toLowerSnake() {
+		return new SymbolName(Case.LOWER_SNAKE, m_name);
+	}
+	public String toLowerSnakeString() {
 		return toSnake(false);
 	}
 
-	public String toUpperSnake() {
+	public SymbolName toUpperSnake() {
+		return new SymbolName(Case.UPPER_SNAKE, m_name);
+	}
+	public String toUpperSnakeString() {
 		return toSnake(true);
 	}
-	public String toLowerCase() {
+	public String toLowerCaseString() {
 		String result = "";
 		for(String w : m_name) {
 			result += w;
@@ -299,13 +313,13 @@ public class SymbolName {
 
 		return result;
 	}
-	public String toDot() {
+	public String toDotString() {
 		return toDot(false);
 	}
-	public String toLowerDot() {
+	public String toLowerDotString() {
 		return toDot(false);
 	}
-	public String toUpperDot() {
+	public String toUpperDotString() {
 		return toDot(true);
 	}
 	public String toPath() {
@@ -380,31 +394,31 @@ public class SymbolName {
 			result = toLowerCamel();
 			break;
 		case LOWER_DOT:
-			result = toLowerDot();
+			result = toLowerDotString();
 			break;
 		case LOWER_SNAKE:
-			result = toLowerSnake();
+			result = toLowerSnakeString();
 			break;
 		case MIXED_DOT:
-			result = toLowerDot();
+			result = toLowerDotString();
 			break;
 		case MIXED_SNAKE:
-			result = toLowerSnake();
+			result = toLowerSnakeString();
 			break;
 		case UNSPECIFIED:
-			result = toLowerSnake();
+			result = toLowerSnakeString();
 			break;
 		case UPPER_CAMEL:
-			result = toUpperCamel();
+			result = toUpperCamelString();
 			break;
 		case UPPER_DOT:
-			result = toUpperDot();
+			result = toUpperDotString();
 			break;
 		case UPPER_SNAKE:
-			result = toUpperSnake();
+			result = toUpperSnakeString();
 			break;
 		default:
-			result = toLowerSnake();
+			result = toLowerSnakeString();
 			break;
 		
 		}
@@ -413,7 +427,7 @@ public class SymbolName {
 
 	
 
-
+	
 
 
 }

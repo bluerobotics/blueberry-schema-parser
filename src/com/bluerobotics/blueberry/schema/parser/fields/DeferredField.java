@@ -48,7 +48,7 @@ public class DeferredField extends AbstractField {
 	public String toString() {
 		String result = getClass().getSimpleName();
 		result += "(";
-		result += getTypeName().toLowerSnake();
+		result += getTypeName().toLowerSnakeString();
 		if(getName() != null) {
 			result += " ";
 			result += getName().toLowerCamel();

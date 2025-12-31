@@ -90,7 +90,7 @@ public class Annotation  {
 		if(isKnown()) {
 			result += getClass().getSimpleName()+"("+m_known+")";
 		} else {
-			result += m_name.toLowerSnake();
+			result += m_name.toLowerSnakeString();
 		}
 		result += ")";
 		return result;

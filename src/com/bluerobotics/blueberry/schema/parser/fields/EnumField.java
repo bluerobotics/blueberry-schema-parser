@@ -55,7 +55,7 @@ public class EnumField extends AbstractField {
 		}
 
 		public String toString() {
-			return getClass().getSimpleName() + "(" + name.toUpperSnake() + " = " + value + ")";
+			return getClass().getSimpleName() + "(" + name.toUpperSnakeString() + " = " + value + ")";
 		}
 		public String getValueAsHex() {
 			return WriterUtils.formatAsHex(getValue().asLong());

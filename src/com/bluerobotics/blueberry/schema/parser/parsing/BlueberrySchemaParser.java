@@ -23,11 +23,8 @@ package com.bluerobotics.blueberry.schema.parser.parsing;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
@@ -556,7 +553,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamel(), df.getCoord());
+								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamelString(), df.getCoord());
 							} else {
 								dft = df;
 							}	
@@ -1080,7 +1077,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 		if(result == null) {
-			throw new SchemaParserException("Cannot find constant of name: \""+n.toLowerSnake()+"\"", null);
+			throw new SchemaParserException("Cannot find constant of name: \""+n.toLowerSnakeString()+"\"", null);
 		}
 		return result;
 	}
@@ -1246,10 +1243,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						//don't do anything, they're the same item
 					} else if(nv1.getName().equals(nv2.getName())){
 						//they have the same name
-						throw new SchemaParserException("Duplicate enum item names: "+nv1.getName().toUpperSnake(), ef.getCoord());
+						throw new SchemaParserException("Duplicate enum item names: "+nv1.getName().toUpperSnakeString(), ef.getCoord());
 					} else if(nv1.getValue().equals(nv2.getValue())) {
 						//they have the same value
-						throw new SchemaParserException("Duplicate enum item values: "+nv1.getName().toUpperSnake()+" = "+nv1.getValue(), ef.getCoord());
+						throw new SchemaParserException("Duplicate enum item values: "+nv1.getName().toUpperSnakeString()+" = "+nv1.getValue(), ef.getCoord());
 					}
 				}
 			}

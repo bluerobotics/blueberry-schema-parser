@@ -30,7 +30,7 @@ import java.util.ListIterator;
  * 
  */
 public class ScopeName extends SymbolName {
-	private static final String SEPARATOR = "%^&";//probably doesn't matter what this is so long as it's unique and unlikely to occur in a string.
+	private static final String SEPARATOR = " | ";//probably doesn't matter what this is so long as it's unique and unlikely to occur in a string.
 	public static final ScopeName ROOT = new ScopeName(Case.LOWER_SNAKE, SEPARATOR); 
 	private ScopeName(Case c, String... ss) {
 		super(c, ss);
@@ -246,7 +246,7 @@ public class ScopeName extends SymbolName {
 			}
 			firstTime = false;
 	
-			result += sn.toLowerSnake();
+			result += sn.toLowerSnakeString();
 		
 		}
 
