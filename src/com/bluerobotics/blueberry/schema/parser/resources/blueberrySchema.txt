@@ -362,6 +362,17 @@ Packet brPacket(preamble = 0x45554c42) {
 		}
 		
 	}
+	/**
+	* A payload to configure the timebase of the oscope.
+	*/
+	Payload oscopeSetupPayload(key = 0x001a){
+		float32 period
+		uint8 triggerSource
+		float32 threshold
+		float32 holdoff
+		uint8 trigPos //indicates how much of series will be ahead of the trigger: 0..4 -> none, 1/4, 1/3, 3/4, all
+		bool risingNotFalling
+	}
 //	define ModuleId enum uint16 {
 //		GPIO                      = 0
 //		FEEDBACK_CONTROL          = 1
@@ -399,7 +410,36 @@ Packet brPacket(preamble = 0x45554c42) {
 	}
 		
 	
-	
+	Payload spiTransaction(key = 0x001b) {
+		define ClockSpecBb enum uint8 {
+			SPI_CPOL_0_CPHA_0 = 0
+			SPI_CPOL_0_CPHA_1 = 1
+			SPI_CPOL_1_CPHA_0 = 2
+			SPI_CPOL_1_CPHA_1 = 3
+		}
+		define SpiDevBb enum uint8 {
+			SPINULL_DEV = 0xFF
+			SPI1_DEV = 0
+			SPI2_DEV = 1
+			SPI3_DEV = 2
+			SPI4_DEV = 3
+			SPI5_DEV = 4
+		}
+		define BaudDivBb enum uint8 {
+			SPI_DIV_2 = 0 
+			SPI_DIV_4 = 1 
+			SPI_DIV_8 = 2 
+			SPI_DIV_16 = 3
+			SPI_DIV_32 = 4
+			SPI_DIV_64 = 5
+			SPI_DIV_128 = 6
+			SPI_DIV_256	= 7	
+		}
+		
+		ClockSpecBb clockSpec
+		SpiDevBb spiDev
+		BaudDivBb baudDiv
+	}
 			
 			
 
