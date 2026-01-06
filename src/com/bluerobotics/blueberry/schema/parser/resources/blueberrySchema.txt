@@ -347,12 +347,14 @@ Packet brPacket(preamble = 0x45554c42) {
 	/*
 	 * A payload to convey a single channel worth of oscilloscope data.
 	 * The actual data vector is conveyed by a compact array of bytes
+	 * Also used to configure a channel
 	 */
 	Payload oscopePayload(key = 0x0017) {
 		uint8 channel //identifies which scope channel this data is for
-		float32 period //sample time in seconds
 		float32 gain //gain that will convert the byte-sized sample data to real values
 		uint32 id //identifier for this capture. All channel data of the same capture will have the same ID.
+		float32 offset //offset that will be added to the sample
+		uint8 source //the sink source id where this data will be captured from
 		
 		/*
 		 * An array of scope data. This must be preceded by an oscopePayload to convey the channel and channel settings
