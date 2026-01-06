@@ -28,8 +28,8 @@ import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
  * A class to make names for various constants, variables, etc used in the source writers
  */
 public class NameMaker {
-	public static String makeMessageKeyName(MessageField mf) {
-		return mf.getTypeName().deScope().append("key").toUpperSnakeString();
+	public static SymbolName makeMessageKeyName(MessageField mf) {
+		return mf.getTypeName().deScope().append("key").toUpperSnake();
 	}
 	public static String makeMessageLengthName(MessageField mf) {
 		return mf.getTypeName().deScope().append("length").toUpperSnakeString();
@@ -198,6 +198,9 @@ public class NameMaker {
 	}
 	public static ScopeName makePackageName(BlueModule m) {
 		return m.getName().makeRelative();
+	}
+	public static SymbolName makeJavaMessageClass(MessageField msg) {
+		return msg.getTypeName().deScope().toUpperCamel();
 	}
 
 
