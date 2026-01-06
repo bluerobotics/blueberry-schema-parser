@@ -73,8 +73,9 @@ public class JavaWriter extends SourceWriter {
 		modules.forEach(m -> {
 			writeConstantsFile(m);
 			writePacketBuilder(m);
+			
 		});
-		
+		writeMessageLookup(modules);	
 		
 //		writeBlockParsers(top, headers);
 //		writeParserInterface(top, headers);
@@ -82,6 +83,14 @@ public class JavaWriter extends SourceWriter {
 //		writePacketReceiver(top, headers);
 
 
+	}
+	/**
+	 * makes a class that maps module/message keys to message constructors
+	 * @param modules
+	 */
+	private void writeMessageLookup(ArrayList<BlueModule> modules) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void writePacketReceiver(StructField top, String[] headers) {

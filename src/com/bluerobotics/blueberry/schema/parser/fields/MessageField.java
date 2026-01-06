@@ -31,6 +31,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  *
  */
 public class MessageField extends ParentField {
+	public static final SymbolName MODULE_MESSAGE_KEY_FIELD_NAME = SymbolName.fromCamel("moduleMessageKey");
 	public static final SymbolName MAX_ORDINAL_FIELD_NAME = SymbolName.fromCamel("maxOrdinal");
 	public static final SymbolName LENGTH_FIELD_NAME = SymbolName.fromCamel("length");
 
@@ -38,9 +39,11 @@ public class MessageField extends ParentField {
 		super(name, typeName, TypeId.MESSAGE, comment, c);
 		
 		//add default header fields
+		BaseField moduleMessageKeyF = new BaseField(MODULE_MESSAGE_KEY_FIELD_NAME, TypeId.UINT32, "The combination of the module unique key and the message unique key.", Coord.NULL);
 		BaseField lenF = new BaseField(LENGTH_FIELD_NAME, TypeId.UINT16, "The length of this message", Coord.NULL);
 		BaseField fieldNumF = new BaseField(MAX_ORDINAL_FIELD_NAME, TypeId.UINT8, "The highest field ordinal in this message", Coord.NULL);
 		FillerByteField fillerF = new FillerByteField();
+		add(moduleMessageKeyF);
 		add(lenF);
 		add(fieldNumF);
 		add(fillerF);
