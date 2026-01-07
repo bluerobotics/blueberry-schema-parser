@@ -24,9 +24,11 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 /**
  *
  */
@@ -105,6 +107,27 @@ public class MessageField extends ParentField {
 			result = a.getParameter(0, Object.class).toString();
 		}
 		return result;
+	}
+	
+	public int getModuleMessageKey() {
+		Annotation modka = getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+		Annotation meska = getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+		
+				
+		if(modka == null) {
+			throw new SchemaParserException("Message does not include a module key.", getCoord());
+		} else if(meska == null) {
+			throw new SchemaParserException("Message is not contained in a module that includes a module key.", getCoord());
+		}
+		Number modkn = modka.getParameter(0, Number.class);
+		Number meskn = meska.getParameter(0, Number.class);
+		
+		if(modkn == null) {
+			throw new SchemaParserException("Message module key is not a number.", getCoord());
+		} else if(meskn == null) {
+			throw new SchemaParserException("Module key of module that contains this message is not a number.", getCoord());
+		}
+		return modkn.asInt() << 16 | meskn.asInt();
 	}
 
 }

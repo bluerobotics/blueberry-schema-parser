@@ -68,6 +68,7 @@ public class NameMaker {
 		
 		return mf.getTypeName().deScope().append("max","ordinal").toUpperSnake();
 	}
+
 	/**
 	 * Traverse the parent hierarchy of this field until a message field is reached
 	 * Construts a scope name from all the names up to the message and prepends the message type
@@ -141,9 +142,7 @@ public class NameMaker {
 	public static String makeParamName(Field f) {
 		return makeName(f, false).toLowerCamel();
 	}
-	public static String makeStringMaxLengthName(StringField f) {
-		return makeName(f, true).append("max", "length").toUpperSnake();
-	}
+	
 	/**
 	 * creates the name for the index for an array or sequence
 	 * @param f - the array or sequence
@@ -201,6 +200,11 @@ public class NameMaker {
 	public static ScopeName makePackageName(BlueModule m) {
 		return m.getName().makeRelative();
 	}
-
+	public static String makeMessageModuleMessageConstant(MessageField mf) {
+		return mf.getTypeName().deScope().append("module","message", "key").toUpperSnake();
+	}
+	public static String makeStringMaxLengthName(StringField f) {
+		return makeName(f, true).append("max", "length").toUpperSnake();
+	}
 
 }
