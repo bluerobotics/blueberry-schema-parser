@@ -24,13 +24,16 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+import com.bluerobotics.blueberry.schema.parser.constants.Number;
 /**
  *
  */
 public class MessageField extends ParentField {
+	public static final SymbolName MODULE_MESSAGE_KEY_FIELD_NAME = SymbolName.fromCamel("moduleMessageKey");
 	public static final SymbolName MAX_ORDINAL_FIELD_NAME = SymbolName.fromCamel("maxOrdinal");
 	public static final SymbolName LENGTH_FIELD_NAME = SymbolName.fromCamel("length");
 
@@ -38,9 +41,11 @@ public class MessageField extends ParentField {
 		super(name, typeName, TypeId.MESSAGE, comment, c);
 		
 		//add default header fields
+		BaseField moduleMessageKeyF = new BaseField(MODULE_MESSAGE_KEY_FIELD_NAME, TypeId.UINT32, "The combination of the module unique key and the message unique key.", Coord.NULL);
 		BaseField lenF = new BaseField(LENGTH_FIELD_NAME, TypeId.UINT16, "The length of this message", Coord.NULL);
 		BaseField fieldNumF = new BaseField(MAX_ORDINAL_FIELD_NAME, TypeId.UINT8, "The highest field ordinal in this message", Coord.NULL);
 		FillerByteField fillerF = new FillerByteField();
+		add(moduleMessageKeyF);
 		add(lenF);
 		add(fieldNumF);
 		add(fillerF);
@@ -102,6 +107,27 @@ public class MessageField extends ParentField {
 			result = a.getParameter(0, Object.class).toString();
 		}
 		return result;
+	}
+	
+	public int getModuleMessageKey() {
+		Annotation modka = getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+		Annotation meska = getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+		
+				
+		if(modka == null) {
+			throw new SchemaParserException("Message does not include a module key.", getCoord());
+		} else if(meska == null) {
+			throw new SchemaParserException("Message is not contained in a module that includes a module key.", getCoord());
+		}
+		Number modkn = modka.getParameter(0, Number.class);
+		Number meskn = meska.getParameter(0, Number.class);
+		
+		if(modkn == null) {
+			throw new SchemaParserException("Message module key is not a number.", getCoord());
+		} else if(meskn == null) {
+			throw new SchemaParserException("Module key of module that contains this message is not a number.", getCoord());
+		}
+		return modkn.asInt() << 16 | meskn.asInt();
 	}
 
 }

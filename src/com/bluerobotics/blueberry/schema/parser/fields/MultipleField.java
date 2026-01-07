@@ -35,22 +35,21 @@ public interface MultipleField extends Field {
 	 * A class to contain useful information about an array or sequence dimension
 	 */
 	public class Index {
-		public final ParentField p;//the sequence or array that this is a dimension for
+		public final MultipleField p;//the sequence or array that this is a dimension for
 		public final int i;//the number of the dimension - only useful for multidimensional arrays
 		public final int ofN;//how many dimensions are there?
 		public final int n;//the number of elements in this dimension
 		public final String type;//either "array" or "sequence"
 		public final boolean arrayNotSequence;//true if p is an array, false if p is a sequence
-		public final String name;//the variable name assigned to this dimension
 		public final int bytesPerElement;
-		Index(ParentField pf, int j, int ofM, int num, String nm, int bpe){
+		Index(MultipleField pf, int j, int ofM, int num, int bpe){
 			p = pf;
 			i = j;
 			n = num;
 			ofN = ofM;
 			arrayNotSequence =  pf instanceof ArrayField;
 			type = arrayNotSequence ? "array" : "sequence";
-			name = nm;
+		
 			bytesPerElement = bpe;
 		}
 	}

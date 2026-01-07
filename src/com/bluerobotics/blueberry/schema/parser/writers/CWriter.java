@@ -160,6 +160,7 @@ public class CWriter extends SourceWriter {
 		m_bools = false;
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
+			
 			mf.getChildren().forEach(f -> {
 				if(getType(f) != null) {
 					if(!(f instanceof BoolFieldField)) {
@@ -192,6 +193,8 @@ public class CWriter extends SourceWriter {
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 
 			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getLastChild().getOrdinal()+")");
+			addLine("#define "+NameMaker.makeMessageModuleMessageConstant(mf) + " ("+WriterUtils.formatAsHex(mf.getModuleMessageKey())+")");
+			
 		});
 		
 		if(m_bools) {
@@ -367,12 +370,13 @@ public class CWriter extends SourceWriter {
 				pName = pi.p.getParent().getName();
 			}
 			
+			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", uint32_t "+pi.name;
+			m_paramList += ", uint32_t "+name;
 	
 				
 			
@@ -400,11 +404,12 @@ public class CWriter extends SourceWriter {
 		
 		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
 		for(Index pi : pis) {
+			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
 				addLine("if(i == 0){");
 				indent();
 				addLine("return 0;//bail because an upstream sequence was not initialized");
@@ -447,18 +452,18 @@ public class CWriter extends SourceWriter {
 		m_paramList = "Bb * buf, BbBlock msg";
 				
 		for(Index pi : pis) {
-			
+			String name = NameMaker.makeIndexName(pi);
 			SymbolName pName = pi.p.getName(); 
 			if(pName == null) {
 				pName = pi.p.getParent().getName();
 			}
 			
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", uint32_t "+pi.name;
+			m_paramList += ", uint32_t "+name;
 	
 				
 			
@@ -492,11 +497,12 @@ public class CWriter extends SourceWriter {
 		
 		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
 		for(Index pi : pis) {
+			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
 				addLine("if(i == 0){");
 				indent();
 				addLine("return;//bail because an upstream sequence was not initialized");
@@ -543,27 +549,33 @@ public class CWriter extends SourceWriter {
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		mf.getChildren().forEach(f -> {
+			//don't process the length, maxOrdinal or moduleMessageKey fields. These fields will be set to constants
+			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
+			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
+			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
+			} else {
 			
-			String tp = getType(f);
-			
-			
-			
-			if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
-				fs.add(f);
+				String tp = getType(f);
 				
-			} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
-				//build a list of all sequences and strings that are not in sequences
-				boolean notInSequence = true;
-				for(Index i : MultipleField.getIndeces(f)) {
-					if(!i.arrayNotSequence) {
-						notInSequence = false;
-						break;
+				
+				
+				if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
+					fs.add(f);
+					
+				} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
+					//build a list of all sequences and strings that are not in sequences
+					boolean notInSequence = true;
+					for(Index i : MultipleField.getIndeces(f)) {
+						if(!i.arrayNotSequence) {
+							notInSequence = false;
+							break;
+						}
 					}
-				}
-					
-					
-				if(notInSequence) {
-					ss.add(f);
+						
+						
+					if(notInSequence) {
+						ss.add(f);
+					}
 				}
 			}
 		}, true);
@@ -597,18 +609,38 @@ public class CWriter extends SourceWriter {
 		//now do contents of function
 		indent();
 		
+		
+		Field ft = null;
+		ft = mf.getChildren().getByName(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME);
+		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageModuleMessageConstant(mf)+");");
+		
+		ft = mf.getChildren().getByName(MessageField.LENGTH_FIELD_NAME);
+		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageLengthName(mf)+");");
+		
+		ft = mf.getChildren().getByName(MessageField.MAX_ORDINAL_FIELD_NAME);
+		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
+
+		
 		for(Field f : fs) {
+			
+			
+			
 				
-			String paramName = NameMaker.makeParamName(f);
+		
 
 			
-
+				String paramName = NameMaker.makeParamName(f);
 			
 			
-			addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+				addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+			
 			
 			
 		}
+		
+		
+		
+		
 		for(Field f : ss) {
 			List<Index> pis = MultipleField.getIndeces(f);
 			if(pis.size() == 0) {
@@ -655,6 +687,7 @@ public class CWriter extends SourceWriter {
 			
 		}
 		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
+		
 		addLine("return buf->length;");
 		
 		outdent();
@@ -743,7 +776,7 @@ public class CWriter extends SourceWriter {
 		
 	
 			Field of = getMaxOrdinalField(f);
-			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " == "+NameMaker.makeFieldGetterName(of)+"(buf, msg);");
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= "+NameMaker.makeFieldGetterName(of)+"(buf, msg);");
 			
 				
 		outdent();
@@ -784,18 +817,18 @@ public class CWriter extends SourceWriter {
 //		List<Field> fs = f.getAncestors(MessageField.class);
 		String paramList = "Bb * buf, BbBlock msg ";
 		for(Index pi : pis) {
-			
+			String name = NameMaker.makeIndexName(pi);
 			SymbolName pName = pi.p.getName(); 
 			if(pName == null) {
 				pName = pi.p.getParent().getName();
 			}
 			
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", uin32_t "+pi.name;
+			paramList += ", uin32_t "+name;
 	
 				
 			
@@ -839,11 +872,12 @@ public class CWriter extends SourceWriter {
 		
 			addLine("uint32_t i = "+NameMaker.makeFieldIndexName(f) + ";" );
 			for(Index pi : pis) {
+				String name = NameMaker.makeIndexName(pi);
 				if(pi.p instanceof ArrayField) {
-					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 				} else if(pi.p instanceof SequenceField) {
 					
-					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
 					if(!getNotSet) {
 						addLine("if(i == 0){");
 						indent();
@@ -883,6 +917,7 @@ public class CWriter extends SourceWriter {
 		comments.add("@param msg - the index to the start of the message in the buffer.");
 		
 		for(Index pi : pis) {
+			String name = NameMaker.makeIndexName(pi);
 			
 			SymbolName pName = pi.p.getName(); 
 			if(pName == null) {
@@ -890,11 +925,11 @@ public class CWriter extends SourceWriter {
 			}
 			
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", uint32_t "+pi.name;
+			paramList += ", uint32_t "+name;
 	
 				
 			
@@ -924,11 +959,12 @@ public class CWriter extends SourceWriter {
 		indent();
 		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
+			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
 				
 			}
 			
@@ -995,18 +1031,18 @@ public class CWriter extends SourceWriter {
 		comments.add("@param msg - the index to the start of the message in the buffer.");
 		
 		for(Index pi : pis) {
-			
+			String name = NameMaker.makeIndexName(pi);
 			SymbolName pName = pi.p.getName(); 
 			if(pName == null) {
 				pName = pi.p.getParent().getName();
 			}
 			
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+pi.name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+pi.name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", uint32_t "+pi.name;
+			paramList += ", uint32_t "+name;
 	
 				
 			
@@ -1030,11 +1066,12 @@ public class CWriter extends SourceWriter {
 		indent();
 		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
 		for(Index pi : pis) {
+			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeArraySizeName(pi) + " * " + pi.name + ";");
+				addLine("i += "+NameMaker.makeArraySizeName(pi) + " * " + name + ";");
 			} else if(pi.p instanceof SequenceField) {
 				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.name+");");
+				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
 				
 			}
 			

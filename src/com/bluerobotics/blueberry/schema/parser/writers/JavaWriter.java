@@ -47,7 +47,16 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
  * Autogenerates Java code stubs based on a parsed field structure
  */
 public class JavaWriter extends SourceWriter {
-	
+
+//	private SymbolName m_packageName;
+//	private String m_constantsName;
+//	private String m_bitIndexEnumName;
+//	private String m_fieldIndexEnumName;
+//	private String m_packetBuilderName;
+//	private String m_consumerInterfaceName;
+//	private String m_keyEnumName;
+//	private String m_consumerManagerName;
+//	private String m_packetRecieverName;
 
 	public JavaWriter(File dir, BlueberrySchemaParser parser, String header) {
 		super(dir, parser, header);
@@ -56,7 +65,6 @@ public class JavaWriter extends SourceWriter {
 	@Override
 	public void write() {
 		ArrayList<BlueModule> modules = getParser().getModules();
-		FieldList messages = getParser().getMessages();
 //		m_constantsName = top.getName().append("constants").toUpperCamel();
 //		m_bitIndexEnumName = top.getName().append("bit","index").toUpperCamel();
 //		m_fieldIndexEnumName = top.getName().append("field","index").toUpperCamel();
@@ -73,8 +81,9 @@ public class JavaWriter extends SourceWriter {
 				writeMessageFile(m, msg);
 				
 			});
+			
 		});
-		
+		writeMessageLookup(modules);	
 		
 //		writeBlockParsers(top, headers);
 //		writeParserInterface(top, headers);
@@ -82,6 +91,14 @@ public class JavaWriter extends SourceWriter {
 //		writePacketReceiver(top, headers);
 
 
+	}
+	/**
+	 * makes a class that maps module/message keys to message constructors
+	 * @param modules
+	 */
+	private void writeMessageLookup(ArrayList<BlueModule> modules) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	
@@ -296,6 +313,7 @@ public class JavaWriter extends SourceWriter {
 
 		SymbolName className = NameMaker.makePacketBuilderName(m);
 		addLine("public class "+className+" extends BlueberryPacketBuilder implements "+NameMaker.makeJavaConstantInterface(m)+" {");
+
 		indent();
 
 		addLine("public "+className + "(int size){");
@@ -1252,135 +1270,135 @@ public class JavaWriter extends SourceWriter {
 	}
 
 private void addMessageConstructor(MessageField mf, boolean params) {
-	String messageName = NameMaker.makeJavaMessageClass(mf).toString();
-	ArrayList<String> comments = new ArrayList<>();
-	comments.add("A constructor to create a "+messageName);
-	comments.add(mf.getComment());
-	
-	comments.add("@param buf - the message buffer to add the message to");
-	comments.add("@param msg - the index of the start of the message");
-	m_paramList = "Bb * buf, BbBlock msg";
-	ArrayList<Field> fs = new ArrayList<>();
-	ArrayList<Field> ss = new ArrayList<>();
-	//first make a list of all top-level fields that are not strings or parent fields
-	//but also add contents of boolfieldfields
-	mf.getChildren().forEach(f -> {
-		
-		String tp = getType(f);
-		
-		
-		
-		if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
-			fs.add(f);
-			
-		} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
-			//build a list of all sequences and strings that are not in sequences
-			boolean notInSequence = true;
-			for(Index i : MultipleField.getIndeces(f)) {
-				if(!i.arrayNotSequence) {
-					notInSequence = false;
-					break;
-				}
-			}
-				
-				
-			if(notInSequence) {
-				ss.add(f);
-			}
-		}
-	}, true);
-	
-	for(Field f : fs) {
-		String stuff = "";
-		
-		m_paramList += ", ";
-		
-		
-		String paramName = NameMaker.makeParamName(f);
-		String type = getType(f);
-		if(f instanceof EnumField) {
-			type = f.getTypeName().deScope().toUpperCamelString();
-		}
-		m_paramList += type+" " + paramName+stuff;
-		
-		comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
-	}
-
-	
-	comments.add("@returns - the index of the next byte after this message.");
-	
-	
-	
-	addDocComment(comments.toArray(new String[comments.size()]));
-	addLine("BbBlock "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
-	if(protoNotDef) {
-		return;
-	}
-	//now do contents of function
-	indent();
-	
-	for(Field f : fs) {
-			
-		String paramName = NameMaker.makeParamName(f);
-
-		
-
-		
-		
-		addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
-		
-		
-	}
-	for(Field f : ss) {
-		List<Index> pis = MultipleField.getIndeces(f);
-		if(pis.size() == 0) {
-			//zero the index field of each string and sequence
-			String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-			addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
-		} else {
-			//TODO: cycle through all the permutations of indeces and zero all the sequence headers
-			//TODO: this is not right yet
-			int[] ii = new int[pis.size()];
-			int n = 1;
-			for(Index pi : pis) {
-				n *= pi.n;
-			}
-			int i = 0;
-			int m = 1;
-			while(i < n) {
-				boolean carry = true;
-				int offset = 0;
-				for(int j = pis.size() - 1; j >= 0; --j) {
-					Index pi = pis.get(j);
-					offset += ii[j] * pi.bytesPerElement;
-			
-				}				
-				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
-				for(int j = pis.size() - 1; j >= 0; --j) {
-					if(carry) {
-						++ii[j];
-						if(ii[j] >= pis.get(j).n) {
-							ii[j] = 0;
-							carry = true;
-						} else {
-							carry = false;
-						}
-					}
-				}
-				
-				++i;
-			}
-			
-			
-		}
-		
-	}
-	addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
-	addLine("return buf->length;");
-	
-	outdent();
-	addLine("}");
+//	String messageName = NameMaker.makeJavaMessageClass(mf).toString();
+//	ArrayList<String> comments = new ArrayList<>();
+//	comments.add("A constructor to create a "+messageName);
+//	comments.add(mf.getComment());
+//	
+//	comments.add("@param buf - the message buffer to add the message to");
+//	comments.add("@param msg - the index of the start of the message");
+//	m_paramList = "Bb * buf, BbBlock msg";
+//	ArrayList<Field> fs = new ArrayList<>();
+//	ArrayList<Field> ss = new ArrayList<>();
+//	//first make a list of all top-level fields that are not strings or parent fields
+//	//but also add contents of boolfieldfields
+//	mf.getChildren().forEach(f -> {
+//		
+//		String tp = getType(f);
+//		
+//		
+//		
+//		if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
+//			fs.add(f);
+//			
+//		} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
+//			//build a list of all sequences and strings that are not in sequences
+//			boolean notInSequence = true;
+//			for(Index i : MultipleField.getIndeces(f)) {
+//				if(!i.arrayNotSequence) {
+//					notInSequence = false;
+//					break;
+//				}
+//			}
+//				
+//				
+//			if(notInSequence) {
+//				ss.add(f);
+//			}
+//		}
+//	}, true);
+//	
+//	for(Field f : fs) {
+//		String stuff = "";
+//		
+//		m_paramList += ", ";
+//		
+//		
+//		String paramName = NameMaker.makeParamName(f);
+//		String type = getType(f);
+//		if(f instanceof EnumField) {
+//			type = f.getTypeName().deScope().toUpperCamelString();
+//		}
+//		m_paramList += type+" " + paramName+stuff;
+//		
+//		comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
+//	}
+//
+//	
+//	comments.add("@returns - the index of the next byte after this message.");
+//	
+//	
+//	
+//	addDocComment(comments.toArray(new String[comments.size()]));
+//	addLine("BbBlock "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+//	if(protoNotDef) {
+//		return;
+//	}
+//	//now do contents of function
+//	indent();
+//	
+//	for(Field f : fs) {
+//			
+//		String paramName = NameMaker.makeParamName(f);
+//
+//		
+//
+//		
+//		
+//		addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+//		
+//		
+//	}
+//	for(Field f : ss) {
+//		List<Index> pis = MultipleField.getIndeces(f);
+//		if(pis.size() == 0) {
+//			//zero the index field of each string and sequence
+//			String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
+//			addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
+//		} else {
+//			//TODO: cycle through all the permutations of indeces and zero all the sequence headers
+//			//TODO: this is not right yet
+//			int[] ii = new int[pis.size()];
+//			int n = 1;
+//			for(Index pi : pis) {
+//				n *= pi.n;
+//			}
+//			int i = 0;
+//			int m = 1;
+//			while(i < n) {
+//				boolean carry = true;
+//				int offset = 0;
+//				for(int j = pis.size() - 1; j >= 0; --j) {
+//					Index pi = pis.get(j);
+//					offset += ii[j] * pi.bytesPerElement;
+//			
+//				}				
+//				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
+//				addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
+//				for(int j = pis.size() - 1; j >= 0; --j) {
+//					if(carry) {
+//						++ii[j];
+//						if(ii[j] >= pis.get(j).n) {
+//							ii[j] = 0;
+//							carry = true;
+//						} else {
+//							carry = false;
+//						}
+//					}
+//				}
+//				
+//				++i;
+//			}
+//			
+//			
+//		}
+//		
+//	}
+//	addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
+//	addLine("return buf->length;");
+//	
+//	outdent();
+//	addLine("}");
 }
 
 
