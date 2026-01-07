@@ -517,9 +517,15 @@ public class CWriter extends SourceWriter {
 		
 		addLine("setUint16(buf, msg, i, is);//set the header to the location of the sequence data");
 		
+		addLine("uint32_t size = ("+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+" * n) + 4; //the 4 is to account for the length field that precedes the sequence data");
 		
+		addLine("buf->length += size;");
+		addLineComment("Finially update the length field of the message");
 		
-		addLine("buf->length += "+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+" + 1; //the 1 is to account for the length field that precedes the sequence data");
+		MessageField mf = sf.getAncestor(MessageField.class);
+		Field ft = mf.getChildren().getByName(MessageField.LENGTH_FIELD_NAME);
+		addLine("uint32_t len = "+lookupBbGetSet(ft, true)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+");");
+		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", len + size);");
 		
 		outdent();
 		addLine("}");
@@ -538,12 +544,12 @@ public class CWriter extends SourceWriter {
 	
 	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
-		comments.add("A function to add a "+mf.getTypeName().deScope().toTitle());
+		comments.add("Adds a "+mf.getTypeName().deScope().toTitle()+" to the end of the current buffer");
 		comments.add(mf.getComment());
 		
 		comments.add("@param buf - the message buffer to add the message to");
-		comments.add("@param msg - the index of the start of the message");
-		m_paramList = "Bb * buf, BbBlock msg";
+		
+		m_paramList = "Bb * buf";
 		ArrayList<Field> fs = new ArrayList<>();
 		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
@@ -597,7 +603,7 @@ public class CWriter extends SourceWriter {
 		}
 	
 		
-		comments.add("@returns - the index of the next byte after this message.");
+		comments.add("@returns - the index of the new message.");
 		
 		
 		
@@ -608,6 +614,9 @@ public class CWriter extends SourceWriter {
 		}
 		//now do contents of function
 		indent();
+		
+		//now compute the location of the new message
+		addLine("BbBlock msg = buf->length;");
 		
 		
 		Field ft = null;
@@ -687,8 +696,11 @@ public class CWriter extends SourceWriter {
 			
 		}
 		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
+	
 		
-		addLine("return buf->length;");
+		
+		//finally return the index of the new message
+		addLine("return msg;");
 		
 		outdent();
 		addLine("}");
