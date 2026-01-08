@@ -311,6 +311,26 @@ public abstract class SourceWriter {
 		return WriterUtils.formatAsHex(k);
 	}
 
-
+	protected String getFieldComment(Field f) {
+		String result = "";
+		if(f.getComment() != null) {
+			result = f.getComment();
+		}
+		ParentField pf = f.getParent();
+		while(pf != null && (!(pf instanceof MessageField))) {
+			if(pf.getComment() != null) {
+				result = pf.getComment() + " " + result;
+			}
+			pf = pf.getParent();
+		}
+		return result;
+	}
+	protected String prependHyphen(String s) {
+		String result = "";
+		if(s != null && !s.isBlank()) {
+			result = " - "+s;
+		}
+		return result;
+	}
 
 }

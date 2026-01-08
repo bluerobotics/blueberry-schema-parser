@@ -387,7 +387,7 @@ public class CWriter extends SourceWriter {
 		comments.add("@param buf - the message buffer to add the message to");
 		comments.add("@param msg - the index of the start of the message");
 
-		m_paramList = "Bb * buf, BbBlock msg";
+		String paramList = "Bb * buf, BbBlock msg";
 				
 		for(Index pi : pis) {
 			
@@ -402,7 +402,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", uint32_t "+name;
+			paramList += ", uint32_t "+name;
 	
 				
 			
@@ -416,7 +416,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		addLine("uint32_t get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("uint32_t get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -475,7 +475,7 @@ public class CWriter extends SourceWriter {
 		comments.add("@param buf - the message buffer to add the message to");
 		comments.add("@param msg - the index of the start of the message");
 		comments.add("@param n - the number of elements of this sequence");
-		m_paramList = "Bb * buf, BbBlock msg";
+		String paramList = "Bb * buf, BbBlock msg";
 				
 		for(Index pi : pis) {
 			String name = NameMaker.makeIndexName(pi);
@@ -489,13 +489,13 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			m_paramList += ", uint32_t "+name;
+			paramList += ", uint32_t "+name;
 	
 				
 			
 		}
 		
-		m_paramList += ", uint32_t n";
+		paramList += ", uint32_t n";
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
@@ -503,7 +503,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		addLine("void "+NameMaker.makeSequenceInitName(sf)+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("void "+NameMaker.makeSequenceInitName(sf)+"("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -566,7 +566,7 @@ public class CWriter extends SourceWriter {
 	
 
 
-	private String m_paramList = "";
+
 	
 	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
@@ -575,7 +575,7 @@ public class CWriter extends SourceWriter {
 		
 		comments.add("@param buf - the message buffer to add the message to");
 		
-		m_paramList = "Bb * buf";
+		String paramList = "Bb * buf";
 		ArrayList<Field> fs = new ArrayList<>();
 		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
@@ -615,7 +615,7 @@ public class CWriter extends SourceWriter {
 		for(Field f : fs) {
 			String stuff = "";
 			
-			m_paramList += ", ";
+			paramList += ", ";
 			
 			
 			SymbolName paramName = NameMaker.makeParamName(f);
@@ -623,7 +623,7 @@ public class CWriter extends SourceWriter {
 			if(f instanceof EnumField) {
 				type = f.getTypeName().deScope().toUpperCamelString();
 			}
-			m_paramList += type+" " + paramName+stuff;
+			paramList += type+" " + paramName+stuff;
 			
 			comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
 		}
@@ -634,7 +634,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
-		addLine("BbBlock "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+m_paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("BbBlock "+mf.getTypeName().deScope().prepend("add").toLowerCamel()+"("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -1195,13 +1195,7 @@ public class CWriter extends SourceWriter {
 		return result;
 	}
 
-	private String prependHyphen(String s) {
-		String result = "";
-		if(s != null && !s.isBlank()) {
-			result = " - "+s;
-		}
-		return result;
-	}
+
 
 	
 	
@@ -1211,20 +1205,7 @@ public class CWriter extends SourceWriter {
 	
 
 	
-	private String getFieldComment(Field f) {
-		String result = "";
-		if(f.getComment() != null) {
-			result = f.getComment();
-		}
-		ParentField pf = f.getParent();
-		while(pf != null && (!(pf instanceof MessageField))) {
-			if(pf.getComment() != null) {
-				result = pf.getComment() + " " + result;
-			}
-			pf = pf.getParent();
-		}
-		return result;
-	}
+
 
 	private String getType(Field f) {
 		String result = null;
