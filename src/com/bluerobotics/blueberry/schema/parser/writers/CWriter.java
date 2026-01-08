@@ -25,7 +25,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
@@ -34,19 +33,14 @@ import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
-import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
-import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
-import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
-import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -120,10 +114,16 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, true, false);
 
 			mf.getChildren().forEach(f -> {
+				if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
+				} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
+				} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
+				} else if(f.isNotFiller()) {
+			
 				
-				makeMessageGetterSetter(f, true, true);
-				makeMessageGetterSetter(f, false, true);
-				makeMessagePresenceTester(f, true);
+					makeMessageGetterSetter(f, true, true);
+					makeMessageGetterSetter(f, false, true);
+					makeMessagePresenceTester(f, true);
+				}
 			}, true);
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
@@ -316,10 +316,14 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, false, false);
 
 			mf.getChildren().forEach(f -> {
-				
-				makeMessageGetterSetter(f, true, false);
-				makeMessageGetterSetter(f, false, false);
-				makeMessagePresenceTester(f, false);
+				if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
+				} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
+				} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
+				} else if(f.isNotFiller()) {
+					makeMessageGetterSetter(f, true, false);
+					makeMessageGetterSetter(f, false, false);
+					makeMessagePresenceTester(f, false);
+				}
 
 			}, true);
 			
@@ -755,9 +759,9 @@ public class CWriter extends SourceWriter {
 			indent();
 
 			if(emptyNotFull) {
-				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) <= 2);//will always be length and ordinal fields");
+				addLine("return (getBbMessageMaxOrdinal(buf, msg) <= 2);//will always be length and ordinal fields");
 			} else {
-				addLine("return (" + NameMaker.makeFieldGetterName(getMaxOrdinalField(mf))+"(buf, msg) >= "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
+				addLine("return (getBbMessageMaxOrdinal(buf, msg) >= "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
 			}
 			
 			
@@ -813,8 +817,8 @@ public class CWriter extends SourceWriter {
 		indent();
 		
 	
-			Field of = getMaxOrdinalField(f);
-			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= "+NameMaker.makeFieldGetterName(of)+"(buf, msg);");
+			
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= (getBbMessageMaxOrdinal(buf, msg));");
 			
 				
 		outdent();
@@ -825,6 +829,7 @@ public class CWriter extends SourceWriter {
 
 	/**
 	 * make getter or setter for all base types except strings
+	 * Note that this won't make a setter for a simple field in a message. Those are set as part of the message adder
 	 * @param f
 	 * @param getNotSet
 	 * @param protoNotDef

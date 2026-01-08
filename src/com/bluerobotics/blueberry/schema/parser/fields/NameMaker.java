@@ -132,9 +132,11 @@ public class NameMaker {
 			result = result.prepend(pn);
 			pf = pf.getParent();
 		}
-		MessageField mf = f.getAncestor(MessageField.class);
-		if(mf != null) {
-			result = result.prepend(mf.getTypeName().deScope());
+		if(includeMessage) {
+			MessageField mf = f.getAncestor(MessageField.class);
+			if(mf != null) {
+				result = result.prepend(mf.getTypeName().deScope());
+			}
 		}
 		return result;
 	}
