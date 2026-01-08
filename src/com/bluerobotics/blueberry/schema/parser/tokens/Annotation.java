@@ -102,6 +102,9 @@ public class Annotation  {
 	}
 	public <C extends Object> C getParameter(int i, Class<C> t) {
 		C result = null;
+		if(i >= m_parameters.size()){
+			return null;
+		}
 		Object c = m_parameters.get(i);
 		if(t.isInstance(c)) {
 			result = t.cast(c);
@@ -132,6 +135,19 @@ public class Annotation  {
 	public void addDeferredParameter(SymbolName n, ScopeName[] imports) {
 		m_parameters.add(new DeferredParameter(n, imports));
 	}
+	@Override
+	public boolean equals(Object obj) {
+		boolean result = false;
+		if(obj instanceof Annotation) {
+			Annotation a = (Annotation)obj;
+			if(getName().equals(a.getName())) {
+				result = true;
+			}
+		}
+		
+		return result;
+	}
+	
 
 
 }

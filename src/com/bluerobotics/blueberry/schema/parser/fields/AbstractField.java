@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
@@ -181,15 +182,22 @@ public abstract class AbstractField implements Field {
 	@Override
 	public void addAnnotation(Annotation... as) {
 		for(Annotation a : as) {
-			m_annotations.add(a);
+			int i = m_annotations.indexOf(a);
+			if(i == -1) {
+				m_annotations.add(a);
+			} else {
+				m_annotations.set(i, a);
+			}
+			
 		}
 	}
 	@Override
 	public void addAnnotation(List<Annotation> as) {
 		for(Annotation a : as) {
-			m_annotations.add(a);
+			addAnnotation(a);
 		}
 	}
+
 	@Override
 	public Annotation getAnnotation(SymbolName name) {
 		Annotation result = null;

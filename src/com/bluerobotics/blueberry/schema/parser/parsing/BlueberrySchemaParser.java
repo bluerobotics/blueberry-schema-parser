@@ -65,6 +65,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Token;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenList;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
 
 /**
  * This class implements the token parsing algorithm
@@ -165,6 +166,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			checkForDuplicateEnumValues();
 			fillInMissingMessageKeyValues();
 			fillInMissingModuleKeyValues();
+			assignModuleAnnotations();
 			checkForDuplicateMessageKeys();
 			
 			processDeferredFields(m_defines.getIterator(), m_defines);	
@@ -183,7 +185,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			
 			computeIndeces();
-			assignModuleAnnotations();
+			
 
 		} catch (SchemaParserException e) {
 			e.printStackTrace();
@@ -304,17 +306,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void checkForDuplicateMessageKeys() {
 		final ArrayList<Integer> keys = new ArrayList<>();
 		m_messages.forEachOfType(MessageField.class, false, mf -> {
-			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
-			if(a != null) {
-				Number an = a.getParameter(0, Number.class);
-				if(an != null) {
-					int i = an.asInt();
-					if(keys.contains(i)) {
-						throw new SchemaParserException("Duplicate message key detected ("+i+")in "+mf.getName(), null);
-					}
-					keys.add(an.asInt());
-				}
+			int i = mf.getModuleMessageKey();
+			
+			if(keys.contains(i)) {
+				throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+mf.getName(), null);
 			}
+			keys.add(i);
+				
+			
 		});
 	}
 	/**
@@ -342,7 +341,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void fillInMissingModuleKeyValues() {
 		m_modules.forEach(m -> {
 			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-			if(a == null) {
+			if(a == null || a.getParameter(0, Number.class) == null) {
 				 a = new Annotation(Annotation.MODULE_KEY_ANNOTATION);
 				 long n = getNextModuleKey();
 				a.addParameter(new Number(n));
@@ -356,24 +355,28 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * scan through all messages and assign any message keys that have not been assigned.
 	 */
 	private void fillInMissingMessageKeyValues() {
-		m_messages.forEachOfType(MessageField.class, false, mf -> {
-			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
-			if(a == null) {
-				 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION);
-				a.addParameter(new Number(getNextMessageKey()));
-				mf.addAnnotation(a);
-				
-				
-			}
-		});
+		for(BlueModule m : m_modules) {
+			m.getMessages().forEachOfType(MessageField.class, false, mf -> {
+				Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+				if(a == null || a.getParameter(0, Number.class) == null) {
+					 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION);
+					 long i = getNextMessageKey(m);
+					a.addParameter(new Number(i));
+					mf.addAnnotation(a);
+					System.out.println("BlueberrySchemaParser.fillInMissingMessageKeyValues Adding new Key Value for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i));
+				}
+					
+			});
+		}
+		
 	}
 	/**
 	 * picks the next available message key value
 	 * @return
 	 */
-	private long getNextMessageKey() {
+	private long getNextMessageKey(BlueModule m) {
 		final ArrayList<Integer> keys = new ArrayList<>();
-		m_messages.forEachOfType(MessageField.class, false, mf -> {
+		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
 			if(a != null) {
 				Number an = a.getParameter(0, Number.class);
@@ -397,6 +400,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					++i;
 					done = false;
 					break;
+				} else if(k > i){
+					done = true;
 				}
 			}
 		}
