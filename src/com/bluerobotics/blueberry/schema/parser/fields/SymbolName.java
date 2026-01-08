@@ -242,9 +242,7 @@ public class SymbolName {
 		return result;
 	}
 
-	public String toLowerCamel() {
-		return toCamel(false);
-	}
+
 	private String toFirstCap(String s) {
 		if(s.length() == 0) {
 			return "";
@@ -272,7 +270,12 @@ public class SymbolName {
 		}
 		return result;
 	}
-
+	public SymbolName toLowerCamel() {
+		return new SymbolName(Case.LOWER_CAMEL, m_name);
+	}
+	public String toLowerCamelString() {
+		return toCamel(false);
+	}
 	public SymbolName toUpperCamel() {
 		return new SymbolName(Case.UPPER_CAMEL, m_name);
 	}
@@ -391,7 +394,7 @@ public class SymbolName {
 		String result = "";
 		switch(c) {
 		case LOWER_CAMEL:
-			result = toLowerCamel();
+			result = toLowerCamelString();
 			break;
 		case LOWER_DOT:
 			result = toLowerDotString();

@@ -80,12 +80,17 @@ public class CWriter extends SourceWriter {
 	 * @param module
 	 */
 	private void makeHeaderFile(BlueModule module) {
-		String moduleFileRoot = module.getName().deScope().toLowerCamel();
 		
 		startFile(module, getHeader());
 
-
-
+//		#ifndef BLUEBERRY_TRANSCODE_FIRMWARE_INC_BLUEBERRY_PACKET_H_
+//		#define BLUEBERRY_TRANSCODE_FIRMWARE_INC_BLUEBERRY_PACKET_H_
+//		#endif /* BLUEBERRY_TRANSCODE_FIRMWARE_INC_BLUEBERRY_PACKET_H_ */
+		
+		addLine("#ifndef "+module.getName().toUpperSnake("_") + "_MODULE_");
+		addLine("#define "+module.getName().toUpperSnake("_") + "_MODULE_");
+		addLine();
+		
 		addSectionDivider("Includes");
 		addLine("#include <stdbool.h>");
 		addLine("#include <stdint.h>");
@@ -133,6 +138,8 @@ public class CWriter extends SourceWriter {
 			
 		});
 		
+		addLine();
+		addLine("#endif /* "+module.getName().toUpperSnake("_") + "_MODULE_ */");
 	
 		writeToFile("inc/"+NameMaker.makeCModuleFileName(module, true));
 
@@ -178,6 +185,7 @@ public class CWriter extends SourceWriter {
 				} else {
 					if(f instanceof ArrayField) {
 						m_arrays = true;
+						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 					} else if(f instanceof SequenceField) {
 						m_sequences = true;
 						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
@@ -185,9 +193,27 @@ public class CWriter extends SourceWriter {
 				}
 			}, true);
 		});
+		addLine();
+		addLineComment("Add message field ordinals");
+		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
+			
+			
+			mf.getChildren().forEach(f -> {
+				
+				if(f.getName() != null && f.isNotFiller()) {
+					addLine("#define " + NameMaker.makeFieldOrdinalName(f) + " ("+f.getOrdinal()+")");
+				}
+						
+					
+				
+					
+				
+			}, true);
+		});
+
 		
 		addLine();
-		addLineComment("Add message ordinals - the number of fields in the message and the ordinal of the last field of the message");
+		addLineComment("Add message max ordinals - the number of fields in the message and the ordinal of the last field of the message");
 		
 		//add a line for the max ordinal
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
@@ -592,7 +618,7 @@ public class CWriter extends SourceWriter {
 			m_paramList += ", ";
 			
 			
-			String paramName = NameMaker.makeParamName(f);
+			SymbolName paramName = NameMaker.makeParamName(f);
 			String type = getType(f);
 			if(f instanceof EnumField) {
 				type = f.getTypeName().deScope().toUpperCamelString();
@@ -638,7 +664,7 @@ public class CWriter extends SourceWriter {
 		
 
 			
-				String paramName = NameMaker.makeParamName(f);
+				SymbolName paramName = NameMaker.makeParamName(f);
 			
 			
 				addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
@@ -723,7 +749,7 @@ public class CWriter extends SourceWriter {
 		SymbolName functionName = mf.getTypeName().toSymbolName().prepend("is").append(emptyNotFull ? "empty" : "full");
 		
 		addDocComment(comments);
-		addLine("bool "+functionName.toLowerCamel()+"(Bb * buff, BbBlock msg)"+(protoNotDef ? ");" : "){"));
+		addLine("bool "+functionName.toLowerCamel()+"(Bb * buf, BbBlock msg)"+(protoNotDef ? ";" : "{"));
 		
 		if(!protoNotDef) {
 			indent();

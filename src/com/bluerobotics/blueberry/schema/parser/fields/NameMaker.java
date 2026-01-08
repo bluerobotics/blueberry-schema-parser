@@ -139,7 +139,7 @@ public class NameMaker {
 		return result;
 	}
 	
-	public static String makeParamName(Field f) {
+	public static SymbolName makeParamName(Field f) {
 		return makeName(f, false).toLowerCamel();
 	}
 
@@ -161,16 +161,16 @@ public class NameMaker {
 		if(i >= 0) {
 			name = name.append(""+i);
 		}
-		return name.toLowerCamel();
+		return name.toLowerCamel().toString();
 	}
 	public static String  makeFieldGetterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel();
+		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel().toString();
 	}
 	public static String  makeFieldSetterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel();
+		return makeScopeName(f).toSymbolName().prepend("set").toLowerCamel().toString();
 	}
 	public static String  makeFieldPresenceTesterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel();
+		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel().toString();
 	}
 	public static String makeStringCopierName(StringField f, boolean toNotFrom) {
 		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f).toSymbolName().toUpperCamelString();
@@ -187,7 +187,7 @@ public class NameMaker {
 		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamelString();
 	}
 	public static String makeCModuleFileName(BlueModule m, boolean headerNotSource) {
-		String result = m.getName().deScope().toLowerCamel();
+		String result = m.getName().deScope().toLowerCamel().toString();
 		result += headerNotSource ? ".h" : ".c";
 		return result;
 	}
@@ -214,4 +214,7 @@ public class NameMaker {
 //	public static String makeStringMaxLengthName(StringField f) {
 //		return makeName(f, true).append("max", "length").toUpperSnakeString();
 //	}
+	public static SymbolName makeCModuleFileRoot(BlueModule module) {
+		return module.getName().deScope().toLowerCamel();
+	}
 }

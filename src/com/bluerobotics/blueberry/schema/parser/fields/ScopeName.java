@@ -268,6 +268,9 @@ public class ScopeName extends SymbolName {
 	public String toLowerSnake(String sep) {
 		return toCase(Case.LOWER_SNAKE, sep);
 	}
+	public String toUpperSnake(String sep) {
+		return toCase(Case.UPPER_SNAKE, sep);
+	}
 	protected String toCase(Case c, String sep) {
 		List<SymbolName> sns = splitScope();
 		String result = "";
