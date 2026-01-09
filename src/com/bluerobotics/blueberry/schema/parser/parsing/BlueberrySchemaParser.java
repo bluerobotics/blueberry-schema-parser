@@ -388,6 +388,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		});
 		Collections.sort(keys);
 		int i = 0;
+		//this assumes that the lowest value module should be the lowest possible value
 		if(keys.size() > 0) {
 			i = keys.get(0);
 		}
@@ -415,7 +416,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private long getNextModuleKey() {
 		final ArrayList<Integer> keys = new ArrayList<>();
 		m_modules.forEach(m -> {
-			Annotation a = m.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
 			if(a != null) {
 				Number an = a.getParameter(0, Number.class);
 				if(an != null) {
@@ -426,6 +427,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		});
 		Collections.sort(keys);
 		int i = 0;
+		//this assumes that the lowest value module should be the lowest possible value
 		if(keys.size() > 0) {
 			i = keys.get(0);
 		}
@@ -438,6 +440,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					++i;
 					done = false;
 					break;
+				} else if(k > i){
+					done = true;
 				}
 			}
 		}

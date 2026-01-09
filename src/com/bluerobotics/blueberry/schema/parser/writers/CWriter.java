@@ -452,7 +452,7 @@ public class CWriter extends SourceWriter {
 		}
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("return getUint16(buf, msg, i);//get the length field of the sequence");
+		addLine("return getBbUint16(buf, msg, i);//get the length field of the sequence");
 		
 		
 		
@@ -518,7 +518,7 @@ public class CWriter extends SourceWriter {
 		addLine("uint32_t dis = is % 4;");
 		addLine("is += dis == 0 ? 0 : 4 - (is % 4);//advance to the next4 byte alignment");
 		
-		addLine("setUint32(buf, msg, is, n);//set the length field of the header sequence");
+		addLine("setBbUint32(buf, msg, is, n);//set the length field of the header sequence");
 		addLine("++is;");
 		
 		
@@ -545,7 +545,7 @@ public class CWriter extends SourceWriter {
 		}
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("setUint16(buf, msg, i, is);//set the header to the location of the sequence data");
+		addLine("setBbUint16(buf, msg, i, is);//set the header to the location of the sequence data");
 		
 		addLine("uint32_t size = ("+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+" * n) + 4; //the 4 is to account for the length field that precedes the sequence data");
 		
@@ -685,7 +685,7 @@ public class CWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
+				addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -871,7 +871,7 @@ public class CWriter extends SourceWriter {
 			} else {
 				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
-			paramList += ", uin32_t "+name;
+			paramList += ", uint32_t "+name;
 	
 				
 			
@@ -932,7 +932,7 @@ public class CWriter extends SourceWriter {
 				
 			}
 			
-			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i"+ val + ");");
+			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		}
 		
 		outdent();
@@ -1041,10 +1041,10 @@ public class CWriter extends SourceWriter {
 			
 		} else {
 			//we're copying from the message
-			addLine("uint32_t len = getUint16(buf, msg, i);");
+			addLine("uint32_t len = getBbUint16(buf, msg, i);");
 			addLine("for(uint32_t j; j < len; ++j){");
 			indent();
-			addLine("string[j] = getUint8(buf, msg, si);");
+			addLine("string[j] = getBbUint8(buf, msg, si);");
 			addLine("++si;");
 			closeBrace();
 		}
@@ -1123,7 +1123,7 @@ public class CWriter extends SourceWriter {
 			
 
 		//we're copying from the message
-		addLine("return (uint32_t)getUint16(buf, msg, i);");
+		addLine("return (uint32_t)getBbUint16(buf, msg, i);");
 		
 		
 		
