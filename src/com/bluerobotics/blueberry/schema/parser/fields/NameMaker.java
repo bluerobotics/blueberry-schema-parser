@@ -185,6 +185,7 @@ public class NameMaker {
 	public static String makeSequenceLengthGetterName(SequenceField sf) {
 		return makeScopeName(sf).toSymbolName().toUpperCamelString()+"SequenceLength";
 	}
+	
 	public static String makeSequenceInitName(SequenceField sf) {
 		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamelString();
 	}

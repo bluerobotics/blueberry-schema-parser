@@ -514,22 +514,12 @@ public class CWriter extends SourceWriter {
 		//now do contents of function
 		indent();
 
-		addLine("uint32_t is = buf->length;//this is the next free byte of the message");
-		addLine("uint32_t dis = is % 4;");
-		addLine("is += dis == 0 ? 0 : 4 - (is % 4);//advance to the next4 byte alignment");
-		
-		addLine("setBbUint32(buf, msg, is, n);//set the length field of the header sequence");
-		addLine("++is;");
-		
-		
-		
-		
-		
-		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
+		addLine("uint32_t i = 0;");
 		for(Index pi : pis) {
 			String name = NameMaker.makeIndexName(pi);
 			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
+			
+				addLine("i  = getBbArrayElementIndex(buf, i, "+name+", "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
 			} else if(pi.p instanceof SequenceField) {
 				
 				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
@@ -543,6 +533,7 @@ public class CWriter extends SourceWriter {
 			}
 			
 		}
+		addLine("i += "+NameMaker.makeFieldIndexName(sf) + ";" );
 		addLineComment("i is now the index of this sequence field header");
 		
 		addLine("setBbUint16(buf, msg, i, is);//set the header to the location of the sequence data");
