@@ -37,6 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
@@ -159,6 +160,7 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Includes");
 		addLine("#include <"+NameMaker.makeCModuleFileName(module, true)+">");
+		addLine("#include <blueberry-message.h>");
 
 		addSectionDivider("Defines");
 		addLineComment("Add message field indeces");
@@ -292,7 +294,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		addLine();
-		addLineComment("Add message lengths");
+		addLineComment("Add message lengths - measured in bytes");
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			addLine("#define " + NameMaker.makeMessageLengthName(mf) + " (" + mf.getPaddedByteCount()+")");
 		});
@@ -452,7 +454,8 @@ public class CWriter extends SourceWriter {
 		}
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("return getBbUint16(buf, msg, i);//get the length field of the sequence");
+		addLine("return getBbSequenceElementNum(buf, msg, i);");
+		
 		
 		
 		
@@ -513,7 +516,6 @@ public class CWriter extends SourceWriter {
 		}
 		//now do contents of function
 		indent();
-
 		addLine("uint32_t i = 0;");
 		for(Index pi : pis) {
 			String name = NameMaker.makeIndexName(pi);
@@ -536,17 +538,11 @@ public class CWriter extends SourceWriter {
 		addLine("i += "+NameMaker.makeFieldIndexName(sf) + ";" );
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("setBbUint16(buf, msg, i, is);//set the header to the location of the sequence data");
 		
-		addLine("uint32_t size = ("+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+" * n) + 4; //the 4 is to account for the length field that precedes the sequence data");
 		
-		addLine("buf->length += size;");
-		addLineComment("Finially update the length field of the message");
 		
-		MessageField mf = sf.getAncestor(MessageField.class);
-		Field ft = mf.getChildren().getByName(MessageField.LENGTH_FIELD_NAME);
-		addLine("uint32_t len = "+lookupBbGetSet(ft, true)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+");");
-		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", len + size);");
+		addLine("uint32_t bs = "+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+"; //the 4 is to account for the length field that precedes the sequence data");
+		addLine("initBbSequence(buf, msg, i, bs, n);");
 		
 		outdent();
 		addLine("}");
@@ -645,7 +641,7 @@ public class CWriter extends SourceWriter {
 		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageModuleMessageConstant(mf)+");");
 		
 		ft = mf.getChildren().getByName(MessageField.LENGTH_FIELD_NAME);
-		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageLengthName(mf)+");");
+		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageLengthName(mf)+"/4);//length field is measured in 4-byte words");
 		
 		ft = mf.getChildren().getByName(MessageField.MAX_ORDINAL_FIELD_NAME);
 		addLine(lookupBbGetSet(ft, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(ft)+", "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
@@ -750,9 +746,9 @@ public class CWriter extends SourceWriter {
 			indent();
 
 			if(emptyNotFull) {
-				addLine("return (getBbMessageMaxOrdinal(buf, msg) <= 2);//will always be length and ordinal fields");
+				addLine("return getBbMessageMaxOrdinal(buf, msg) <= 2;//will always be length and ordinal fields");
 			} else {
-				addLine("return (getBbMessageMaxOrdinal(buf, msg) >= "+NameMaker.makeMessageMaxOrdinalName(mf)+");");
+				addLine("return getBbMessageMaxOrdinal(buf, msg) >= "+NameMaker.makeMessageMaxOrdinalName(mf)+";");
 			}
 			
 			
@@ -903,12 +899,14 @@ public class CWriter extends SourceWriter {
 			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, "+ NameMaker.makeFieldIndexName(f) + ");");
 			
 		} else {
-		
-			addLine("uint32_t i = "+NameMaker.makeFieldIndexName(f) + ";" );
+			
+			
+			addLine("uint32_t i = "+NameMaker.makeFieldIndexName(pis.get(0).p)+";" );
 			for(Index pi : pis) {
 				String name = NameMaker.makeIndexName(pi);
 				if(pi.p instanceof ArrayField) {
-					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
+//					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
+					addLine("i = getBbArrayElementIndex(buf, msg, i, "+pi.i+", "+pi.bytesPerElement+");");
 				} else if(pi.p instanceof SequenceField) {
 					
 					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
@@ -922,6 +920,7 @@ public class CWriter extends SourceWriter {
 				}
 				
 			}
+			addLine("i += "+NameMaker.makeFieldIndexName(f)+";");
 			
 			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		}

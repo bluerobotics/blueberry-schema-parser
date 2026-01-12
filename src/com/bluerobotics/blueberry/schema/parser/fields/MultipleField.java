@@ -52,6 +52,7 @@ public interface MultipleField extends Field {
 		
 			bytesPerElement = bpe;
 		}
+		
 	}
 	
 	

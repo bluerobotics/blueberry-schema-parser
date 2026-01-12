@@ -129,5 +129,13 @@ public class MessageField extends ParentField {
 		}
 		return modkn.asInt() << 16 | meskn.asInt();
 	}
+	/**
+	 * returns the number of 4-byte words in this message
+	 * This does not include any sequence blocks or string blocks
+	 * @return
+	 */
+	public int getPaddedWordCount() {
+		return getPaddedByteCount()/4;
+	}
 
 }
