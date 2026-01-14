@@ -395,24 +395,10 @@ public class CWriter extends SourceWriter {
 
 		String paramList = "Bb * buf, BbBlock msg";
 				
-		for(Index pi : pis) {
-			
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			String name = NameMaker.makeIndexName(pi);
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", uint32_t "+name;
-	
-				
-			
-		}
+		
+		addIndecesComments(pis, comments);
+		
+		paramList += makeIndecesParamList(pis);
 		
 		comments.add("@return - the number of elements in the sequence");
 		
@@ -465,6 +451,49 @@ public class CWriter extends SourceWriter {
 	}
 
 	/**
+	 * adds details of the index parameters to the specified comments list
+	 * @param pis
+	 * @param comments
+	 */
+	private void addIndecesComments(List<Index> pis, ArrayList<String> comments) {
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			String name = NameMaker.makeIndexName(pi);
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
+				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+			}
+
+		}
+	}
+
+	/**
+	 * makes string list of index parameters to append to the paramater list of a function declaration
+	 * for fields that must be accessed by specfying these indeces
+	 * @param pis
+	 * @return
+	 */
+	private String makeIndecesParamList(List<Index> pis) {
+		String result = "";
+		for(Index pi : pis) {
+					
+			String name = NameMaker.makeIndexName(pi);
+			
+			result += ", uint32_t "+name;
+	
+				
+			
+		}
+		return result;
+	}
+
+	/**
 	 * makes the sequence initialize function
 	 * this allocates bytes in the buffer for the contents of the sequence
 	 * this must be called on all sequences before any of the contained fields can be assigned values
@@ -484,23 +513,8 @@ public class CWriter extends SourceWriter {
 		comments.add("@param n - the number of elements of this sequence");
 		String paramList = "Bb * buf, BbBlock msg";
 				
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", uint32_t "+name;
-	
-				
-			
-		}
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
 		
 		paramList += ", uint32_t n";
 		
@@ -508,7 +522,6 @@ public class CWriter extends SourceWriter {
 		addDocComment(comments.toArray(new String[comments.size()]));
 		
 		
-	
 		
 		addLine("void "+NameMaker.makeSequenceInitName(sf)+"("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
@@ -833,6 +846,7 @@ public class CWriter extends SourceWriter {
 			return;
 		}
 		ArrayList<String> comments = new ArrayList<>();
+		
 		SymbolName fn = f.getName();
 		if(fn == null) {
 			fn = f.getParent().getName();
@@ -843,26 +857,11 @@ public class CWriter extends SourceWriter {
 			comments.add(f.getComment());
 		}
 		
-		
-//		List<Field> fs = f.getAncestors(MessageField.class);
+		comments.add("@param buf - the message buffer to add the message to");
+		comments.add("@param msg - the index of the start of the message");
 		String paramList = "Bb * buf, BbBlock msg ";
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", uint32_t "+name;
-	
-				
-			
-		}
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
 		
 		String val = "";
 		
@@ -894,10 +893,34 @@ public class CWriter extends SourceWriter {
 		}
 		indent();
 		
+		addLinesForFieldIndexCalc(pis, f);
+		
+		if(!getNotSet) {
+			addLine("if(isBbIndexValid(i)){");
+			indent();
+			addLine("return;//bail because a sequence was not initialized");
+			closeBrace();
+		}
+		//TODO: what to do if the index is invalid for a getter?
+		
+		
+		addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		
+		outdent();
+		addLine("}");
+	}
+	
+	/**
+	 * adds lines to the output file for looking up the index of the specified field
+	 * This takes into account the various array and sequence indeces required
+	 * @param pis
+	 * @param f
+	 */
+	private void addLinesForFieldIndexCalc(List<Index> pis, Field f) {
+		boolean bail = false;
 		if(pis.size() == 0) {
 			
-			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, "+ NameMaker.makeFieldIndexName(f) + ");");
-			
+			addLine("uint32_t i = 0;");
 		} else {
 			
 			
@@ -910,26 +933,18 @@ public class CWriter extends SourceWriter {
 				} else if(pi.p instanceof SequenceField) {
 					
 					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
-					if(!getNotSet) {
-						addLine("if(i == 0){");
-						indent();
-						addLine("return;//bail because a sequence was not initialized");
-						closeBrace();
-					}
-					
+
+				
 				}
 				
 			}
-			addLine("i += "+NameMaker.makeFieldIndexName(f)+";");
 			
-			addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		}
+		addLine("i += "+NameMaker.makeFieldIndexName(f)+";");
 		
-		outdent();
-		addLine("}");
 	}
 	
-	
+
 	private void makeStringCopier(StringField f, boolean toNotFrom, boolean protoNotDef) {
 		List<Index> pis = MultipleField.getIndeces(f);
 		ArrayList<String> comments = new ArrayList<>();
@@ -949,24 +964,8 @@ public class CWriter extends SourceWriter {
 		comments.add("@param buf - the buffer that the message is being read/written from/to");
 		comments.add("@param msg - the index to the start of the message in the buffer.");
 		
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", uint32_t "+name;
-	
-				
-			
-		}
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
 
 		paramList += ", char * string";
 		
@@ -1063,23 +1062,8 @@ public class CWriter extends SourceWriter {
 		comments.add("@param buf - the buffer that the message is being read/written from/to");
 		comments.add("@param msg - the index to the start of the message in the buffer.");
 		
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			SymbolName pName = pi.p.getName(); 
-			if(pName == null) {
-				pName = pi.p.getParent().getName();
-			}
-			
-			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
-			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
-			}
-			paramList += ", uint32_t "+name;
-	
-				
-			
-		}
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
 
 		
 	
