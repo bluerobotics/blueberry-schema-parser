@@ -48,6 +48,7 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  * This class implements the autogeneration of C code based on a parsed field structure
  */
 public class CWriter extends SourceWriter {
+	
 
 	public CWriter(File dir, BlueberrySchemaParser parser, String header) {
 		super(dir, parser, header);
@@ -422,7 +423,7 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, sf);
 		
 
-		addLine("if(isBbIndexInvalid(i)){");
+		addLine("if(isBbBlockInvalid(i)){");
 		indent();
 		addLine("return 0;//bail because a sequence was not initialized");
 		closeBrace();
@@ -480,6 +481,7 @@ public class CWriter extends SourceWriter {
 	 * makes the sequence initialize function
 	 * this allocates bytes in the buffer for the contents of the sequence
 	 * this must be called on all sequences before any of the contained fields can be assigned values
+	 * TODO: init any child sequence placeholders to 0xffff
 	 * @param sf
 	 * @param protoNotDef
 	 */
@@ -515,7 +517,7 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, sf);
 		
 
-		addLine("if(isBbIndexInvalid(i)){");
+		addLine("if(isBbBlockInvalid(i)){");
 		indent();
 		addLine("return;//bail because a sequence was not initialized");
 		closeBrace();
@@ -543,7 +545,12 @@ public class CWriter extends SourceWriter {
 
 
 
-	
+	/**
+	 * writes a function to add a message to a packet
+	 * TODO: make sure all sequence and string placeholders are initialized to 0xffff!
+	 * @param mf
+	 * @param protoNotDef
+	 */
 	private void makeMessageAdder(MessageField mf, boolean protoNotDef) {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("Adds a "+mf.getTypeName().deScope().toTitle()+" to the end of the current buffer");
@@ -661,7 +668,7 @@ public class CWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
+				addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", BB_INVALID_BLOCK);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -681,7 +688,7 @@ public class CWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
+					addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", BB_INVALID_BLOCK);//clear "+s+" header. Note magic number. Sorry.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -874,7 +881,7 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, f);
 		
 		if(!getNotSet) {
-			addLine("if(isBbIndexInvalid(i)){");
+			addLine("if(isBbBlockInvalid(i)){");
 			indent();
 			addLine("return;//bail because a sequence was not initialized");
 			closeBrace();
@@ -901,14 +908,15 @@ public class CWriter extends SourceWriter {
 	 */
 	private void addLinesForFieldIndexCalc(List<Index> pis, Field f) {
 		boolean bail = false;
+		addLine("uint32_t i = 0;");
 		if(pis.size() == 0) {
 			
-			addLine("uint32_t i = 0;");
+			
 		} else {
 			
 			
-			addLine("uint32_t i = "+pis.get(0).paramName+";" );
 			for(Index pi : pis) {
+				addLine("i += "+NameMaker.makeFieldIndexName(pis.getFirst().p)+";" );
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 					addLine("i = getBbArrayElementIndex(buf, msg, i, "+pi.paramName+", "+pi.bytesPerElement+");");
@@ -974,7 +982,7 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, f);
 		
 
-		addLine("if(isBbIndexInvalid(i)){");
+		addLine("if(isBbBlockInvalid(i)){");
 		indent();
 		addLine("return;//bail because a sequence was not initialized");
 		closeBrace();
@@ -1036,7 +1044,7 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, f);
 		
 
-		addLine("if(isBbIndexInvalid(i)){");
+		addLine("if(isBbBlockInvalid(i)){");
 		indent();
 		addLine("return 0;//bail because a sequence was not initialized");
 		closeBrace();
