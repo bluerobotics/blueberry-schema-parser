@@ -29,7 +29,11 @@ import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
  */
 public class NameMaker {
 	public static SymbolName makeMessageKeyName(MessageField mf) {
-		return mf.getTypeName().deScope().append("key").toUpperSnake();
+
+	
+		
+		SymbolName result = mf.getTypeName().toSymbolName().append("key").toUpperSnake();
+		return result;
 	}
 	public static String makeMessageLengthName(MessageField mf) {
 		return mf.getTypeName().deScope().append("length").toUpperSnakeString();
@@ -180,7 +184,7 @@ public class NameMaker {
 	public static String makeStringLengthGetterName(StringField f) {
 		ScopeName name = NameMaker.makeScopeName(f);
 
-		return "getStringLength"+name.toSymbolName().toUpperCamelString();
+		return "get"+name.toSymbolName().toUpperCamelString()+"StringLength";
 	}
 	public static String makeSequenceLengthGetterName(SequenceField sf) {
 		return makeScopeName(sf).toSymbolName().toUpperCamelString()+"SequenceLength";

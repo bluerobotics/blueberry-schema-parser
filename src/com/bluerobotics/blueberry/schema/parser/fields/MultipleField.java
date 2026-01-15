@@ -42,6 +42,7 @@ public interface MultipleField extends Field {
 		public final String type;//either "array" or "sequence"
 		public final boolean arrayNotSequence;//true if p is an array, false if p is a sequence
 		public final int bytesPerElement;
+		public String paramName;
 		Index(MultipleField pf, int j, int ofM, int num, int bpe){
 			p = pf;
 			i = j;
@@ -49,7 +50,7 @@ public interface MultipleField extends Field {
 			ofN = ofM;
 			arrayNotSequence =  pf instanceof ArrayField;
 			type = arrayNotSequence ? "array" : "sequence";
-		
+			paramName = "";
 			bytesPerElement = bpe;
 		}
 		
@@ -95,7 +96,10 @@ public interface MultipleField extends Field {
 			
 		}
 		
-	
+		for(int i = 0; i < result.size(); ++i) {
+			Index pi = result.get(i);
+			pi.paramName = "i"+i;
+		}
 		
 		return result;
 	}

@@ -256,8 +256,7 @@ public class CWriter extends SourceWriter {
 						addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
 						addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 					} else {
-						for(int i = 0; i < n; ++i) { 
-							Index pi = is.get(i);
+						for(Index pi : is) { 
 							addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
 							addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 						}
@@ -420,27 +419,16 @@ public class CWriter extends SourceWriter {
 		
 		
 		
-		addLine("uint32_t i = "+NameMaker.makeFieldIndexName(sf) + ";" );
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-			} else if(pi.p instanceof SequenceField) {
-				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
-				addLine("if(i == 0){");
-				indent();
-				addLine("return 0;//bail because an upstream sequence was not initialized");
-				closeBrace();
-				
-				
-				
-			}
-			
-		}
+		addLinesForFieldIndexCalc(pis, sf);
+		
+
+		addLine("if(isBbIndexInvalid(i)){");
+		indent();
+		addLine("return 0;//bail because a sequence was not initialized");
+		closeBrace();
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("return getBbSequenceElementNum(buf, msg, i);");
+		addLine("return getBbSequenceLength(buf, msg, i);");
 		
 		
 		
@@ -463,11 +451,11 @@ public class CWriter extends SourceWriter {
 				pName = pi.p.getParent().getName();
 			}
 			
-			String name = NameMaker.makeIndexName(pi);
+			
 			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
-				comments.add("@param "+name+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+				comments.add("@param "+pi.paramName+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
 			} else {
-				comments.add("@param "+name+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+				comments.add("@param "+pi.paramName+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
 			}
 
 		}
@@ -482,14 +470,9 @@ public class CWriter extends SourceWriter {
 	private String makeIndecesParamList(List<Index> pis) {
 		String result = "";
 		for(Index pi : pis) {
-					
-			String name = NameMaker.makeIndexName(pi);
-			
-			result += ", uint32_t "+name;
-	
-				
-			
+			result += ", uint32_t " + pi.paramName;
 		}
+		
 		return result;
 	}
 
@@ -529,26 +512,15 @@ public class CWriter extends SourceWriter {
 		}
 		//now do contents of function
 		indent();
-		addLine("uint32_t i = 0;");
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			if(pi.p instanceof ArrayField) {
-			
-				addLine("i  = getBbArrayElementIndex(buf, i, "+name+", "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
-			} else if(pi.p instanceof SequenceField) {
-				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
-				addLine("if(i == 0){");
-				indent();
-				addLine("return;//bail because an upstream sequence was not initialized");
-				closeBrace();
-				
-				
-				
-			}
-			
-		}
-		addLine("i += "+NameMaker.makeFieldIndexName(sf) + ";" );
+		addLinesForFieldIndexCalc(pis, sf);
+		
+
+		addLine("if(isBbIndexInvalid(i)){");
+		indent();
+		addLine("return;//bail because a sequence was not initialized");
+		closeBrace();
+		
+		
 		addLineComment("i is now the index of this sequence field header");
 		
 		
@@ -670,8 +642,12 @@ public class CWriter extends SourceWriter {
 			
 				SymbolName paramName = NameMaker.makeParamName(f);
 			
-			
-				addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+				String boolStuff = "";
+				if(f.getBitCount() == 1) {
+					//this is a bool so it needs another field for the bit num
+					boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
+				}
+				addLine(lookupBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+boolStuff+", "+paramName+");");
 			
 			
 			
@@ -705,7 +681,7 @@ public class CWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
+					addLine("setBbUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -880,6 +856,8 @@ public class CWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
+	
+		
 		String line;
 		if(getNotSet) {
 			line =  tf + " " + NameMaker.makeFieldGetterName(f);
@@ -896,15 +874,20 @@ public class CWriter extends SourceWriter {
 		addLinesForFieldIndexCalc(pis, f);
 		
 		if(!getNotSet) {
-			addLine("if(isBbIndexValid(i)){");
+			addLine("if(isBbIndexInvalid(i)){");
 			indent();
 			addLine("return;//bail because a sequence was not initialized");
 			closeBrace();
 		}
 		//TODO: what to do if the index is invalid for a getter?
 		
+		String boolStuff = "";
+		if(f.getBitCount() == 1) {
+			//this is a bool so it needs another field for the bit num
+			boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
+		}
 		
-		addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		addLine((getNotSet ? "return " : "")+lookupBbGetSet(f, getNotSet)+"(buf, msg, i" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		
 		outdent();
 		addLine("}");
@@ -924,15 +907,14 @@ public class CWriter extends SourceWriter {
 		} else {
 			
 			
-			addLine("uint32_t i = "+NameMaker.makeFieldIndexName(pis.get(0).p)+";" );
+			addLine("uint32_t i = "+pis.get(0).paramName+";" );
 			for(Index pi : pis) {
-				String name = NameMaker.makeIndexName(pi);
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-					addLine("i = getBbArrayElementIndex(buf, msg, i, "+pi.i+", "+pi.bytesPerElement+");");
+					addLine("i = getBbArrayElementIndex(buf, msg, i, "+pi.paramName+", "+pi.bytesPerElement+");");
 				} else if(pi.p instanceof SequenceField) {
 					
-					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
+					addLine("i = getBbSequenceElementIndex(buf, msg, i, "+pi.paramName+");");
 
 				
 				}
@@ -967,7 +949,7 @@ public class CWriter extends SourceWriter {
 		addIndecesComments(pis, comments);
 		paramList += makeIndecesParamList(pis);
 
-		paramList += ", char * string";
+		paramList += ", char * string, uint32_t n";
 		
 	
 		
@@ -989,54 +971,24 @@ public class CWriter extends SourceWriter {
 		}
 		
 		indent();
-		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-			} else if(pi.p instanceof SequenceField) {
-				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
-				
-			}
-			
-		}
+		addLinesForFieldIndexCalc(pis, f);
+		
+
+		addLine("if(isBbIndexInvalid(i)){");
+		indent();
+		addLine("return;//bail because a sequence was not initialized");
+		closeBrace();
+		addLineComment("i is now the index of this string field header");
 		
 
 		
-		if(toNotFrom) {
-			//we're copying to the message
-			addLine("uint32_t lenW = buf->length;//the current end of the message which will now be the length word of the string");
-			addLine("uint32_t si = lenW + 4;//this will be the start of the string data");
-			addLine("uint32_t j = 0;//this will be the string length by the time we're done");
-			
-			addLine("for(; j < "+NameMaker.makeStringMaxLengthName(f)+"; ++j){");
-			indent();
-			addLine("char c = string[j]");
-			addLine("if(c == 0){");
-			indent();
-			addLine("break;");
-			
-			closeBrace();
-			addLine("setUint8(buf, msg, si, c);");
-			addLine("++si;");
-			closeBrace();
+		
+		//we're copying to the message
+		addLine("copyBbString"+(toNotFrom ? "To" : "From")+"Message(buf, msg, i, string, n);");
 			
 			
 			
-			addLineComment("Update the string length and the buffer length");
-			addLine("setUint32(buf, msg, lenW, j);");
-			addLine("buf->length = si;");
-			
-		} else {
-			//we're copying from the message
-			addLine("uint32_t len = getBbUint16(buf, msg, i);");
-			addLine("for(uint32_t j; j < len; ++j){");
-			indent();
-			addLine("string[j] = getBbUint8(buf, msg, si);");
-			addLine("++si;");
-			closeBrace();
-		}
+	
 		
 
 		closeBrace();
@@ -1081,18 +1033,14 @@ public class CWriter extends SourceWriter {
 		}
 		
 		indent();
-		addLine("uint32_t i = " + NameMaker.makeFieldIndexName(f) + ";");
-		for(Index pi : pis) {
-			String name = NameMaker.makeIndexName(pi);
-			if(pi.p instanceof ArrayField) {
-				addLine("i += "+NameMaker.makeArraySizeName(pi) + " * " + name + ";");
-			} else if(pi.p instanceof SequenceField) {
-				
-				addLine("i = getBbSequenceElementIndex(buf, msg, i, "+name+");");
-				
-			}
-			
-		}
+		addLinesForFieldIndexCalc(pis, f);
+		
+
+		addLine("if(isBbIndexInvalid(i)){");
+		indent();
+		addLine("return 0;//bail because a sequence was not initialized");
+		closeBrace();
+		addLineComment("i is now the index of this sequence field header");
 	
 			
 
