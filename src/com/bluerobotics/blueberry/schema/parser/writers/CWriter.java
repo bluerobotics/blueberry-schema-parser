@@ -626,6 +626,8 @@ public class CWriter extends SourceWriter {
 		
 		//now compute the location of the new message
 		addLine("BbBlock msg = buf->length;");
+		addLineComment("Extend buffer to include the main message body before writing it");
+		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
 		
 		
 		Field ft = null;
@@ -708,7 +710,7 @@ public class CWriter extends SourceWriter {
 			}
 			
 		}
-		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
+		
 	
 		
 		
