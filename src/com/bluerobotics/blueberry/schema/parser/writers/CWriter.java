@@ -910,7 +910,7 @@ public class CWriter extends SourceWriter {
 	 */
 	private void addLinesForFieldIndexCalc(List<Index> pis, Field f) {
 		boolean bail = false;
-		addLine("uint32_t i = 0;");
+		addLine("uint16_t i = 0;");
 		if(pis.size() == 0) {
 			
 			
@@ -1050,12 +1050,12 @@ public class CWriter extends SourceWriter {
 		indent();
 		addLine("return 0;//bail because a sequence was not initialized");
 		closeBrace();
-		addLineComment("i is now the index of this sequence field header");
+		addLineComment("i is now the index of this string field header");
 	
 			
 
 		//we're copying from the message
-		addLine("return (uint32_t)getBbUint16(buf, msg, i);");
+		addLine("return getBbStringLength(buf, msg, i);");
 		
 		
 		
