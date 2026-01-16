@@ -137,5 +137,18 @@ public class MessageField extends ParentField {
 	public int getPaddedWordCount() {
 		return getPaddedByteCount()/4;
 	}
+	public FieldList getUsefulChildren() {
+		FieldList result = new FieldList();
+		getChildren().forEach(f -> {
+			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
+			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
+			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
+			} else if(f.isNotFiller()) {
+				result.add(f);
+			}
+		}, true);
+		
+		return result;
+	}
 
 }
