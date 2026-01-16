@@ -27,6 +27,7 @@ import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
+import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
@@ -35,6 +36,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
+import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
@@ -1259,6 +1261,36 @@ public class JavaWriter extends SourceWriter {
 		addBlockComment("A class to read and write a "+messageName);
 		addLine("public class "+messageName+" extends BlueberryMessage {");
 		indent();
+		
+		//add field indeces
+		
+		
+		msg.getChildren().forEach(f -> {
+			if(getType(f) != null) {
+				if(!(f instanceof BoolFieldField)) {
+					if(f.getBitCount() == 1) {
+						addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getParent().getIndex()+";");
+
+					} else {
+						addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
+					}
+				}
+				if(f.getTypeId() == TypeId.STRING) {
+
+				}
+				
+			} else {
+				if(f instanceof ArrayField) {
+
+					addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
+				} else if(f instanceof SequenceField) {
+	
+					addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
+				}
+			}
+		}, true);
+		
+
 		addMessageTxConstructor(msg, true);
 		addMessageTxConstructor(msg, false);
 		

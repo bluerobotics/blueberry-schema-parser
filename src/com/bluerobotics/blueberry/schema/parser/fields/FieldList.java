@@ -159,4 +159,28 @@ public class FieldList {
 		}
 		return result;
 	}
+	/**
+	 * scans the children for instances of the specified class.
+	 * @param <T> type of class - this will be inferred from C
+	 * @param c - the class to look for
+	 * @param deep - will recurse if true, else will just be shallow
+	 * @return
+	 */
+	public<T extends Field> boolean isChildrenOfType(Class<T> c, boolean deep) {
+		boolean result = false;
+		for(Field f : m_fields) {
+			if(c.isInstance(f)) {
+				result = true;
+				break;
+			} else if(deep && f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				if(pf.getChildren().isChildrenOfType(c, true)) {
+					result = true;
+					break;
+				}
+			}
+		}
+		
+		return result;
+	}
 }
