@@ -532,6 +532,7 @@ public class JavaWriter extends SourceWriter {
 		addMessageConstructor(msg);
 		addTxMessageMaker(msg, true);
 		addTxMessageMaker(msg, false);
+		addRxMessageWrapper(msg);
 
 		
 		
@@ -551,6 +552,8 @@ public class JavaWriter extends SourceWriter {
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("A constructor to create a "+messageName+".");
 		comments.add("This does the bare minimum: it just wraps a buffer in a message.");
+		comments.add("This is private so it should never be called outside of this class.");
+		comments.add("The intent is that the static factory methods would be used instead.");
 		comments.add(mf.getComment());
 		
 		comments.add("@param buf - the message buffer to add the message to");
@@ -566,7 +569,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
-		addLine("protected "+messageName+"("+paramList+") {");
+		addLine("private "+messageName+"("+paramList+") {");
 		
 		//now do contents of function
 		indent();
@@ -577,10 +580,47 @@ public class JavaWriter extends SourceWriter {
 		outdent();
 		addLine("}");
 	}
+	/**
+	 * makes a protected message constructor, either for tx or rx
+	 * doesn't set up header
+	 * @param mf
+	 * @param txNotRx
+	 */
+	private void addRxMessageWrapper(MessageField mf) {
+		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("A method to wrap a buffer of received data in a "+messageName+".");
+		comments.add(mf.getComment());
+		
+		comments.add("@param buf - the message buffer to add the message to");
+		String paramList = "BlueberryBuffer buf";
+		ArrayList<Field> fs = new ArrayList<>();
+		ArrayList<Field> ss = new ArrayList<>();
+		//first make a list of all top-level fields that are not strings or parent fields
+		//but also add contents of boolfieldfields
+		
+		
+		
+		
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		addLine("public static "+messageName +" wrap"+"("+paramList+") {");
+		
+		//now do contents of function
+		indent();
+	
+		addLine(messageName + " msg = new "+messageName+"(buf);");
+		//TODO: add stuff to check the module/message key and stuff
+		
+		addLine("return msg;");
+		outdent();
+		addLine("}");
+	}
 	private void addTxMessageMaker(MessageField mf, boolean params) {
 		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
 		ArrayList<String> comments = new ArrayList<>();
-		comments.add("A constructor to create a "+messageName+" for transmission.");
+		comments.add("A constructor to create " + (params ? "a " : "an empty ") +messageName+" for transmission.");
 		comments.add(mf.getComment());
 		
 		comments.add("@param buf - the message buffer to add the message to");
@@ -640,7 +680,7 @@ public class JavaWriter extends SourceWriter {
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
 		String prefix = params ? "" : "Empty";
-		addLine("public static " + messageName + " make"+prefix+messageName+"("+paramList+") {");
+		addLine("public static " + messageName + " make"+prefix+"("+paramList+") {");
 		
 		//now do contents of function
 		indent();
