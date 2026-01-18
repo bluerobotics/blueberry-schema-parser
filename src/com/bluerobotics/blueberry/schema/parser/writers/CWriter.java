@@ -115,18 +115,12 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, true, true);
 			makeMessageEmptyandFullTester(mf, true, false);
 
-			mf.getChildren().forEach(f -> {
-				if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
-				} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
-				} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
-				} else if(f.isNotFiller()) {
-			
+			mf.getUsefulChildren().forEach(true, f -> {
+				makeMessageGetterSetter(f, true, true);
+				makeMessageGetterSetter(f, false, true);
+				makeMessagePresenceTester(f, true);
 				
-					makeMessageGetterSetter(f, true, true);
-					makeMessageGetterSetter(f, false, true);
-					makeMessagePresenceTester(f, true);
-				}
-			}, true);
+			});
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 				makeStringCopier(sf, true, true);
@@ -171,7 +165,7 @@ public class CWriter extends SourceWriter {
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 			
-			mf.getChildren().forEach(f -> {
+			mf.getChildren().forEach(true, f -> {
 				if(getType(f) != null) {
 					if(!(f instanceof BoolFieldField)) {
 						if(f.getBitCount() == 1) {
@@ -194,14 +188,14 @@ public class CWriter extends SourceWriter {
 						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 					}
 				}
-			}, true);
+			});
 		});
 		addLine();
 		addLineComment("Add message field ordinals");
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 			
-			mf.getChildren().forEach(f -> {
+			mf.getChildren().forEach(true, f -> {
 				
 				if(f.getName() != null && f.isNotFiller()) {
 					addLine("#define " + NameMaker.makeFieldOrdinalName(f) + " ("+f.getOrdinal()+")");
@@ -211,7 +205,7 @@ public class CWriter extends SourceWriter {
 				
 					
 				
-			}, true);
+			});
 		});
 
 		
@@ -221,7 +215,7 @@ public class CWriter extends SourceWriter {
 		//add a line for the max ordinal
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 
-			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getLastChild().getOrdinal()+")");
+			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getMaxOrdinal()+")");
 			addLine("#define "+NameMaker.makeMessageModuleMessageConstant(mf) + " ("+WriterUtils.formatAsHex(mf.getModuleMessageKey())+")");
 			
 		});
@@ -232,7 +226,7 @@ public class CWriter extends SourceWriter {
 
 			//now add defines for bit field indeces and bit masks
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
-				mf.getChildren().forEach(f -> {
+				mf.getChildren().forEach(true, f -> {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
 						
@@ -242,7 +236,7 @@ public class CWriter extends SourceWriter {
 						
 						
 					}
-				}, true);
+				});
 			});
 		}
 		if(m_arrays) {
@@ -317,17 +311,14 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, false, true);
 			makeMessageEmptyandFullTester(mf, false, false);
 
-			mf.getChildren().forEach(f -> {
-				if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
-				} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
-				} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
-				} else if(f.isNotFiller()) {
-					makeMessageGetterSetter(f, true, false);
-					makeMessageGetterSetter(f, false, false);
-					makeMessagePresenceTester(f, false);
-				}
+			mf.getUsefulChildren().forEach(true, f -> {
+				
+				makeMessageGetterSetter(f, true, false);
+				makeMessageGetterSetter(f, false, false);
+				makeMessagePresenceTester(f, false);
+				
 
-			}, true);
+			});
 			
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 				makeStringCopier(sf, true,  false);
@@ -563,37 +554,33 @@ public class CWriter extends SourceWriter {
 		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
-		mf.getChildren().forEach(f -> {
-			//don't process the length, maxOrdinal or moduleMessageKey fields. These fields will be set to constants
-			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
-			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
-			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
-			} else {
+		mf.getUsefulChildren().forEach(true, f -> {
 			
-				String tp = getType(f);
+			
+			String tp = getType(f);
+			
+			
+			
+			if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
+				fs.add(f);
 				
-				
-				
-				if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
-					fs.add(f);
-					
-				} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
-					//build a list of all sequences and strings that are not in sequences
-					boolean notInSequence = true;
-					for(Index i : MultipleField.getIndeces(f)) {
-						if(!i.arrayNotSequence) {
-							notInSequence = false;
-							break;
-						}
-					}
-						
-						
-					if(notInSequence) {
-						ss.add(f);
+			} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
+				//build a list of all sequences and strings that are not in sequences
+				boolean notInSequence = true;
+				for(Index i : MultipleField.getIndeces(f)) {
+					if(!i.arrayNotSequence) {
+						notInSequence = false;
+						break;
 					}
 				}
+					
+					
+				if(notInSequence) {
+					ss.add(f);
+				}
 			}
-		}, true);
+			
+		});
 		
 		for(Field f : fs) {
 			String stuff = "";

@@ -37,6 +37,7 @@ public class MessageField extends ParentField {
 	public static final SymbolName MAX_ORDINAL_FIELD_NAME = SymbolName.fromCamel("maxOrdinal");
 	public static final SymbolName LENGTH_FIELD_NAME = SymbolName.fromCamel("length");
 
+
 	public MessageField(SymbolName name, ScopeName typeName, String comment, Coord c) {
 		super(name, typeName, TypeId.MESSAGE, comment, c);
 		
@@ -137,18 +138,31 @@ public class MessageField extends ParentField {
 	public int getPaddedWordCount() {
 		return getPaddedByteCount()/4;
 	}
+	/**
+	 * make a list of all child fields of this message that are not part of the header and are not filler
+	 * @return
+	 */
 	public FieldList getUsefulChildren() {
 		FieldList result = new FieldList();
-		getChildren().forEach(f -> {
+		getChildren().forEach(false, f -> {
 			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
+			} else if(f instanceof BoolFieldField) {
 			} else if(f.isNotFiller()) {
 				result.add(f);
 			}
-		}, true);
+		});
 		
 		return result;
+	}
+
+	public int getMaxOrdinal() {
+		Field f = getLastChild();
+		if(f.getBitCount() == 1) {
+			f = f.getParent();
+		}
+		return f.getOrdinal();
 	}
 
 }

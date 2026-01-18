@@ -38,6 +38,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
+import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
@@ -459,46 +460,127 @@ public class JavaWriter extends SourceWriter {
 		addLineComment("This is the unique key to identify this type of message");
 		addLine("private static final int "+NameMaker.makeMessageModuleMessageConstant(msg)+" = "+WriterUtils.formatAsHex(msg.getModuleMessageKey())+";");
 		addLine();
+		addLine("private static final int "+NameMaker.makeMessageMaxOrdinalName(msg)+" = "+msg.getMaxOrdinal()+";");
+		addLine();
+		addLine("private static final int "+NameMaker.makeMessageLengthName(msg)+" = "+msg.getPaddedByteCount()+";");
+		addLine();
 		
 		addLineComment("These values are used to index into this message to access the various fields.");
-		msg.getUsefulChildren().forEach(f -> {
-			if(getType(f) != null) {
-				if(!(f instanceof BoolFieldField)) {
-					if(f.getBitCount() == 1) {
-						addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getParent().getIndex()+";");
-
-					} else {
-						addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
-					}
+		
+		FieldList fs = msg.getUsefulChildren();
+		fs.forEach(f -> {
+			if(getType(f) != null || f instanceof ArrayField || f instanceof SequenceField) {
+				int fi = f.getIndex();
+				if(f.getBitCount() == 1) {
+					fi = f.getParent().getIndex();
 				}
-				if(f.getTypeId() == TypeId.STRING) {
-
-				}
-				
+				addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+fi+";");
+					
 			} else {
-				if(f instanceof ArrayField) {
-
-					addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
-				} else if(f instanceof SequenceField) {
-	
-					addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+f.getIndex()+";");
-				}
+				System.out.println("JavaWriter.writeMessageFile not sure how to do index constant for --> "+f);
 			}
 		});
 		
-		addMessageTxConstructor(msg, true);
-		addMessageTxConstructor(msg, false);
+		addLine();
+		addLineComment("The following values represent the ordinals of the fields of this message.");
+		addLineComment("This corresponds to the order that they were defined in the schema");
+		fs.forEach(f -> {
+			int fi = f.getOrdinal();
+			if(f.getBitCount() == 1) {
+				fi = f.getParent().getOrdinal();
+			}
+			addLine("private static final " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
+		});
+		//sequence stuff
+		if(fs.isChildrenOfType(SequenceField.class, false)) {
+			addLine();
+			addLineComment("Sequence Element Byte Counts");
+			fs.forEachOfType(SequenceField.class, false, sf -> {
+				addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getPaddedByteCount()+";");
+			});
+		}
+		//string stuff
+		if(fs.isChildrenOfType(StringField.class, false)) {
+			addLine();
+			addLineComment("String max length constants");
+			fs.forEachOfType(StringField.class, false, sf -> {
+				addLine("private static final " + NameMaker.makeStringMaxLengthName(sf) + " = "+sf.getMaxSize()+";");
+			});
+		}
+		//array stuff
+		if(fs.isChildrenOfType(ArrayField.class, false)) {
+			addLine();
+			addLineComment("Add array sizes and element byte count");
+			fs.forEachOfType(ArrayField.class, false, af -> {
+				List<Index> is = af.getIndeces();
+				int n = is.size();
+				if(n == 1) {
+					Index pi = is.get(0);
+					addLine("private static final  " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
+					addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+				} else {
+					for(Index pi : is) { 
+						addLine("private static final " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+						addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+					}
+				}
+			});
+		}
+		
+		
+		
+		addMessageConstructor(msg);
+		addTxMessageMaker(msg, true);
+		addTxMessageMaker(msg, false);
+
 		
 		
 		closeBrace();
 		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/")+"/"+messageName+".java");
 		
 	}
-
-	private void addMessageTxConstructor(MessageField mf, boolean params) {
+	
+	/**
+	 * makes a protected message constructor, either for tx or rx
+	 * doesn't set up header
+	 * @param mf
+	 * @param txNotRx
+	 */
+	private void addMessageConstructor(MessageField mf) {
 		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
 		ArrayList<String> comments = new ArrayList<>();
-		comments.add("A constructor to create a "+messageName);
+		comments.add("A constructor to create a "+messageName+".");
+		comments.add("This does the bare minimum: it just wraps a buffer in a message.");
+		comments.add(mf.getComment());
+		
+		comments.add("@param buf - the message buffer to add the message to");
+		String paramList = "BlueberryBuffer buf";
+		ArrayList<Field> fs = new ArrayList<>();
+		ArrayList<Field> ss = new ArrayList<>();
+		//first make a list of all top-level fields that are not strings or parent fields
+		//but also add contents of boolfieldfields
+		
+		
+		
+		
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		addLine("protected "+messageName+"("+paramList+") {");
+		
+		//now do contents of function
+		indent();
+	
+		addLine("super(buf);");
+		
+		
+		outdent();
+		addLine("}");
+	}
+	private void addTxMessageMaker(MessageField mf, boolean params) {
+		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("A constructor to create a "+messageName+" for transmission.");
 		comments.add(mf.getComment());
 		
 		comments.add("@param buf - the message buffer to add the message to");
@@ -508,7 +590,7 @@ public class JavaWriter extends SourceWriter {
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		if(params) {
-			mf.getUsefulChildren().forEach(f -> {
+			mf.getUsefulChildren().forEach(true, f -> {
 				
 				String tp = getType(f);
 				
@@ -532,7 +614,7 @@ public class JavaWriter extends SourceWriter {
 						ss.add(f);
 					}
 				}
-			}, true);
+			});
 		}
 		
 		for(Field f : fs) {
@@ -557,10 +639,16 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		addDocComment(comments.toArray(new String[comments.size()]));
-		addLine("public "+messageName+"("+paramList+") {");
+		String prefix = params ? "" : "Empty";
+		addLine("public static " + messageName + " make"+prefix+messageName+"("+paramList+") {");
 		
 		//now do contents of function
 		indent();
+		String maxOrd = params ? NameMaker.makeMessageMaxOrdinalName(mf) : "MIN_MAX_ORDINAL";
+		String mLen = params ? NameMaker.makeMessageLengthName(mf) : "MIN_MESSAGE_LENGTH";
+		addLine(messageName + " msg = new "+messageName+"(buf);");
+
+		addLine("msg.makeHeader( "+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
 		
 		for(Field f : fs) {
 				
@@ -570,7 +658,7 @@ public class JavaWriter extends SourceWriter {
 	
 			
 			
-			addLine(makeBbGetSet(f, false)+"(buf, msg, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+			addLine("msg.m_buf."+makeBbGetSet(f, false)+"("+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
 			
 			
 		}
@@ -579,7 +667,7 @@ public class JavaWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", 0);//clear "+s+" header");
+				addLine("msg.m_buf.setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", INVALID_BLOCK);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -599,7 +687,7 @@ public class JavaWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", 0);//clear "+s+" header. Note magic number. Sorry.");
+					addLine("msg.m_buf.setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -619,17 +707,63 @@ public class JavaWriter extends SourceWriter {
 			}
 			
 		}
-		addLine("buf->length = msg + "+NameMaker.makeMessageLengthName(mf)+";");
 		
-		
+		addLine("return msg;");
 		outdent();
 		addLine("}");
 	}
-	
 	private String makeBbGetSet(Field f, boolean b) {
-		String result = b ? "get" : "set";
-		result += SymbolName.fromCamel(getType(f)).toUpperCamelString();
-		return result;
+		SymbolName result = SymbolName.fromCamel(b ? "get" : "set");
+		
+		switch(f.getTypeId()) {
+		default:
+		case ARRAY:
+		case BOOLFIELD:
+		case DEFERRED:
+		case DEFINED:
+		case FILLER:
+		case MESSAGE:
+		case SEQUENCE:
+		case STRING:
+		case STRUCT:
+			throw new RuntimeException("Should never have done this!");
+		case BOOL:
+			result.append("bit");
+			break;
+		case FLOAT32:
+			result.append("float32");
+			break;
+		case FLOAT64:
+			result.append("flaot64");
+			break;
+		case INT16:
+			result.append("int16");
+			break;
+		case INT32:
+			result.append("int32");
+			break;
+		case INT64:
+			result.append("int64");
+			break;
+		case INT8:
+			result.append("int8");
+			break;
+		case UINT16:
+			result.append("uint16");
+			break;
+		case UINT32:
+			result.append("uint32");
+			break;
+		case UINT64:
+			result.append("uint64");
+			break;
+		case UINT8:
+			result.append("uint8");
+			break;
+		
+		}
+		
+		return result.toLowerCamelString();
 	}
 
 	private String getType(Field f) {
@@ -667,7 +801,7 @@ public class JavaWriter extends SourceWriter {
 				result = "int";
 				break;
 			case UINT32:
-				result = "int";
+				result = "long";
 				break;
 			case UINT64:
 				result = "long";

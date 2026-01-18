@@ -236,9 +236,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(f instanceof ParentField) {
 						ParentField pf = (ParentField)f;
 						int o = order;
-						pf.getChildren().forEach(ft -> {
+						pf.getChildren().forEach(true, ft -> {
 							ft.setOrdinal(o);
-						}, true);
+						});
 					}
 					++order;
 				}

@@ -108,15 +108,15 @@ public class FieldList {
 	}
 	/**
 	 * shallow or deep scan through list elements
-	 * @param con - consumer to apply to each element
 	 * @param deep - when true, the a full recursive scan is done, down through each parent field
+	 * @param con - consumer to apply to each element
 	 */
-	public void forEach(Consumer<Field> con, boolean deep) {
+	public void forEach(boolean deep, Consumer<Field> con) {
 		for(Field f : m_fields) {
 			con.accept(f);
 			if(f instanceof ParentField && deep) {
 				ParentField pf = (ParentField)f;
-				pf.getChildren().forEach(con, deep);
+				pf.getChildren().forEach(deep, con);
 			}
 		}
 	}
