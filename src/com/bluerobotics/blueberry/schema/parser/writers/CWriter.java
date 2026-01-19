@@ -319,7 +319,7 @@ public class CWriter extends SourceWriter {
 				
 
 			});
-			
+		
 			mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 				makeStringCopier(sf, true,  false);
 				makeStringCopier(sf, false, false);

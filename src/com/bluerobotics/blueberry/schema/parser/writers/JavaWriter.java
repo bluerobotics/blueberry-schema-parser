@@ -533,6 +533,14 @@ public class JavaWriter extends SourceWriter {
 		addTxMessageMaker(msg, true);
 		addTxMessageMaker(msg, false);
 		addRxMessageWrapper(msg);
+		makeMessageFullTester(msg);
+		
+		msg.getUsefulChildren().forEach(true, f -> {
+			makeMessageGetterSetter(f, true);
+			makeMessageGetterSetter(f, false);
+			makeMessagePresenceTester(f);
+			
+		});
 
 		
 		
@@ -540,7 +548,124 @@ public class JavaWriter extends SourceWriter {
 		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/")+"/"+messageName+".java");
 		
 	}
+	/**
+	 * makes a function to test if a message contains no fields or if it contains all fields defined in this version of the schema
+	 * This is computed using the max ordinal field
+	 * @param mf
+	 */
+	private void makeMessageFullTester(MessageField mf) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("Tests if the current message ha all defined fields present.");
+
+		if(mf.getComment() != null) {
+			comments.add(mf.getComment());
+		}
+		
+		SymbolName functionName = mf.getTypeName().toSymbolName().prepend("is").append("full");
+		
+		addDocComment(comments);
+		addLine("public boolean "+functionName.toLowerCamel()+"(){");
+		
+		
+		indent();
+
+		
+		addLine("return getMaxOrdinal() >= "+NameMaker.makeMessageMaxOrdinalName(mf)+";");
+		
+		
+		
+		closeBrace();
+		
+	}
+
+	/**
+	 * make getter or setter for all base types except strings
+	 * Note that this won't make a setter for a simple field in a message. Those are set as part of the message adder
+	 * @param f
+	 * @param getNotSet
+	 * @param protoNotDef
+	 */
+	private void makeMessageGetterSetter(Field f, boolean getNotSet) {
+		String tf = getType(f);
+		if(tf == null || f.getTypeId() == TypeId.STRING) {
+			return;
+		}
+		List<Index> pis = MultipleField.getIndeces(f);
+		
+		//don't need a setter if it's a simple field not in an array
+		if((!getNotSet) && pis.size() == 0) {
+			return;
+		}
+		ArrayList<String> comments = new ArrayList<>();
+		
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("A "+(getNotSet ? "g" : "s") + "etter for the "+fn.toLowerCamel()+" field");
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+
+		String paramList = "";
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
+		
+		String val = "";
+		
 	
+		if(!getNotSet) {
+			val = tf + " "+fn.toLowerCamel();
+			paramList += val;
+			
+			comments.add("@param "+fn.toLowerCamel()+prependHyphen(f.getComment()));
+			
+		}
+		
+
+	
+		
+		
+		addDocComment(comments);
+		
+	
+		
+		String line;
+		if(getNotSet) {
+			line =  "public "+ tf + " " + NameMaker.makeFieldGetterName(f);
+		} else {
+			line =  "public void " + NameMaker.makeFieldSetterName(f);
+		}
+		line += "("+paramList+"){";
+		addLine(line);
+		
+		indent();
+		
+		addLinesForFieldIndexCalc(pis, f);
+		
+		if(!getNotSet) {
+			addLine("if(i == FieldIndex.INVALID){");
+			indent();
+			addLine("return;//bail because a sequence was not initialized");
+			closeBrace();
+		}
+		//TODO: what to do if the index is invalid for a getter?
+		
+		String boolStuff = "";
+		if(f.getBitCount() == 1) {
+			//this is a bool so it needs another field for the bit num
+			boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
+		}
+		
+		addLine((getNotSet ? "return " : "")+lookupGetSetName(f, getNotSet)+"(buf, msg, i" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		
+		outdent();
+		addLine("}");
+	}
+	
+
 	/**
 	 * makes a protected message constructor, either for tx or rx
 	 * doesn't set up header
@@ -872,5 +997,190 @@ public class JavaWriter extends SourceWriter {
 		return result;
 	}
 	
+	/**
+	 * adds lines to the output file for looking up the index of the specified field
+	 * This takes into account the various array and sequence indeces required
+	 * @param pis
+	 * @param f
+	 */
+	private void addLinesForFieldIndexCalc(List<Index> pis, Field f) {
+		boolean bail = false;
+		addLine("FieldIndex i = FieldIndex.ZERO;");
+		if(pis.size() == 0) {
+			
+			
+		} else {
+			
+			
+			for(Index pi : pis) {
+				addLine("i = FieldIndex.make(i, "+NameMaker.makeFieldIndexName(pis.getFirst().p)+");" );
+				if(pi.p instanceof ArrayField) {
+//					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
+					addLine("i = getArrayElementBlock(i, "+pi.paramName+",0, "+pi.bytesPerElement+");");
+				} else if(pi.p instanceof SequenceField) {
+					
+					addLine("i = getSequenceElementBlock(i, 0, "+pi.paramName+");");
+
+				
+				}
+				
+			}
+			
+		}
+		addLine("i = FieldIndex.make( i, "+NameMaker.makeFieldIndexName(f)+");");
+		
+	}
+	
+	
+	/**
+	 * adds details of the index parameters to the specified comments list
+	 * @param pis
+	 * @param comments
+	 */
+	private void addIndecesComments(List<Index> pis, ArrayList<String> comments) {
+		for(Index pi : pis) {
+			
+			SymbolName pName = pi.p.getName(); 
+			if(pName == null) {
+				pName = pi.p.getParent().getName();
+			}
+			
+			
+			if(pi.p instanceof ArrayField && pi.p.asType(ArrayField.class).getNumber().length > 1) {
+				comments.add("@param "+pi.paramName+" - index "+pi.i+" of "+ pName.toLowerCamel()+" "+pi.type+". Valid values: 0 to "+(pi.n - 1));
+			} else {
+				comments.add("@param "+pi.paramName+" - index of "+ pName.toLowerCamel()+" "+pi.type+"." + (pi.n >= 0 ? " Valid values: 0 to "+(pi.n - 1) : ""));
+			}
+
+		}
+	}
+
+	/**
+	 * makes string list of index parameters to append to the paramater list of a function declaration
+	 * for fields that must be accessed by specfying these indeces
+	 * @param pis
+	 * @return
+	 */
+	private String makeIndecesParamList(List<Index> pis) {
+		String result = "";
+		boolean firstTime = true;
+		for(Index pi : pis) {
+			if(!firstTime) {
+				result += ", ";
+			}
+			firstTime  = false;
+			result += "int " + pi.paramName;
+		}
+		
+		return result;
+	}
+	/**
+	 * looks up the name of the bb transcoder function 
+	 * @param f
+	 * @return
+	 */
+	private String lookupGetSetName(Field f, boolean getNotSet) {
+		String result = getNotSet ? "read" : "write";
+		switch(f.getTypeId()) {
+		
+		case BOOL:
+			result += "Bit";
+			break;
+		case FLOAT32:
+			result += "Float32";
+			break;
+		case FLOAT64:
+			result += "Float64";
+			break;
+		case INT16:
+			result += "Int16";
+			break;
+		case INT32:
+			result += "Int32";
+			break;
+		case INT64:
+			result += "Int64";
+			break;
+		case INT8:
+			result += "Int8";
+			break;
+		case UINT16:
+			result += "Uint16";
+			break;
+		case UINT32:
+			result += "Uint32";
+			break;
+		case UINT64:
+			result += "Uint64";
+			break;
+		case UINT8:
+			result += "Uint8";
+			break;
+		case FILLER:
+		case BOOLFIELD:
+		case STRUCT:
+		case ARRAY:
+		case MESSAGE:
+		case SEQUENCE:
+		case STRING:
+		case DEFERRED:
+		case DEFINED:
+			throw new RuntimeException("I don't think this should have happened.");
+		}
+		return result;
+	}
+	/**
+	 * makes a function to test if a message has the specified field or not
+	 * this uses the field number field to compare against the field's ordinal
+	 * @param f
+	 */
+	private void makeMessagePresenceTester(Field f) {
+		String tf = getType(f);
+		if(tf == null || f.getTypeId() == TypeId.STRING) {
+			return;
+		}
+		List<Index> pis = MultipleField.getIndeces(f);
+		if(pis.size() > 0) {//only need this for top level message fields
+			return;
+		}
+		
+		
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("Tests if the current message containts the "+fn.toLowerCamel()+" field");
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+
+		
+		
+		String val = "";
+		
+	
+		
+	
+		
+		
+		addDocComment(comments);
+		String line = ("boolean ")+NameMaker.makeFieldPresenceTesterName(f)+"(){";
+		addLine(line);
+		
+		indent();
+		
+	
+			
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= (getMaxOrdinal(buf));");
+			
+				
+		outdent();
+		addLine("}");
+		return;		
+	}
+
+
 
 }
