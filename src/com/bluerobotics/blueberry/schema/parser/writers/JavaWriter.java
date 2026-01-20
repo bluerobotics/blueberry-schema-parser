@@ -447,7 +447,7 @@ public class JavaWriter extends SourceWriter {
 
 		addLine();
 		addBlockComment("A class to read and write a "+messageName);
-		addLine("public class "+messageName+" extends BlueberryMessage {");
+		addLine("public class "+messageName+" extends BlueberryMessage implements "+NameMaker.makeJavaConstantInterface(m)+" {");
 		indent();
 		
 		//add field indeces
@@ -457,9 +457,9 @@ public class JavaWriter extends SourceWriter {
 		
 
 
-		addLineComment("This is the unique key to identify this type of message");
-		addLine("private static final int "+NameMaker.makeMessageModuleMessageConstant(msg)+" = "+WriterUtils.formatAsHex(msg.getModuleMessageKey())+";");
-		addLine();
+//		addLineComment("This is the unique key to identify this type of message");
+//		addLine("private static final int "+NameMaker.makeMessageModuleMessageConstant(msg)+" = "+WriterUtils.formatAsHex(msg.getModuleMessageKey())+";");
+//		addLine();
 		addLine("private static final int "+NameMaker.makeMessageMaxOrdinalName(msg)+" = "+msg.getMaxOrdinal()+";");
 		addLine();
 		addLine("private static final int "+NameMaker.makeMessageLengthName(msg)+" = "+msg.getPaddedByteCount()+";");
@@ -659,10 +659,9 @@ public class JavaWriter extends SourceWriter {
 			boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
 		}
 		
-		addLine((getNotSet ? "return " : "")+lookupGetSetName(f, getNotSet)+"(buf, msg, i" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		addLine((getNotSet ? "return " : "")+lookupGetSetName(f, getNotSet)+"(m_buf, msg, i" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		
-		outdent();
-		addLine("}");
+		closeBrace();
 	}
 	
 
@@ -702,8 +701,7 @@ public class JavaWriter extends SourceWriter {
 		addLine("super(buf);");
 		
 		
-		outdent();
-		addLine("}");
+		closeBrace();
 	}
 	/**
 	 * makes a protected message constructor, either for tx or rx
@@ -734,13 +732,15 @@ public class JavaWriter extends SourceWriter {
 		
 		//now do contents of function
 		indent();
-	
-		addLine(messageName + " msg = new "+messageName+"(buf);");
+		addLine("if(isModuleMessageKeyCorrect(buf, "+NameMaker.makeMessageKeyName(mf)+")){");
+		indent();
+		addLine("return null;");
+		closeBrace();
+		addLine(messageName + " msg = new "+messageName+"(m_buf);");
 		//TODO: add stuff to check the module/message key and stuff
 		
 		addLine("return msg;");
-		outdent();
-		addLine("}");
+		closeBrace();
 	}
 	private void addTxMessageMaker(MessageField mf, boolean params) {
 		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
@@ -811,9 +811,9 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		String maxOrd = params ? NameMaker.makeMessageMaxOrdinalName(mf) : "MIN_MAX_ORDINAL";
 		String mLen = params ? NameMaker.makeMessageLengthName(mf) : "MIN_MESSAGE_LENGTH";
-		addLine(messageName + " msg = new "+messageName+"(buf);");
+		addLine(messageName + " msg = new "+messageName+"(m_buf);");
 
-		addLine("msg.makeHeader( "+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
+		addLine("msg.makeHeader("+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
 		
 		for(Field f : fs) {
 				
@@ -874,8 +874,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		
 		addLine("return msg;");
-		outdent();
-		addLine("}");
+		closeBrace();
 	}
 	private String makeBbGetSet(Field f, boolean b) {
 		SymbolName result = SymbolName.fromCamel(b ? "get" : "set");
@@ -893,37 +892,37 @@ public class JavaWriter extends SourceWriter {
 		case STRUCT:
 			throw new RuntimeException("Should never have done this!");
 		case BOOL:
-			result.append("bit");
+			result = result.append("bit");
 			break;
 		case FLOAT32:
-			result.append("float32");
+			result = result.append("float32");
 			break;
 		case FLOAT64:
-			result.append("flaot64");
+			result = result.append("float64");
 			break;
 		case INT16:
-			result.append("int16");
+			result = result.append("int16");
 			break;
 		case INT32:
-			result.append("int32");
+			result = result.append("int32");
 			break;
 		case INT64:
-			result.append("int64");
+			result = result.append("int64");
 			break;
 		case INT8:
-			result.append("int8");
+			result = result.append("int8");
 			break;
 		case UINT16:
-			result.append("uint16");
+			result = result.append("uint16");
 			break;
 		case UINT32:
-			result.append("uint32");
+			result = result.append("uint32");
 			break;
 		case UINT64:
-			result.append("uint64");
+			result = result.append("uint64");
 			break;
 		case UINT8:
-			result.append("uint8");
+			result = result.append("uint8");
 			break;
 		
 		}
@@ -1173,11 +1172,10 @@ public class JavaWriter extends SourceWriter {
 		
 	
 			
-			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= (getMaxOrdinal(buf));");
+			addLine("return "+ NameMaker.makeFieldOrdinalName(f) + " <= (getMaxOrdinal());");
 			
 				
-		outdent();
-		addLine("}");
+			closeBrace();
 		return;		
 	}
 
