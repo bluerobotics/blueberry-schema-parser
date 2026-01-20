@@ -541,6 +541,15 @@ public class JavaWriter extends SourceWriter {
 			makeMessagePresenceTester(f);
 			
 		});
+		msg.getUsefulChildren().forEachOfType(SequenceField.class, true, f -> {
+			makeSequenceInit(f);
+			makeSequenceLengthGetter(f);
+
+		});
+		msg.getUsefulChildren().forEachOfType(StringField.class, true, f -> {
+			makeStringCopier(f, true);
+			makeStringCopier(f, false);
+		});
 
 		
 		
@@ -643,13 +652,14 @@ public class JavaWriter extends SourceWriter {
 		
 		indent();
 		
-		addLinesForFieldIndexCalc(pis, f);
-		
-		if(!getNotSet) {
-			addLine("if(i == FieldIndex.INVALID){");
-			indent();
-			addLine("return;//bail because a sequence was not initialized");
-			closeBrace();
+		if(addLinesForFieldIndexCalc(pis, f)) {
+			//only do this if there was a sequence as an index
+			if(!getNotSet) {
+				addLine("if(i == FieldIndex.INVALID){");
+				indent();
+				addLine("return;//bail because a sequence was not initialized");
+				closeBrace();
+			}
 		}
 		//TODO: what to do if the index is invalid for a getter?
 		
@@ -1001,9 +1011,11 @@ public class JavaWriter extends SourceWriter {
 	 * This takes into account the various array and sequence indeces required
 	 * @param pis
 	 * @param f
+	 * @return true if there was a sequence in the list
 	 */
-	private void addLinesForFieldIndexCalc(List<Index> pis, Field f) {
+	private boolean addLinesForFieldIndexCalc(List<Index> pis, Field f) {
 		boolean bail = false;
+		boolean result = false;
 		addLine("FieldIndex i = FieldIndex.ZERO;");
 		if(pis.size() == 0) {
 			
@@ -1015,9 +1027,9 @@ public class JavaWriter extends SourceWriter {
 				addLine("i = FieldIndex.make(i, "+NameMaker.makeFieldIndexName(pis.getFirst().p)+");" );
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-					addLine("i = getArrayElementBlock(i, "+pi.paramName+",0, "+pi.bytesPerElement+");");
+					addLine("i = getArrayElementBlock(i, "+pi.paramName+",0, "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
 				} else if(pi.p instanceof SequenceField) {
-					
+					result = true;
 					addLine("i = getSequenceElementBlock(i, 0, "+pi.paramName+");");
 
 				
@@ -1027,6 +1039,7 @@ public class JavaWriter extends SourceWriter {
 			
 		}
 		addLine("i = FieldIndex.make( i, "+NameMaker.makeFieldIndexName(f)+");");
+		return result;
 		
 	}
 	
@@ -1178,7 +1191,195 @@ public class JavaWriter extends SourceWriter {
 			closeBrace();
 		return;		
 	}
+	/**
+	 * makes the sequence initialize function
+	 * this allocates bytes in the buffer for the contents of the sequence
+	 * this must be called on all sequences before any of the contained fields can be assigned values
+	 * TODO: init any child sequence placeholders to 0xffff
+	 * @param sf
+	 */
+	private void makeSequenceInit(SequenceField sf) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("A function to initialize a "+sf.getTypeName().deScope().toTitle());
+		comments.add(sf.getComment());
+		
+		List<Index> pis = MultipleField.getIndeces(sf);
+		
+		
+		comments.add("@param n - the number of elements of this sequence");
+		String paramList = "";
+				
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
+		if(paramList.length() > 0) {
+			paramList += ", ";
+		}
+		paramList += "int n";
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		
+		
+		
+		addLine("public void "+NameMaker.makeSequenceInitName(sf)+"("+paramList+"){");
+		
+		//now do contents of function
+		indent();
+		if(addLinesForFieldIndexCalc(pis, sf)) {
+			//only do this test if there was a sequence in the index list
+	
+	
+			addLine("if(i == FieldIndex.INVALID){");
+			indent();
+			addLine("return;//bail because a sequence was not initialized");
+			closeBrace();
+		}
+		
+		addLineComment("i is now the index of this sequence field header");
+		
+		
+		
+		
+		addLine("int bs = "+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+";");
+		addLine("initSequenceBlock(i, 0,  bs, n);");
+		
+		outdent();
+		addLine("}");
+	}
 
 
 
+	private void makeSequenceLengthGetter(SequenceField sf) {
+		ArrayList<String> comments = new ArrayList<>();
+		comments.add("Gets the defined length of a sequence "+sf.getTypeName().deScope().toTitle());
+		comments.add(sf.getComment());
+		
+		List<Index> pis = MultipleField.getIndeces(sf);
+		
+		
+
+		String paramList = "";
+				
+		
+		addIndecesComments(pis, comments);
+		
+		paramList += makeIndecesParamList(pis);
+		
+		comments.add("@return - the number of elements in the sequence");
+		
+		
+		addDocComment(comments.toArray(new String[comments.size()]));
+		
+		
+	
+		
+		addLine("int get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+"){");
+		
+		//now do contents of function
+		indent();
+
+		
+		
+		
+		
+		
+		if(addLinesForFieldIndexCalc(pis, sf)) {
+
+			//only do this test if there was a sequence in the index list
+
+
+			addLine("if(i == FieldIndex.INVALID){");
+			indent();
+			addLine("return 0;//bail because a sequence was not initialized");
+			closeBrace();
+		}
+		addLineComment("i is now the index of this sequence field header");
+		
+		addLine("return getSequenceLength(i, 0);");
+		
+		
+		
+		
+		
+		outdent();
+		addLine("}");
+	}
+
+	private void makeStringCopier(StringField f, boolean toNotFrom) {
+		List<Index> pis = MultipleField.getIndeces(f);
+		ArrayList<String> comments = new ArrayList<>();
+		SymbolName fn = f.getName();
+		if(fn == null) {
+			fn = f.getParent().getName();
+		}
+		comments.add("A function to copy a string "+(toNotFrom ? "to" : "from") + " a message.");
+		
+
+		if(f.getComment() != null) {
+			comments.add(f.getComment());
+		}
+		
+		
+		String paramList = "";
+	
+		
+		addIndecesComments(pis, comments);
+		paramList += makeIndecesParamList(pis);
+
+		
+		if(toNotFrom) {
+			if(paramList.length() > 0) {
+				paramList += ", ";
+			}
+			paramList += "String s";
+			comments.add("@param s - the string to copy to the message");
+		}
+		
+		
+	
+		
+			
+			
+	
+		
+
+	
+		
+		
+		addDocComment(comments);
+		
+		addLine((toNotFrom ? "void " : "String ")+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+"){");
+		
+	
+		
+		indent();
+		if(addLinesForFieldIndexCalc(pis, f)) {
+			
+			//only do this test if there was a sequence in the index list
+			addLine("if(i == FieldIndex.INVALID){");
+			indent();
+			addLine("return"+(toNotFrom ? "" : " null")+";//bail because a sequence was not initialized");
+			closeBrace();
+		}
+		
+		addLineComment("i is now the index of this string field header");
+
+		
+		if(toNotFrom) {
+			addLine("addString(i, 0, s);");
+		} else {
+			addLine("return getString(i, 0);");
+		}
+			
+			
+	
+		
+
+		closeBrace();
+		
+	}
+
+	
+	
+	
 }
