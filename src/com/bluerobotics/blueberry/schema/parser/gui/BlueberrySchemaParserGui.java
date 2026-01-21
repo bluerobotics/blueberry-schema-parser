@@ -229,6 +229,8 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private void generateJava() {
 		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
+		String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
+		
 		m_text.append("Generating Java code in \"" + dir+"\"\n");
 
 		if(m_parser.getMessages().size() == 0) {
@@ -236,7 +238,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		}
 
 		String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-		JavaWriter w = new JavaWriter(dir, m_parser, h);
+		JavaWriter w = new JavaWriter(dir, m_parser, h, p);
 		w.write();
 		m_text.append("Done");
 	}
@@ -288,8 +290,10 @@ public class BlueberrySchemaParserGui implements Constants {
 	private void parse() {
 
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
+		
 		try {
 			m_parser.clear();
+			
 			loadFiles(dir, dir);
 		
 			m_parser.parse();

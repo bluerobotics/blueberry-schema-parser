@@ -38,6 +38,7 @@ public class SymbolName {
 		LOWER_DOT,
 		UPPER_DOT,
 		MIXED_DOT,
+		
 	}
 	public static final SymbolName EMPTY = new SymbolName(Case.UNSPECIFIED, new String[0]);
 	private final Case m_case;
@@ -51,6 +52,42 @@ public class SymbolName {
 		}
 		m_name = ssn;
 		m_case = c;
+	}
+	public static SymbolName parse(Case c, String input) {
+		SymbolName result = null;
+		switch(c) {
+		case LOWER_CAMEL:
+			result = fromCamel(input);
+			break;
+		case LOWER_DOT:
+			result = fromDot(input);
+			break;
+		case LOWER_SNAKE:
+			result = fromSnake(input);
+			break;
+		case MIXED_DOT:
+			result = fromDot(input);
+			break;
+		case MIXED_SNAKE:
+			result = fromSnake(input);
+			break;
+		case UNSPECIFIED:
+			result = guess(input);
+			break;
+		case UPPER_CAMEL:
+			result = fromCamel(input);
+			break;
+		case UPPER_DOT:
+			result = fromDot(input);
+			break;
+		case UPPER_SNAKE:
+			result = fromSnake(input);
+			break;
+		default:
+			break;
+		
+		}
+		return result;
 	}
 	public static SymbolName make(List<String> ss) {
 		SymbolName result = EMPTY;

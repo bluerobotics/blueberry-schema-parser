@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 
 /**
  * A class to make names for various constants, variables, etc used in the source writers
@@ -205,8 +206,8 @@ public class NameMaker {
 	public static SymbolName makePacketBuilderName(BlueModule m) {
 		return m.getName().deScope().append("builder").toUpperCamel();
 	}
-	public static ScopeName makePackageName(BlueModule m) {
-		return m.getName().makeRelative();
+	public static ScopeName makePackageName(BlueModule m, ScopeName prefix) {
+		return prefix.addLevelBelow(m.getName().makeRelative());
 	}
 	public static SymbolName makeJavaMessageClass(MessageField msg) {
 		return msg.getTypeName().deScope().toUpperCamel();

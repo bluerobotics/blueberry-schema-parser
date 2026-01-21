@@ -37,10 +37,12 @@ import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -50,18 +52,12 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class JavaWriter extends SourceWriter {
 
-//	private SymbolName m_packageName;
-//	private String m_constantsName;
-//	private String m_bitIndexEnumName;
-//	private String m_fieldIndexEnumName;
-//	private String m_packetBuilderName;
-//	private String m_consumerInterfaceName;
-//	private String m_keyEnumName;
-//	private String m_consumerManagerName;
-//	private String m_packetRecieverName;
+	private final ScopeName m_packagePrefix;
 
-	public JavaWriter(File dir, BlueberrySchemaParser parser, String header) {
+
+	public JavaWriter(File dir, BlueberrySchemaParser parser, String header, String packagePrefix) {
 		super(dir, parser, header);
+		m_packagePrefix = ScopeName.make(Case.LOWER_SNAKE, "\\.", packagePrefix);
 	}
 
 	@Override
@@ -130,7 +126,7 @@ public class JavaWriter extends SourceWriter {
 //		writeBitIndexEnum(top);
 		writeOtherEnums(m);
 		closeBrace();
-		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/")+"/"+NameMaker.makeJavaConstantInterface(m)+".java");
+		writeToFile(NameMaker.makePackageName(m, m_packagePrefix).toLowerSnake("/")+"/"+NameMaker.makeJavaConstantInterface(m)+".java");
 
 
 
@@ -434,7 +430,7 @@ public class JavaWriter extends SourceWriter {
 	@Override
 	protected void startFile(BlueModule m, String... hs) {
 		super.startFile(m, hs);
-		addLine("package " + NameMaker.makePackageName(m).toLowerSnake(".")+";");
+		addLine("package " + NameMaker.makePackageName(m, m_packagePrefix).toLowerSnake(".")+";");
 
 
 	}
@@ -554,7 +550,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		closeBrace();
-		writeToFile(NameMaker.makePackageName(m).toLowerSnake("/")+"/"+messageName+".java");
+		writeToFile(NameMaker.makePackageName(m, m_packagePrefix).toLowerSnake("/")+"/"+messageName+".java");
 		
 	}
 	/**
@@ -1379,7 +1375,6 @@ public class JavaWriter extends SourceWriter {
 		
 	}
 
-	
-	
+
 	
 }

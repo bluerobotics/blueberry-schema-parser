@@ -37,6 +37,7 @@ public class ScopeName extends SymbolName {
 		
 		
 	}
+	
 	private ScopeName(Case c, List<String> ss) {
 		this(c, ss.toArray(new String[ss.size()]));
 	}
@@ -52,6 +53,16 @@ public class ScopeName extends SymbolName {
 			result.addAll(Arrays.asList(sn.m_name));
 		}
 		return new ScopeName(getCase(), result);
+	}
+	public static ScopeName make(Case c, String sep, String input) {
+		 
+		String[] ss = input.split(sep);
+		ScopeName result = new ScopeName(c);
+		for(String s : ss) {
+			result = result.addLevelBelow(SymbolName.parse(c, s));
+		}
+		return result;
+		
 	}
 	public static ScopeName wrap(SymbolName sn) {
 		if(sn instanceof ScopeName) {
@@ -109,10 +120,14 @@ public class ScopeName extends SymbolName {
 	
 	/**
 	 * adds a new level of scope to the end (right) of this ScopeName
+	 * does nothing with null
 	 * @param scope
 	 * @return
 	 */
 	public ScopeName addLevelBelow(SymbolName scope) {
+		if(scope == null) {
+			return this;
+		}
 		ScopeName result = this;
 		ScopeName s = ScopeName.wrap(scope);
 		if(scope == null || scope.isEmpty()) {
