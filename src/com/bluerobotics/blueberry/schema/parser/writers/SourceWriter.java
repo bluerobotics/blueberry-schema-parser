@@ -36,9 +36,11 @@ import com.bluerobotics.blueberry.schema.parser.fields.Field;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
+import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
@@ -88,6 +90,10 @@ public abstract class SourceWriter {
 		addLine("}");
 	}
 	protected void writeToFile(String name) {
+		String[] ds = m_directory.getAbsolutePath().split("/");
+		String[] ns = name.split("/");
+		
+		
 		File f = new File(m_directory, name);
 		File p = f.getParentFile();
 		if(!p.exists()) {
