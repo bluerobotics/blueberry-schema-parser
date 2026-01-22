@@ -90,11 +90,43 @@ public abstract class SourceWriter {
 		addLine("}");
 	}
 	protected void writeToFile(String name) {
-		String[] ds = m_directory.getAbsolutePath().split("/");
+		//split the directory path and the name path into chunks
+		String[] ds = m_directory.getAbsolutePath().substring(1).split("/");
 		String[] ns = name.split("/");
 		
-		
+		int dn = ds.length;
+		int nn = ns.length;
+		int found = -1;
+		//now match them by chunk
+		for(int di = 0; di < dn; ++di) {
+			boolean match = true;
+			for(int ni = 0; ni < nn && (di + ni ) < dn; ++ni) {
+					if(!ds[di + ni].equals(ns[ni])) {
+						match = false;
+						break;
+					}
+			}
+			if(match) {
+				found = di;
+				break;
+			}
+		}
 		File f = new File(m_directory, name);
+		if(found >= 0) {
+			//we found a match so concatenate
+			int n = found + nn;
+			String an = "";
+			for(int i = 0; i < n; ++i) {
+				if(i < found) {
+					an += "/"+ds[i];
+				} else {
+					an += "/"+ns[i - found];
+				}
+			}
+			f = new File(an);
+		}
+		
+		
 		File p = f.getParentFile();
 		if(!p.exists()) {
 			p.mkdirs();
