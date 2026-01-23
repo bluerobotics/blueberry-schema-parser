@@ -440,6 +440,9 @@ public class JavaWriter extends SourceWriter {
 		startFile(m, getHeader());
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryMessage;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBuffer;");
+		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+
 
 		addLine();
 		addBlockComment("A class to read and write a "+messageName);
@@ -466,11 +469,12 @@ public class JavaWriter extends SourceWriter {
 		FieldList fs = msg.getUsefulChildren();
 		fs.forEach(f -> {
 			if(getType(f) != null || f instanceof ArrayField || f instanceof SequenceField) {
+			
 				int fi = f.getIndex();
 				if(f.getBitCount() == 1) {
 					fi = f.getParent().getIndex();
 				}
-				addLine("private static final " + NameMaker.makeFieldIndexName(f) + " = "+fi+";");
+				addLine("private static final int " + NameMaker.makeFieldIndexName(f) + " = "+fi+";");
 					
 			} else {
 				System.out.println("JavaWriter.writeMessageFile not sure how to do index constant for --> "+f);
@@ -485,14 +489,14 @@ public class JavaWriter extends SourceWriter {
 			if(f.getBitCount() == 1) {
 				fi = f.getParent().getOrdinal();
 			}
-			addLine("private static final " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
+			addLine("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
 		});
 		//sequence stuff
 		if(fs.isChildrenOfType(SequenceField.class, false)) {
 			addLine();
 			addLineComment("Sequence Element Byte Counts");
 			fs.forEachOfType(SequenceField.class, false, sf -> {
-				addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getPaddedByteCount()+";");
+				addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getPaddedByteCount()+";");
 			});
 		}
 		//string stuff
@@ -500,7 +504,7 @@ public class JavaWriter extends SourceWriter {
 			addLine();
 			addLineComment("String max length constants");
 			fs.forEachOfType(StringField.class, false, sf -> {
-				addLine("private static final " + NameMaker.makeStringMaxLengthName(sf) + " = "+sf.getMaxSize()+";");
+				addLine("private static final int " + NameMaker.makeStringMaxLengthName(sf) + " = "+sf.getMaxSize()+";");
 			});
 		}
 		//array stuff
@@ -512,12 +516,12 @@ public class JavaWriter extends SourceWriter {
 				int n = is.size();
 				if(n == 1) {
 					Index pi = is.get(0);
-					addLine("private static final  " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
-					addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+					addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
+					addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 				} else {
 					for(Index pi : is) { 
-						addLine("private static final " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
-						addLine("private static final " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+						addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+						addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 					}
 				}
 			});
@@ -566,7 +570,7 @@ public class JavaWriter extends SourceWriter {
 			comments.add(mf.getComment());
 		}
 		
-		SymbolName functionName = mf.getTypeName().toSymbolName().prepend("is").append("full");
+		SymbolName functionName = SymbolName.fromCamel("isFull");
 		
 		addDocComment(comments);
 		addLine("public boolean "+functionName.toLowerCamel()+"(){");
@@ -623,6 +627,9 @@ public class JavaWriter extends SourceWriter {
 	
 		if(!getNotSet) {
 			val = tf + " "+fn.toLowerCamel();
+			if(paramList.length() > 0) {
+				paramList += ", ";
+			}
 			paramList += val;
 			
 			comments.add("@param "+fn.toLowerCamel()+prependHyphen(f.getComment()));
@@ -665,7 +672,9 @@ public class JavaWriter extends SourceWriter {
 			boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
 		}
 		
-		addLine((getNotSet ? "return " : "")+lookupGetSetName(f, getNotSet)+"(m_buf, msg, i" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		
+		
+		addLine((getNotSet ? "return " : "")+"m_buf."+lookupGetSetName(f, getNotSet)+"(i, 0" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		
 		closeBrace();
 	}
@@ -742,7 +751,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		addLine("return null;");
 		closeBrace();
-		addLine(messageName + " msg = new "+messageName+"(m_buf);");
+		addLine(messageName + " msg = new "+messageName+"(buf);");
 		//TODO: add stuff to check the module/message key and stuff
 		
 		addLine("return msg;");
@@ -817,9 +826,9 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		String maxOrd = params ? NameMaker.makeMessageMaxOrdinalName(mf) : "MIN_MAX_ORDINAL";
 		String mLen = params ? NameMaker.makeMessageLengthName(mf) : "MIN_MESSAGE_LENGTH";
-		addLine(messageName + " msg = new "+messageName+"(m_buf);");
+		addLine(messageName + " msg = new "+messageName+"(buf);");
 
-		addLine("msg.makeHeader("+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
+		addLine("msg.setupHeader("+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
 		
 		for(Field f : fs) {
 				
@@ -829,7 +838,7 @@ public class JavaWriter extends SourceWriter {
 	
 			
 			
-			addLine("msg.m_buf."+makeBbGetSet(f, false)+"("+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+			addLine("msg.m_buf."+makeBbGetSet(f, true)+"(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
 			
 			
 		}
@@ -838,7 +847,7 @@ public class JavaWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("msg.m_buf.setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+", INVALID_BLOCK);//clear "+s+" header");
+				addLine("msg.m_buf.writeUint16(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+", INVALID_BLOCK);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -858,7 +867,7 @@ public class JavaWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("msg.m_buf.setUint16(buf, msg, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
+					addLine("msg.m_buf.writeUint16(buf, 0, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -882,8 +891,8 @@ public class JavaWriter extends SourceWriter {
 		addLine("return msg;");
 		closeBrace();
 	}
-	private String makeBbGetSet(Field f, boolean b) {
-		SymbolName result = SymbolName.fromCamel(b ? "get" : "set");
+	private String makeBbGetSet(Field f, boolean setNotGet) {
+		SymbolName result = SymbolName.fromCamel(setNotGet ? "write" : "read");
 		
 		switch(f.getTypeId()) {
 		default:
@@ -1010,6 +1019,9 @@ public class JavaWriter extends SourceWriter {
 	 * @return true if there was a sequence in the list
 	 */
 	private boolean addLinesForFieldIndexCalc(List<Index> pis, Field f) {
+		if(f.getName() == null && f.getParent().getName().toLowerCamelString().equals("floats")) {
+			System.out.println("JavaWriter.addLinesForFieldIndexCalc test.");
+		}
 		boolean bail = false;
 		boolean result = false;
 		addLine("FieldIndex i = FieldIndex.ZERO;");
@@ -1034,7 +1046,12 @@ public class JavaWriter extends SourceWriter {
 			}
 			
 		}
-		addLine("i = FieldIndex.make( i, "+NameMaker.makeFieldIndexName(f)+");");
+		if(f.getParent() instanceof SequenceField) {
+		} else if(f.getParent() instanceof ArrayField) {
+			
+		} else {
+			addLine("i = FieldIndex.make( i, "+NameMaker.makeFieldIndexName(f)+");");
+		}
 		return result;
 		
 	}
