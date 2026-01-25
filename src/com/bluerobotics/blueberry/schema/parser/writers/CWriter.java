@@ -115,7 +115,7 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, true, true);
 			makeMessageEmptyandFullTester(mf, true, false);
 
-			mf.getUsefulChildren().forEach(true, f -> {
+			mf.getUsefulChildren(true).forEach(true, f -> {
 				makeMessageGetterSetter(f, true, true);
 				makeMessageGetterSetter(f, false, true);
 				makeMessagePresenceTester(f, true);
@@ -311,7 +311,7 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, false, true);
 			makeMessageEmptyandFullTester(mf, false, false);
 
-			mf.getUsefulChildren().forEach(true, f -> {
+			mf.getUsefulChildren(true).forEach(true, f -> {
 				
 				makeMessageGetterSetter(f, true, false);
 				makeMessageGetterSetter(f, false, false);
@@ -554,7 +554,7 @@ public class CWriter extends SourceWriter {
 		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
-		mf.getUsefulChildren().forEach(true, f -> {
+		mf.getUsefulChildren(false).forEach(true, f -> {
 			
 			
 			String tp = getType(f);

@@ -183,4 +183,14 @@ public class FieldList {
 		
 		return result;
 	}
+	public FieldList duplicate() {
+		FieldList result = new FieldList();
+		forEach(f -> {
+			result.add(f);
+		});
+		return result;
+	}
+	public void remove(Field f) {
+		m_fields.remove(f);
+	}
 }

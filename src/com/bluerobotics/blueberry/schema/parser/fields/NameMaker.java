@@ -45,6 +45,12 @@ public class NameMaker {
 		}
 		return makeName(f, true).append("mask").toUpperSnakeString();
 	}
+	public static String makeBooleanBitNumName(Field f) {
+		if(f.getBitCount() != 1) {
+			throw new RuntimeException("This should only be used for boolean fields, not this one: "+f);
+		}
+		return makeName(f, true).append("bit", "num").toUpperSnakeString();
+	}
 	public static String makeArraySizeName(Index pi) {
 		SymbolName result = makeName(pi.p, true).append("size");
 		if(pi.ofN >= 0) {
@@ -55,7 +61,7 @@ public class NameMaker {
 	public static String makeMultipleFieldElementByteCountName(Index pi) {
 		
 		
-		SymbolName result = makeName(pi.p, true).append("element", "byte", "count");
+		SymbolName result = makeName(pi.p, true).append((pi.arrayNotSequence ? "array" : "sequence"), "element", "byte", "count");
 		if(pi.ofN > 1) {
 			result = result.append("" + pi.i);
 		}
@@ -123,26 +129,25 @@ public class NameMaker {
 	 * @return
 	 */
 	private static SymbolName makeName(Field f, boolean includeMessage) {
-		SymbolName result = f.getName();
-		if(result == null) {
-			result = f.getParent().getName();
+		SymbolName result = SymbolName.EMPTY;
+		
+		Field pf = f;
+		while(pf != null) {
+			 SymbolName n = pf.getName();
 			
-		}
-		ParentField pf = f.getParent();
-		while((pf != null) && !(pf instanceof MessageField)) {
-			SymbolName pn = null;
-			pn = pf.getName();
-			
-			
-			result = result.prepend(pn);
+			if(n != null) {
+				result = result.prepend(n);
+			}
 			pf = pf.getParent();
-		}
-		if(includeMessage) {
-			MessageField mf = f.getAncestor(MessageField.class);
-			if(mf != null) {
-				result = result.prepend(mf.getTypeName().deScope());
+			if(pf instanceof MessageField) {
+				if(includeMessage) {
+					MessageField mf = (MessageField)pf;
+					result = result.prepend(mf.getTypeName().deScope());
+				}
+				break;
 			}
 		}
+		
 		return result;
 	}
 	

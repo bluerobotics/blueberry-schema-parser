@@ -26,8 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
+import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
-import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
 import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
@@ -466,8 +466,20 @@ public class JavaWriter extends SourceWriter {
 		
 		addLineComment("These values are used to index into this message to access the various fields.");
 		
-		FieldList fs = msg.getUsefulChildren();
-		fs.forEach(f -> {
+		FieldList fs = msg.getUsefulChildren(true);
+		FieldList fs2 = fs.duplicate();
+		fs.forEach(f1 -> {
+//			fs.forEach(f2 -> {
+//				if(f1 == f2) {
+//				} else if(NameMaker.makeFieldIndexName(f1).equals(NameMaker.makeFieldIndexName(f2))) {
+//					fs2.remove(f2);
+//				}
+//			});
+			if(f1.getName() == null || f1.getName().isEmpty()) {
+				fs2.remove(f1);
+			}
+		});
+		fs2.forEach(f -> {
 			if(getType(f) != null || f instanceof ArrayField || f instanceof SequenceField) {
 			
 				int fi = f.getIndex();
@@ -484,13 +496,24 @@ public class JavaWriter extends SourceWriter {
 		addLine();
 		addLineComment("The following values represent the ordinals of the fields of this message.");
 		addLineComment("This corresponds to the order that they were defined in the schema");
-		fs.forEach(f -> {
+		fs2.forEach(f -> {
 			int fi = f.getOrdinal();
 			if(f.getBitCount() == 1) {
 				fi = f.getParent().getOrdinal();
 			}
 			addLine("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
 		});
+		
+		//bit num stuff
+		addLine();
+		addLineComment("Bit Nums");
+		fs.forEachOfType(BaseField.class, false, f -> {
+			if(f.getBitCount() == 1) {
+				addLine("private static final int " + NameMaker.makeBooleanBitNumName(f) + " = " +f.getIndex()+";");
+			}
+		});
+		
+	
 		//sequence stuff
 		if(fs.isChildrenOfType(SequenceField.class, false)) {
 			addLine();
@@ -520,7 +543,7 @@ public class JavaWriter extends SourceWriter {
 					addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 				} else {
 					for(Index pi : is) { 
-						addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+						addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
 						addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 					}
 				}
@@ -535,18 +558,18 @@ public class JavaWriter extends SourceWriter {
 		addRxMessageWrapper(msg);
 		makeMessageFullTester(msg);
 		
-		msg.getUsefulChildren().forEach(true, f -> {
+		msg.getUsefulChildren(false).forEach(true, f -> {
 			makeMessageGetterSetter(f, true);
 			makeMessageGetterSetter(f, false);
 			makeMessagePresenceTester(f);
 			
 		});
-		msg.getUsefulChildren().forEachOfType(SequenceField.class, true, f -> {
+		msg.getUsefulChildren(true).forEachOfType(SequenceField.class, false, f -> {
 			makeSequenceInit(f);
 			makeSequenceLengthGetter(f);
 
 		});
-		msg.getUsefulChildren().forEachOfType(StringField.class, true, f -> {
+		msg.getUsefulChildren(true).forEachOfType(StringField.class, false, f -> {
 			makeStringCopier(f, true);
 			makeStringCopier(f, false);
 		});
@@ -624,6 +647,7 @@ public class JavaWriter extends SourceWriter {
 		
 		String val = "";
 		
+		
 	
 		if(!getNotSet) {
 			val = tf + " "+fn.toLowerCamel();
@@ -669,7 +693,7 @@ public class JavaWriter extends SourceWriter {
 		String boolStuff = "";
 		if(f.getBitCount() == 1) {
 			//this is a bool so it needs another field for the bit num
-			boolStuff = ", " + NameMaker.makeBooleanMaskName(f);
+			boolStuff = ", " + NameMaker.makeBooleanBitNumName(f);
 		}
 		
 		
@@ -770,7 +794,7 @@ public class JavaWriter extends SourceWriter {
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		if(params) {
-			mf.getUsefulChildren().forEach(true, f -> {
+			mf.getUsefulChildren(false).forEach(true, f -> {
 				
 				String tp = getType(f);
 				
@@ -837,8 +861,15 @@ public class JavaWriter extends SourceWriter {
 			
 	
 			
-			
-			addLine("msg.m_buf."+makeBbGetSet(f, true)+"(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+", "+paramName+");");
+			String fn = paramName.toString();
+			if(f instanceof EnumField) {
+				fn += ".getValue()";
+			}
+			String booly = "";
+			if(f.getBitCount() == 1) {
+				booly = ", "+NameMaker.makeBooleanBitNumName(f);
+			}
+			addLine("msg.m_buf."+makeBbGetSet(f, true)+"(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+booly+", "+fn+");");
 			
 			
 		}
@@ -867,7 +898,7 @@ public class JavaWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("msg.m_buf.writeUint16(buf, 0, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
+					addLine("msg.m_buf.writeUint16(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
