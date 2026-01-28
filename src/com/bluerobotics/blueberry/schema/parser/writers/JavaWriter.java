@@ -445,7 +445,7 @@ public class JavaWriter extends SourceWriter {
 		addLine();
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryMessage;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.BlueberryBuffer;");
-		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
 
 
 		addLine();
@@ -696,7 +696,7 @@ public class JavaWriter extends SourceWriter {
 		if(addLinesForFieldIndexCalc(pis, f)) {
 			//only do this if there was a sequence as an index
 			if(!getNotSet) {
-				addLine("if(i == FieldIndex.INVALID){");
+				addLine("if(i < 0){");
 				indent();
 				addLine("return;//bail because a sequence was not initialized");
 				closeBrace();
@@ -712,7 +712,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		
-		addLine((getNotSet ? "return " : "")+"m_buf."+lookupGetSetName(f, getNotSet)+"(i, 0" + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
+		addLine((getNotSet ? "return " : "")+"m_buf."+lookupGetSetName(f, getNotSet)+"(i " + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		
 		closeBrace();
 	}
@@ -883,7 +883,7 @@ public class JavaWriter extends SourceWriter {
 			if(f.getBitCount() == 1) {
 				booly = ", "+NameMaker.makeBooleanBitNumName(f);
 			}
-			addLine("msg.m_buf."+makeBbGetSet(f, true)+"(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+booly+", "+fn+");");
+			addLine("msg.m_buf."+makeBbGetSet(f, true)+"("+NameMaker.makeFieldIndexName(f)+booly+", "+fn+");");
 			
 			
 		}
@@ -892,7 +892,7 @@ public class JavaWriter extends SourceWriter {
 			if(pis.size() == 0) {
 				//zero the index field of each string and sequence
 				String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-				addLine("msg.m_buf.writeUint16(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+", INVALID_BLOCK);//clear "+s+" header");
+				addLine("msg.m_buf.writeUint16("+NameMaker.makeFieldIndexName(f)+", INVALID_BLOCK);//clear "+s+" header");
 			} else {
 				//TODO: cycle through all the permutations of indeces and zero all the sequence headers
 				//TODO: this is not right yet
@@ -912,7 +912,7 @@ public class JavaWriter extends SourceWriter {
 				
 					}				
 					String s = (f.getTypeId() == TypeId.SEQUENCE) ? "sequence" : "string";
-					addLine("msg.m_buf.writeUint16(FieldIndex.ZERO, "+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
+					addLine("msg.m_buf.writeUint16("+NameMaker.makeFieldIndexName(f)+" + "+offset+", INVALID_BLOCK);//clear "+s+" header.");
 					for(int j = pis.size() - 1; j >= 0; --j) {
 						if(carry) {
 							++ii[j];
@@ -1069,7 +1069,7 @@ public class JavaWriter extends SourceWriter {
 		}
 		boolean bail = false;
 		boolean result = false;
-		addLine("FieldIndex i = FieldIndex.ZERO;");
+		addLine("int i = 0;");
 		if(pis.size() == 0) {
 			
 			
@@ -1077,13 +1077,13 @@ public class JavaWriter extends SourceWriter {
 			
 			
 			for(Index pi : pis) {
-				addLine("i = FieldIndex.make(i, "+NameMaker.makeFieldIndexName(pi.p)+");" );
+				addLine("i = i + "+NameMaker.makeFieldIndexName(pi.p)+";" );
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-					addLine("i = getArrayElementBlock(i, "+pi.paramName+",0, "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
+					addLine("i = getArrayElementBlock(i, "+pi.paramName+", "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
 				} else if(pi.p instanceof SequenceField) {
 					result = true;
-					addLine("i = getSequenceElementBlock(i, 0, "+pi.paramName+");");
+					addLine("i = getSequenceElementBlock(i, "+pi.paramName+");");
 
 				
 				}
@@ -1095,7 +1095,7 @@ public class JavaWriter extends SourceWriter {
 		} else if(f.getParent() instanceof ArrayField) {
 			
 		} else {
-			addLine("i = FieldIndex.make( i, "+NameMaker.makeFieldIndexName(f)+");");
+			addLine("i = i + "+NameMaker.makeFieldIndexName(f)+";");
 		}
 		return result;
 		
@@ -1287,7 +1287,7 @@ public class JavaWriter extends SourceWriter {
 			//only do this test if there was a sequence in the index list
 	
 	
-			addLine("if(i == FieldIndex.INVALID){");
+			addLine("if(i < 0){");
 			indent();
 			addLine("return;//bail because a sequence was not initialized");
 			closeBrace();
@@ -1299,7 +1299,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		addLine("int bs = "+NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst())+";");
-		addLine("initSequenceBlock(i, 0,  bs, n);");
+		addLine("initSequenceBlock(i,  bs, n);");
 		
 		outdent();
 		addLine("}");
@@ -1346,14 +1346,14 @@ public class JavaWriter extends SourceWriter {
 			//only do this test if there was a sequence in the index list
 
 
-			addLine("if(i == FieldIndex.INVALID){");
+			addLine("if(i < 0){");
 			indent();
 			addLine("return 0;//bail because a sequence was not initialized");
 			closeBrace();
 		}
 		addLineComment("i is now the index of this sequence field header");
 		
-		addLine("return getSequenceLength(i, 0);");
+		addLine("return getSequenceLength(i);");
 		
 		
 		
@@ -1414,7 +1414,7 @@ public class JavaWriter extends SourceWriter {
 		if(addLinesForFieldIndexCalc(pis, f)) {
 			
 			//only do this test if there was a sequence in the index list
-			addLine("if(i == FieldIndex.INVALID){");
+			addLine("if(i < 0){");
 			indent();
 			addLine("return"+(toNotFrom ? "" : " null")+";//bail because a sequence was not initialized");
 			closeBrace();
@@ -1424,9 +1424,9 @@ public class JavaWriter extends SourceWriter {
 
 		
 		if(toNotFrom) {
-			addLine("addString(i, 0, s);");
+			addLine("addString(i, s);");
 		} else {
-			addLine("return getString(i, 0);");
+			addLine("return getString(i);");
 		}
 			
 			
