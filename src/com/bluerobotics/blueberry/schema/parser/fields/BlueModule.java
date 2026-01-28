@@ -120,6 +120,13 @@ public class BlueModule implements AnnotationOwner {
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name.toLowerSnake("\\")+")";
 	}
+
+	public boolean isEmpty() {
+		boolean result = false;
+		result |= m_messages.size() == 0;
+//		result |= m_constants.size() == 0;
+		return result;
+	}
 	
 	
 	

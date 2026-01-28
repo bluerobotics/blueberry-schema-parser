@@ -37,6 +37,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
+import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.ScopeName;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
@@ -73,11 +74,13 @@ public class JavaWriter extends SourceWriter {
 //		m_packetRecieverName = top.getName().append("Receiver").toUpperCamel();
 //
 		modules.forEach(m -> {
-			writeConstantsFile(m);
-			m.getMessages().forEachOfType(MessageField.class, false, msg -> {
-				writeMessageFile(m, msg);
-				
-			});
+			if(!m.isEmpty()) {
+				writeConstantsFile(m);
+				m.getMessages().forEachOfType(MessageField.class, false, msg -> {
+					writeMessageFile(m, msg);
+					
+				});
+			}
 			
 		});
 		writeMessageLookup(modules);	
@@ -111,8 +114,8 @@ public class JavaWriter extends SourceWriter {
 	private void writeConstantsFile(BlueModule m) {
 		startFile(m, getHeader());
 		addLine();
-		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
-		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.BitIndex;");
+//		addLine("import com.bluerobotics.blueberry.transcoder.java.FieldIndex;");
 		addLine("import com.bluerobotics.blueberry.transcoder.java.EnumLookup;");
 		addLine();
 
@@ -120,6 +123,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		
 		writeConstants(m);
+		addLine();
 		
 		
 //		writeFieldIndexEnum(top);
@@ -497,11 +501,21 @@ public class JavaWriter extends SourceWriter {
 		addLineComment("The following values represent the ordinals of the fields of this message.");
 		addLineComment("This corresponds to the order that they were defined in the schema");
 		fs2.forEach(f -> {
-			int fi = f.getOrdinal();
-			if(f.getBitCount() == 1) {
-				fi = f.getParent().getOrdinal();
+			List<Field> pis = f.getAncestors(MessageField.class);
+			boolean inSeq = false;
+			for(Field pi : pis) {
+				if(pi instanceof SequenceField) {// || pi instanceof StructField) {
+					inSeq = true;
+					break;
+				}
 			}
-			addLine("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
+			if(!inSeq) {
+				int fi = f.getOrdinal();
+				if(f.getBitCount() == 1) {
+					fi = f.getParent().getOrdinal();
+				}
+				addLine("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
+			}
 		});
 		
 		//bit num stuff
@@ -558,7 +572,7 @@ public class JavaWriter extends SourceWriter {
 		addRxMessageWrapper(msg);
 		makeMessageFullTester(msg);
 		
-		msg.getUsefulChildren(false).forEach(true, f -> {
+		msg.getUsefulChildren(true).forEach(false, f -> {
 			makeMessageGetterSetter(f, true);
 			makeMessageGetterSetter(f, false);
 			makeMessagePresenceTester(f);
@@ -771,7 +785,7 @@ public class JavaWriter extends SourceWriter {
 		
 		//now do contents of function
 		indent();
-		addLine("if(isModuleMessageKeyCorrect(buf, "+NameMaker.makeMessageKeyName(mf)+")){");
+		addLine("if(!isModuleMessageKeyCorrect(buf, "+NameMaker.makeMessageKeyName(mf)+")){");
 		indent();
 		addLine("return null;");
 		closeBrace();
@@ -1063,7 +1077,7 @@ public class JavaWriter extends SourceWriter {
 			
 			
 			for(Index pi : pis) {
-				addLine("i = FieldIndex.make(i, "+NameMaker.makeFieldIndexName(pis.getFirst().p)+");" );
+				addLine("i = FieldIndex.make(i, "+NameMaker.makeFieldIndexName(pi.p)+");" );
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
 					addLine("i = getArrayElementBlock(i, "+pi.paramName+",0, "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
@@ -1317,7 +1331,7 @@ public class JavaWriter extends SourceWriter {
 		
 	
 		
-		addLine("int get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+"){");
+		addLine("public int get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+"){");
 		
 		//now do contents of function
 		indent();
