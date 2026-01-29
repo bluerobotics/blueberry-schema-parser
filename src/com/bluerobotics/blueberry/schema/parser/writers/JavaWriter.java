@@ -1406,7 +1406,7 @@ public class JavaWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
-		addLine((toNotFrom ? "void " : "String ")+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+"){");
+		addLine((toNotFrom ? "public void " : "public String ")+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+"){");
 		
 	
 		
