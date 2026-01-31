@@ -712,10 +712,23 @@ public class JavaWriter extends SourceWriter {
 			//this is a bool so it needs another field for the bit num
 			boolStuff = ", " + NameMaker.makeBooleanBitNumName(f);
 		}
+		boolean isEnum = f instanceof EnumField;
+		if(getNotSet) {
+			if(isEnum) {
+				addLine("return " +tf+".lookup(m_buf."+lookupGetSetName(f, true)+"(i " + boolStuff + "));");
+			} else {
+				addLine("return " +"m_buf."+lookupGetSetName(f, true)+"(i " + boolStuff + ");");
+
+			}
+			
+		} else {
+			if(isEnum) {
+				addLine("m_buf."+lookupGetSetName(f, false)+"(i " + boolStuff + ", "+ fn.toLowerCamel() + ".getValue());");
+			} else {
+				addLine("m_buf."+lookupGetSetName(f, false)+"(i " + boolStuff + ", "+ fn.toLowerCamel() + ");");				
+			}
+		}
 		
-		
-		
-		addLine((getNotSet ? "return " : "")+"m_buf."+lookupGetSetName(f, getNotSet)+"(i " + boolStuff + (getNotSet ? "" : ", "+ fn.toLowerCamel()) + ");");
 		
 		closeBrace();
 	}
@@ -886,7 +899,10 @@ public class JavaWriter extends SourceWriter {
 			if(f.getBitCount() == 1) {
 				booly = ", "+NameMaker.makeBooleanBitNumName(f);
 			}
+		
 			addLine("msg.m_buf."+makeBbGetSet(f, true)+"("+NameMaker.makeFieldIndexName(f)+booly+", "+fn+");");
+
+			
 			
 			
 		}
@@ -995,7 +1011,9 @@ public class JavaWriter extends SourceWriter {
 
 	private String getType(Field f) {
 		String result = null;
-		if(true) {
+		if(f instanceof EnumField) {
+			result = f.getTypeName().deScope().toUpperCamelString();
+		} else {
 		
 		
 			switch(f.getTypeId()) {
