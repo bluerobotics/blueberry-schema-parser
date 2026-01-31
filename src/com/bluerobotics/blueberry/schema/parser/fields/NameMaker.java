@@ -88,7 +88,7 @@ public class NameMaker {
 	 * @param f
 	 * @return
 	 */
-	protected static ScopeName makeScopeName(Field f) {
+	protected static ScopeName makeScopeName(Field f, boolean includeMessageName) {
 		ScopeName result = ScopeName.wrap(SymbolName.EMPTY);
 		MessageField mf = null;
 		Field ft = f;
@@ -105,7 +105,9 @@ public class NameMaker {
 		if(mf == null) {
 			throw new RuntimeException("Could not determine the message that this field is part of "+f);
 		}
-		result = result.addLevelAbove(mf.getTypeName().deScope());
+		if(includeMessageName) {
+			result = result.addLevelAbove(mf.getTypeName().deScope());
+		}
 		return result;
 	}
 	public static String makeEnumName(EnumField ef) {
@@ -175,29 +177,33 @@ public class NameMaker {
 		}
 		return name.toLowerCamel().toString();
 	}
-	public static String  makeFieldGetterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("get").toLowerCamel().toString();
+	
+	public static String  makeFieldGetterName(Field f, boolean includeMessage) {
+		return makeScopeName(f, includeMessage).toSymbolName().prepend("get").toLowerCamel().toString();
 	}
-	public static String  makeFieldSetterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("set").toLowerCamel().toString();
+	public static String  makeFieldSetterName(Field f, boolean includeMessage) {
+		return makeScopeName(f, includeMessage).toSymbolName().prepend("set").toLowerCamel().toString();
 	}
-	public static String  makeFieldPresenceTesterName(Field f) {
-		return makeScopeName(f).toSymbolName().prepend("is").append("present").toLowerCamel().toString();
+	public static String  makeJavaFieldPresenceTesterName(Field f, boolean includeMessage) {
+		return makeScopeName(f, includeMessage).deScope().prepend("is").append("present").toLowerCamel().toString();
 	}
-	public static String makeStringCopierName(StringField f, boolean toNotFrom) {
-		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f).toSymbolName().toUpperCamelString();
+	public static String  makeFieldPresenceTesterName(Field f,boolean includeMessage) {
+		return makeScopeName(f, includeMessage).toSymbolName().prepend("is").append("present").toLowerCamel().toString();
 	}
-	public static String makeStringLengthGetterName(StringField f) {
-		ScopeName name = NameMaker.makeScopeName(f);
+	public static String makeStringCopierName(StringField f, boolean toNotFrom, boolean includeMessage) {
+		return "copy"+(toNotFrom ? "To" : "From")+makeScopeName(f, includeMessage).toSymbolName().toUpperCamelString();
+	}
+	public static String makeStringLengthGetterName(StringField f, boolean includeMessage) {
+		ScopeName name = NameMaker.makeScopeName(f, includeMessage);
 
 		return "get"+name.toSymbolName().toUpperCamelString()+"StringLength";
 	}
-	public static String makeSequenceLengthGetterName(SequenceField sf) {
-		return makeScopeName(sf).toSymbolName().toUpperCamelString()+"SequenceLength";
+	public static String makeSequenceLengthGetterName(SequenceField sf, boolean includeMessage) {
+		return makeScopeName(sf, includeMessage).toSymbolName().toUpperCamelString()+"SequenceLength";
 	}
 	
-	public static String makeSequenceInitName(SequenceField sf) {
-		return "init"+NameMaker.makeScopeName(sf).toSymbolName().toUpperCamelString();
+	public static String makeSequenceInitName(SequenceField sf, boolean includeMessage) {
+		return "init"+NameMaker.makeScopeName(sf, includeMessage).toSymbolName().toUpperCamelString();
 	}
 	public static String makeCModuleFileName(BlueModule m, boolean headerNotSource) {
 		String result = m.getName().deScope().toLowerCamel().toString();

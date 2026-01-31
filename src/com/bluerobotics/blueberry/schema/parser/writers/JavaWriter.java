@@ -573,6 +573,9 @@ public class JavaWriter extends SourceWriter {
 		makeMessageFullTester(msg);
 		
 		msg.getUsefulChildren(true).forEach(false, f -> {
+			if(NameMaker.makeFieldSetterName(f, false).equals("setTest10")) {
+				System.out.println("JavaWriter.writeMessageFile blah");
+			}
 			makeMessageGetterSetter(f, true);
 			makeMessageGetterSetter(f, false);
 			makeMessagePresenceTester(f);
@@ -684,9 +687,9 @@ public class JavaWriter extends SourceWriter {
 		
 		String line;
 		if(getNotSet) {
-			line =  "public "+ tf + " " + NameMaker.makeFieldGetterName(f);
+			line =  "public "+ tf + " " + NameMaker.makeFieldGetterName(f, false);
 		} else {
-			line =  "public void " + NameMaker.makeFieldSetterName(f);
+			line =  "public void " + NameMaker.makeFieldSetterName(f, false);
 		}
 		line += "("+paramList+"){";
 		addLine(line);
@@ -1236,7 +1239,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		addDocComment(comments);
-		String line = ("boolean ")+NameMaker.makeFieldPresenceTesterName(f)+"(){";
+		String line = ("boolean ")+NameMaker.makeJavaFieldPresenceTesterName(f, false)+"(){";
 		addLine(line);
 		
 		indent();
@@ -1279,7 +1282,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		
-		addLine("public void "+NameMaker.makeSequenceInitName(sf)+"("+paramList+"){");
+		addLine("public void "+NameMaker.makeSequenceInitName(sf, false)+"("+paramList+"){");
 		
 		//now do contents of function
 		indent();
@@ -1331,7 +1334,7 @@ public class JavaWriter extends SourceWriter {
 		
 	
 		
-		addLine("public int get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+"){");
+		addLine("public int get"+NameMaker.makeSequenceLengthGetterName(sf, false)+ "("+paramList+"){");
 		
 		//now do contents of function
 		indent();
@@ -1406,7 +1409,7 @@ public class JavaWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
-		addLine((toNotFrom ? "public void " : "public String ")+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+"){");
+		addLine((toNotFrom ? "public void " : "public String ")+NameMaker.makeStringCopierName(f, toNotFrom, false)+"("+paramList+"){");
 		
 	
 		

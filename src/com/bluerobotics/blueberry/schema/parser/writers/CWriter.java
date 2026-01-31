@@ -399,7 +399,7 @@ public class CWriter extends SourceWriter {
 		
 	
 		
-		addLine("uint32_t get"+NameMaker.makeSequenceLengthGetterName(sf)+ "("+paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("uint32_t get"+NameMaker.makeSequenceLengthGetterName(sf, true)+ "("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -499,7 +499,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		
-		addLine("void "+NameMaker.makeSequenceInitName(sf)+"("+paramList+")" + (protoNotDef ? ";" : "{"));
+		addLine("void "+NameMaker.makeSequenceInitName(sf, true)+"("+paramList+")" + (protoNotDef ? ";" : "{"));
 		if(protoNotDef) {
 			return;
 		}
@@ -781,7 +781,7 @@ public class CWriter extends SourceWriter {
 		
 		
 		addDocComment(comments);
-		String line = ("bool ")+NameMaker.makeFieldPresenceTesterName(f)+"("+paramList+")"+(protoNotDef ? ";" : "{");
+		String line = ("bool ")+NameMaker.makeFieldPresenceTesterName(f, true)+"("+paramList+")"+(protoNotDef ? ";" : "{");
 		addLine(line);
 		if(protoNotDef) {
 			return;
@@ -856,9 +856,9 @@ public class CWriter extends SourceWriter {
 		
 		String line;
 		if(getNotSet) {
-			line =  tf + " " + NameMaker.makeFieldGetterName(f);
+			line =  tf + " " + NameMaker.makeFieldGetterName(f, true);
 		} else {
-			line =  "void " + NameMaker.makeFieldSetterName(f);
+			line =  "void " + NameMaker.makeFieldSetterName(f, true);
 		}
 		line += "("+paramList+")"+(protoNotDef ? ";" : "{");
 		addLine(line);
@@ -961,7 +961,7 @@ public class CWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
-		addLine("void "+NameMaker.makeStringCopierName(f, toNotFrom)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		addLine("void "+NameMaker.makeStringCopierName(f, toNotFrom, true)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
 		
 		if(protoNotDef) {
 			return;
@@ -1023,7 +1023,7 @@ public class CWriter extends SourceWriter {
 		
 		addDocComment(comments);
 		
-		addLine("uint32_t "+NameMaker.makeStringLengthGetterName(f)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
+		addLine("uint32_t "+NameMaker.makeStringLengthGetterName(f, true)+"("+paramList+")"+(protoNotDef ? ";" : "{"));
 		
 		if(protoNotDef) {
 			return;
