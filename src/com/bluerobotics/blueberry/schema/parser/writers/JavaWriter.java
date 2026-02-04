@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
 import com.bluerobotics.blueberry.schema.parser.fields.BoolFieldField;
@@ -424,6 +425,11 @@ public class JavaWriter extends SourceWriter {
 			addDocComment(mf.getComment());
 			addLine("public static final int "+ NameMaker.makeMessageKeyName(mf)+" = "+makeFullMessageKey(mf)+";");
 		
+		});
+		m.getConstants().forEach(c -> {
+			//test if c is a Constant<Number>
+			//also Constant<String>
+			//maybe also Constant<boolean>
 		});
 	}
 

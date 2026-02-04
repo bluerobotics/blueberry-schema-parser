@@ -98,6 +98,9 @@ public class BlueModule implements AnnotationOwner {
 		}
 		m_constants.add(c);
 	}
+	public List<Constant<?>> getConstants(){
+		return m_constants;
+	}
 	public Constant<?> getConstant(SymbolName n) {
 		Constant<?> result = null;
 		for(Constant<?> c : m_constants) {
