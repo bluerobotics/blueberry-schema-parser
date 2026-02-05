@@ -437,10 +437,34 @@ Packet brPacket(preamble = 0x45554c42) {
 			SPI_DIV_128 = 6
 			SPI_DIV_256	= 7	
 		}
+		define PortNameBb enum uint8 {
+			A = 0
+			B = 1
+			C = 2
+			D = 3
+			E = 4
+			F = 5
+			G = 6
+			H = 7
+			I = 8
+		}
 		
 		ClockSpecBb clockSpec
 		SpiDevBb spiDev
 		BaudDivBb baudDiv
+		
+		PortNameBb csPinPort
+		uint8 csPinNum
+		uint8 numBytes
+		bool deAssertCs
+		int32 transactionId
+
+		// If the packet is incoming to the software, this is RX data. If it's outgoing from the software, it's TX data
+		Array spiTxRxData(key = 0x001c) {
+			uint8 byte
+		}
+
+		bool complete
 	}
 			
 			
