@@ -140,11 +140,12 @@ public class MessageField extends ParentField {
 	}
 	/**
 	 * make a list of all child fields of this message that are not part of the header and are not filler
+	 * @param deep - when true recurses down sequences, arrays and structs
 	 * @return
 	 */
-	public FieldList getUsefulChildren() {
+	public FieldList getUsefulChildren(boolean deep) {
 		FieldList result = new FieldList();
-		getChildren().forEach(false, f -> {
+		getChildren().forEach(deep, f -> {
 			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
