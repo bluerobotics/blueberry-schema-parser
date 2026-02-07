@@ -32,7 +32,6 @@ public abstract class AbstractConstant<T> implements Constant<T> {
 	private final String m_comment;
 	private final Type m_type;
 	private String m_fileName = null;
-	private SymbolName m_namespace = null;
 	
 	protected AbstractConstant(Type type, SymbolName name, String comment) {
 		m_type = type;

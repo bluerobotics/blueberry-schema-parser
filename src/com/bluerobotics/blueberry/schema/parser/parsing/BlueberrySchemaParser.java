@@ -1171,7 +1171,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
 
-			SymbolName fn = m_moduleStack.getLast().scope(nvt.getSymbolName()).getName();
+			SymbolName fn = m_moduleStack.getLast().scope(nvt.getSymbolName()).getName().deScope();
 
 			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), m_lastComment);
 			c.setFileName(m_fileName);
@@ -1184,7 +1184,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(equals == null) {
 				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
 			}
-			SymbolName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName();
+			SymbolName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName().deScope();
 			StringConstant c = new StringConstant(name, string.getString(), m_lastComment);
 			c.setFileName(m_fileName);
 			m_lastComment = null;

@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
+import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
+import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
@@ -293,67 +295,74 @@ public class JavaWriter extends SourceWriter {
 		if(f instanceof EnumField) {
 			result = NameMaker.makeEnumName((EnumField)f);
 		} else {
-			switch(f.getTypeId()) {
-			case ARRAY:
-				break;
+			result = lookupTypeForJavaVars(f.getTypeId());
 			
-			case BOOL:
-				result = "boolean";
-				break;
-			case BOOLFIELD:
-				result = "int";
-				break;
-			
-			case FLOAT32:
-				result = "double";
-				break;
-			case INT16:
-				result = "int";
-				break;
-			case INT32:
-				result = "int";
-				break;
-			case INT8:
-				result = "int";
-				break;
-			case UINT16:
-				result = "int";
-				break;
-			case UINT32:
-				result = "int";
-				break;
-			case UINT8:
-				result = "int";
-				break;
-			case DEFERRED:
-				break;
-			case DEFINED:
-				break;
-			case FILLER:
-				break;
-			case FLOAT64:
-				result = "double";
-				break;
-			case INT64:
-				result = "long";
-				break;
-			case MESSAGE:
-				break;
-			case SEQUENCE:
-				break;
-			case STRING:
-				break;
-			case STRUCT:
-				break;
-			case UINT64:
-				result = "long";//TODO:this is not strictly true
-				break;
-			
-
-			}
 		}
 		return result;
 	}
+	private String lookupTypeForJavaVars(TypeId tid) {
+		String result = "";
+		switch(tid) {
+		case ARRAY:
+			break;
+		
+		case BOOL:
+			result = "boolean";
+			break;
+		case BOOLFIELD:
+			result = "int";
+			break;
+		
+		case FLOAT32:
+			result = "double";
+			break;
+		case INT16:
+			result = "int";
+			break;
+		case INT32:
+			result = "int";
+			break;
+		case INT8:
+			result = "int";
+			break;
+		case UINT16:
+			result = "int";
+			break;
+		case UINT32:
+			result = "int";
+			break;
+		case UINT8:
+			result = "int";
+			break;
+		case DEFERRED:
+			break;
+		case DEFINED:
+			break;
+		case FILLER:
+			break;
+		case FLOAT64:
+			result = "double";
+			break;
+		case INT64:
+			result = "long";
+			break;
+		case MESSAGE:
+			break;
+		case SEQUENCE:
+			break;
+		case STRING:
+			break;
+		case STRUCT:
+			break;
+		case UINT64:
+			result = "long";//TODO:this is not strictly true
+			break;
+		
+
+		}
+		return result;
+	}
+
 	private String lookupTypeForJavaType(EnumField f) {
 		String result = "";
 
@@ -431,6 +440,55 @@ public class JavaWriter extends SourceWriter {
 		
 		});
 		m.getConstants().forEach(c -> {
+			String ct = c.getComment();
+			if(ct != null && !ct.isBlank()) {
+				addBlockComment(ct);
+			}
+			SymbolName name = c.getName();
+			if(c instanceof StringConstant) {
+				StringConstant sc = (StringConstant)c;
+				addLine("public static final String "+sc.getName()+" = \"" + sc.getValue()+"\";");
+			} else if(c instanceof NumberConstant) {
+				NumberConstant nc = (NumberConstant)c;
+				TypeId tid = nc.getType().getTypeId();
+				String type = lookupTypeForJavaVars(tid);
+				String val = "";
+				switch(tid) {
+				
+				case BOOL:
+					val = "false";//TODO: don't have these yet
+					break;
+				case FLOAT32:
+				case FLOAT64:
+					val = nc.getValue().toString();
+					break;
+				case INT16:
+				case INT32:
+				case INT64:
+				case INT8:
+				case UINT16:
+				case UINT32:
+				case UINT64:
+				case UINT8:
+					val = nc.getValue().toString();
+					break;
+				case STRING:
+				case BOOLFIELD:
+				case DEFERRED:
+				case DEFINED:
+				case FILLER:
+
+				case ARRAY:
+				case STRUCT:
+				case SEQUENCE:
+				case MESSAGE:
+					val = "";
+					break;
+				
+				}
+				addLine("public static final "+type+" "+nc.getName().toUpperSnakeString()+" = "+val+";");
+			}
+			
 			//test if c is a Constant<Number>
 			//also Constant<String>
 			//maybe also Constant<boolean>

@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
-import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 
