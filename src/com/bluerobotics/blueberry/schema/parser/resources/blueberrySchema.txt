@@ -464,7 +464,6 @@ Packet brPacket(preamble = 0x45554c42) {
 			uint8 byte
 		}
 
-		bool complete
 	}
 			
 			
