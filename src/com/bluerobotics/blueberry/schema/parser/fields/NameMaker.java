@@ -136,6 +136,7 @@ public class NameMaker {
 		Field pf = f;
 		while(pf != null) {
 			 SymbolName n = pf.getName();
+			 
 			
 			if(n != null) {
 				result = result.prepend(n);
@@ -148,6 +149,11 @@ public class NameMaker {
 				}
 				break;
 			}
+		}
+		if(f instanceof SequenceField) {
+			result = result.append("placeholder");
+		} else if(f instanceof ArrayField) {
+			result = result.append("array");
 		}
 		
 		return result;

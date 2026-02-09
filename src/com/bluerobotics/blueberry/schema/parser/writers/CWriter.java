@@ -25,6 +25,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
+import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
@@ -97,6 +99,53 @@ public class CWriter extends SourceWriter {
 		addLineComment("Message keys");
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			addMessageKey(mf);	
+		});
+		
+		addLineComment("Constants");
+		module.getConstants().forEach(c -> {
+			if(c instanceof StringConstant) {
+				StringConstant sc = (StringConstant)c;
+				addLine("public static final String "+sc.getName()+" = \"" + sc.getValue()+"\";");
+			} else if(c instanceof NumberConstant) {
+				NumberConstant nc = (NumberConstant)c;
+				TypeId tid = nc.getType().getTypeId();
+				String type = getType(tid);
+				String val = "";
+				switch(tid) {
+				
+				case BOOL:
+					val = "false";//TODO: don't have these yet
+					break;
+				case FLOAT32:
+				case FLOAT64:
+					val = nc.getValue().toString();
+					break;
+				case INT16:
+				case INT32:
+				case INT64:
+				case INT8:
+				case UINT16:
+				case UINT32:
+				case UINT64:
+				case UINT8:
+					val = nc.getValue().toString();
+					break;
+				case STRING:
+				case BOOLFIELD:
+				case DEFERRED:
+				case DEFINED:
+				case FILLER:
+
+				case ARRAY:
+				case STRUCT:
+				case SEQUENCE:
+				case MESSAGE:
+					val = "";
+					break;
+				
+				}
+				addLine("#define "+nc.getName().toUpperSnakeString()+" ("+val+")");
+			}
 		});
 
 		addSectionDivider("Types");
@@ -311,7 +360,7 @@ public class CWriter extends SourceWriter {
 			makeMessageEmptyandFullTester(mf, false, true);
 			makeMessageEmptyandFullTester(mf, false, false);
 
-			mf.getUsefulChildren(true).forEach(true, f -> {
+			mf.getUsefulChildren(true).forEach(false, f -> {
 				
 				makeMessageGetterSetter(f, true, false);
 				makeMessageGetterSetter(f, false, false);
@@ -1128,71 +1177,75 @@ public class CWriter extends SourceWriter {
 
 	
 
-	
-
+	private String getType(TypeId tid) {
+		String result = "";
+		switch(tid) {
+		
+		case BOOL:
+			result = "bool";
+			break;
+		case FLOAT32:
+			result = "float";
+			break;
+		case FLOAT64:
+			result = "double";
+			break;
+		case INT16:
+			result = "int16_t";
+			break;
+		case INT32:
+			result = "int32_t";
+			break;
+		case INT64:
+			result = "int64_t";
+			break;
+		case INT8:
+			result = "int8_t";
+			break;
+		case STRING:
+			result = "char *";
+			break;
+		case UINT16:
+			result = "uint16_t";
+			break;
+		case UINT32:
+			result = "uint32_t";
+			break;
+		case UINT64:
+			result = "uint64";
+			break;
+		case UINT8:
+			result = "uint8_t";
+			break;
+		case DEFINED:
+			//check if it's a defined type of a base type
+		
+			break;
+		case ARRAY:
+		case BOOLFIELD:
+		case FILLER:
+		case DEFERRED:
+		case MESSAGE:
+		case SEQUENCE:
+		case STRUCT:
+			result = null;
+			break;
+		
+		}
+		return result;
+	}
 
 	private String getType(Field f) {
 		String result = null;
-		if(true) {
-		
-		
-			switch(f.getTypeId()) {
-			
-			case BOOL:
-				result = "bool";
-				break;
-			case FLOAT32:
-				result = "float";
-				break;
-			case FLOAT64:
-				result = "double";
-				break;
-			case INT16:
-				result = "int16_t";
-				break;
-			case INT32:
-				result = "int32_t";
-				break;
-			case INT64:
-				result = "int64_t";
-				break;
-			case INT8:
-				result = "int8_t";
-				break;
-			case STRING:
-				result = "char *";
-				break;
-			case UINT16:
-				result = "uint16_t";
-				break;
-			case UINT32:
-				result = "uint32_t";
-				break;
-			case UINT64:
-				result = "uint64";
-				break;
-			case UINT8:
-				result = "uint8_t";
-				break;
-			case DEFINED:
-				//check if it's a defined type of a base type
-				Field f2 = f;
-				while(f2 instanceof DefinedTypeField) {
-					f2 = ((DefinedTypeField)f2).getFirstChild();
-				}
-				result = getType(f2);
-				break;
-			case ARRAY:
-			case BOOLFIELD:
-			case FILLER:
-			case DEFERRED:
-			case MESSAGE:
-			case SEQUENCE:
-			case STRUCT:
-				result = null;
-				break;
-			
+		if(f.getTypeId() == TypeId.DEFINED) {
+			Field f2 = f;
+			while(f2 instanceof DefinedTypeField) {
+				f2 = ((DefinedTypeField)f2).getFirstChild();
 			}
+			result = getType(f2);
+		} else {
+		
+			result = getType(f.getTypeId());
 		}
 		return result;
 	}
