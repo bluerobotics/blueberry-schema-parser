@@ -1160,6 +1160,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		SymbolNameToken nameToken = m_tokens.relative(2, SymbolNameToken.class);
 		IdentifierToken equals = m_tokens.relativeId(3, TokenIdentifier.EQUALS);
 		StringToken string = m_tokens.relative(4, StringToken.class);
+		
 
 
 		if(btt != null && btt.getKeyword() != TokenIdentifier.STRING) {
@@ -1188,6 +1189,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			c.setFileName(m_fileName);
 			m_lastComment = null;
 			m_moduleStack.getLast().addConstant(c);
+			//TODO not sure if there will be a semicolon here at this point
+			IdentifierToken semiT = m_tokens.relativeId(5, TokenIdentifier.SEMICOLON);
+			if(semiT != null) {
+				m_tokens.remove(semiT);
+			}
 			m_tokens.setIndex(string);
 		} else {
 			throw new SchemaParserException("Only base types and Strings can be declared const.", it.getEnd());

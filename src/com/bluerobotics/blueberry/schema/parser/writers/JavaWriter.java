@@ -473,6 +473,7 @@ public class JavaWriter extends SourceWriter {
 					val = nc.getValue().toString();
 					break;
 				case STRING:
+				
 				case BOOLFIELD:
 				case DEFERRED:
 				case DEFINED:
