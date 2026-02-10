@@ -154,8 +154,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 			collapseTypedefs();
 			collapseEols();
-			collapseNameValues();
 			
+			collapseNameValues();
 			collapseSemicolons();
 			
 			//check all brackets of all kinds to be sure they all match
@@ -200,6 +200,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
+	
 	/**
 	 * put a reference to all module annotations into every message member of that module
 	 */
@@ -1161,10 +1162,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		StringToken string = m_tokens.relative(4, StringToken.class);
 
 
-		if(btt != null) {
-			if(btt.getKeyword() == TokenIdentifier.STRING) {
-				throw new SchemaParserException("Const Strings have not been implemented yet.", btt.getEnd());
-			}
+		if(btt != null && btt.getKeyword() != TokenIdentifier.STRING) {
+			
 			if(nvt == null) {
 				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
 			}
@@ -1340,6 +1339,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				CommentToken commentT = m_tokens.relative(-2, CommentToken.class);
 				SymbolNameToken nameT = m_tokens.relative(-1, SymbolNameToken.class);
 				NumberToken numberT = m_tokens.relative(+1, NumberToken.class);
+				StringToken stringT = m_tokens.relative(+1, StringToken.class);
 
 				if(nameT != null && numberT != null) {
 					NameValueToken nvt = new NameValueToken(nameT, numberT, commentT);
@@ -1348,6 +1348,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m_tokens.remove(nameT);
 					m_tokens.remove(commentT);
 
+				} else if(nameT != null && stringT != null){
+					//this is likely a string  constant
+					System.out.println("BlueberrySchemaParser.collapseNameValues string constant stuff");
+					m_tokens.next();
 				} else {
 					throw new SchemaParserException("Incorrect tokens around equals.", numberT.getStart());
 				}
