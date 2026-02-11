@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
@@ -241,5 +242,8 @@ public class NameMaker {
 //	}
 	public static SymbolName makeCModuleFileRoot(BlueModule module) {
 		return module.getName().deScope().toLowerCamel();
+	}
+	public static String makeConstantName(StringConstant sc) {
+		return sc.getName().toUpperSnakeString();
 	}
 }

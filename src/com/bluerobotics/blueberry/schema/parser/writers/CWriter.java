@@ -101,11 +101,11 @@ public class CWriter extends SourceWriter {
 			addMessageKey(mf);	
 		});
 		
-		addLineComment("Constants");
+		addLineComment("Numerical Constants");
 		module.getConstants().forEach(c -> {
 			if(c instanceof StringConstant) {
-				StringConstant sc = (StringConstant)c;
-				addLine("public static final String "+sc.getName()+" = \"" + sc.getValue()+"\";");
+//				StringConstant sc = (StringConstant)c;
+//				addLine("const char "+sc.getName()+"[] = \"" + sc.getValue()+"\";");
 			} else if(c instanceof NumberConstant) {
 				NumberConstant nc = (NumberConstant)c;
 				TypeId tid = nc.getType().getTypeId();
@@ -154,6 +154,13 @@ public class CWriter extends SourceWriter {
 //
 		module.getDefines().forEachOfType(EnumField.class, false, ef -> {
 			writeEnum(ef);
+		});
+		addSectionDivider("Variables");
+		module.getConstants().forEach(c -> {
+			if(c instanceof StringConstant) {
+				StringConstant sc = (StringConstant)c;
+				addLine("extern const char "+NameMaker.makeConstantName(sc)+"[];");
+			}
 		});
 //
 		addSectionDivider("Function Prototypes");
@@ -345,7 +352,13 @@ public class CWriter extends SourceWriter {
 
 		addSectionDivider("Types");
 
-
+		addSectionDivider("Variables");
+		module.getConstants().forEach(c -> {
+			if(c instanceof StringConstant) {
+				StringConstant sc = (StringConstant)c;
+				addLine("const char "+NameMaker.makeConstantName(sc)+"[] = \"" + sc.getValue()+"\";");
+			}
+		});
 
 		addSectionDivider("Function Prototypes");
 //		addBlockFunctionAdder(top, true);
