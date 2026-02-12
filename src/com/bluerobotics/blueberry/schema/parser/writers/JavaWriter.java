@@ -544,7 +544,8 @@ public class JavaWriter extends SourceWriter {
 //					fs2.remove(f2);
 //				}
 //			});
-			if(f1.getName() == null || f1.getName().isEmpty()) {
+			if(f1 instanceof SequenceField) {
+			} else if(f1.getName() == null || f1.getName().isEmpty()) {
 				fs2.remove(f1);
 			}
 		});
@@ -1166,7 +1167,7 @@ public class JavaWriter extends SourceWriter {
 				addLine("i = i + "+NameMaker.makeFieldIndexName(pi.p)+";" );
 				if(pi.p instanceof ArrayField) {
 //					addLine("i += "+NameMaker.makeMultipleFieldElementByteCountName(pi) + " * " + name + ";");
-					addLine("i = getArrayElementBlock(i, "+pi.paramName+", "+NameMaker.makeMultipleFieldElementByteCountName(pi)+");");
+					addLine("i = getArrayElementBlock(i, "+pi.paramName+", "+NameMaker.makeMultipleFieldElementByteCountName(pi)+", "+NameMaker.makeArraySizeName(pi)+");");
 				} else if(pi.p instanceof SequenceField) {
 					result = true;
 					addLine("i = getSequenceElementBlock(i, "+pi.paramName+");");
