@@ -455,17 +455,17 @@ Packet brPacket(preamble = 0x45554c42) {
 		
 		PortNameBb csPinPort
 		uint8 csPinNum
-		uint8 numBytes
+		uint16 numBytes
 		bool deAssertCs
 		int32 transactionId
 
-		// If the packet is incoming to the software, this is RX data. If it's outgoing from the software, it's TX data
-		Array spiTxRxData(key = 0x001c) {
-			uint8 byte
-		}
-
 	}
 			
-			
+	// If the packet is incoming to the software, this is RX data. If it's outgoing from the software, it's TX data
+	// Note that we cram 4 bytes into each uint32 element of this array
+	Array spiTxRxData(key = 0x001c) {
+		uint32 byteChunk
+	}
+
 
 }
