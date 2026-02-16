@@ -22,6 +22,7 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
+import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
@@ -44,6 +46,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
@@ -51,11 +54,15 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class CWriter extends SourceWriter {
 	
-
+	
+	private static final String TOPIC_NID_CHAR_STRING = "\\x80";
+	private static final String TOPIC_DEVICE_TYPE_CHAR_STRING = "\\x81";
+	
 	public CWriter(File dir, BlueberrySchemaParser parser, String header) {
 		super(dir, parser, header);
 	}
 
+	
 	@Override
 	public void write() {
 			ArrayList<BlueModule> modules = getParser().getModules();
@@ -162,7 +169,19 @@ public class CWriter extends SourceWriter {
 				addLine("extern const char "+NameMaker.makeConstantName(sc)+"[];");
 			}
 		});
-//
+		
+		
+		
+		addSectionDivider("Topic String Constants");
+		module.getMessages().forEachOfType(MessageField.class, false, msg -> {
+			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			String t = a.getParameter(0, String.class);
+			addLine("extern const char "+NameMaker.makeTopicSymbol(msg)+"[];");
+		});
+		addLine();
+			
+		
+
 		addSectionDivider("Function Prototypes");
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			makeMessageAdder(mf, true);
@@ -358,6 +377,15 @@ public class CWriter extends SourceWriter {
 				StringConstant sc = (StringConstant)c;
 				addLine("const char "+NameMaker.makeConstantName(sc)+"[] = \"" + sc.getValue()+"\";");
 			}
+		});
+		addSectionDivider("Topic String Constants");
+		module.getMessages().forEachOfType(MessageField.class, false, msg -> {
+			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			String t = a.getParameter(0, String.class);
+			t = t.replace(Annotation.TOPIC_NID_STRING, TOPIC_NID_CHAR_STRING);
+			t = t.replace(Annotation.TOPIC_DEVICE_TYPE_STRING, TOPIC_DEVICE_TYPE_CHAR_STRING);
+
+			addLine("const char "+NameMaker.makeTopicSymbol(msg)+"[] = \""+t+"\";");
 		});
 
 		addSectionDivider("Function Prototypes");

@@ -246,4 +246,8 @@ public class NameMaker {
 	public static String makeConstantName(StringConstant sc) {
 		return sc.getName().toUpperSnakeString();
 	}
+	public static SymbolName makeTopicSymbol(MessageField msg) {
+		SymbolName result = msg.getTypeName().deScope().toSymbolName().append("topic").toUpperSnake();
+		return result;
+	}
 }

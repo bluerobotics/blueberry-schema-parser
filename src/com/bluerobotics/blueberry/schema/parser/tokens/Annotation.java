@@ -64,6 +64,8 @@ public class Annotation  {
 	public static final SymbolName MESSAGE_KEY_ANNOTATION      = SymbolName.fromSnake("message_key");
 	public static final SymbolName MODULE_KEY_ANNOTATION      = SymbolName.fromSnake("module_key");
 	public static final SymbolName SERIALIZATION_ANNOTATION      = SymbolName.fromSnake("serialization");
+	public static final String TOPIC_NID_STRING = "{nid}";
+	public static final String TOPIC_DEVICE_TYPE_STRING = "{device_type}";
 	private final KnownAnnotation m_known;
 	private final SymbolName m_name;
 	private ArrayList<Object> m_parameters = new ArrayList<>();

@@ -48,6 +48,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 
@@ -126,6 +127,7 @@ public class JavaWriter extends SourceWriter {
 		indent();
 		
 		writeConstants(m);
+		writeTopics(m);
 		addLine();
 		
 		
@@ -137,6 +139,18 @@ public class JavaWriter extends SourceWriter {
 
 
 
+	}
+
+	private void writeTopics(BlueModule m) {
+		addSectionDivider("Topic String Constants");
+		FieldList ms = m.getMessages();
+		ms.forEachOfType(MessageField.class, false, msg -> {
+			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			String t = a.getParameter(0, String.class);
+			addLine("public static final String "+NameMaker.makeTopicSymbol(msg)+" = \""+t+"\";");
+		});
+		addLine();
+		
 	}
 
 	private void writeOtherEnums(BlueModule m) {
