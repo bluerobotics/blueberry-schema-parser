@@ -1346,6 +1346,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolNameToken nameT = m_tokens.relative(-1, SymbolNameToken.class);
 				NumberToken numberT = m_tokens.relative(+1, NumberToken.class);
 				StringToken stringT = m_tokens.relative(+1, StringToken.class);
+				SymbolNameToken constT = m_tokens.relative(+1, SymbolNameToken.class);
 
 				if(nameT != null && numberT != null) {
 					NameValueToken nvt = new NameValueToken(nameT, numberT, commentT);
@@ -1358,8 +1359,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					//this is likely a string  constant
 					System.out.println("BlueberrySchemaParser.collapseNameValues string constant stuff");
 					m_tokens.next();
+				} else if(nameT != null && constT != null) {
+					//TODO: for now we just remove the constant referring to a constant. This needs thought through better
+					m_tokens.remove(nameT);
+					m_tokens.remove(commentT);
+					m_tokens.remove(constT);
+					m_tokens.remove(equalsT);
 				} else {
-					throw new SchemaParserException("Incorrect tokens around equals.", numberT.getStart());
+					throw new SchemaParserException("Incorrect tokens around equals.", equalsT.getStart());
 				}
 			} else {
 				break;
