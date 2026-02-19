@@ -146,6 +146,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseNumbers();
 			collapseSymbolNames();
 			collapseBaseTypes();
+			collapseLongLong();
 			collapseScope();
 			collapseWhiteSpace();
 			collapseUnsigned();
@@ -200,7 +201,25 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
-	
+	/**
+	 * any instance of two longs in a row should be collapsed to a long long
+	 */
+	private void collapseLongLong() {
+		m_tokens.resetIndex();
+		while(m_tokens.isMore()) {
+			IdentifierToken long1 = m_tokens.gotoNextId(TokenIdentifier.LONG);
+			IdentifierToken long2 = m_tokens.relativeId(1, TokenIdentifier.LONG);
+			if(long1 != null && long2 != null) {
+				m_tokens.next();
+				m_tokens.remove(long2);
+				IdentifierToken longLong = new IdentifierToken(long1.getStart(), long2.getEnd(), TokenIdentifier.LONG_LONG);
+				m_tokens.replace(long1, longLong);
+				
+			}
+
+		}
+		
+	}
 	/**
 	 * put a reference to all module annotations into every message member of that module
 	 */
@@ -591,9 +610,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				IdentifierToken id = m_tokens.relative(1, IdentifierToken.class);
 				if(id != null) {
 					switch(id.getKeyword()) {
+					case SEQUENCE:
+						m_tokens.next();
+						m_tokens.remove(typedef);
+						IdentifierToken id2 = new IdentifierToken(typedef.getStart(), id.getEnd(), TokenIdentifier.TYPEDEF_SEQUENCE);
+						m_tokens.replace(id, id2);
+						break;
 					case ENUM:
 					case STRUCT:
-					case SEQUENCE:
 						m_tokens.next();
 						m_tokens.remove(typedef);
 						break;
@@ -688,7 +712,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				case MODULE:
 					assembleModule(it);
 					break;
-				case SEQUENCE:
+				case TYPEDEF_SEQUENCE:
 					assembleSequence(it);
 					break;
 				case STRUCT:
@@ -849,8 +873,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	}
 	/**
-	 * of the form <comment?><sequence><angle bracket start><constituentTypeName><comma?><number?><angle bracket end><sequenceTypeName>
-	 * @param it
+	 * of the form <comment?><typdef><sequence><angle bracket start><constituentTypeName><comma?><number?><angle bracket end><sequenceTypeName>
+	 * except this method assumes that the <typedef> has already been removed
+	 * @param it - the sequence token
 	 * @throws SchemaParserException
 	 */
 	private void assembleSequence(IdentifierToken it) throws SchemaParserException {
@@ -947,7 +972,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @throws SchemaParserException
 	 */
 	private void assembleTypedef(IdentifierToken it) throws SchemaParserException {
-
+		IdentifierToken st = m_tokens.relativeId(1,  TokenIdentifier.SEQUENCE);
+//		if(st != null) {
+//			m_tokens.remove(it);
+//			m_tokens.setIndex(st);
+//			assembleSequence(st);
+//			return;
+//		}
 		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//this is the original type that this typedef is based on 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//this could also be the original type depending on whether it's a base type or not
 		SymbolNameToken name = m_tokens.relative(2, SymbolNameToken.class);//name of new type
@@ -1170,9 +1201,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
-
+			if(typeId == null) {
+				throw new SchemaParserException("Something wrong with base type \""+btt.getKeyword()+"\"", btt.getStart());
+			}
+			
 			SymbolName fn = m_moduleStack.getLast().scope(nvt.getSymbolName()).getName().deScope();
-
+			
 			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), m_lastComment);
 			c.setFileName(m_fileName);
 			m_lastComment = null;
@@ -1297,6 +1331,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		case INT16:
 			result = TypeId.INT16;
 			break;
+		case LONG:
 		case INT32:
 			result = TypeId.INT32;
 			break;
@@ -1313,6 +1348,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			result = TypeId.UINT8;
 			break;
 		case UINT64:
+		case LONG_LONG:
 			result = TypeId.UINT64;
 			break;
 		case INT64:

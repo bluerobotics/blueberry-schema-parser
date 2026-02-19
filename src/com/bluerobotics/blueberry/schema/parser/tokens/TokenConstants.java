@@ -52,6 +52,7 @@ public interface TokenConstants {
 		INT64("int64"),
 		INT8("int8"),
 		LONG("long"),
+		LONG_LONG("long long"),
 		MESSAGE("message"),
 		MODULE("module"),
 		SEMICOLON(";"),
@@ -64,6 +65,7 @@ public interface TokenConstants {
 		STRUCT("struct"),
 		TAB("\t"),//this is not intended to be used as a token, just to help parse
 		TYPEDEF("typedef"),
+		TYPEDEF_SEQUENCE("typedef sequence"),
 		UINT16("uint16"),
 		UINT32("uint32"),
 		UINT64("uint64"),
