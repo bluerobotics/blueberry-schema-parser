@@ -328,16 +328,26 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	private void checkForDuplicateMessageKeys() {
 		final ArrayList<Integer> keys = new ArrayList<>();
-		m_messages.forEachOfType(MessageField.class, false, mf -> {
-			int i = mf.getModuleMessageKey();
-			
-			if(keys.contains(i)) {
-				throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+mf.getName(), null);
-			}
-			keys.add(i);
+		m_modules.forEach(mod -> {
+			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
+				int i = msg.getModuleMessageKey();
 				
-			
+				if(keys.contains(i)) {
+					throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), null);
+				}
+				keys.add(i);
+			});
 		});
+//		m_messages.forEachOfType(MessageField.class, false, mf -> {
+//			int i = mf.getModuleMessageKey();
+//			
+//			if(keys.contains(i)) {
+//				throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+mf.getName(), null);
+//			}
+//			keys.add(i);
+//				
+//			
+//		});
 	}
 	/**
 	 * Calculates the field indeces for messages, based on the word packing rules
@@ -585,7 +595,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamelString(), df.getCoord());
+								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamelString(), f.getCoord());
 							} else {
 								dft = df;
 							}	
@@ -896,7 +906,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(btt != null) {
 			TypeId tid = lookupBaseType(btt.getKeyword());
 			if(btt.getKeyword() == TokenIdentifier.STRING) {
-				throw new SchemaParserException("Sequences containing Strings has not been implemented yet.",null);
+				throw new SchemaParserException("Sequences containing Strings has not been implemented yet.",it.getStart());
 			}
 			cf = new BaseField(null, tid, null, btt.getEnd());
 		} else if(snt != null) {
@@ -1196,7 +1206,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //		String comment = ct != null ? ct.combineLines() : null;
 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
-		IdentifierToken stringType = m_tokens.relativeId(1,  TokenIdentifier.STRING);
 		boolean nvtGood = m_tokens.relative(2, NameValueToken.class) != null;
 		SymbolName name = nvtGood ? m_tokens.relative(2, NameValueToken.class).getSymbolName() : null;
 		Object val = nvtGood ? m_tokens.relative(2, NameValueToken.class).getValue() : null;
@@ -1204,10 +1213,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		String sVal = val instanceof String ? (String)val : null;
 		TokenIdentifier idVal = val instanceof TokenIdentifier ? (TokenIdentifier)val : null;
 		
-
-
-		
-		if(stringType != null) {
+		TokenIdentifier ti = btt != null ? btt.getKeyword() : null;
+		if(btt == null) {
+			throw new SchemaParserException("Only base types and Strings can be declared const so far.", it.getEnd());
+		} else if(ti == TokenIdentifier.STRING || ti == TokenIdentifier.CHAR) {
 			if(sVal == null) {
 				throw new SchemaParserException("Const string must include a string value", it.getEnd());
 			}
@@ -1224,7 +1233,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 
 			m_tokens.next(3);
-		} else if(btt != null && btt.getKeyword() == TokenIdentifier.BOOLEAN) {
+		
+		} else if(btt.getKeyword() == TokenIdentifier.BOOLEAN) {
 			//check for boolean
 			if(idVal == null) {
 				throw new SchemaParserException("Const must include a boolean value", btt.getStart());
@@ -1266,8 +1276,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			m_moduleStack.getLast().addConstant(c);
 			m_tokens.next(3);
 		} else {
-			throw new SchemaParserException("Only base types and Strings can be declared const.", it.getEnd());
-
+			throw new SchemaParserException("Not sure why this didn't parse. Probably a weird type for this const", it.getEnd());
 		}
 
 
