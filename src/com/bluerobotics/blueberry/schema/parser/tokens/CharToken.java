@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024  Blue Robotics North Inc.
+Copyright (c) 2025  Blue Robotics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,47 +21,24 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
-import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
-
 /**
- * A token that represents a name assigned (with an equals sign) to a value, which could be of whatever type (e.g. Number, String, etc)
+ *
  */
-public class NameValueToken<T> extends AbstractToken {
-	private T m_value;
-	private final SymbolName m_name;
-	private final String m_comment;
-	public NameValueToken(Coord start, Coord end, SymbolName name, T value, String comment) {
-		super(start, end);
-
-		m_name = name;
-		m_value = value;
-		m_comment = comment;
-	
+public class CharToken extends AbstractToken {
+	private final String m_char;
+	public CharToken(Coord start, Coord end, String c) {
+		super(start,end);
+		m_char = c;
 	}
-
-	public T getValue() {
-		return m_value;
-	}
-	public boolean isValue() {
-		return m_value != null;
-	}
-	public SymbolName getSymbolName() {
-		return m_name;
-	}
-	public String getComment() {
-		return m_comment;
+	public CharToken(Coord start, Coord end) {
+		this(start, end, start.fromThisToThatString(end));
 	}
 	public String toString() {
-		String s = getClass().getSimpleName();
-		s += "(";
-		s += m_name;
-		if(isValue()) {
-			s += " = ";
-			s += m_value;
-		}
-		s += ")";
-		return s;
-	}
-	
 
+		
+		return getClass().getSimpleName() +"('"+m_char+"')";
+	}
+	public String getChar() {
+		return m_char;
+	}
 }

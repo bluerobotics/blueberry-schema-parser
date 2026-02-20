@@ -36,7 +36,7 @@ public interface TokenConstants {
 		BRACKET_START("("),
 		BYTE("byte"),
 		SCOPE_SEPARATOR("::"),//this must come before a colon
-		CHAR("ckar"),
+		CHAR("char"),
 		COLON(":"),
 		COMMA(","),
 		CONST("const"),
@@ -44,6 +44,7 @@ public interface TokenConstants {
 		ENUM("enum"),
 		EQUALS("="),
 //		ESCAPE_DELIMITER("_"),
+		FALSE("FALSE"),
 		FLOAT("float"),
 		IMPORT("import"),
 		INT("int"),
@@ -64,6 +65,7 @@ public interface TokenConstants {
 		STRING("string"),
 		STRUCT("struct"),
 		TAB("\t"),//this is not intended to be used as a token, just to help parse
+		TRUE("TRUE"),
 		TYPEDEF("typedef"),
 		TYPEDEF_SEQUENCE("typedef sequence"),
 		UINT16("uint16"),
@@ -89,7 +91,7 @@ public interface TokenConstants {
 //	public static final String BRACKET_END = ")";
 //	public static final String BRACKET_START = "(";
 //	public static final String BYTE_KEYWORD = "byte";
-	public static final String CHAR_DELIMITER = "'";
+	public static final String CHAR_DELIMITER = "\'";
 	public static final String COMMENT_BLOCK_END = "*/";
 	public static final String COMMENT_BLOCK_MIDDLE = "*";
 	public static final String COMMENT_BLOCK_START = "/*";

@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import com.bluerobotics.blueberry.schema.parser.constants.BooleanConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
@@ -50,6 +51,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
+import com.bluerobotics.blueberry.schema.parser.tokens.CharToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CommentToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.tokens.EolToken;
@@ -130,6 +132,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			c = processBlockComment(c);
 			c = processLineComment(c);
 			c = processStrings(c);
+			c = processChars(c);
 			c = processNextToken(c);
 			c = processEol(c);
 
@@ -829,6 +832,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			if(m_tokens.getCurrent() instanceof EolToken) {
 				m_tokens.next();
+			} else if(m_tokens.relativeId(0, TokenIdentifier.ANNOTATION_START) != null) {
+				//this is the start of an annotation
+				assembleAnnotation(m_tokens.relativeId(0, TokenIdentifier.ANNOTATION_START));
 			} else {
 			
 				//reuse a bunch of fields from above for the sub-field
@@ -1157,12 +1163,16 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 			String comment = ct != null ? ct.combineLines() : null;
 			nameToken = m_tokens.relative(0, SymbolNameToken.class);
-			NameValueToken nameValueToken = m_tokens.relative(0, NameValueToken.class);
+			NameValueToken<?> nvt = m_tokens.relative(0, NameValueToken.class);
+			Number n = null;
+			if(nvt != null && nvt.getValue() instanceof Number) {
+				n = (Number)nvt.getValue();
+			}
 			if(nameToken != null) {
 				et.addNameValue(nameToken.getSymbolName(), Number.NAN, comment);
-			} else if(nameValueToken != null) {
+			} else if(n != null) {
 				try {
-					et.addNameValue(nameValueToken.getSymbolName(), nameValueToken.getValue(), comment);
+					et.addNameValue(nvt.getSymbolName(), n, comment);
 				} catch(RuntimeException e) {
 					System.out.println("BlueberrySchemaParser.processEnum ");
 				}
@@ -1187,39 +1197,21 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
 		IdentifierToken stringType = m_tokens.relativeId(1,  TokenIdentifier.STRING);
-		NameValueToken nvt = m_tokens.relative(2, NameValueToken.class);
-		SymbolNameToken nameToken = m_tokens.relative(2, SymbolNameToken.class);
-		IdentifierToken equals = m_tokens.relativeId(3, TokenIdentifier.EQUALS);
-		StringToken string = m_tokens.relative(4, StringToken.class);
+		boolean nvtGood = m_tokens.relative(2, NameValueToken.class) != null;
+		SymbolName name = nvtGood ? m_tokens.relative(2, NameValueToken.class).getSymbolName() : null;
+		Object val = nvtGood ? m_tokens.relative(2, NameValueToken.class).getValue() : null;
+		Number nVal = val instanceof Number ? (Number)val : null;
+		String sVal = val instanceof String ? (String)val : null;
+		TokenIdentifier idVal = val instanceof TokenIdentifier ? (TokenIdentifier)val : null;
 		
 
 
-		if(btt != null && btt.getKeyword() != TokenIdentifier.STRING) {
-			
-			if(nvt == null) {
-				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
-			}
-
-			TypeId typeId = lookupBaseType(btt.getKeyword());
-			if(typeId == null) {
-				throw new SchemaParserException("Something wrong with base type \""+btt.getKeyword()+"\"", btt.getStart());
-			}
-			
-			SymbolName fn = m_moduleStack.getLast().scope(nvt.getSymbolName()).getName().deScope();
-			
-			NumberConstant c = new NumberConstant(typeId, fn, nvt.getValue(), m_lastComment);
-			c.setFileName(m_fileName);
-			m_lastComment = null;
 		
-	
-			m_moduleStack.getLast().addConstant(c);
-			m_tokens.setIndex(nvt);
-		} else if(stringType != null) {
-			if(equals == null) {
-				throw new SchemaParserException("Const must include an equals symbol", it.getEnd());
+		if(stringType != null) {
+			if(sVal == null) {
+				throw new SchemaParserException("Const string must include a string value", it.getEnd());
 			}
-			SymbolName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName().deScope();
-			StringConstant c = new StringConstant(name, string.getString(), m_lastComment);
+			StringConstant c = new StringConstant(name, sVal, m_lastComment);
 			c.setFileName(m_fileName);
 			m_lastComment = null;
 			m_moduleStack.getLast().addConstant(c);
@@ -1228,7 +1220,51 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(semiT != null) {
 				m_tokens.remove(semiT);
 			}
-			m_tokens.setIndex(string);
+			
+			
+
+			m_tokens.next(3);
+		} else if(btt != null && btt.getKeyword() == TokenIdentifier.BOOLEAN) {
+			//check for boolean
+			if(idVal == null) {
+				throw new SchemaParserException("Const must include a boolean value", btt.getStart());
+			}
+			
+			Boolean b  = Boolean.FALSE;
+			if(idVal == TokenIdentifier.TRUE) {
+				b = Boolean.TRUE;
+			} else if(idVal == TokenIdentifier.FALSE) {
+			} else {
+				throw new SchemaParserException("Valid values are either true or false, not "+idVal, btt.getStart());
+			}
+			
+			BooleanConstant c = new BooleanConstant(name, b, m_lastComment);
+			c.setFileName(m_fileName);
+			m_lastComment = null;
+			
+			m_moduleStack.getLast().addConstant(c);
+			m_tokens.next(3);
+		} else if(btt != null) {
+				
+			if(nVal == null) {
+				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
+			}
+
+			TypeId typeId = lookupBaseType(btt.getKeyword());
+			if(typeId == null) {
+				throw new SchemaParserException("Something wrong with base type \""+btt.getKeyword()+"\"", btt.getStart());
+			}
+			
+			
+			
+			
+			NumberConstant c = new NumberConstant(typeId, name, nVal, m_lastComment);
+			c.setFileName(m_fileName);
+			m_lastComment = null;
+		
+	
+			m_moduleStack.getLast().addConstant(c);
+			m_tokens.next(3);
 		} else {
 			throw new SchemaParserException("Only base types and Strings can be declared const.", it.getEnd());
 
@@ -1354,6 +1390,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		case INT64:
 			result = TypeId.INT64;
 			break;
+		case CHAR:
+			result = TypeId.CHAR;
+			break;
 		default:
 			break;
 
@@ -1382,25 +1421,46 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolNameToken nameT = m_tokens.relative(-1, SymbolNameToken.class);
 				NumberToken numberT = m_tokens.relative(+1, NumberToken.class);
 				StringToken stringT = m_tokens.relative(+1, StringToken.class);
+				CharToken charT = m_tokens.relative(+1, CharToken.class);
 				SymbolNameToken constT = m_tokens.relative(+1, SymbolNameToken.class);
-
+				ScopeNameToken scopedConstT = m_tokens.relative(+1, ScopeNameToken.class);
+				IdentifierToken iConstT = m_tokens.relative(+1, IdentifierToken.class);
+				String comment = commentT != null ? commentT.combineLines() : null;
 				if(nameT != null && numberT != null) {
-					NameValueToken nvt = new NameValueToken(nameT, numberT, commentT);
+					//this should be for a number
+					NameValueToken<Number> nvt = new NameValueToken<Number>(Coord.findStart(nameT, numberT), Coord.findEnd(nameT, numberT, commentT), nameT.getSymbolName(), numberT.getNumber(), comment);
 					m_tokens.replace(equalsT, nvt);
 					m_tokens.remove(numberT);
 					m_tokens.remove(nameT);
 					m_tokens.remove(commentT);
 
 				} else if(nameT != null && stringT != null){
-					//this is likely a string  constant
-					System.out.println("BlueberrySchemaParser.collapseNameValues string constant stuff");
-					m_tokens.next();
+					//this should be for a String
+					NameValueToken<String> nvt = new NameValueToken<String>(Coord.findStart(nameT, numberT), Coord.findEnd(nameT, numberT, commentT), nameT.getSymbolName(), stringT.getString(), comment);
+
+					m_tokens.remove(nameT);
+					m_tokens.remove(commentT);
+					m_tokens.remove(stringT);
+					m_tokens.replace(equalsT, nvt);
+				} else if(nameT != null && scopedConstT != null) {
+					NameValueToken<ScopeName> nvt = new NameValueToken<ScopeName>(Coord.findStart(nameT, numberT), Coord.findEnd(nameT, numberT, commentT), nameT.getSymbolName(), scopedConstT.getScopeName(), comment);
+
+					m_tokens.remove(nameT);
+					m_tokens.remove(commentT);
+					m_tokens.remove(scopedConstT);
+					m_tokens.replace(equalsT, nvt);
 				} else if(nameT != null && constT != null) {
-					//TODO: for now we just remove the constant referring to a constant. This needs thought through better
+					NameValueToken<SymbolName> nvt = new NameValueToken<SymbolName>(Coord.findStart(nameT, numberT), Coord.findEnd(nameT, numberT, commentT), nameT.getSymbolName(), constT.getSymbolName(), comment);
 					m_tokens.remove(nameT);
 					m_tokens.remove(commentT);
 					m_tokens.remove(constT);
-					m_tokens.remove(equalsT);
+					m_tokens.replace(equalsT, nvt);
+				} else if(nameT != null && iConstT != null) {
+					NameValueToken<TokenIdentifier> nvt = new NameValueToken<TokenIdentifier>(Coord.findStart(nameT, numberT), Coord.findEnd(nameT, numberT, commentT), nameT.getSymbolName(), iConstT.getKeyword(), comment);
+					m_tokens.remove(nameT);
+					m_tokens.remove(commentT);
+					m_tokens.remove(iConstT);
+					m_tokens.replace(equalsT, nvt);
 				} else {
 					throw new SchemaParserException("Incorrect tokens around equals.", equalsT.getStart());
 				}
@@ -1465,46 +1525,62 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void assembleAnnotation(IdentifierToken at) throws SchemaParserException {
 
 		if(at != null) {
+			ScopeNameToken snt = m_tokens.relative(1, ScopeNameToken.class);
 			SymbolNameToken swt = m_tokens.relative(1, SymbolNameToken.class);
 			IdentifierToken bracketStart = m_tokens.relativeId(2, TokenIdentifier.BRACKET_START);
 			IdentifierToken bracketEnd = m_tokens.matchBrackets(bracketStart);
+			boolean noBrackets = false;
 
-			if(swt == null) {
+			if(swt == null && snt == null) {
 				throw new SchemaParserException("Annotation symbol should be followed by a name", at.getEnd());
 			} else if(bracketStart == null) {
-				throw new SchemaParserException("Annotation should be followed by an opening bracket.", swt.getEnd());
+//				throw new SchemaParserException("Annotation should be followed by an opening bracket.", swt.getEnd());
+				noBrackets = true;
 			} else if(bracketEnd == null) {
 				//this should never happen because the match bracket will throw its own exception
 			}
 			
-			Annotation a = new Annotation(swt.getSymbolName());
+			ScopeName sn = snt == null ? ScopeName.wrap(swt.getSymbolName()) : snt.getScopeName();
+			Annotation a = new Annotation(sn);
 			
-			m_tokens.setIndex(bracketStart);
-			m_tokens.next();
+			
 
-			while(m_tokens.isCurrentBefore( bracketEnd)) {
-				Token t = m_tokens.getCurrent();
-				if(t instanceof StringToken) {
-					
-					a.addParameter(t.getName());
-				} else if(t instanceof SymbolNameToken) {
-					//this is likely a constant
-					a.addDeferredParameter(((SymbolNameToken)t).getSymbolName(), getImports(true));
-				} else if(t instanceof NumberToken) {
-					NumberToken nt = (NumberToken)t;
-					a.addParameter(nt.getNumber());
-				} else if(t instanceof CommentToken) {
-					//ignore comments
-				} else if(t instanceof IdentifierToken) {
-					IdentifierToken comma = (IdentifierToken)t;
-					if(comma.getKeyword() != TokenIdentifier.COMMA){
-						throw new SchemaParserException("Parameters should e comma separated "+t, t.getStart());
-					}
-				} else {
-					throw new SchemaParserException("This doesn't seem to be a valid annotation parameter "+t, t.getStart());
-				}
+			if(noBrackets) {
+				m_tokens.setIndex(swt);
 				m_tokens.next();
-
+			} else {
+				m_tokens.setIndex(bracketStart);
+				m_tokens.next();
+				while(m_tokens.isCurrentBefore( bracketEnd)) {
+					Token t = m_tokens.getCurrent();
+					if(t instanceof StringToken) {
+						
+						a.addParameter(t.getName());
+					} else if(t instanceof SymbolNameToken) {
+						//this is likely a constant
+						a.addDeferredParameter(((SymbolNameToken)t).getSymbolName(), getImports(true));
+					} else if(t instanceof NumberToken) {
+						NumberToken nt = (NumberToken)t;
+						a.addParameter(nt.getNumber());
+					} else if(t instanceof CommentToken) {
+						//ignore comments
+					} else if(t instanceof IdentifierToken) {
+						IdentifierToken comma = (IdentifierToken)t;
+						if(comma.getKeyword() != TokenIdentifier.COMMA){
+							throw new SchemaParserException("Parameters should e comma separated "+t, t.getStart());
+						}
+					} else if(t instanceof NameValueToken) {
+						NameValueToken<?> nvt = (NameValueToken<?>)t;
+						a.addParameter(nvt.getValue());
+					} else {
+						throw new SchemaParserException("This doesn't seem to be a valid annotation parameter "+t, t.getStart());
+					}
+					m_tokens.next();
+	
+				}
+				if(m_tokens.getCurrent() == bracketEnd) {
+					m_tokens.next();
+				}
 			}
 			if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
 				String fn = a.getParameter(0, String.class);
@@ -1734,6 +1810,48 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			m_tokens.add(m_tokens.getFirstIndexBeforeLine(start.line), new CommentToken(start, end, comment, false));
 		}
 
+		return result;
+	}
+	/**
+	 * if the next coord is a single quotation mark then process as a string until the closing quote
+	 * if no valid closing quote is found then consume the remainder of the whole input
+	 * So this really is not different that processsing single quotes
+	 * @param c
+	 * @return
+	 */
+	private Coord processChars(Coord c) {
+		if(c == null) {
+			return null;
+		}
+
+		Coord result = c;
+
+		if(result.startsWith(CHAR_DELIMITER)) {
+			Coord start = result.incrementIndex(1);//we don't want to point to the quotation mark
+			Coord end = start;
+			boolean notDone = true;
+			while(notDone) {
+				Coord r = result.findNext(CHAR_DELIMITER, STRING_ESCAPE_DELIMITER);
+				if(r == null) {
+					System.out.println("BlueberrySchemaParser.processStrings");
+				}
+				result = r;
+				if(result.isAtEnd()) {
+					notDone = false;
+					end = result;
+				} else if(result.startsWith(CHAR_DELIMITER)) {
+					end = result;
+					notDone = false;
+					result = result.incrementIndex(1);
+
+				} else {
+					//this must be a escape character then the next character might be a quotation so skip it
+					result = result.incrementIndex(1);
+				}
+
+			}
+			m_tokens.add(new StringToken(start, end));
+		}
 		return result;
 	}
 	/**

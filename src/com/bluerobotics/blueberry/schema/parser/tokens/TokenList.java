@@ -133,10 +133,22 @@ public class TokenList {
 		}
 
 	}
+	/**
+	 * advance the current postion by 1
+	 */
 	public void next() {
-		if(!isAtEnd()) {
-			++m_index;
+		next(1);
+	}
+	/**
+	 * advances the current position by the specified amount
+	 * @param i
+	 */
+	public void next(int i) {
+		int j = i + m_index;
+		if(j > m_tokens.size()) {
+			j = m_tokens.size();
 		}
+		m_index = j;
 	}
 	public Token next(Token t) throws SchemaParserException {
 		int i = m_tokens.indexOf(t);

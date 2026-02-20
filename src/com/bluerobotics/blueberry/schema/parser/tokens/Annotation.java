@@ -59,17 +59,17 @@ public class Annotation  {
 		}
 	}
 
-	public static final SymbolName FILE_PATH_ANNOTATION = SymbolName.fromSnake("file_path");
-	public static final SymbolName TOPIC_ANNOTATION = SymbolName.fromSnake("topic");
-	public static final SymbolName MESSAGE_KEY_ANNOTATION      = SymbolName.fromSnake("message_key");
-	public static final SymbolName MODULE_KEY_ANNOTATION      = SymbolName.fromSnake("module_key");
-	public static final SymbolName SERIALIZATION_ANNOTATION      = SymbolName.fromSnake("serialization");
+	public static final ScopeName FILE_PATH_ANNOTATION         = ScopeName.wrap(SymbolName.fromSnake("file_path"));
+	public static final ScopeName TOPIC_ANNOTATION             = ScopeName.wrap(SymbolName.fromSnake("topic"));
+	public static final ScopeName MESSAGE_KEY_ANNOTATION       = ScopeName.wrap(SymbolName.fromSnake("message_key"));
+	public static final ScopeName MODULE_KEY_ANNOTATION        = ScopeName.wrap(SymbolName.fromSnake("module_key"));
+	public static final ScopeName SERIALIZATION_ANNOTATION     = ScopeName.wrap(SymbolName.fromSnake("serialization"));
 	public static final String TOPIC_NID_STRING = "{nid}";
 	public static final String TOPIC_DEVICE_TYPE_STRING = "{device_type}";
 	private final KnownAnnotation m_known;
-	private final SymbolName m_name;
+	private final ScopeName m_name;
 	private ArrayList<Object> m_parameters = new ArrayList<>();
-	public Annotation(SymbolName name) {
+	public Annotation(ScopeName name) {
 		m_name = name;
 		
 		KnownAnnotation ka = null;
@@ -84,7 +84,7 @@ public class Annotation  {
 	public boolean isKnown() {
 		return m_known != null;
 	}
-	public SymbolName getName() {
+	public ScopeName getName() {
 		return m_name;
 	}
 	public String toString() {

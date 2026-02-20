@@ -362,6 +362,33 @@ public class Coord implements Comparable<Coord> {
 	public boolean isSameFile(Coord c) {
 		return c.filePath.equals(filePath);
 	}
-	
+	/**
+	 * Determines the start coordinate of the specified tokens
+	 * @param ts - a list of tokens
+	 * @return - the coordinate of the start of the earliest token listed
+	 */
+	public static Coord findStart(Token... ts) {
+		Coord result = null;
+		for(Token t : ts) {
+			if(t != null) {
+				result = t.getStart().getFirst(result);
+			}
+		}
+		return result;
+	}
+	/**
+	 * Determines the end coordinate of the specified tokens
+	 * @param ts - a list of tokens
+	 * @return - the coordinate of the end of the last token listed
+	 */
+	public static Coord findEnd(Token... ts) {
+		Coord result = null;
+		for(Token t : ts) {
+			if(t != null) {
+				result = t.getEnd().getLast(result);
+			}
+		}
+		return result;
+	}
 
 }

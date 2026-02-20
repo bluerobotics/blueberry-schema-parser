@@ -28,6 +28,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
  */
 public enum TypeId {
 	BOOL           (1),
+	CHAR           (8),
 	INT8           (8),
 	UINT8          (8),
 	BOOLFIELD      (8),
