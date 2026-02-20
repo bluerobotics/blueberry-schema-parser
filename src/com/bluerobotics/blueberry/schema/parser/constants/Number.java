@@ -41,28 +41,46 @@ public class Number {
 	}
 	public Number(String s) {
 		BigDecimal result = null;
-		String s2 = s.toLowerCase();
+		String s2 = s.toLowerCase().trim();
 		int n = s2.length();
-		
-		if(s2.startsWith("0x")) {
-			result = new BigDecimal(Long.parseLong(s2, 2, n, 16));
+		s2 = s2.replace("ll", "");//remove long long suffix
+		s2 = s2.replace("u", "");//remove unsignedif(sign) {
+		if(s2.contains("_")) {
+			System.out.println("Blah");
+		}
+	
+		s2 = s2.replace("_", "");//remove underscores. They're technically not supported (I think) but we'll allow them
+		boolean sign = s2.startsWith("-");
+		if(sign) {
+			s2 = s2.substring(1);
+		}
+		if(s2.endsWith("d")) {
+			result = new BigDecimal(s2.replace("d",""));
+			m_integer = false;
+		} else if(s2.contains(".") || s2.contains("e")) {
+			result = new BigDecimal(s2);
+			m_integer = false;
+		} else if(s2.startsWith("0x")) {
+			s2 = s2.replace("0x", "");
+			result = new BigDecimal(Long.parseLong(s2, 16));
 			m_integer = true;
 		} else if(s2.startsWith("0d")) {
-			result = new BigDecimal(Long.parseLong(s2, 2, n, 10));
+			s2 = s2.replace("0d", "");
+			result = new BigDecimal(Long.parseLong(s2, 10));
 			m_integer = true;
 		} else if(s2.startsWith("0b")) {
-			result = new BigDecimal(Long.parseLong(s2, 2, n,  2));
+			s2 = s2.replace("0b", "");
+			result = new BigDecimal(Long.parseLong(s2,  2));
 			m_integer = true;
 		} else if(s2.length() > 1 && s2.startsWith("0")) {
-			result = new BigDecimal(Long.parseLong(s2, 1, n, 8));
+			result = new BigDecimal(Long.parseLong(s2, 8));
 			m_integer = true;
 		} else {
 			result = new BigDecimal(s2);
-			if(s2.contains(".") || s2.contains("e")) {
-				m_integer = false;
-			} else {
-				m_integer = true;
-			}
+			m_integer = true;
+		}
+		if(sign) {
+			result = result.negate();
 		}
 		m_value = result;
 	}

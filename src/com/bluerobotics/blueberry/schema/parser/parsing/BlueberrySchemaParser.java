@@ -752,7 +752,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void assembleImport(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
-			throw new SchemaParserException("Import statement does not have a name specified", null);
+			throw new SchemaParserException("Import statement does not have a name specified", it.getStart());
 		}
 		ScopeName scope = ScopeName.wrap(nameToken.getSymbolName());
 		if(!scope.isAbsolute()) {
