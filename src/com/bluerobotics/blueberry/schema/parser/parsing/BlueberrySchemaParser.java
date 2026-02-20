@@ -595,7 +595,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-								throw new SchemaParserException("Ambiguous field type: "+typeName.toUpperCamelString(), f.getCoord());
+//								throw new SchemaParserException("Type shadowning: "+typeName.toUpperCamelString(), f.getCoord());//TODO: add this as a warning
 							} else {
 								dft = df;
 							}	
@@ -1283,7 +1283,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
-	private void assembleModule(IdentifierToken it) throws SchemaParserException {
+	private void s(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken moduleName = m_tokens.relative(1, SymbolNameToken.class);
 		if(moduleName == null) {
 			moduleName = m_tokens.relative(1, ScopeNameToken.class);
@@ -1615,7 +1615,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(includeModule) {
 			result.add(m_moduleStack.getLast().getName());
 		}
-		result.add(m_moduleStack.getFirst().getName());
+		result.add(0, m_moduleStack.getFirst().getName());
 		return result.toArray(new ScopeName[result.size()]);
 	}
 	/**

@@ -45,9 +45,7 @@ public class Number {
 		int n = s2.length();
 		s2 = s2.replace("ll", "");//remove long long suffix
 		s2 = s2.replace("u", "");//remove unsignedif(sign) {
-		if(s2.contains("_")) {
-			System.out.println("Blah");
-		}
+	
 	
 		s2 = s2.replace("_", "");//remove underscores. They're technically not supported (I think) but we'll allow them
 		boolean sign = s2.startsWith("-");
