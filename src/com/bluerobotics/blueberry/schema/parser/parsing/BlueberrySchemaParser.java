@@ -1283,7 +1283,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 
 	}
-	private void s(IdentifierToken it) throws SchemaParserException {
+	private void assembleModule(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken moduleName = m_tokens.relative(1, SymbolNameToken.class);
 		if(moduleName == null) {
 			moduleName = m_tokens.relative(1, ScopeNameToken.class);
