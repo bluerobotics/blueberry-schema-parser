@@ -1254,7 +1254,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			m_moduleStack.getLast().addConstant(c);
 			m_tokens.next(3);
-		} else if(btt != null) {
+		} else {
 				
 			if(nVal == null) {
 				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
@@ -1274,9 +1274,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	
 			m_moduleStack.getLast().addConstant(c);
-			m_tokens.next(3);
-		} else {
-			throw new SchemaParserException("Not sure why this didn't parse. Probably a weird type for this const", it.getEnd());
+	
 		}
 
 
