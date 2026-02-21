@@ -29,6 +29,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
@@ -55,10 +56,26 @@ public class BlueberrySchemaParserGui implements Constants {
 	private final Settings m_settings;
 	private final JFrame m_frame;
 //	private MenuBar m_menuBar;
-	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser();
-
+	
+	public interface TextOutput {
+		void add(String s);
+	}
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextArea m_text = new JTextArea();
+	
+	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser(s -> {
+		append(s);
+	});
+
+	private void append(String s) {
+		SwingUtilities.invokeLater(() -> {
+			m_text.append(s);
+			m_text.append("\n");	
+			m_text.repaint();
+			System.out.println(s);
+		});
+	}
+	
 	
 	/**
 	 * 
@@ -226,35 +243,48 @@ public class BlueberrySchemaParserGui implements Constants {
 
 
 	}
-
-	private void generateJava() {
-		File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
-		String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
+	private void execute(Runnable r) {
+		Thread t = new Thread(() -> {
+			r.run();
+		});
+		t.start();
+	}
+	private void parse() {
+		execute(() -> noThreadParse());
 		
-		m_text.append("Generating Java code in \"" + dir+"\"\n");
-
-		if(m_parser.getMessages().size() == 0) {
-			parse();
-		}
-
-		String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-		JavaWriter w = new JavaWriter(dir, m_parser, h, p);
-		w.write();
-		m_text.append("Done");
+	}
+	private void generateJava() {
+		execute(() -> {
+			File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
+			String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
+			
+			append("Generating Java code in \"" + dir+"\"\n");
+	
+			if(m_parser.getMessages().size() == 0) {
+				noThreadParse();
+			}
+	
+			String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+			JavaWriter w = new JavaWriter(dir, m_parser, h, p);
+			w.write();
+			append("Done");
+		});
 	}
 
 	private void generateC() {
-		File dir = m_settings.getFile(Key.C_DIRECTORY);
-		m_text.append("Generating C code in \"" + dir+"\"\n");
-
-		if(m_parser.getMessages().size() == 0) {
-			parse();
-		}
-
-		String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-		CWriter w = new CWriter(dir, m_parser, h);
-		w.write();
-		m_text.append("Done");
+		execute(() -> {
+			File dir = m_settings.getFile(Key.C_DIRECTORY);
+			append("Generating C code in \"" + dir+"\"\n");
+	
+			if(m_parser.getMessages().size() == 0) {
+				noThreadParse();
+			}
+	
+			String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+			CWriter w = new CWriter(dir, m_parser, h);
+			w.write();
+			append("Done");
+		});
 	}
 	private String readHeader(URI uri) {
 		String header = "";
@@ -276,7 +306,7 @@ public class BlueberrySchemaParserGui implements Constants {
 	}
 	private void generatePretty() {
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
-		m_text.append("Generating Beautified Schema in \"" + dir+"\"\n");
+		append("Generating Beautified Schema in \"" + dir+"\"\n");
 
 //		if(m_parser.getTopLevelField() == null) {
 //			parse();
@@ -285,9 +315,9 @@ public class BlueberrySchemaParserGui implements Constants {
 		String h = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
 		PrettyWriter pw = new PrettyWriter(dir, m_parser, h);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
-		m_text.append("Done");
+		append("Done");
 	}
-	private void parse() {
+	private void noThreadParse() {
 
 		File dir = m_settings.getFile(Key.SCHEMA_DIRECTORY);
 		
@@ -295,14 +325,14 @@ public class BlueberrySchemaParserGui implements Constants {
 			m_parser.clear();
 			
 			loadFiles(dir, dir);
-		
+			append("Starting Parser");
 			m_parser.parse();
 		} catch(SchemaParserException e) {
-			m_text.append(e.toString());
+			append(e.toString());
 		}
 	}
 	private void loadFiles(File root, File f) throws SchemaParserException {
-		m_text.append("Parsing \""+f+"\"\n");
+		append("Loading \""+f+"\"\n");
 		if(f.isDirectory()) {
 			File[] fs = f.listFiles();
 			for(File cf : fs) {
@@ -317,7 +347,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				ss = lines.toArray(String[]::new);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				m_text.append(e.toString());
+				append(e.toString());
 			}
 
 			if(ss != null) {
@@ -326,7 +356,6 @@ public class BlueberrySchemaParserGui implements Constants {
 				m_parser.append(p.toString(), ss);
 				
 			}
-			m_text.append("Done\n");
 		}
 	}
 

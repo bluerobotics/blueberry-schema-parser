@@ -28,19 +28,25 @@ import java.util.function.Consumer;
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 
 /**
  * 
  */
 public class BlueModule implements AnnotationOwner {
 	private final ScopeName m_name;
-	public static final BlueModule ROOT = new BlueModule(ScopeName.ROOT);
+	public static final BlueModule ROOT = new BlueModule(ScopeName.ROOT, null);
 	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
 	private ArrayList<Constant<?>> m_constants = new ArrayList<>();
 	private FieldList m_defines = new FieldList();
 	private FieldList m_messages = new FieldList();
-	public BlueModule(ScopeName name) {
+	private final Coord m_coord;
+	public BlueModule(ScopeName name, Coord c) {
 		m_name = name;
+		m_coord = c;
+	}
+	public Coord getCoord() {
+		return m_coord;
 	}
 	
 	public ScopeName getName() {
@@ -76,10 +82,12 @@ public class BlueModule implements AnnotationOwner {
 		}
 	}
 
-	public BlueModule scope(SymbolName symbolName) {
-		return new BlueModule(m_name.addLevelBelow(symbolName));
+	public ScopeName scope(SymbolName symbolName) {
+		return getName().addLevelBelow(symbolName);
 	}
-
+	public BlueModule makeChild(SymbolName symbolName, Coord c) {
+		return new BlueModule(m_name.addLevelBelow(symbolName), c);
+	}
 	@Override
 	public boolean equals(Object o) {
 		boolean result = false;

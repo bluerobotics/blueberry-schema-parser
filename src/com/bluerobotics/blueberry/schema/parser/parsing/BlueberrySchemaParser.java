@@ -49,6 +49,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.gui.BlueberrySchemaParserGui.TextOutput;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
 import com.bluerobotics.blueberry.schema.parser.tokens.CharToken;
@@ -88,15 +89,22 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private final ArrayList<BlueModule> m_moduleStack = new ArrayList<>();//keeps track of the current module that the token being currently processed is within.
 	private final ArrayList<BlueModule> m_modules = new ArrayList<>();
 	private final ArrayList<IdentifierToken> m_moduleEnd = new ArrayList<>();
+	private final ArrayList<ParserIssue> m_issues = new ArrayList<>();
 	private String m_fileName = null;//indicates the filename that the present tokens are from
 	private String m_lastComment = null;//temporary storage for the last processed comment
-
+	private final TextOutput m_output;
+	
+	public BlueberrySchemaParser(TextOutput ti) {
+		m_output = ti;
+	}
+	
 	/**
 	 * Clear this parser's state in preparation for a new parsing session
 	 */
 	public void clear() {
 		m_tokens.clear();
 		m_defines.clear();
+		m_issues.clear();
 
 		m_messages.clear();
 		
@@ -145,6 +153,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	public void parse() throws SchemaParserException {
 		try {
+			issueNote("BlahBlahBlah", null);
 			collapseIdentifiers();
 			collapseNumbers();
 			collapseSymbolNames();
@@ -333,21 +342,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				int i = msg.getModuleMessageKey();
 				
 				if(keys.contains(i)) {
-					throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), null);
+					issueError("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), null);
 				}
 				keys.add(i);
 			});
 		});
-//		m_messages.forEachOfType(MessageField.class, false, mf -> {
-//			int i = mf.getModuleMessageKey();
-//			
-//			if(keys.contains(i)) {
-//				throw new SchemaParserException("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+mf.getName(), null);
-//			}
-//			keys.add(i);
-//				
-//			
-//		});
+
 	}
 	/**
 	 * Calculates the field indeces for messages, based on the word packing rules
@@ -359,7 +359,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			
 			if(mf.useCdrNotBlueberry()) {
-				throw new SchemaParserException("CDR serialization not supported yet", null);
+				issueError("CDR serialization not supported yet", mf.getCoord());
 				//TODO: add a field packer for CDR packing
 			} else {
 				BlueberryFieldPacker.pack(mf);
@@ -379,7 +379,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				 long n = getNextModuleKey();
 				a.addParameter(new Number(n));
 				m.addAnnotation(a);
-				System.out.println("BlueberrySchemaParser.fillInMissingModulekeyValues adding Module key: "+n+" for module "+m.getName().toLowerSnake("\\"));
+				issueNote("BlueberrySchemaParser.fillInMissingModulekeyValues adding Module key: "+n+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
 				
 			}
 		});
@@ -396,7 +396,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					 long i = getNextMessageKey(m);
 					a.addParameter(new Number(i));
 					mf.addAnnotation(a);
-					System.out.println("BlueberrySchemaParser.fillInMissingMessageKeyValues Adding new Key Value for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i));
+					issueNote("Adding new Key Value for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i), mf.getCoord());
 				}
 					
 			});
@@ -546,7 +546,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m_tokens.remove(tName);
 
 				} else if(tName == null) {
-					throw new SchemaParserException("There does not seem to be a name with this Scope separator.", s.getEnd());
+					issueError("There does not seem to be a name with this Scope separator.", s.getEnd());
 				}
 			}
 		}
@@ -584,25 +584,25 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				ScopeName typeName = f.getTypeName();
 				Field dft = null;
 				if(typeName == null && f.getTypeId() == null) {
-					throw new SchemaParserException("BlueberrySchemaParser.processDeferredFields type is somehow not defined.", f.getCoord());
+					issueError("BlueberrySchemaParser.processDeferredFields type is somehow not defined.", f.getCoord());
 				} else if(typeName != null) {
 				
 				
 					for(Field df : defines.getList()) {
 						if(df.getTypeName() == null) {
-							throw new SchemaParserException("Don't think this should ever be null", df.getCoord());
+							issueError("Don't think this should ever be null", df.getCoord());
 						}
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-//								throw new SchemaParserException("Type shadowning: "+typeName.toUpperCamelString(), f.getCoord());//TODO: add this as a warning
+								issueWarning("Type shadowing: "+typeName.toUpperCamelString(), f.getCoord());//TODO: add this as a warning
 							} else {
 								dft = df;
 							}	
 						}
 					}
 					if(dft == null) {
-						throw new SchemaParserException("Could not find a type definition for "+typeName, f.getCoord());
+						issueError("Could not find a type definition for "+typeName, f.getCoord());
 					}
 					fi.set(dft.makeInstance(f.getName()));
 				}
@@ -657,7 +657,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
 				TokenIdentifier newTi = null;
 				if(btt == null) {
-					throw new SchemaParserException("Unsigned keyword must be followed by a base type.", it.getEnd());
+					issueError("Unsigned keyword must be followed by a base type.", it.getEnd());
+					m_tokens.gotoNext(EolToken.class);
 				} else {
 					switch(btt.getKeyword()) {
 					case BYTE:
@@ -677,7 +678,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						newTi = TokenIdentifier.UINT64;
 						break;
 					default:
-						throw new SchemaParserException("Unsigned keyword makes no sense combined with "+btt.getName(), btt.getStart());
+						issueError("Unsigned keyword makes no sense combined with "+btt.getName(), btt.getStart());
 					}
 					BaseTypeToken newBtt = new BaseTypeToken(it.getStart(), btt.getEnd(), newTi);
 					m_tokens.replace(it, newBtt);
@@ -738,7 +739,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					assembleAnnotation(it);
 					break;
 				default:
-					System.out.println("Did not process "+it);
+					issueNote("Did not process "+it, it.getStart());
 					break;
 				}
 
@@ -787,7 +788,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceStart == null) {
 			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
 		}
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName();
+		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
 
 
 		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment, it.getStart());
@@ -820,7 +821,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(braceEnd == null) {
 			throw new SchemaParserException("Message statement has no closing brace.", braceStart.getEnd());
 		}
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName();
+		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
 
 
 		MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment, it.getEnd());
@@ -931,7 +932,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
 		}
 		m_tokens.setIndex(angleBracketEnd);
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName();
+		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
 		SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
 		sf.setFileName(m_fileName);
 		sf.add(cf);
@@ -1005,7 +1006,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else if(btt == null && typeName == null) {
 			throw new SchemaParserException("No type specified for this typedef.",it.getEnd());
 		}
-		ScopeName scopedName = m_moduleStack.getLast().scope(name.getSymbolName()).getName();
+		ScopeName scopedName = m_moduleStack.getLast().scope(name.getSymbolName());
 		
 		
 		//check for arrays and keep track of the dimensions
@@ -1155,7 +1156,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 
 		TypeId bt = (btt != null) ? lookupBaseType(btt.getKeyword()) : TypeId.UINT32;
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName()).getName();
+		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
 		EnumField et = new EnumField(SymbolName.EMPTY, name, bt, m_lastComment, enumT.getEnd());
 		et.setFileName(m_fileName);
 		m_lastComment = null;
@@ -1288,15 +1289,18 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		}
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		if(braceStart == null) {
-			throw new SchemaParserException("Module should start with opening brace", it.getEnd());
+			issueError("Module should start with opening brace", it.getEnd());
+			m_tokens.gotoNext(EolToken.class);
 		} else if(moduleName == null){
-			throw new SchemaParserException("Module name is ill-formed.",it.getEnd());
+			issueError("Module name is ill-formed.",it.getEnd());
+			m_tokens.gotoNext(EolToken.class);
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
 			if(braceEnd == null) {
-				throw new SchemaParserException("Module statement open brace is never closed.", braceStart.getEnd());
+				issueError("Module statement open brace is never closed.", braceStart.getEnd());
+				m_tokens.setIndex(m_tokens.getLast());
 			}
-			BlueModule m = m_moduleStack.getLast().scope(moduleName.getSymbolName());
+			BlueModule m = m_moduleStack.getLast().makeChild(moduleName.getSymbolName(), moduleName.getStart());
 			int i = m_modules.indexOf(m);
 			if(i >= 0) {
 				m = m_modules.get(i);
@@ -1979,7 +1983,19 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return m_modules;
 	}
 
-	
+	private void issueError(String desc, Coord loc) {
+		logIssue(ParserIssue.error(desc, loc));
+	}
+	private void issueWarning(String desc, Coord loc) {
+		logIssue(ParserIssue.warning(desc, loc));
+	}
+	private void issueNote(String desc, Coord loc) {
+		logIssue(ParserIssue.note(desc, loc));
+	}
+	private void logIssue(ParserIssue pi) {
+		m_issues.add(pi);
+		m_output.add(pi.toString());
+	}
 
 
 
