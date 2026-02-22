@@ -50,6 +50,9 @@ public class ParserIssue {
 	public static ParserIssue note(String description, Coord location) {
 		return new ParserIssue(description, location, Type.NOTE);
 	}
+	public Type getType() {
+		return m_type;
+	}
 	@Override
 	public String toString() {
 		String result =  ""+m_type+": "+m_description;

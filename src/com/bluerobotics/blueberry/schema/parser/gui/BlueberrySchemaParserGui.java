@@ -30,12 +30,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssue;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
@@ -60,22 +66,54 @@ public class BlueberrySchemaParserGui implements Constants {
 //	private MenuBar m_menuBar;
 	
 	public interface TextOutput {
-		void add(String s);
+		void add(String s, ParserIssue.Type t);
 	}
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
-	private final JTextArea m_text = new JTextArea();
-	
-	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser(s -> {
-		append(s);
-	});
+	private final JTextPane m_text = new JTextPane();
+	private final Style STYLE_RED = addStyle("red", Color.RED);
+	private final Style STYLE_BLUE = addStyle("orange", Color.BLUE);
+	private final Style STYLE_ORANGE = addStyle("blue", Color.ORANGE);
+	private final Style STYLE_GREEN = addStyle("green", Color.GREEN);
+	private final Style STYLE_BLACK = addStyle("black", Color.BLACK);
 
+	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser((s,t) -> {
+		
+		append(s,t);
+	});
 	private void append(String s) {
+		append(s, null);
+	}
+	private void append(String s, ParserIssue.Type t) {
 		SwingUtilities.invokeLater(() -> {
 			String s2 = s;
 			if(s2.charAt(s2.length() - 1) != '\n') {
 				s2 += "\n";
 			}
-			m_text.append(s2);
+			Document d = m_text.getDocument();
+			Style style = STYLE_BLACK;
+			if(t != null) {
+				switch(t) {
+				case ERROR:
+					style = STYLE_RED;
+					break;
+				case NOTE:
+					style = STYLE_BLUE;
+					break;
+				case WARNING:
+					style = STYLE_ORANGE;
+					break;
+				default:
+					style = STYLE_BLACK;
+					break;
+				}
+			}
+			
+			try {
+				d.insertString(d.getLength(), s2, style);
+			} catch (BadLocationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 //			m_text.append("\n");	
 			m_text.repaint();
 			System.out.println(s2);
@@ -83,6 +121,13 @@ public class BlueberrySchemaParserGui implements Constants {
 	}
 	
 	
+	private Style addStyle(String string, Color c) {
+		Style result = m_text.addStyle("Style red", null);
+		StyleConstants.setForeground(result, c);
+		return result;
+	}
+
+
 	/**
 	 * 
 	 * Constructs the GUI, maps actions
@@ -219,7 +264,7 @@ public class BlueberrySchemaParserGui implements Constants {
 			
 		});
 //		m_text.setPreferredSize(new Dimension(500,500));
-		m_text.setLineWrap(false);
+//		m_text.setLineWrap(false);
 		m_text.setFont(new Font("Monospaced", Font.PLAIN, 12));
 //		m_text.setWrapStyleWord(true);
 		split.add(new JScrollPane(m_text));

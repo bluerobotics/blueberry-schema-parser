@@ -1999,7 +1999,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	private void logIssue(ParserIssue pi) {
 		m_issues.add(pi);
-		m_output.add(pi.toString());
+		m_output.add(pi.toString(), pi.getType());
 	}
 
 
