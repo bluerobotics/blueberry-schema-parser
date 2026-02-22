@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -26,6 +27,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
@@ -195,11 +197,29 @@ public class BlueberrySchemaParserGui implements Constants {
 		setTable.getColumnModel().getColumn(1).setCellRenderer(new SettingsTableCellRenderer(m_settings));
 //		settings.setDefaultEditor(File.class, new SettingsTableFileCellEditor());
 //		settings.setDefaultEditor(SerialPort.class, new SettingsTableSerialPortCellEditor());
-		Box b = Box.createVerticalBox();
-		b.add(new JScrollPane(setTable));
-		m_text.setPreferredSize(new Dimension(500,500));
-		b.add(new JScrollPane(m_text));
-		cp.add(b);
+		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+//		Box b = Box.createVerticalBox();
+		JScrollPane jsp = new JScrollPane(setTable);
+		jsp.setPreferredSize(new Dimension(500,500));
+		split.add(jsp);
+		
+		m_settings.addSettingsListener(e -> {
+			int sp = m_settings.getInt(Key.SPLIT_PANE_POS);
+			
+			split.setDividerLocation(sp);
+		}, Key.SPLIT_PANE_POS, true);
+		split.addPropertyChangeListener(e -> {
+			int sp = split.getDividerLocation();
+			
+			m_settings.set(Key.SPLIT_PANE_POS, sp);
+			
+		});
+//		m_text.setPreferredSize(new Dimension(500,500));
+		m_text.setLineWrap(false);
+		m_text.setFont(new Font("Monospaced", Font.PLAIN, 12));
+//		m_text.setWrapStyleWord(true);
+		split.add(new JScrollPane(m_text));
+		cp.add(split);
 
 		f.setVisible(true);
 

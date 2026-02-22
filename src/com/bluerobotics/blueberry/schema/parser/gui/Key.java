@@ -49,6 +49,7 @@ public enum Key implements SettingsKey {
 	APP_POS_Y(Integer.class, 0),
 	APP_WIDTH(Integer.class, 1000),
 	APP_HEIGHT(Integer.class, 700),
+	SPLIT_PANE_POS(Integer.class, 200),
 	
 
 	;
