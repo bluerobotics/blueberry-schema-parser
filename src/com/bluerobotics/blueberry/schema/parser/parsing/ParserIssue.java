@@ -54,10 +54,21 @@ public class ParserIssue {
 	public String toString() {
 		String result =  ""+m_type+": "+m_description;
 		if(m_location != null) {
+			int loc = m_location.index;
+			String ss = m_location.getString();
+			int j = 0;
+			for(int i = 0; i < loc; ++i) {
+				if(ss.charAt(i) == '\t') {
+					j += 4;
+				}
+			}
+			loc += j;
+
+			ss = ss.replace("\t", "    ");
 			result += " in \""+m_location.filePath+"\" ";
 			result +=  " at line "+ (m_location.line + 1) + "\n";
-			result += m_location.getString() + "\n";
-			result += " ".repeat(m_location.index);
+			result += ss + "\n";
+			result += " ".repeat(loc);
 			result += "^\n";
 		} else {
 			result += "\n";
