@@ -153,7 +153,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 */
 	public void parse() throws SchemaParserException {
 		try {
-			issueNote("BlahBlahBlah", null);
 			collapseIdentifiers();
 			collapseNumbers();
 			collapseSymbolNames();
@@ -707,6 +706,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(!m_moduleEnd.isEmpty() && !m_tokens.isCurrentBefore(m_moduleEnd.getLast())) {
 				m_moduleStack.removeLast();
 				m_moduleEnd.removeLast();
+				m_tokens.next();//skip past last brace
 			}
 			IdentifierToken it = m_tokens.relative(0,IdentifierToken.class);
 			if(it != null) {
@@ -1589,9 +1589,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					m_tokens.next();
 	
 				}
-				if(m_tokens.getCurrent() == bracketEnd) {
-					m_tokens.next();
-				}
+//				if(m_tokens.getCurrent() == bracketEnd) {
+//					m_tokens.next();
+//				}
 			}
 			if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
 				String fn = a.getParameter(0, String.class);

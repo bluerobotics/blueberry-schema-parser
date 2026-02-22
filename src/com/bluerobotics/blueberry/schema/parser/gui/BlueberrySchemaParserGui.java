@@ -71,10 +71,14 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	private void append(String s) {
 		SwingUtilities.invokeLater(() -> {
-			m_text.append(s);
-			m_text.append("\n");	
+			String s2 = s;
+			if(s2.charAt(s2.length() - 1) != '\n') {
+				s2 += "\n";
+			}
+			m_text.append(s2);
+//			m_text.append("\n");	
 			m_text.repaint();
-			System.out.println(s);
+			System.out.println(s2);
 		});
 	}
 	
@@ -270,10 +274,12 @@ public class BlueberrySchemaParserGui implements Constants {
 		t.start();
 	}
 	private void parse() {
+		m_text.setText("");
 		execute(() -> noThreadParse());
 		
 	}
 	private void generateJava() {
+		m_text.setText("");
 		execute(() -> {
 			File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 			String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
@@ -292,6 +298,7 @@ public class BlueberrySchemaParserGui implements Constants {
 	}
 
 	private void generateC() {
+		m_text.setText("");
 		execute(() -> {
 			File dir = m_settings.getFile(Key.C_DIRECTORY);
 			append("Generating C code in \"" + dir+"\"\n");
