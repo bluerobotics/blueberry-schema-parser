@@ -378,7 +378,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				 long n = getNextModuleKey();
 				a.addParameter(new Number(n));
 				m.addAnnotation(a);
-				issueNote("BlueberrySchemaParser.fillInMissingModulekeyValues adding Module key: "+n+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
+				issueNote("Adding module_key: "+n+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
 				
 			}
 		});
@@ -395,7 +395,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					 long i = getNextMessageKey(m);
 					a.addParameter(new Number(i));
 					mf.addAnnotation(a);
-					issueNote("Adding new Key Value for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i), mf.getCoord());
+					issueNote("Adding message_key for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i), mf.getCoord());
 				}
 					
 			});
@@ -838,14 +838,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_tokens.setIndex(braceStart);
 		m_tokens.next();
 		while(m_tokens.isCurrentBefore(braceEnd)) {
-			if(m_tokens.getCurrent() instanceof CommentToken) {
-				m_tokens.next();
-			}
-			if(m_tokens.getCurrent() instanceof EolToken) {
-				m_tokens.next();
-			} else if(m_tokens.relativeId(0, TokenIdentifier.ANNOTATION_START) != null) {
-				//this is the start of an annotation
-				assembleAnnotation(m_tokens.relativeId(0, TokenIdentifier.ANNOTATION_START));
+			if(IdentifierToken.check(m_tokens.getCurrent(), TokenIdentifier.ANNOTATION_START)) {
+				assembleAnnotation((IdentifierToken)m_tokens.getCurrent());
+				 
+			} else if(m_tokens.getCurrent() instanceof CommentToken) {
+				
+			} else if(m_tokens.getCurrent() instanceof EolToken) {
+				
+			
 			} else {
 			
 				//reuse a bunch of fields from above for the sub-field
@@ -878,14 +878,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 					} else {//must be a defined type field
 						//we have to defer looking this up for now
-						DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName()), getImports(true), comment, nameToken.getEnd());
+						DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName()), getImports(true), comment, nameToken.getStart());
 						m.add(df);
 						m_tokens.setIndex(nameToken);	
 					}
 				}
 				
-				m_tokens.next();
+				
 			}
+			m_tokens.next();
 		}
 		
 	}
@@ -911,9 +912,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			cf = new BaseField(null, tid, null, btt.getEnd());
 		} else if(snt != null) {
-			cf = new DeferredField(null, ScopeName.wrap(snt.getSymbolName()), getImports(true), null, snt.getEnd());
+			cf = new DeferredField(null, ScopeName.wrap(snt.getSymbolName()), getImports(true), null, snt.getStart());
 		} else {
-			throw new SchemaParserException("Sequence must be defined with a type for its elements.", it.getEnd());
+			
+			issueError("Sequence must be defined with a type for its elements.", it.getStart());
+			m_tokens.gotoNext(EolToken.class);
 		}
 		IdentifierToken commaT = m_tokens.relativeId(3, TokenIdentifier.COMMA);
 		NumberToken nt = m_tokens.relative(4, NumberToken.class);
@@ -1254,11 +1257,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			m_lastComment = null;
 			
 			m_moduleStack.getLast().addConstant(c);
-			m_tokens.next(3);
+			m_tokens.next(2);
 		} else {
 				
 			if(nVal == null) {
-				throw new SchemaParserException("Const must include a name and value.", it.getEnd());
+				issueError("Const must include a name and value.", it.getEnd());
+				m_tokens.gotoNext(EolToken.class);
 			}
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
@@ -1275,6 +1279,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 	
 			m_moduleStack.getLast().addConstant(c);
+			m_tokens.next(2);
 	
 		}
 

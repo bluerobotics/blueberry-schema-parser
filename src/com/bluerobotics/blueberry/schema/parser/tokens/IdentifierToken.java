@@ -65,4 +65,5 @@ public class IdentifierToken extends AbstractToken {
 		return result;
 	}
 
+
 }
