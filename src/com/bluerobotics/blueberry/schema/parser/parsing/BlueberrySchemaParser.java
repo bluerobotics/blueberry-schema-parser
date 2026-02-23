@@ -168,7 +168,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseEols();
 			
 			collapseNameValues();
-			collapseSemicolons();
+//			collapseSemicolons();
 			
 			//check all brackets of all kinds to be sure they all match
 			m_tokens.matchBrackets(null);
@@ -657,7 +657,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				TokenIdentifier newTi = null;
 				if(btt == null) {
 					issueError("Unsigned keyword must be followed by a base type.", it.getEnd());
-					m_tokens.gotoNext(EolToken.class);
+					m_tokens.gotoSemi();
 				} else {
 					switch(btt.getKeyword()) {
 					case BYTE:
@@ -738,6 +738,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				case ANNOTATION_START:
 					assembleAnnotation(it);
 					break;
+				case SEMICOLON:
+					//nothing to do
+					break;
 				default:
 					issueNote("Did not process "+it, it.getStart());
 					break;
@@ -763,7 +766,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void assembleImport(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
-			throw new SchemaParserException("Import statement does not have a name specified", it.getStart());
+			issueError("Import statement does not have a name specified", it.getStart());
+			m_tokens.gotoSemi();
 		}
 		ScopeName scope = ScopeName.wrap(nameToken.getSymbolName());
 		if(!scope.isAbsolute()) {
@@ -844,7 +848,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			} else if(m_tokens.getCurrent() instanceof CommentToken) {
 				
 			} else if(m_tokens.getCurrent() instanceof EolToken) {
-				
+			} else if(IdentifierToken.check(m_tokens.getCurrent(), TokenIdentifier.SEMICOLON)){
 			
 			} else {
 			
@@ -916,7 +920,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else {
 			
 			issueError("Sequence must be defined with a type for its elements.", it.getStart());
-			m_tokens.gotoNext(EolToken.class);
+			m_tokens.gotoSemi();
 		}
 		IdentifierToken commaT = m_tokens.relativeId(3, TokenIdentifier.COMMA);
 		NumberToken nt = m_tokens.relative(4, NumberToken.class);
@@ -1262,7 +1266,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				
 			if(nVal == null) {
 				issueError("Const must include a name and value.", it.getEnd());
-				m_tokens.gotoNext(EolToken.class);
+				m_tokens.gotoSemi();
 			}
 
 			TypeId typeId = lookupBaseType(btt.getKeyword());
@@ -1295,10 +1299,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		if(braceStart == null) {
 			issueError("Module should start with opening brace", it.getEnd());
-			m_tokens.gotoNext(EolToken.class);
+			m_tokens.gotoSemi();
 		} else if(moduleName == null){
 			issueError("Module name is ill-formed.",it.getEnd());
-			m_tokens.gotoNext(EolToken.class);
+			m_tokens.gotoSemi();
 		} else {
 			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
 			if(braceEnd == null) {
@@ -1647,7 +1651,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 							TokenIdentifier.BRACKET_START,
 							TokenIdentifier.COMMA,
 							TokenIdentifier.SQUARE_BRACKET_END,
-							TokenIdentifier.SQUARE_BRACKET_START
+							TokenIdentifier.SQUARE_BRACKET_START,
+							TokenIdentifier.SEMICOLON
 					)) {
 						m_tokens.remove(et);
 					} else {
@@ -1663,7 +1668,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * removes any semicolon tokens that occur either right right after  the following tokens:
 	 * NameValueToken, CommmentToken, FilePathToken, closing brace, closing bracket, closing square bracket
 	 * Also removes if the token right after the semicolon is:
-	 * NameValueToken, CommentToken, FilePathToken, EolToken, BraceEnd, BracketEnd, SquareBracketEnd
+	 * NameValueToken, CommentToken, FilePathToken, BraceEnd, BracketEnd, SquareBracketEnd
 	 */
 	private void collapseSemicolons() {
 		m_tokens.resetIndex();
@@ -1674,10 +1679,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			IdentifierToken itPrev = m_tokens.relative(-1, IdentifierToken.class);
 			Token tNext = m_tokens.relative(1);
 			IdentifierToken itNext = m_tokens.relative(1, IdentifierToken.class);
-			if(tPrev instanceof NameValueToken || tPrev instanceof CommentToken || tPrev instanceof FilePathToken || tPrev instanceof EolToken
+			if(tPrev instanceof NameValueToken || tPrev instanceof CommentToken || tPrev instanceof FilePathToken
 					|| (itPrev != null && itPrev.check(TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END))) {
 				m_tokens.remove(et);
-			} else if(tNext instanceof NameValueToken || tNext instanceof CommentToken || tNext instanceof FilePathToken || tNext instanceof EolToken
+			} else if(tNext instanceof NameValueToken || tNext instanceof CommentToken || tNext instanceof FilePathToken 
 					|| (itNext != null && itNext.check(TokenIdentifier.BRACE_END, TokenIdentifier.BRACKET_END, TokenIdentifier.SQUARE_BRACKET_END))) {
 				m_tokens.remove(et);
 			} else {

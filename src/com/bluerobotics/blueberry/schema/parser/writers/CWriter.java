@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bluerobotics.blueberry.schema.parser.constants.BooleanConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
@@ -108,11 +109,15 @@ public class CWriter extends SourceWriter {
 			addMessageKey(mf);	
 		});
 		
-		addLineComment("Numerical Constants");
+		addLineComment("Numerical & Boolean Constants");
 		module.getConstants().forEach(c -> {
 			if(c instanceof StringConstant) {
 //				StringConstant sc = (StringConstant)c;
 //				addLine("const char "+sc.getName()+"[] = \"" + sc.getValue()+"\";");
+			} else if(c instanceof BooleanConstant) {
+				BooleanConstant bc = (BooleanConstant)c;
+				String val = bc.getValue() ? "true" : "false";
+				addLine("#define "+bc.getName().toUpperSnakeString()+" ("+val+")");
 			} else if(c instanceof NumberConstant) {
 				NumberConstant nc = (NumberConstant)c;
 				TypeId tid = nc.getType().getTypeId();

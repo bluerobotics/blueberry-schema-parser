@@ -642,4 +642,9 @@ public class TokenList {
 	}
 
 
+	public void gotoSemi() {
+		gotoNextId(TokenIdentifier.SEMICOLON);
+	}
+
+
 }
