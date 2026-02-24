@@ -102,6 +102,7 @@ public class TokenList {
 		}
 	}
 
+	
 	public Token relative(int i) {
 		int j = i + m_index;
 		if(j < 0 || j >= m_tokens.size()) {

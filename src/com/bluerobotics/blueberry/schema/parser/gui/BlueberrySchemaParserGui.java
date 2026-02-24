@@ -67,8 +67,8 @@ public class BlueberrySchemaParserGui implements Constants {
 	private final ActionManager m_actions = new ActionManager(RESOURCE_PATH);
 	private final JTextPane m_text = new JTextPane();
 	private final Style STYLE_RED = addStyle("red", Color.RED);
-	private final Style STYLE_BLUE = addStyle("orange", Color.BLUE);
-	private final Style STYLE_ORANGE = addStyle("blue", Color.ORANGE);
+	private final Style STYLE_BLUE = addStyle("blue", Color.BLUE);
+	private final Style STYLE_ORANGE = addStyle("orange", new Color(220, 100, 0));
 	private final Style STYLE_GREEN = addStyle("green", Color.GREEN);
 	private final Style STYLE_BLACK = addStyle("black", Color.BLACK);
 

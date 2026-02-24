@@ -863,8 +863,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(btt == null && typeNameToken == null) {
 					throw new SchemaParserException("Expecting a type name.", m_tokens.getCurrent().getStart());
 				} else if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
-					StringField sf = processString(btt);
-					m.add(sf);
+					m.add(processString(btt));
 				} else {
 					SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 					if(nameToken == null) {
@@ -912,44 +911,51 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		if(btt != null) {
 			TypeId tid = lookupBaseType(btt.getKeyword());
 			if(btt.getKeyword() == TokenIdentifier.STRING) {
-				throw new SchemaParserException("Sequences containing Strings has not been implemented yet.",it.getStart());
+				cf = processString(btt);
+				
+			} else {
+				cf = new BaseField(null, tid, null, btt.getEnd());
 			}
-			cf = new BaseField(null, tid, null, btt.getEnd());
 		} else if(snt != null) {
 			cf = new DeferredField(null, ScopeName.wrap(snt.getSymbolName()), getImports(true), null, snt.getStart());
 		} else {
 			
-			issueError("Sequence must be defined with a type for its elements.", it.getStart());
-			m_tokens.gotoSemi();
+			issueError("Sequence must be defined with a type for its elements.", it.getEnd());
+			
 		}
-		IdentifierToken commaT = m_tokens.relativeId(3, TokenIdentifier.COMMA);
-		NumberToken nt = m_tokens.relative(4, NumberToken.class);
-		int n = -1;
-		if(commaT != null && nt != null) {
-			n = nt.getNumber().asInt();
-		}
-		IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
-		if(angleBracketEnd == null) {
-			throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
-		}
+		if(cf != null) {
+			IdentifierToken commaT = m_tokens.relativeId(3, TokenIdentifier.COMMA);
+			NumberToken nt = m_tokens.relative(4, NumberToken.class);
+			int n = -1;
+			if(commaT != null && nt != null) {
+				n = nt.getNumber().asInt();
+			}
+			IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
+			if(angleBracketEnd == null) {
+				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
+			}
+			
+			m_tokens.setIndex(angleBracketEnd);
+			SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+			if(nameToken == null) {
+				throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
+			}
+			m_tokens.setIndex(angleBracketEnd);
+			ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
+			SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
+			sf.setFileName(m_fileName);
+			sf.add(cf);
+			sf.setLimit(n);
+			m_lastComment = null;
+			m_defines.add(sf);
+			m_moduleStack.getLast().getDefines().add(sf);
+			
 		
-		m_tokens.setIndex(angleBracketEnd);
-		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
-		if(nameToken == null) {
-			throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
 		}
-		m_tokens.setIndex(angleBracketEnd);
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
-		SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
-		sf.setFileName(m_fileName);
-		sf.add(cf);
-		sf.setLimit(n);
-		m_lastComment = null;
-		m_defines.add(sf);
-		m_moduleStack.getLast().getDefines().add(sf);
-		m_tokens.setIndex(nameToken);
-		
+		m_tokens.gotoSemi();
 	}
+
+
 	/**
 	 * processes a string token at the current token list position
 	 * @param it
@@ -1223,71 +1229,86 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		TokenIdentifier ti = btt != null ? btt.getKeyword() : null;
 		if(btt == null) {
-			throw new SchemaParserException("Only base types and Strings can be declared const so far.", it.getEnd());
+			issueWarning("Only base types and Strings can be declared const so far.", it.getStart());
+			m_tokens.gotoSemi();
 		} else if(ti == TokenIdentifier.STRING || ti == TokenIdentifier.CHAR) {
 			if(sVal == null) {
-				throw new SchemaParserException("Const string must include a string value", it.getEnd());
-			}
-			StringConstant c = new StringConstant(name, sVal, m_lastComment);
-			c.setFileName(m_fileName);
-			m_lastComment = null;
-			m_moduleStack.getLast().addConstant(c);
-			//TODO not sure if there will be a semicolon here at this point
-			IdentifierToken semiT = m_tokens.relativeId(5, TokenIdentifier.SEMICOLON);
-			if(semiT != null) {
-				m_tokens.remove(semiT);
+				issueError("Const string must include a string value", it.getStart());
+				m_tokens.gotoSemi();
+			} else {
+				StringConstant c = new StringConstant(name, sVal, m_lastComment);
+				c.setFileName(m_fileName);
+				m_lastComment = null;
+				m_moduleStack.getLast().addConstant(c);
+			
 			}
 			
 			
 
-			m_tokens.next(3);
+
 		
 		} else if(btt.getKeyword() == TokenIdentifier.BOOLEAN) {
 			//check for boolean
-			if(idVal == null) {
-				throw new SchemaParserException("Const must include a boolean value", btt.getStart());
-			}
+			Boolean b  = null;
 			
-			Boolean b  = Boolean.FALSE;
-			if(idVal == TokenIdentifier.TRUE) {
-				b = Boolean.TRUE;
-			} else if(idVal == TokenIdentifier.FALSE) {
+			if(idVal != null){
+				if(idVal == TokenIdentifier.TRUE) {
+					b = Boolean.TRUE;
+				} else if(idVal == TokenIdentifier.FALSE) {
+					b = Boolean.FALSE;
+				} else {
+					issueError("Valid values are either true or false, not "+idVal, btt.getStart());
+					
+				}
+			} else if(nVal != null){
+				if(nVal.asFloat() > 0.0) {
+					b = Boolean.TRUE; 
+				} else if(nVal.asFloat() < 0.0) {
+					issueError("Negative value is inappropriate for boolean type.", btt.getStart());
+					
+				}
 			} else {
-				throw new SchemaParserException("Valid values are either true or false, not "+idVal, btt.getStart());
+				issueError("Const must include a boolean value", btt.getStart());
+				
 			}
 			
-			BooleanConstant c = new BooleanConstant(name, b, m_lastComment);
-			c.setFileName(m_fileName);
-			m_lastComment = null;
+			if(b != null) {
 			
-			m_moduleStack.getLast().addConstant(c);
-			m_tokens.next(2);
+				BooleanConstant c = new BooleanConstant(name, b, m_lastComment);
+				c.setFileName(m_fileName);
+				m_lastComment = null;
+				
+				m_moduleStack.getLast().addConstant(c);
+			}
+			
 		} else {
 				
 			if(nVal == null) {
 				issueError("Const must include a name and value.", it.getEnd());
-				m_tokens.gotoSemi();
-			}
+				
+			} else {
 
-			TypeId typeId = lookupBaseType(btt.getKeyword());
-			if(typeId == null) {
-				throw new SchemaParserException("Something wrong with base type \""+btt.getKeyword()+"\"", btt.getStart());
+				TypeId typeId = lookupBaseType(btt.getKeyword());
+				if(typeId == null) {
+					issueError("Something wrong with base type \""+btt.getKeyword()+"\"", btt.getStart());
+				} else {
+				
+			
+			
+				
+					NumberConstant c = new NumberConstant(typeId, name, nVal, m_lastComment);
+					c.setFileName(m_fileName);
+					m_lastComment = null;
+				
+			
+					m_moduleStack.getLast().addConstant(c);
+				}
 			}
-			
-			
-			
-			
-			NumberConstant c = new NumberConstant(typeId, name, nVal, m_lastComment);
-			c.setFileName(m_fileName);
-			m_lastComment = null;
 		
-	
-			m_moduleStack.getLast().addConstant(c);
-			m_tokens.next(2);
 	
 		}
 
-
+		m_tokens.gotoSemi();
 
 
 	}
