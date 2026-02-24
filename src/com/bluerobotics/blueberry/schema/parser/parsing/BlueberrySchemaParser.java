@@ -526,26 +526,35 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			IdentifierToken s = m_tokens.gotoNextId(TokenIdentifier.SCOPE_SEPARATOR);
 			if(s != null) {
 				SymbolNameToken tName = m_tokens.relative(1, SymbolNameToken.class);
-				SymbolNameToken tScope = m_tokens.relative(-1, SymbolNameToken.class);
-				if(tScope == null) {
-					tScope = m_tokens.relative(-1, ScopeNameToken.class);
+				ScopeNameToken tScopeBefore = m_tokens.relative(-1, ScopeNameToken.class);
+				SymbolNameToken tSymbolBefore = m_tokens.relative(-1, SymbolNameToken.class);
+				Token tBefore = m_tokens.relative(-1);
+				ScopeName scopeBefore = null;
+				SymbolName scopeAfter = tName != null ? tName.getSymbolName() : null;
+				if(tScopeBefore != null) {
+					scopeBefore = tScopeBefore.getScopeName();
+				} else if(tSymbolBefore != null) {
+					scopeBefore = ScopeName.wrap(tSymbolBefore.getSymbolName());
 				}
-				if(tScope != null && tName != null) {
+				if(scopeBefore != null && scopeAfter != null) {
 					//this should be a scoped name
-					ScopeName sn = ScopeName.combine(tScope.getSymbolName(), tName.getSymbolName());
-					ScopeNameToken swt = new ScopeNameToken(tScope.getStart(), tName.getEnd(), sn);
-					m_tokens.replace(tScope, swt);
+					
+					ScopeNameToken swt = new ScopeNameToken(tBefore.getStart(), tName.getEnd(), scopeBefore.addLevelBelow(scopeAfter));
+					m_tokens.replace(tBefore, swt);
 					m_tokens.remove(s);
 					m_tokens.remove(tName);
-				} else if(tScope == null && tName != null){
-					ScopeName sn = ScopeName.ROOT.addLevelBelow(tName.getSymbolName());
+				} else if(scopeBefore == null && scopeAfter != null){
+					ScopeName sn = ScopeName.ROOT.addLevelBelow(scopeAfter);
 					ScopeNameToken swt = new ScopeNameToken(s.getStart(), tName.getEnd(), sn);
 
 					m_tokens.replace(s, swt);
 					m_tokens.remove(tName);
 
 				} else if(tName == null) {
-					issueError("There does not seem to be a name with this Scope separator.", s.getEnd());
+					//this must be a root separator
+					ScopeNameToken swt = new ScopeNameToken(s.getStart(), s.getEnd(), ScopeName.ROOT);
+
+					m_tokens.replace(s, swt);
 				}
 			}
 		}
@@ -601,9 +610,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						}
 					}
 					if(dft == null) {
-						issueError("Could not find a type definition for "+typeName, f.getCoord());
+						issueError("Could not find a type definition for \""+typeName+"\"", f.getCoord());
+					} else {
+						fi.set(dft.makeInstance(f.getName()));
 					}
-					fi.set(dft.makeInstance(f.getName()));
 				}
 			} else if(f instanceof ParentField) {
 				processDeferredFields(((ParentField)f).getChildren().getIterator(), defines);
@@ -856,39 +866,40 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				CommentToken ct = m_tokens.relative(-1, CommentToken.class);
 				String comment = ct != null ? ct.combineLines() : null;
 				SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
+				ScopeNameToken typeScopeNameToken = m_tokens.relative(0, ScopeNameToken.class);
+				ScopeName tn = typeScopeNameToken != null ? typeScopeNameToken.getScopeName() : typeNameToken != null ? ScopeName.wrap(typeNameToken.getSymbolName()) : null;
 //				if(typeNameToken == null) {
 //					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
 //				}
 				BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
-				if(btt == null && typeNameToken == null) {
-					throw new SchemaParserException("Expecting a type name.", m_tokens.getCurrent().getStart());
+				if(btt == null && tn == null) {
+					issueError("Expecting a type name.", m_tokens.getCurrent().getStart());
 				} else if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
-					
+					//it's a string
 					m.add(processString(btt, true, null, ct));
+					
 				} else {
 					SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 					if(nameToken == null) {
-						throw new SchemaParserException("No name specified for field", m_tokens.getCurrent().getEnd());
-					}
-					
-					if(btt != null) {
+						issueError("No name specified for field", m_tokens.getCurrent().getEnd());
+					} else if(btt != null) {
 						//there's a base type identifier so we're either adding a string or a numerical base type
 						
 					
 						
 						//add a base type field
 						m.add(new BaseField(nameToken.getSymbolName(), lookupBaseType(btt.getKeyword()), comment, nameToken.getEnd()));
-						m_tokens.setIndex(nameToken);
+						
 						
 					} else {//must be a defined type field
 						//we have to defer looking this up for now
-						DeferredField df = new DeferredField(nameToken.getSymbolName(), ScopeName.wrap(typeNameToken.getSymbolName()), getImports(true), comment, nameToken.getStart());
+						DeferredField df = new DeferredField(nameToken.getSymbolName(), tn, getImports(true), comment, nameToken.getStart());
 						m.add(df);
-						m_tokens.setIndex(nameToken);	
+							
 					}
 				}
 				
-				
+				m_tokens.gotoSemi();
 			}
 			m_tokens.next();
 		}
@@ -1575,7 +1586,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			boolean noBrackets = false;
 
 			if(swt == null && snt == null) {
-				throw new SchemaParserException("Annotation symbol should be followed by a name", at.getEnd());
+				issueError("Annotation symbol should be followed by a name", at.getEnd());
+				m_tokens.gotoEol();
 			} else if(bracketStart == null) {
 //				throw new SchemaParserException("Annotation should be followed by an opening bracket.", swt.getEnd());
 				noBrackets = true;

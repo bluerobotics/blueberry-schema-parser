@@ -64,6 +64,20 @@ public class IdentifierToken extends AbstractToken {
 		}
 		return result;
 	}
+	public IdentifierToken test(TokenIdentifier...ids) {
+		IdentifierToken result = null;
+		if(check(ids)) {
+			result = this;
+		}
+		return result;
+	}
+	public static IdentifierToken test(Token t, TokenIdentifier... ids) {
+		IdentifierToken result = null;
+		if(t != null && t instanceof IdentifierToken) {
+			result = ((IdentifierToken)t).test(ids);
+		}
+		return result;
+	}
 
 
 }

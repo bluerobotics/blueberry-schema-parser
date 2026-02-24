@@ -106,14 +106,7 @@ public class TokenList {
 	}
 
 	
-	public Token relative(int i) {
-		int j = i + m_index;
-		if(j < 0 || j >= m_tokens.size()) {
-			return null;
-		}
-		return m_tokens.get(j);
 
-	}
 	public boolean isAtEnd() {
 		return m_index >= m_tokens.size();
 	}
@@ -367,6 +360,14 @@ public class TokenList {
 
 		return result;
 	}
+	public Token relative(int i) {
+		int j = i + m_index;
+		if(j < 0 || j >= m_tokens.size()) {
+			return null;
+		}
+		return m_tokens.get(j);
+
+	}
 	/**
 	 * get the token in the position relative to the current token if it is of the specified type. Otherwise it return null.
 	 * @param <T>
@@ -375,24 +376,35 @@ public class TokenList {
 	 * @return
 	 */
 	public <T extends Token> T relative(int i, Class<T> type){
-		return relative(getCurrent(), i, type);
-	}
-	public Token relative(Token t, int i) {
-		Token result = null;
-		int j = m_tokens.indexOf(t);
-		if(j > 0) {
-			--j;
-			result = m_tokens.get(j);
+		T result = null;
+		Token t = relative(i);
+		if(type.isInstance(t)) {
+			result = type.cast(t);
 		}
 		return result;
+	}
+	public Token relative(Token t, int i) {
+		int j = m_tokens.indexOf(t) - m_index+i;
+		return relative(j);
 	}
 	public <T extends Token> T relative(Token t, int i, Class<T> type) {
 		T result = null;
 		Token t2 = relative(t, i);
-		if(t2 != null && t2.getClass() == type) {
+		if(t2 != null && type.isInstance(t2)) {
 			result = type.cast(t2);
 		}
 		return result;
+	}
+	
+	
+	public IdentifierToken relativeId(int i, TokenIdentifier... ids) {
+
+		return IdentifierToken.test(relative(i, IdentifierToken.class), ids);
+	}
+
+	public IdentifierToken relativeId(Token t, int i, TokenIdentifier... ids) {
+		int j = m_tokens.indexOf(t) - m_index;
+		return relativeId(j, ids);
 	}
 
 	/**
@@ -409,20 +421,7 @@ public class TokenList {
 
 		return type.cast(r);
 	}
-	public IdentifierToken relativeId(int i, TokenIdentifier id) {
-		return relativeId(getCurrent(), i, id);
-	}
 
-	public IdentifierToken relativeId(Token t, int i, TokenIdentifier id) {
-		IdentifierToken result = relative(t, i, IdentifierToken.class);
-		if(result != null) {
-			if(result.getKeyword() != id) {
-				result = null;
-			}
-		}
-
-		return result;
-	}
 	public String toString() {
 		return getClass().getSimpleName() + "("+getCurrent()+", " + relative(1) + ", " + relative(2) + "...)";
 	}
@@ -644,6 +643,11 @@ public class TokenList {
 
 
 	public void gotoSemi() {
+		gotoNextId(TokenIdentifier.SEMICOLON);
+	}
+
+
+	public void gotoEol() {
 		gotoNextId(TokenIdentifier.SEMICOLON);
 	}
 
