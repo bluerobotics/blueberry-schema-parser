@@ -403,7 +403,7 @@ public class TokenList {
 	}
 
 	public IdentifierToken relativeId(Token t, int i, TokenIdentifier... ids) {
-		int j = m_tokens.indexOf(t) - m_index;
+		int j = m_tokens.indexOf(t) - m_index + i;
 		return relativeId(j, ids);
 	}
 
