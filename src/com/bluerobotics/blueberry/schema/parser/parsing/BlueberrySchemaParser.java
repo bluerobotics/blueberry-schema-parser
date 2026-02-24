@@ -863,7 +863,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(btt == null && typeNameToken == null) {
 					throw new SchemaParserException("Expecting a type name.", m_tokens.getCurrent().getStart());
 				} else if(btt != null && btt.getKeyword() == TokenIdentifier.STRING) {
-					m.add(processString(btt));
+					
+					m.add(processString(btt, true, null, ct));
 				} else {
 					SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 					if(nameToken == null) {
@@ -902,16 +903,16 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void assembleSequence(IdentifierToken it) throws SchemaParserException {
 
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
-		if(angleBracketStart == null) {
-			throw new SchemaParserException("Sequence keyword should be followed by an open angle bracket.", it.getEnd());
-		}
 		BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);
 		SymbolNameToken snt = m_tokens.relative(2, SymbolNameToken.class);
 		Field cf = null;
-		if(btt != null) {
+		if(angleBracketStart == null) {
+			issueError("Sequence keyword should be followed by an open angle bracket.", it.getEnd());
+			
+		} else if(btt != null) {
 			TypeId tid = lookupBaseType(btt.getKeyword());
 			if(btt.getKeyword() == TokenIdentifier.STRING) {
-				cf = processString(btt);
+				cf = processString(btt, false, null, null);
 				
 			} else {
 				cf = new BaseField(null, tid, null, btt.getEnd());
@@ -959,13 +960,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * processes a string token at the current token list position
 	 * @param it
+	 * @param findName - if true then expects a field name to occur after
 	 * @return
 	 */
-	private StringField processString(IdentifierToken it)  throws SchemaParserException {
-		m_tokens.setIndex(it);
-		CommentToken ct = m_tokens.relative(-1, CommentToken.class);
-		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
+	private StringField processString(IdentifierToken it, boolean findName, ScopeName typeName, CommentToken ct)  throws SchemaParserException {
+		IdentifierToken angleBracketStart = m_tokens.relativeId(it, 1, TokenIdentifier.ANGLE_BRACKET_START);
 		int maxSize = 65536;
+		SymbolNameToken nameT = null;
 		if(angleBracketStart != null) {
 			//todo trap number token
 			NumberToken nt = m_tokens.relative(2,NumberToken.class);
@@ -978,19 +979,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(angleBracketEnd == null) {
 				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
 			}
-			m_tokens.setIndex(angleBracketEnd);
+			nameT = m_tokens.relative(angleBracketEnd, 1, SymbolNameToken.class);
 
+		} else {
+			nameT = m_tokens.relative(it, 1, SymbolNameToken.class);
+			
 		}
 		
-		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
 		
-		if(nameToken == null) {
-			throw new SchemaParserException("String field needs a name specified.", it.getEnd());
-		}
-		m_tokens.setIndex(nameToken);
+		
+		
+		
 //		SymbolName name = m_module.getLast().addLevel(nameToken.getSymbolName());
-		SymbolName name = nameToken.getSymbolName();
-		StringField sf = new StringField(name, maxSize, ct == null ? "" : ct.combineLines(), it.getEnd());
+		SymbolName name = (findName && nameT != null) ? nameT.getSymbolName() : null;
+		StringField sf = new StringField(name, typeName, maxSize, ct == null ? "" : ct.combineLines(), it.getEnd());
 		sf.setFileName(m_fileName);
 		return sf;
 	}

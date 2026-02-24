@@ -41,6 +41,9 @@ public class TokenList {
 
 
 	public Token getCurrent() {
+		if(m_index < 0 || m_index >= m_tokens.size()) {
+			return null;
+		}
 		return m_tokens.get(m_index);
 	}
 	public Token get(int i) {
@@ -372,12 +375,7 @@ public class TokenList {
 	 * @return
 	 */
 	public <T extends Token> T relative(int i, Class<T> type){
-		T result = null;
-		Token t = relative(i);
-		if(t != null && type.isInstance(t)) {
-			result = type.cast(t);
-		}
-		return result;
+		return relative(getCurrent(), i, type);
 	}
 	public Token relative(Token t, int i) {
 		Token result = null;
@@ -391,8 +389,8 @@ public class TokenList {
 	public <T extends Token> T relative(Token t, int i, Class<T> type) {
 		T result = null;
 		Token t2 = relative(t, i);
-		if(t2.getClass() == type) {
-			result = type.cast(t);
+		if(t2 != null && t2.getClass() == type) {
+			result = type.cast(t2);
 		}
 		return result;
 	}
@@ -411,10 +409,12 @@ public class TokenList {
 
 		return type.cast(r);
 	}
-
-
 	public IdentifierToken relativeId(int i, TokenIdentifier id) {
-		IdentifierToken result = relative(i, IdentifierToken.class);
+		return relativeId(getCurrent(), i, id);
+	}
+
+	public IdentifierToken relativeId(Token t, int i, TokenIdentifier id) {
+		IdentifierToken result = relative(t, i, IdentifierToken.class);
 		if(result != null) {
 			if(result.getKeyword() != id) {
 				result = null;

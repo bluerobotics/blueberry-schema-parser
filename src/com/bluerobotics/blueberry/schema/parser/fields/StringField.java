@@ -29,14 +29,14 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
  */
 public class StringField extends AbstractField {
 	private final int m_maxSize;
-	public StringField(SymbolName name, int maxSize, String comment, Coord c) {
-		super(name, null, TypeId.STRING, comment, c);
+	public StringField(SymbolName fieldName, ScopeName typeName, int maxSize, String comment, Coord c) {
+		super(fieldName, typeName, TypeId.STRING, comment, c);
 		m_maxSize = maxSize;
 	}
 	
 	@Override
 	public Field makeInstance(SymbolName name) {
-		return new StringField(name, getMaxSize(), getComment(), getCoord());
+		return new StringField(name, getTypeName(), getMaxSize(), getComment(), getCoord());
 	}
 
 	public int getMaxSize() {
