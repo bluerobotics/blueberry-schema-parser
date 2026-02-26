@@ -71,6 +71,7 @@ public class BlueberrySchemaParserGui implements Constants {
 	private final Style STYLE_ORANGE = addStyle("orange", new Color(220, 100, 0));
 	private final Style STYLE_GREEN = addStyle("green", Color.GREEN);
 	private final Style STYLE_BLACK = addStyle("black", Color.BLACK);
+	private final Style STYLE_MAGENTA = addStyle("magenta", Color.MAGENTA);
 
 	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser((s,t) -> {
 		
@@ -97,6 +98,9 @@ public class BlueberrySchemaParserGui implements Constants {
 					break;
 				case WARNING:
 					style = STYLE_ORANGE;
+					break;
+				case SKIPPED:
+					style = STYLE_MAGENTA;
 					break;
 				default:
 					style = STYLE_BLACK;
@@ -211,6 +215,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				addItem(m_actions, ActionInfos.GENERATE_C);
 				addItem(m_actions, ActionInfos.GENERATE_JAVA);
 				addItem(m_actions, ActionInfos.CLEAN_SCHEMA);
+				addItem(m_actions, ActionInfos.COPY_ISSUES);
 
 				addSeparator(new Dimension(20,20));
 //				addItem( m_actions, ActionInfos.HELP);
@@ -293,7 +298,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.GENERATE_C, e -> generateC());
 		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
 		m_actions.addListener(ActionInfos.CLEAN_SCHEMA, e -> generatePretty());
-
+		m_actions.addListener(ActionInfos.COPY_ISSUES, e -> copyIssues());
 
 
 		m_actions.getAction(ActionInfos.EXIT).setIcon(EXIT_ICON);
@@ -305,8 +310,12 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.getAction(ActionInfos.GENERATE_JAVA).setIcon(GENERATE_JAVA_ICON);
 		m_actions.getAction(ActionInfos.CLEAN_SCHEMA).setIcon(SOAP_ICON);
 		m_actions.getAction(ActionInfos.PARSE_SCHEMA).setIcon(CHECK_ICON);
+//		m_actions.getAction(ActionInfos.COPY_ISSUES).setIcon(UtilMethods.makeIconFromFont(ICON_FONT, "\ue14d", COLOR_LOGO_BLUE, -1, 32));
 
 
+	}
+	private void copyIssues() {
+		// TODO Auto-generated method stub
 	}
 	private void execute(Runnable r) {
 		Thread t = new Thread(() -> {
@@ -325,15 +334,19 @@ public class BlueberrySchemaParserGui implements Constants {
 			File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 			String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
 			
-			append("Generating Java code in \"" + dir+"\"\n");
+			
 	
 			if(m_parser.getMessages().size() == 0) {
 				noThreadParse();
 			}
-	
-			String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-			JavaWriter w = new JavaWriter(dir, m_parser, h, p);
-			w.write();
+			if(m_parser.isError()) {
+				append("Errors occured during parsing. Will not generate Java code.", ParserIssue.Type.ERROR);
+			} else {
+				append("Generating Java code in \"" + dir+"\"\n");
+				String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+				JavaWriter w = new JavaWriter(dir, m_parser, h, p);
+				w.write();
+			}
 			append("Done");
 		});
 	}
@@ -351,7 +364,7 @@ public class BlueberrySchemaParserGui implements Constants {
 			}
 			
 			if(m_parser.isError()) {
-				append("Errors occured during parsing.", ParserIssue.Type.ERROR);
+				append("Errors occured during parsing. Will not generate C code.", ParserIssue.Type.ERROR);
 			} else {
 				append("Generating C code in \"" + dir+"\"\n");
 		

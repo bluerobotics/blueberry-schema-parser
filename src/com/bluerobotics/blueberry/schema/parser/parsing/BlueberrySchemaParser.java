@@ -362,7 +362,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
 				
 				if(a == null) {
-					issueError("No message topic found for "+msg.getName(), msg.getCoord());
+					issueError("No topic annotation found for message"+msg.getName(), msg.getCoord());
 				}
 			});
 		});
@@ -1252,7 +1252,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //		String comment = ct != null ? ct.combineLines() : null;
 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);
-		boolean nvtGood = m_tokens.relative(2, NameValueToken.class) != null;
+		NameValueToken<?> nvt = m_tokens.relative(2, NameValueToken.class);
+		boolean nvtGood = nvt != null;
 		SymbolName name = nvtGood ? m_tokens.relative(2, NameValueToken.class).getSymbolName() : null;
 		Object val = nvtGood ? m_tokens.relative(2, NameValueToken.class).getValue() : null;
 		Number nVal = val instanceof Number ? (Number)val : null;
@@ -1261,7 +1262,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		TokenIdentifier ti = btt != null ? btt.getKeyword() : null;
 		if(btt == null) {
-			issueWarning("Only base types and Strings can be declared const so far.", it.getStart());
+			issueSkipped("Only base types and Strings can be declared const so far.", it.getStart());
 			m_tokens.gotoSemi();
 		} else if(ti == TokenIdentifier.STRING || ti == TokenIdentifier.CHAR) {
 			if(sVal == null) {
@@ -1316,7 +1317,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		} else {
 				
 			if(nVal == null) {
-				issueError("Const must include a name and value.", it.getEnd());
+				Coord c = nvtGood ? nvt.getStart() : it.getEnd();
+				issueSkipped("Const must include a name and value.", c);
 				
 			} else {
 
@@ -2046,7 +2048,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public ArrayList<BlueModule> getModules(){
 		return m_modules;
 	}
-
+	private void issueSkipped(String desc, Coord loc) {
+		logIssue(ParserIssue.skipped(desc, loc));
+	}
 	private void issueError(String desc, Coord loc) {
 		logIssue(ParserIssue.error(desc, loc));
 	}

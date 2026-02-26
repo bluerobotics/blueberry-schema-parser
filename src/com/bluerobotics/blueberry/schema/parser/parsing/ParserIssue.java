@@ -33,6 +33,7 @@ public class ParserIssue {
 		ERROR,
 		WARNING,
 		NOTE,
+		SKIPPED,
 	}
 	private final Type m_type;
 	
@@ -49,6 +50,9 @@ public class ParserIssue {
 	}
 	public static ParserIssue note(String description, Coord location) {
 		return new ParserIssue(description, location, Type.NOTE);
+	}
+	public static ParserIssue skipped(String description, Coord location) {
+		return new ParserIssue("Unimplemented feature:\n"+description, location, Type.SKIPPED);
 	}
 	public Type getType() {
 		return m_type;
@@ -78,5 +82,6 @@ public class ParserIssue {
 		}
 		return result;
 	}
+	
 
 }

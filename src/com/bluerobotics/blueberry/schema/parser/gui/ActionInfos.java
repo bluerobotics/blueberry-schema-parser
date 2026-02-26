@@ -21,46 +21,68 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.gui;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 
+import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.starfishmedical.sfdq.actions.ActionInfo;
 
 
 
 
-public enum ActionInfos implements ActionInfo {
+public enum ActionInfos implements ActionInfo, Constants {
 	PARSE_SCHEMA("Parse", "parse.png", "Parse the chosen schema file.", KeyEvent.VK_UNDEFINED, "ctrl alt P"),
-	GENERATE_C("Generete C", "generateC.png", "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
-	GENERATE_JAVA("Generete Java", "generateJ.png", "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
+	GENERATE_C("Generete C", "", "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
+	GENERATE_JAVA("Generete Java", "", "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
 	CLEAN_SCHEMA("Clean Schema", "", "Generate a cleaned up version of the schema.", KeyEvent.VK_UNDEFINED, ""),
-	HELP("Help", "help.png", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
-	EXIT("Exit", "exit.png", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
+	HELP("Help", "", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
+	EXIT("Exit", "", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
 	MINIMIZE("Minimize", "minimizeWindow.png", "Hide the app window.", KeyEvent.VK_UNDEFINED, ""),
 	NORMALIZE("Normalize", "normalizeWindow.png", "Make the app window not too small and not too big.", KeyEvent.VK_UNDEFINED, "shift alt N"),
 	MAXIMIZE("Maximize", "maximizeWindow.png", "Full-screen the app window.", KeyEvent.VK_UNDEFINED, "shift alt X"),
-	NULL("",null, "An action was referenced that does not exist in the action list.",KeyEvent.VK_N),
+	
+	COPY_ISSUES("Copy Issues", ICON_FONT, COLOR_LOGO_BLUE, "\ue14d", "Copy issues to clipboard.", KeyEvent.VK_C, ""),
 	
 	SETTINGS_LOAD("Load settings", "loadSettings.png", "Load previously saved settings.", KeyEvent.VK_L),
 	SETTINGS_SAVE("Save settings", "saveSettings.png", "Save current application settings.", KeyEvent.VK_E),
 	SETTINGS_SHOW("Show settings", "settings.png", "Show the settings dialog.", KeyEvent.VK_UNDEFINED),
-
+	
+	NULL("",null, "An action was referenced that does not exist in the action list.",KeyEvent.VK_N),
 	;
 		
 
-	private String m_description;
-	private String m_hotKeyName;
-	private String m_iconName;
-	private String m_offIconName;
-	private int m_mnemonic;
+	private final String m_description;
+	private final String m_hotKeyName;
+	private final String m_iconName;
+	private final String m_offIconName;
+	private final Font m_iconFont;
+	private final int m_mnemonic;
+	private final String m_name;
+	private final Color m_iconColor;
 	
-	private String m_name;
-	//	
+	private ActionInfos(String name, Font iconFont, Color iconColor, String iconText, String description, int mnemonic, String hotKey){
+		m_name = name;
+		m_description = description;
+		m_mnemonic = mnemonic;
+		m_iconName = iconText;
+		m_iconFont = iconFont;
+		m_offIconName = null;
+		m_hotKeyName = hotKey;
+		m_iconColor = iconColor;
+//		setMnemonicIdeces(mnemonic);
+	}
+	
 	private ActionInfos(String name, String iconName, String description, int mnemonic){
 		m_name = name;
 		m_description = description;
 		m_mnemonic = mnemonic;
 		m_iconName = iconName;
+		m_iconFont = null;
+		m_iconColor = null;
 		m_offIconName = null;
+		m_hotKeyName = "";
+
 //		setMnemonicIdeces(mnemonic);
 	}
 	private ActionInfos(String name, String iconName, String description, int mnemonic, boolean  defaultState){
@@ -69,6 +91,9 @@ public enum ActionInfos implements ActionInfo {
 		m_mnemonic = mnemonic;
 		m_offIconName = null;
 		m_iconName = iconName;
+		m_iconFont = null;
+		m_iconColor = null;
+		m_hotKeyName = "";
 	}
 	
 	private ActionInfos(String name, String iconName, String description, int mnemonic, String hotKey){
@@ -78,6 +103,9 @@ public enum ActionInfos implements ActionInfo {
 		m_iconName = iconName;
 		m_offIconName = null;
 		m_hotKeyName = hotKey;
+		m_iconFont = null;
+		m_iconColor = null;
+
 //		setMnemonicIdeces(mnemonic);
 	}
 	private ActionInfos(String name, String iconName, String offIconName, String description, int mnemonic, String hotKey){
@@ -87,6 +115,8 @@ public enum ActionInfos implements ActionInfo {
 		m_iconName = iconName;
 		m_offIconName = offIconName;
 		m_hotKeyName = hotKey;
+		m_iconFont = null;
+		m_iconColor = null;
 
 //		setMnemonicIdeces(mnemonic);
 	}
@@ -115,6 +145,14 @@ public enum ActionInfos implements ActionInfo {
 	@Override
 	public String getIconName() {
 		return m_iconName;
+	}
+	@Override
+	public Font getIconFont() {
+		return m_iconFont;
+	}
+	@Override
+	public Color getIconColor() {
+		return m_iconColor;
 	}
 	@Override
 	public String getOffIconName() {
