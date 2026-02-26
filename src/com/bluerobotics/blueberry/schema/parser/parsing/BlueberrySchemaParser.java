@@ -93,6 +93,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private String m_fileName = null;//indicates the filename that the present tokens are from
 	private String m_lastComment = null;//temporary storage for the last processed comment
 	private final TextOutput m_output;
+	private boolean m_errorDetected = false;
 	
 	public BlueberrySchemaParser(TextOutput ti) {
 		m_output = ti;
@@ -117,6 +118,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_moduleEnd.clear();
 		m_fileName = null;
 		m_lastComment = null;
+		m_errorDetected = false;
 		
 
 	}
@@ -180,6 +182,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			fillInMissingModuleKeyValues();
 			assignModuleAnnotations();
 			checkForDuplicateMessageKeys();
+			checkForMessageTopics();
 			
 			processDeferredFields(m_defines.getIterator(), m_defines);	
 			processDeferredFields(m_messages.getIterator(), m_defines);
@@ -212,6 +215,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		System.out.println("BlueberrySchemaParser.parse done.");
 
 	}
+
+	
+
 	/**
 	 * any instance of two longs in a row should be collapsed to a long long
 	 */
@@ -341,12 +347,25 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				int i = msg.getModuleMessageKey();
 				
 				if(keys.contains(i)) {
-					issueError("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), null);
+					issueError("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), msg.getCoord());
 				}
 				keys.add(i);
 			});
 		});
 
+	}
+	
+	private void checkForMessageTopics() {
+		final ArrayList<Integer> keys = new ArrayList<>();
+		m_modules.forEach(mod -> {
+			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
+				Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+				
+				if(a == null) {
+					issueError("No message topic found for "+msg.getName(), msg.getCoord());
+				}
+			});
+		});
 	}
 	/**
 	 * Calculates the field indeces for messages, based on the word packing rules
@@ -2038,8 +2057,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		logIssue(ParserIssue.note(desc, loc));
 	}
 	private void logIssue(ParserIssue pi) {
+		if(pi.getType() == ParserIssue.Type.ERROR) {
+			m_errorDetected = true;
+		}
 		m_issues.add(pi);
 		m_output.add(pi.toString(), pi.getType());
+	}
+	public boolean isError() {
+		return m_errorDetected;
 	}
 
 

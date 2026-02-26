@@ -342,15 +342,23 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_text.setText("");
 		execute(() -> {
 			File dir = m_settings.getFile(Key.C_DIRECTORY);
-			append("Generating C code in \"" + dir+"\"\n");
+			
+			
+			
 	
 			if(m_parser.getMessages().size() == 0) {
 				noThreadParse();
 			}
-	
-			String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-			CWriter w = new CWriter(dir, m_parser, h);
-			w.write();
+			
+			if(m_parser.isError()) {
+				append("Errors occured during parsing.", ParserIssue.Type.ERROR);
+			} else {
+				append("Generating C code in \"" + dir+"\"\n");
+		
+				String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
+				CWriter w = new CWriter(dir, m_parser, h);
+				w.write();
+			}
 			append("Done");
 		});
 	}
