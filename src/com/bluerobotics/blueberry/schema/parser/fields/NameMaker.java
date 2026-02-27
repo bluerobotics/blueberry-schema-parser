@@ -213,7 +213,9 @@ public class NameMaker {
 		return "init"+NameMaker.makeScopeName(sf, includeMessage).toSymbolName().toUpperCamelString();
 	}
 	public static String makeCModuleFileName(BlueModule m, boolean headerNotSource) {
-		String result = m.getName().deScope().toLowerCamel().toString();
+//		String result = m.getName().deScope().toLowerCamel().toString();
+		String result = m.getName().makeRelative().toLowerSnake("_");
+
 		result += headerNotSource ? ".h" : ".c";
 		return result;
 	}

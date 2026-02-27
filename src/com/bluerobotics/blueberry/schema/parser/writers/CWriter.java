@@ -817,7 +817,7 @@ public class CWriter extends SourceWriter {
 			comments.add(mf.getComment());
 		}
 		
-		SymbolName functionName = mf.getTypeName().toSymbolName().prepend("is").append(emptyNotFull ? "empty" : "full");
+		SymbolName functionName = mf.getTypeName().deScope().toSymbolName().prepend("is").append(emptyNotFull ? "empty" : "full");
 		
 		addDocComment(comments);
 		addLine("bool "+functionName.toLowerCamel()+"(Bb * buf, BbBlock msg)"+(protoNotDef ? ";" : "{"));
