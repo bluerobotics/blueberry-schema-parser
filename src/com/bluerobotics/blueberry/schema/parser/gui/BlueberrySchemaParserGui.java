@@ -315,7 +315,15 @@ public class BlueberrySchemaParserGui implements Constants {
 
 	}
 	private void copyIssues() {
-		// TODO Auto-generated method stub
+		int s = m_text.getSelectionStart();
+		int e = m_text.getSelectionEnd();
+		m_text.selectAll();
+		m_text.copy();
+		if(s >= 0) {
+			m_text.setSelectionStart(s);
+			m_text.setSelectionEnd(e);
+		}
+		
 	}
 	private void execute(Runnable r) {
 		Thread t = new Thread(() -> {
