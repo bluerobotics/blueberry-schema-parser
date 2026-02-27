@@ -69,9 +69,10 @@ public class Annotation  {
 	private final KnownAnnotation m_known;
 	private final ScopeName m_name;
 	private ArrayList<Object> m_parameters = new ArrayList<>();
-	public Annotation(ScopeName name) {
+	private Coord m_source;
+	public Annotation(ScopeName name, Coord source) {
 		m_name = name;
-		
+		m_source = source;
 		KnownAnnotation ka = null;
 		for(KnownAnnotation kaf : KnownAnnotation.values()) {
 			if(kaf.getName().equals(name)) {
@@ -148,6 +149,9 @@ public class Annotation  {
 		}
 		
 		return result;
+	}
+	public Coord getSource() {
+		return m_source;
 	}
 	
 

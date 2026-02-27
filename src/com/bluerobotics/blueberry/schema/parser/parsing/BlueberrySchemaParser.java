@@ -31,6 +31,7 @@ import com.bluerobotics.blueberry.schema.parser.constants.Constant;
 import com.bluerobotics.blueberry.schema.parser.constants.Number;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.StringConstant;
+import com.bluerobotics.blueberry.schema.parser.fields.AnnotationOwner;
 import com.bluerobotics.blueberry.schema.parser.fields.ArrayField;
 import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.BlueModule;
@@ -178,9 +179,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			assembleFields();
 			fillInMissingEnumValues();
 			checkForDuplicateEnumValues();
+			checkForDuplicateAnnotations();
 			fillInMissingMessageKeyValues();
 			fillInMissingModuleKeyValues();
+			
 			assignModuleAnnotations();
+			
 			checkForDuplicateMessageKeys();
 			checkForMessageTopics();
 			
@@ -217,6 +221,31 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 	
+	/**
+	 * checks each annotation owner for duplicate annotations
+	 */
+	private void checkForDuplicateAnnotations() {
+		for(BlueModule mod : m_modules) {
+			checkForDuplicateAnnotations(mod);
+			mod.getDefines().forEach(true, f -> {
+				checkForDuplicateAnnotations(f);
+			});
+			mod.getMessages().forEach(true, f -> {
+				checkForDuplicateAnnotations(f);
+			});
+		}
+	}
+
+	private void checkForDuplicateAnnotations(AnnotationOwner ao) {
+		ao.scanAnnotations(a1 -> {
+			ao.scanAnnotations(a2 -> {
+				if(a1 != a2 && a1.getName().equals(a2.getName())) {
+					issueError("Duplicate annotation found.", a2.getSource());
+				}
+			});
+		});
+		
+	}
 
 	/**
 	 * any instance of two longs in a row should be collapsed to a long long
@@ -393,7 +422,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_modules.forEach(m -> {
 			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
 			if(a == null || a.getParameter(0, Number.class) == null) {
-				 a = new Annotation(Annotation.MODULE_KEY_ANNOTATION);
+				 a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
 				 long n = getNextModuleKey();
 				a.addParameter(new Number(n));
 				m.addAnnotation(a);
@@ -410,7 +439,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			m.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
 				if(a == null || a.getParameter(0, Number.class) == null) {
-					 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION);
+					 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
 					 long i = getNextMessageKey(m);
 					a.addParameter(new Number(i));
 					mf.addAnnotation(a);
@@ -1617,7 +1646,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			
 			ScopeName sn = snt == null ? ScopeName.wrap(swt.getSymbolName()) : snt.getScopeName();
-			Annotation a = new Annotation(sn);
+			Coord c = snt == null ? swt.getStart() : snt.getStart();
+			Annotation a = new Annotation(sn, c);
 			
 			
 
