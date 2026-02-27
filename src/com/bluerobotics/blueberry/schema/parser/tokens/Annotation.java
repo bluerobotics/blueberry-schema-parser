@@ -153,6 +153,27 @@ public class Annotation  {
 	public Coord getSource() {
 		return m_source;
 	}
+	/**
+	 * compares the names of this annotation and the specified one.
+	 * @param a - the specified annotation
+	 * @return - true if name matches
+	 */
+	public boolean matchesByName(Annotation a) {
+		return m_name.equals(a.m_name);
+	}
+	/**
+	 * Compares the parameters of this and the specified annotation
+	 * @param a - the specified annotation
+	 * @return true if all parameters match (according to equals method)
+	 */
+	public boolean matchesByParameters(Annotation a) {
+		int n  = getParameters().size();
+		boolean result = true;
+		for(int i = 0; i < n; ++i) {
+			result &= m_parameters.get(i).equals(a.m_parameters.get(i));
+		}
+		return result;
+	}
 	
 
 

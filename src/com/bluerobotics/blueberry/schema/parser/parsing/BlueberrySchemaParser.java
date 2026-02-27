@@ -239,8 +239,14 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void checkForDuplicateAnnotations(AnnotationOwner ao) {
 		ao.scanAnnotations(a1 -> {
 			ao.scanAnnotations(a2 -> {
-				if(a1 != a2 && a1.getName().equals(a2.getName())) {
-					issueError("Duplicate annotation found.", a2.getSource());
+				if(a1 != a2 && a1.matchesByName(a2)) {
+					String loc1 = a1.getSource().filePath;
+					if(a1.matchesByParameters(a2)) {
+						issueWarning("Duplicate annotation found with same parameters. First match in "+loc1, a2.getSource());
+					} else {
+						issueError("Duplicate annotation found with unmatching parameters. First match in "+loc1, a2.getSource());
+ 
+					}
 				}
 			});
 		});
