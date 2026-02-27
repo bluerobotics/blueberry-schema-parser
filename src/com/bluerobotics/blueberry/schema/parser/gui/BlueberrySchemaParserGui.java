@@ -8,6 +8,8 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -23,6 +25,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -267,12 +270,33 @@ public class BlueberrySchemaParserGui implements Constants {
 //		m_text.setPreferredSize(new Dimension(500,500));
 //		m_text.setLineWrap(false);
 		m_text.setFont(new Font("Monospaced", Font.PLAIN, 12));
+		
+		m_text.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				showPanePopup(e);
+			}
+
+			
+			
+			
+			
+		});
 //		m_text.setWrapStyleWord(true);
 		split.add(new JScrollPane(m_text));
 		cp.add(split);
 
 		f.setVisible(true);
 
+	}
+	
+	private void showPanePopup(MouseEvent e) {
+		if(e.isPopupTrigger()) {
+			JPopupMenu jpm = new JPopupMenu();
+			jpm.add(m_actions.getAction(ActionInfos.COPY_ISSUES));
+			jpm.show(e.getComponent(), e.getX(), e.getY());		
+		}
 	}
 	private Settings getSettings() {
 		return m_settings;
@@ -337,7 +361,6 @@ public class BlueberrySchemaParserGui implements Constants {
 		
 	}
 	private void generateJava() {
-		m_text.setText("");
 		execute(() -> {
 			File dir = m_settings.getFile(Key.JAVA_DIRECTORY);
 			String p = m_settings.getString(Key.JAVA_PACKAGE_NAME);
@@ -360,7 +383,6 @@ public class BlueberrySchemaParserGui implements Constants {
 	}
 
 	private void generateC() {
-		m_text.setText("");
 		execute(() -> {
 			File dir = m_settings.getFile(Key.C_DIRECTORY);
 			

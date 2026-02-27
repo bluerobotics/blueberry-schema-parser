@@ -623,7 +623,7 @@ public class CWriter extends SourceWriter {
 
 	private void addMessageKey(MessageField mf) {
 		String mk = makeFullMessageKey(mf);
-		addLine("#define "+NameMaker.makeMessageKeyName(mf) + " ("+mk+")");
+		addLine("#define "+NameMaker.makeAbsoluteMessageKeyName(mf) + " ("+mk+")");
 	}
 	
 	

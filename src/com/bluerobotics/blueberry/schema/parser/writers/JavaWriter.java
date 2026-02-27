@@ -450,7 +450,7 @@ public class JavaWriter extends SourceWriter {
 
 			
 			addDocComment(mf.getComment());
-			addLine("public static final int "+ NameMaker.makeMessageKeyName(mf)+" = "+makeFullMessageKey(mf)+";");
+			addLine("public static final int "+ NameMaker.makeRelativeMessageKeyName(mf)+" = "+makeFullMessageKey(mf)+";");
 		
 		});
 		m.getConstants().forEach(c -> {
@@ -881,7 +881,7 @@ public class JavaWriter extends SourceWriter {
 		
 		//now do contents of function
 		indent();
-		addLine("if(!isModuleMessageKeyCorrect(buf, "+NameMaker.makeMessageKeyName(mf)+")){");
+		addLine("if(!isModuleMessageKeyCorrect(buf, "+NameMaker.makeRelativeMessageKeyName(mf)+")){");
 		indent();
 		addLine("return null;");
 		closeBrace();
@@ -962,7 +962,7 @@ public class JavaWriter extends SourceWriter {
 		String mLen = params ? NameMaker.makeMessageLengthName(mf) : "MIN_MESSAGE_LENGTH";
 		addLine(messageName + " msg = new "+messageName+"(buf);");
 
-		addLine("msg.setupHeader("+NameMaker.makeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
+		addLine("msg.setupHeader("+NameMaker.makeRelativeMessageKeyName(mf)+", "+maxOrd+", "+mLen+");");
 		
 		for(Field f : fs) {
 				

@@ -30,11 +30,12 @@ import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
  * A class to make names for various constants, variables, etc used in the source writers
  */
 public class NameMaker {
-	public static SymbolName makeMessageKeyName(MessageField mf) {
-
-	
-		
+	public static SymbolName makeAbsoluteMessageKeyName(MessageField mf) {
 		SymbolName result = mf.getTypeName().toSymbolName().append("key").toUpperSnake();
+		return result;
+	}
+	public static SymbolName makeRelativeMessageKeyName(MessageField mf) {
+		SymbolName result = mf.getTypeName().deScope().toSymbolName().append("key").toUpperSnake();
 		return result;
 	}
 	public static String makeMessageLengthName(MessageField mf) {
@@ -252,4 +253,5 @@ public class NameMaker {
 		SymbolName result = msg.getTypeName().deScope().toSymbolName().append("topic").toUpperSnake();
 		return result;
 	}
+	
 }
