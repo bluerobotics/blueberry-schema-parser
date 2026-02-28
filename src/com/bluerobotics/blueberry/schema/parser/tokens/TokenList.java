@@ -437,7 +437,7 @@ public class TokenList {
 	 * @return - the matching closing brace token
 	 * @throws SchemaParserException 
 	 */
-	public IdentifierToken matchBrackets(Token start) throws SchemaParserException {
+	public IdentifierToken matchBracket(Token start) throws SchemaParserException {
 		IdentifierToken result = null;
 	
 		Token t = start;
@@ -496,7 +496,7 @@ public class TokenList {
 					TokenIdentifier.BRACKET_START,
 					TokenIdentifier.SQUARE_BRACKET_START,
 					TokenIdentifier.ANGLE_BRACKET_START)){
-				foundT = matchBrackets(foundT);
+				foundT = matchBracket(foundT);
 				//this is now the closing bracket of the start we just found
 				//move ahead one token so we don't get caught in an infinite loop
 				//but if we didn't find anything then just bail

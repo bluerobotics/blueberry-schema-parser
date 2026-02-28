@@ -177,7 +177,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //			collapseSemicolons();
 			
 			//check all brackets of all kinds to be sure they all match
-			m_tokens.matchBrackets(null);
+			matchBracket(null);
 
 			assembleFields();
 			fillInMissingEnumValues();
@@ -245,9 +245,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				if(a1 != a2 && a1.matchesByName(a2)) {
 					String loc1 = a1.getSource().filePath;
 					if(a1.matchesByParameters(a2)) {
-						issueWarning("Duplicate annotation found with same parameters. First match in "+loc1, a2.getSource());
+						issueWarning("Duplicate annotation found with same parameters.", a1.getSource(), a2.getSource());
 					} else {
-						issueError("Duplicate annotation found with unmatching parameters. First match in "+loc1, a2.getSource());
+						issueError("Duplicate annotation found with unmatching parameters.",a1.getSource(), a2.getSource());
  
 					}
 				}
@@ -379,15 +379,20 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * this should be called after fillInMessageKeyValues()
 	 */
 	private void checkForDuplicateMessageKeys() {
-		final ArrayList<Integer> keys = new ArrayList<>();
+		final ArrayList<Annotation> keys = new ArrayList<>();
 		m_modules.forEach(mod -> {
+			keys.clear();
 			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
-				int i = msg.getModuleMessageKey();
+				Annotation a = msg.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
 				
-				if(keys.contains(i)) {
-					issueError("Duplicate message key detected ("+WriterUtils.formatAsHex(i)+")in "+msg.getName(), msg.getCoord());
+				if(a != null) {
+					for(Annotation at : keys) {
+						if(at.matchesByParameters(a)) {
+							issueError("Duplicate message key detected in "+msg.getName(), a.getSource(), at.getSource());
+						}
+					}
+					keys.add(a);
 				}
-				keys.add(i);
 			});
 		});
 
@@ -415,7 +420,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			
 			if(mf.useCdrNotBlueberry()) {
-				issueError("CDR serialization not supported yet", mf.getCoord());
+				issueSkipped("CDR serialization not supported yet", mf.getCoord());
 				//TODO: add a field packer for CDR packing
 			} else {
 				BlueberryFieldPacker.pack(mf);
@@ -726,12 +731,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				
 					for(Field df : defines.getList()) {
 						if(df.getTypeName() == null) {
-							issueError("Don't think this should ever be null", df.getCoord());
+							issueError("Somehow there's a defined type without a type name.", df.getCoord());
 						}
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-								issueWarning("Type shadowing: "+typeName.toUpperCamelString(), f.getCoord());//TODO: add this as a warning
+								issueWarning("Type shadowing: "+typeName.toUpperCamelString(), f.getCoord(), dft.getCoord());
 							} else {
 								dft = df;
 							}	
@@ -818,8 +823,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						issueError("Unsigned keyword makes no sense combined with "+btt.getName(), btt.getStart());
 					}
 					BaseTypeToken newBtt = new BaseTypeToken(it.getStart(), btt.getEnd(), newTi);
-					m_tokens.replace(it, newBtt);
-					m_tokens.remove(btt);
+					m_tokens.replace(btt, newBtt);
+					m_tokens.remove(it);
 				}
 			}
 			m_tokens.next();
@@ -880,7 +885,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					//nothing to do
 					break;
 				default:
-					issueNote("Did not process "+it, it.getStart());
+					issueNote("Did not process "+it+". This is probably not right.", it.getStart());
 					break;
 				}
 
@@ -924,7 +929,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
-		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+		IdentifierToken braceEnd = matchBracket(braceStart);
 		if(nameToken == null) {
 			throw new SchemaParserException("Struct has no specified name.", it.getEnd());
 		} else if(braceStart == null) {
@@ -955,7 +960,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void assembleMessage(IdentifierToken it) throws SchemaParserException {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
-		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+		IdentifierToken braceEnd = matchBracket(braceStart);
 		if(nameToken == null) {
 			throw new SchemaParserException("Message has no specified name.", it.getEnd());
 		} else if(braceStart == null) {
@@ -1070,7 +1075,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(commaT != null && nt != null) {
 				n = nt.getNumber().asInt();
 			}
-			IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
+			IdentifierToken angleBracketEnd = matchBracket(angleBracketStart);
 			if(angleBracketEnd == null) {
 				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
 			}
@@ -1114,7 +1119,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				throw new SchemaParserException("Angle brackets in a string definition should contain a number.", angleBracketStart.getEnd());
 			}
 			maxSize = nt.getNumber().asInt();
-			IdentifierToken angleBracketEnd = m_tokens.matchBrackets(angleBracketStart);
+			IdentifierToken angleBracketEnd = matchBracket(angleBracketStart);
 			if(angleBracketEnd == null) {
 				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
 			}
@@ -1300,7 +1305,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		IdentifierToken colon = m_tokens.relativeId(2, TokenIdentifier.COLON);
 		BaseTypeToken btt = m_tokens.relative(3, BaseTypeToken.class);
 		IdentifierToken braceStart = m_tokens.relativeId(colon == null ? 2 : 4, TokenIdentifier.BRACE_START);
-		IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);
+		IdentifierToken braceEnd = matchBracket(braceStart);
 		if(nameToken == null) {
 			throw new SchemaParserException("Enum name not specified.", enumT.getEnd());
 		} else if(braceStart == null){
@@ -1468,7 +1473,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			issueError("Module name is ill-formed.",it.getEnd());
 			m_tokens.gotoSemi();
 		} else {
-			IdentifierToken braceEnd = m_tokens.matchBrackets(braceStart);//this should never be null I think
+			IdentifierToken braceEnd = matchBracket(braceStart);//this should never be null I think
 			if(braceEnd == null) {
 				issueError("Module statement open brace is never closed.", braceStart.getEnd());
 				m_tokens.setIndex(m_tokens.getLast());
@@ -1712,7 +1717,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			ScopeNameToken snt = m_tokens.relative(1, ScopeNameToken.class);
 			SymbolNameToken swt = m_tokens.relative(1, SymbolNameToken.class);
 			IdentifierToken bracketStart = m_tokens.relativeId(2, TokenIdentifier.BRACKET_START);
-			IdentifierToken bracketEnd = m_tokens.matchBrackets(bracketStart);
+			IdentifierToken bracketEnd = matchBracket(bracketStart);
 			boolean noBrackets = false;
 
 			if(swt == null && snt == null) {
@@ -1781,6 +1786,16 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 		}
 	}
+	private IdentifierToken matchBracket(IdentifierToken bracketStart) {
+		IdentifierToken result = null;
+		try {
+			result = m_tokens.matchBracket(bracketStart);
+		} catch (SchemaParserException e) {
+			issueError(e.getMessage(), e.getLocaation());
+		}
+		return result;
+	}
+
 	/**
 	 * builds an array of all names of modules, from any import statements and if specified, from the current module too
 	 * @param includeModule
@@ -2158,17 +2173,17 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public ArrayList<BlueModule> getModules(){
 		return m_modules;
 	}
-	private void issueSkipped(String desc, Coord loc) {
-		logIssue(ParserIssue.skipped(desc, loc));
+	private void issueSkipped(String desc, Coord... locs) {
+		logIssue(ParserIssue.skipped(desc, locs));
 	}
-	private void issueError(String desc, Coord loc) {
-		logIssue(ParserIssue.error(desc, loc));
+	private void issueError(String desc, Coord... locs) {
+		logIssue(ParserIssue.error(desc, locs));
 	}
-	private void issueWarning(String desc, Coord loc) {
-		logIssue(ParserIssue.warning(desc, loc));
+	private void issueWarning(String desc, Coord... locs) {
+		logIssue(ParserIssue.warning(desc, locs));
 	}
-	private void issueNote(String desc, Coord loc) {
-		logIssue(ParserIssue.note(desc, loc));
+	private void issueNote(String desc, Coord... locs) {
+		logIssue(ParserIssue.note(desc, locs));
 	}
 	private void logIssue(ParserIssue pi) {
 		if(pi.getType() == ParserIssue.Type.ERROR) {

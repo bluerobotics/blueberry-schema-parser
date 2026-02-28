@@ -27,7 +27,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
  * 
  */
 public class ParserIssue {
-	private final Coord m_location;
+	private final Coord[] m_locations;
 	private final String m_description;
 	public enum Type {
 		ERROR,
@@ -37,22 +37,22 @@ public class ParserIssue {
 	}
 	private final Type m_type;
 	
-	protected ParserIssue(String description, Coord location, Type type) {
-		m_location = location;
+	protected ParserIssue(String description, Type type, Coord... locations) {
+		m_locations = locations;
 		m_description = description;
 		m_type = type;
 	}
-	public static ParserIssue error(String description, Coord location) {
-		return new ParserIssue(description, location, Type.ERROR);
+	public static ParserIssue error(String description, Coord... locations) {
+		return new ParserIssue(description, Type.ERROR, locations);
 	}
-	public static ParserIssue warning(String description, Coord location) {
-		return new ParserIssue(description, location, Type.WARNING);
+	public static ParserIssue warning(String description, Coord... locations) {
+		return new ParserIssue(description, Type.WARNING, locations);
 	}
-	public static ParserIssue note(String description, Coord location) {
-		return new ParserIssue(description, location, Type.NOTE);
+	public static ParserIssue note(String description, Coord... locations) {
+		return new ParserIssue(description, Type.NOTE, locations);
 	}
-	public static ParserIssue skipped(String description, Coord location) {
-		return new ParserIssue("Unimplemented feature:\n"+description, location, Type.SKIPPED);
+	public static ParserIssue skipped(String description, Coord... locations) {
+		return new ParserIssue("Unimplemented feature:\n"+description, Type.SKIPPED, locations);
 	}
 	public Type getType() {
 		return m_type;
@@ -60,9 +60,11 @@ public class ParserIssue {
 	@Override
 	public String toString() {
 		String result =  ""+m_type+": "+m_description;
-		if(m_location != null) {
-			int loc = m_location.index;
-			String ss = m_location.getString();
+		boolean firstTime = true;
+		for(Coord c : m_locations) {
+			result += "\n";
+			int loc = c.index;
+			String ss = c.getString();
 			int j = 0;
 			for(int i = 0; i < loc; ++i) {
 				if(ss.charAt(i) == '\t') {
@@ -72,14 +74,14 @@ public class ParserIssue {
 			loc += j;
 
 			ss = ss.replace("\t", "    ");
-			result += " in \""+m_location.filePath+"\" ";
-			result +=  " at line "+ (m_location.line + 1) + "\n";
+			result += (!firstTime ? " and" : "") + " in \""+c.filePath+"\" ";
+			result +=  " at line "+ (c.line + 1) + "\n";
 			result += ss + "\n";
 			result += " ".repeat(loc);
-			result += "^\n";
-		} else {
-			result += "\n";
+			firstTime = false;
+		
 		}
+		result += "^\n";
 		return result;
 	}
 	

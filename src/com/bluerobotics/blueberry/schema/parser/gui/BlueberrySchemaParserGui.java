@@ -325,16 +325,6 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.COPY_ISSUES, e -> copyIssues());
 
 
-		m_actions.getAction(ActionInfos.EXIT).setIcon(EXIT_ICON);
-		m_actions.getAction(ActionInfos.MINIMIZE).setIcon(MINIMIZE_ICON);
-		m_actions.getAction(ActionInfos.NORMALIZE).setIcon(NORMALIZE_ICON);
-
-		m_actions.getAction(ActionInfos.MAXIMIZE).setIcon(MAXIMIZE_ICON);
-		m_actions.getAction(ActionInfos.GENERATE_C).setIcon(GENERATE_C_ICON);
-		m_actions.getAction(ActionInfos.GENERATE_JAVA).setIcon(GENERATE_JAVA_ICON);
-		m_actions.getAction(ActionInfos.CLEAN_SCHEMA).setIcon(SOAP_ICON);
-		m_actions.getAction(ActionInfos.PARSE_SCHEMA).setIcon(CHECK_ICON);
-//		m_actions.getAction(ActionInfos.COPY_ISSUES).setIcon(UtilMethods.makeIconFromFont(ICON_FONT, "\ue14d", COLOR_LOGO_BLUE, -1, 32));
 
 
 	}

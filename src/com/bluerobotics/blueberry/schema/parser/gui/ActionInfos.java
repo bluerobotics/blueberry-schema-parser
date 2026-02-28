@@ -25,28 +25,33 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
 
+import javax.swing.Icon;
+
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.starfishmedical.sfdq.actions.ActionInfo;
+import com.starfishmedical.utils.UtilMethods;
 
 
 
 
 public enum ActionInfos implements ActionInfo, Constants {
-	PARSE_SCHEMA("Parse", "parse.png", "Parse the chosen schema file.", KeyEvent.VK_UNDEFINED, "ctrl alt P"),
-	GENERATE_C("Generete C", "", "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
-	GENERATE_JAVA("Generete Java", "", "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
-	CLEAN_SCHEMA("Clean Schema", "", "Generate a cleaned up version of the schema.", KeyEvent.VK_UNDEFINED, ""),
-	HELP("Help", "", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
-	EXIT("Exit", "", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
-	MINIMIZE("Minimize", "minimizeWindow.png", "Hide the app window.", KeyEvent.VK_UNDEFINED, ""),
-	NORMALIZE("Normalize", "normalizeWindow.png", "Make the app window not too small and not too big.", KeyEvent.VK_UNDEFINED, "shift alt N"),
-	MAXIMIZE("Maximize", "maximizeWindow.png", "Full-screen the app window.", KeyEvent.VK_UNDEFINED, "shift alt X"),
 	
-	COPY_ISSUES("Copy Issues", ICON_FONT, COLOR_LOGO_BLUE, "\ue14d", "Copy issues to clipboard.", KeyEvent.VK_C, ""),
+
+
+	PARSE_SCHEMA("Parse",          ICON_FONT, COLOR_LOGO_BLUE, "\ue86c", "Parse the chosen schema file.", KeyEvent.VK_UNDEFINED, "ctrl alt P"),
+	GENERATE_C("Generete C",       UI_FONT,   COLOR_LOGO_BLUE, "C",      "Generate C code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt C"),
+	GENERATE_JAVA("Generete Java", UI_FONT,   COLOR_LOGO_BLUE, "J",      "Generate Java code in the specified location", KeyEvent.VK_UNDEFINED, "ctrl alt J"),
+	CLEAN_SCHEMA("Clean Schema",   ICON_FONT, COLOR_LOGO_BLUE, "\uf1b2", "Generate a cleaned up version of the schema.", KeyEvent.VK_UNDEFINED, ""),
+	HELP("Help",                   ICON_FONT, COLOR_LOGO_BLUE, "\ue887", "Show application help.", KeyEvent.VK_UNDEFINED, "pressed F1"),//"ctrl H"),
+	EXIT("Exit",                   ICON_FONT, COLOR_LOGO_BLUE, "\ue5cd", "Exit the application", KeyEvent.VK_X, "ctrl shift X"),
+	MINIMIZE("Minimize",           ICON_FONT, COLOR_LOGO_BLUE, "\ue931", "Hide the app window.", KeyEvent.VK_UNDEFINED, ""),
+	NORMALIZE("Normalize",         ICON_FONT, COLOR_LOGO_BLUE, "\ue15b", "Make the app window not too small and not too big.", KeyEvent.VK_UNDEFINED, "shift alt N"),
+	MAXIMIZE("Maximize",           ICON_FONT, COLOR_LOGO_BLUE, "\ue930", "Full-screen the app window.", KeyEvent.VK_UNDEFINED, "shift alt X"),
+	COPY_ISSUES("Copy Issues",     ICON_FONT, COLOR_LOGO_BLUE, "\ue14d", "Copy issues to clipboard.", KeyEvent.VK_C, ""),
 	
 	SETTINGS_LOAD("Load settings", "loadSettings.png", "Load previously saved settings.", KeyEvent.VK_L),
 	SETTINGS_SAVE("Save settings", "saveSettings.png", "Save current application settings.", KeyEvent.VK_E),
-	SETTINGS_SHOW("Show settings", "settings.png", "Show the settings dialog.", KeyEvent.VK_UNDEFINED),
+	SETTINGS_SHOW("Show settings", ICON_FONT, COLOR_LOGO_BLUE, "\ue930", "Show the settings dialog.", KeyEvent.VK_UNDEFINED, ""),
 	
 	NULL("",null, "An action was referenced that does not exist in the action list.",KeyEvent.VK_N),
 	;
