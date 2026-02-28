@@ -652,4 +652,9 @@ public class TokenList {
 	}
 
 
+	public void gotoNextFile() {
+		gotoNext(FilePathToken.class);
+	}
+
+
 }

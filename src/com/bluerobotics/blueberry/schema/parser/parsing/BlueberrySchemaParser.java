@@ -791,7 +791,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * replace integer types preceded with the unsigned keyword with the appropriate unsigned type
 	 * @throws SchemaParserException
 	 */
-	private void collapseUnsigned() throws SchemaParserException {
+	private void collapseUnsigned() {
 		m_tokens.resetIndex();
 		while(m_tokens.isMore()) {
 			BaseTypeToken it = m_tokens.gotoNext(BaseTypeToken.class);
@@ -923,31 +923,32 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * process a struct statement and all the fields in the following braces
 	 * The fields are actually processed by a helper method
 	 * @param it
-	 * @throws SchemaParserException
 	 */
-	private void assembleStructs(IdentifierToken it) throws SchemaParserException {
+	private void assembleStructs(IdentifierToken it) {
 
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		IdentifierToken braceEnd = matchBracket(braceStart);
-		if(nameToken == null) {
-			throw new SchemaParserException("Struct has no specified name.", it.getEnd());
-		} else if(braceStart == null) {
-			throw new SchemaParserException("Struct has no opening brace.", it.getEnd());
+		if(braceStart == null) {
+			issueError("Struct has no opening brace. Skipping rest of file.", it.getEnd());
+			m_tokens.gotoNextFile();
+		} else if(nameToken == null) {
+			issueError("Struct has no specified name. Skipping rest of file.", it.getEnd());
+			m_tokens.gotoNextFile();
+		} else {
+			ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
+	
+	
+			StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment, it.getStart());
+			m.setFileName(m_fileName);
+			m_lastComment = null;
+	
+			m_defines.add(m);
+			m_moduleStack.getLast().getDefines().add(m);
+			m.addAnnotation(m_annotations);
+			m_annotations.clear();
+			processMessageOrStructFields(m, braceStart, braceEnd);
 		}
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
-
-
-		StructField m = new StructField(SymbolName.EMPTY, name, m_lastComment, it.getStart());
-		m.setFileName(m_fileName);
-		m_lastComment = null;
-
-		m_defines.add(m);
-		m_moduleStack.getLast().getDefines().add(m);
-		m.addAnnotation(m_annotations);
-		m_annotations.clear();
-		processMessageOrStructFields(m, braceStart, braceEnd);
-
 		
 	}
 	/**
@@ -955,31 +956,35 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * The fields are actually processed by a helper method
 	 * A message is like a strut whose purpose is to be sent over the network
 	 * @param it
-	 * @throws SchemaParserException
 	 */
-	private void assembleMessage(IdentifierToken it) throws SchemaParserException {
+	private void assembleMessage(IdentifierToken it) {
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		IdentifierToken braceStart = m_tokens.relativeId(2, TokenIdentifier.BRACE_START);
 		IdentifierToken braceEnd = matchBracket(braceStart);
 		if(nameToken == null) {
-			throw new SchemaParserException("Message has no specified name.", it.getEnd());
+			issueError("Message has no specified name. Skipping rest of file.", it.getEnd());
+			m_tokens.gotoNextFile();
 		} else if(braceStart == null) {
-			throw new SchemaParserException("Message statement has no opening brace.", it.getEnd());
+			issueError("Message statement has no opening brace. Skipping rest of file.", it.getEnd());
+			m_tokens.gotoNextFile();
 		} else if(braceEnd == null) {
-			throw new SchemaParserException("Message statement has no closing brace.", braceStart.getEnd());
+			issueError("Message statement has no closing brace.", braceStart.getEnd());
+			m_tokens.gotoNextFile();
+
+		} else {
+			ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
+	
+	
+			MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment, it.getEnd());
+			m.setFileName(m_fileName);
+			m_lastComment = null;
+	
+			m_messages.add(m);
+			m_moduleStack.getLast().getMessages().add(m);
+			m.addAnnotation(m_annotations);
+			m_annotations.clear();
+			processMessageOrStructFields(m, braceStart, braceEnd);
 		}
-		ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
-
-
-		MessageField m = new MessageField(SymbolName.EMPTY, name, m_lastComment, it.getEnd());
-		m.setFileName(m_fileName);
-		m_lastComment = null;
-
-		m_messages.add(m);
-		m_moduleStack.getLast().getMessages().add(m);
-		m.addAnnotation(m_annotations);
-		m_annotations.clear();
-		processMessageOrStructFields(m, braceStart, braceEnd);
 	}
 	private void processMessageOrStructFields(ParentField m, IdentifierToken braceStart, IdentifierToken braceEnd) {
 		m_tokens.setIndex(braceStart);
@@ -1042,9 +1047,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * of the form <comment?><typdef><sequence><angle bracket start><constituentTypeName><comma?><number?><angle bracket end><sequenceTypeName>
 	 * except this method assumes that the <typedef> has already been removed
 	 * @param it - the sequence token
-	 * @throws SchemaParserException
 	 */
-	private void assembleSequence(IdentifierToken it) throws SchemaParserException {
+	private void assembleSequence(IdentifierToken it) {
 
 		IdentifierToken angleBracketStart = m_tokens.relativeId(1, TokenIdentifier.ANGLE_BRACKET_START);
 		BaseTypeToken btt = m_tokens.relative(2, BaseTypeToken.class);
@@ -1077,23 +1081,25 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			IdentifierToken angleBracketEnd = matchBracket(angleBracketStart);
 			if(angleBracketEnd == null) {
-				throw new SchemaParserException("Starting angle brackets must have closing bracket too.", angleBracketStart.getEnd());
-			}
+				issueError("Starting angle brackets must have closing bracket too. Skipping rest of file.", angleBracketStart.getEnd());
+				m_tokens.gotoNextFile();
+			} else {
 			
-			m_tokens.setIndex(angleBracketEnd);
-			SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
-			if(nameToken == null) {
-				throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
+				m_tokens.setIndex(angleBracketEnd);
+				SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);
+				if(nameToken == null) {
+					throw new SchemaParserException("Sequence needs a type name specified.", angleBracketEnd.getEnd());
+				}
+				m_tokens.setIndex(angleBracketEnd);
+				ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
+				SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
+				sf.setFileName(m_fileName);
+				sf.add(cf);
+				sf.setLimit(n);
+				m_lastComment = null;
+				m_defines.add(sf);
+				m_moduleStack.getLast().getDefines().add(sf);
 			}
-			m_tokens.setIndex(angleBracketEnd);
-			ScopeName name = m_moduleStack.getLast().scope(nameToken.getSymbolName());
-			SequenceField sf = new SequenceField(null, name, m_lastComment, it.getEnd());
-			sf.setFileName(m_fileName);
-			sf.add(cf);
-			sf.setLimit(n);
-			m_lastComment = null;
-			m_defines.add(sf);
-			m_moduleStack.getLast().getDefines().add(sf);
 			
 		
 		}
@@ -2102,9 +2108,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	/**
 	 * Checks if the next element of the file is a block comment
 	 * @return the next Coord after a comment if there is one. null if incomplete comment, c if no comment
-	 * @throws SchemaParserException
 	 */
-	private Coord processBlockComment(Coord c) throws SchemaParserException{
+	private Coord processBlockComment(Coord c){
 		if(c == null) {
 			return null;
 		}
@@ -2152,7 +2157,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(result == null) {
 						keepGoing = false;
 						result = null;
-						throw new SchemaParserException("Block comment missing end!", c);
+						issueError("Block comment missing end! Skipping rest of file.", c);
+						m_tokens.gotoNextFile();
 					}
 
 				}

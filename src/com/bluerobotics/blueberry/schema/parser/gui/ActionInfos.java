@@ -54,6 +54,8 @@ public enum ActionInfos implements ActionInfo, Constants {
 	SETTINGS_SHOW("Show settings", ICON_FONT, COLOR_LOGO_BLUE, "\ue930", "Show the settings dialog.", KeyEvent.VK_UNDEFINED, ""),
 	
 	NULL("",null, "An action was referenced that does not exist in the action list.",KeyEvent.VK_N),
+	
+	TOOLS_RESET_KEYS("Reset Keys", ICON_FONT, COLOR_LOGO_BLUE, "\ueb84", "Reset all message and module keys.", KeyEvent.VK_UNDEFINED, ""),
 	;
 		
 
