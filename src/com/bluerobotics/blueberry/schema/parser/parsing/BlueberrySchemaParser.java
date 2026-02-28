@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -50,6 +51,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.gui.BlueberrySchemaParserGui.TextOutput;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
@@ -70,6 +72,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants;
 import com.bluerobotics.blueberry.schema.parser.tokens.TokenList;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 import com.bluerobotics.blueberry.schema.parser.writers.WriterUtils;
+import com.starfishmedical.comms.Crc1021;
 
 /**
  * This class implements the token parsing algorithm
@@ -428,11 +431,15 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_modules.forEach(m -> {
 			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
 			if(a == null || a.getParameter(0, Number.class) == null) {
-				 a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
-				 long n = getNextModuleKey();
-				a.addParameter(new Number(n));
+				a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
+//				long n = getNextModuleKey();
+				long h = makeHashKey(m);
+				while(doesModuleKeyExist(h)) {
+					++h;
+				}
+				a.addParameter(new Number(h));
 				m.addAnnotation(a);
-				issueNote("Adding module_key: "+n+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
+				issueNote("Adding module_key: "+WriterUtils.formatAsHex(h)+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
 				
 			}
 		});
@@ -446,16 +453,79 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
 				if(a == null || a.getParameter(0, Number.class) == null) {
 					 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
-					 long i = getNextMessageKey(m);
-					a.addParameter(new Number(i));
+					 long h = makeHashKey(mf);
+//					 long i = getNextMessageKey(m);
+					 
+					 while(doesMessageKeyExist(m, h)) {
+						 ++h;
+					 }
+					 
+					a.addParameter(new Number(h));
 					mf.addAnnotation(a);
-					issueNote("Adding message_key for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(i), mf.getCoord());
+					issueNote("Adding message_key for "+mf.getTypeName()+" message  -> "+WriterUtils.formatAsHex(h), mf.getCoord());
 				}
 					
 			});
 		}
 		
 	}
+	private boolean doesModuleKeyExist(long i) {
+		boolean result = false;
+		for(BlueModule m : m_modules) {
+			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			Number n = a.getParameter(0,  Number.class);
+			if(n != null && n.asLong() == i) {
+				result = true;
+				break;
+			}
+		
+		}
+		return result;
+	}
+	private boolean doesMessageKeyExist(BlueModule m, long h) {
+		boolean result = false;
+		int n = m.getMessages().size();
+		for(int i = 0; i < n; ++i) {
+			MessageField msg = (MessageField)m.getMessages().get(i);
+			Annotation a = msg.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			Number nt = a.getParameter(0,  Number.class);
+			if(nt != null && nt.asLong() == h) {
+				result = true;
+				break;
+			}
+		
+		}
+		return result;
+	}
+
+	/**
+	 * Makes a key for a specified module
+	 * Does this by first making a string from the absolute scoped module name with "::" separator, in lower-case
+	 * @param m - the module to compute the hash for
+	 * @return - the 16 bit hash
+	 */
+	private int makeHashKey(BlueModule m) {
+		return makeHashKey(m.getName().toLowerCamel("::").toLowerCase());
+	}
+	/**
+	 * Makes a key for the specified message field
+	 * Does this by first making a string from the message name (without module scope) in lower case
+	 * @param msg - the message to compute the hash for
+	 * @return - the 16 bit hash
+	 */
+	private int makeHashKey(MessageField msg) {
+		return makeHashKey(msg.getTypeName().toSymbolName().toLowerCamelString().toLowerCase());
+	}
+	private int makeHashKey(String n) {
+		Crc1021 crc = new Crc1021();
+		try {
+			crc.addBytes(n.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return crc.getCrc();
+	}
+
 	/**
 	 * picks the next available message key value
 	 * @return
