@@ -473,10 +473,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		boolean result = false;
 		for(BlueModule m : m_modules) {
 			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-			Number n = a.getParameter(0,  Number.class);
-			if(n != null && n.asLong() == i) {
-				result = true;
-				break;
+			if(a != null) {
+				Number n = a.getParameter(0,  Number.class);
+				if(n != null && n.asLong() == i) {
+					result = true;
+					break;
+				}
 			}
 		
 		}
@@ -488,10 +490,12 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(int i = 0; i < n; ++i) {
 			MessageField msg = (MessageField)m.getMessages().get(i);
 			Annotation a = msg.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-			Number nt = a.getParameter(0,  Number.class);
-			if(nt != null && nt.asLong() == h) {
-				result = true;
-				break;
+			if(a != null) {
+				Number nt = a.getParameter(0,  Number.class);
+				if(nt != null && nt.asLong() == h) {
+					result = true;
+					break;
+				}
 			}
 		
 		}
