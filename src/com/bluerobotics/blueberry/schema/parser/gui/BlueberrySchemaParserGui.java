@@ -219,6 +219,8 @@ public class BlueberrySchemaParserGui implements Constants {
 				addItem(m_actions, ActionInfos.GENERATE_JAVA);
 				addItem(m_actions, ActionInfos.CLEAN_SCHEMA);
 				addItem(m_actions, ActionInfos.COPY_ISSUES);
+				addItem(m_actions, ActionInfos.TOOLS_CLEAR_OUTPUT);
+				addItem(m_actions, ActionInfos.TOOLS_RESET_KEYS);
 
 				addSeparator(new Dimension(20,20));
 //				addItem( m_actions, ActionInfos.HELP);
@@ -306,6 +308,7 @@ public class BlueberrySchemaParserGui implements Constants {
 	}
 
 	private void registerActions() {
+		m_actions.setIconColor(COLOR_LOGO_BLUE);
 		m_actions.registerActions(ActionInfos.values());
 		m_actions.addKeyBindings(m_frame.getRootPane());
 
@@ -323,10 +326,13 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_actions.addListener(ActionInfos.GENERATE_JAVA, e -> generateJava());
 		m_actions.addListener(ActionInfos.CLEAN_SCHEMA, e -> generatePretty());
 		m_actions.addListener(ActionInfos.COPY_ISSUES, e -> copyIssues());
+		m_actions.addListener(ActionInfos.TOOLS_RESET_KEYS, e -> resetKeys());
+		m_actions.addListener(ActionInfos.TOOLS_CLEAR_OUTPUT, e -> clearText());
+		
+	}
 
-
-
-
+	private void clearText() {
+		m_text.setText("");
 	}
 	private void copyIssues() {
 		int s = m_text.getSelectionStart();
@@ -349,6 +355,27 @@ public class BlueberrySchemaParserGui implements Constants {
 		m_text.setText("");
 		execute(() -> noThreadParse());
 		
+	}
+	
+	
+	
+	/**
+	 * after parsing, this resets all module and message keys and recomputes 
+	 */
+	private void resetKeys() {
+		execute(() -> {
+			if(m_parser.getMessages().size() == 0) {
+				noThreadParse();
+			}
+			if(m_parser.isError()) {
+				append("Errors occured during parsing. Will not generate proceed with key reset.", ParserIssue.Type.ERROR);
+			} else {
+				append("Reseting module and message keys \n");
+				
+				m_parser.resetKeys();
+			}
+			append("Done");
+		});		
 	}
 	private void generateJava() {
 		execute(() -> {

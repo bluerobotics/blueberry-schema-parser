@@ -2194,6 +2194,27 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	public boolean isError() {
 		return m_errorDetected;
 	}
+	/**
+	 * Scan through all modules and messages, resetting the module_key and message_key annotation
+	 * Then re-assign them from scratch.
+	 */
+	public void resetKeys() {
+		m_modules.forEach(m -> {
+			Annotation a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
+			m.addAnnotation(a);
+		});
+		m_modules.forEach(m -> {
+			m.getMessages().forEachOfType(MessageField.class, false, msg -> {
+				Annotation a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
+				msg.addAnnotation(a);
+			});
+		});
+		fillInMissingMessageKeyValues();
+		fillInMissingModuleKeyValues();
+		assignModuleAnnotations();
+		checkForDuplicateMessageKeys();
+		
+	}
 
 
 

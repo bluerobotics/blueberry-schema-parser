@@ -32,6 +32,7 @@ import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 public interface AnnotationOwner {
 	/**
 	 * adds an annotation to this field.
+	 * replaces an existing one of the same name if it exists
 	 * @param as
 	 */
 	public void addAnnotation(Annotation... as);
