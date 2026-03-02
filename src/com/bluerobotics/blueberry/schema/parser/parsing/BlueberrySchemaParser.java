@@ -51,7 +51,6 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
-import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.gui.BlueberrySchemaParserGui.TextOutput;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.tokens.BaseTypeToken;
@@ -241,7 +240,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		ao.scanAnnotations(a1 -> {
 			ao.scanAnnotations(a2 -> {
 				if(a1 != a2 && a1.matchesByName(a2)) {
-					String loc1 = a1.getSource().filePath;
 					if(a1.matchesByParameters(a2)) {
 						issueWarning("Duplicate annotation found with same parameters.", a1.getSource(), a2.getSource());
 					} else {
@@ -397,7 +395,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	
 	private void checkForMessageTopics() {
-		final ArrayList<Integer> keys = new ArrayList<>();
 		m_modules.forEach(mod -> {
 			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
 				Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
@@ -1002,9 +999,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				SymbolNameToken typeNameToken = m_tokens.relative(0, SymbolNameToken.class);//or this
 				ScopeNameToken typeScopeNameToken = m_tokens.relative(0, ScopeNameToken.class);
 				ScopeName tn = typeScopeNameToken != null ? typeScopeNameToken.getScopeName() : typeNameToken != null ? ScopeName.wrap(typeNameToken.getSymbolName()) : null;
-//				if(typeNameToken == null) {
-//					typeNameToken = m_tokens.relative(0, ScopeNameToken.class);
-//				}
+
 				BaseTypeToken btt = m_tokens.relative(0, BaseTypeToken.class);//or this
 				if(btt == null && tn == null) {
 					issueError("Expecting a type name.", m_tokens.getCurrent().getStart());
@@ -1037,6 +1032,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			}
 			m_tokens.next();
 		}
+		m_tokens.setIndex(braceEnd);
 		
 	}
 	/**
@@ -1154,13 +1150,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	 * @param it
 	 */
 	private void assembleTypedef(IdentifierToken it) {
-		IdentifierToken st = m_tokens.relativeId(1,  TokenIdentifier.SEQUENCE);
-//		if(st != null) {
-//			m_tokens.remove(it);
-//			m_tokens.setIndex(st);
-//			assembleSequence(st);
-//			return;
-//		}
+
 		SymbolNameToken typeName = m_tokens.relative(1, SymbolNameToken.class);//this is the original type that this typedef is based on 
 		BaseTypeToken btt = m_tokens.relative(1, BaseTypeToken.class);//this could also be the original type depending on whether it's a base type or not
 		SymbolNameToken name = m_tokens.relative(2, SymbolNameToken.class);//name of new type
