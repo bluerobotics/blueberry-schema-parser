@@ -21,6 +21,10 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.parsing;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.ListIterator;
+
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 
 /**
@@ -38,7 +42,16 @@ public class ParserIssue {
 	private final Type m_type;
 	
 	protected ParserIssue(String description, Type type, Coord... locations) {
-		m_locations = locations;
+		ArrayList<Coord> cs = new ArrayList<>();
+		cs.addAll(Arrays.asList(locations));
+		ListIterator<Coord> lic = cs.listIterator();
+		while(lic.hasNext()) {
+			Coord c = lic.next();
+			if(c == null) {
+				lic.remove();
+			}
+		}
+		m_locations = cs.toArray(new Coord[cs.size()]);
 		m_description = description;
 		m_type = type;
 	}

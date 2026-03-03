@@ -289,6 +289,9 @@ public class ScopeName extends SymbolName {
 	public String toLowerCamel(String sep) {
 		return toCase(Case.LOWER_CAMEL, sep);
 	}
+	public String toUpperCamel(String sep) {
+		return toCase(Case.UPPER_CAMEL, sep);
+	}
 	protected String toCase(Case c, String sep) {
 		List<SymbolName> sns = splitScope();
 		String result = "";
@@ -307,6 +310,46 @@ public class ScopeName extends SymbolName {
 
 		return result;
 	}
+	/**
+	 * compute the number of levels of this scope name
+	 * a value of one means there is only one level above root
+	 * if this scope name is not absolute then returns -1
+	 * @return the number of levels of this scope name
+	 */
+	public int getNumberOfLevels() {
+		int result = -1;
+		if(isAbsolute()) {
+			result = splitScope().size(); 
+		}
+		return result;
+	}
+	/**
+	 * compute a new scope name from the n left-most levels of this one
+	 * if this scope name has less than two levels then a name equivalent to this one is returned.
+	 * @param levels
+	 * @return
+	 */
+	public ScopeName getAncestorOfLevels(int n) {
+		List<SymbolName> sns = splitScope();
+		while(sns.size() > n) {
+			sns.removeLast();
+		}
+		return makeFromSymbols(sns, true);
+	}
+
+	/**
+	 * Checks if the specified ScopeName forms a root of this scope name.
+	 * @param sn
+	 * @return
+	 */
+	public boolean isChildOf(ScopeName sn) {
+		int n = sn.getNumberOfLevels();
+		ScopeName sn2 = getAncestorOfLevels(n);
+		return sn2.equals(sn);
+	}
+
+	
+	
 	
 
 

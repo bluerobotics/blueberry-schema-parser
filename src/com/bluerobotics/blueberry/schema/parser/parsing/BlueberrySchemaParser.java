@@ -181,9 +181,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			checkForDuplicateEnumValues();
 			checkForDuplicateAnnotations();
 			fillInMissingMessageKeyValues();
-			fillInMissingModuleKeyValues();
 			
+			fillInMissingModuleKeyValues();
+			propagateModuleAnnotations();
 			assignModuleAnnotations();
+			
 			
 			checkForDuplicateMessageKeys();
 			checkForMessageTopics();
@@ -270,6 +272,28 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		}
 		
+	}
+	/**
+	 * copy annotations from any two level module to any child module
+	 */
+	private void propagateModuleAnnotations() {
+		ArrayList<Annotation> as = new ArrayList<>();
+		m_modules.forEach(m -> {
+			ScopeName sn = m.getName();
+			if(sn.getNumberOfLevels() == 2) {
+				as.clear();
+				m.scanAnnotations(a -> {
+					as.add(a);
+				});
+				Annotation[] aa = as.toArray(new Annotation[as.size()]);
+				m_modules.forEach(m2 -> {
+					ScopeName sn2 = m2.getName();
+					if(sn2.isChildOf(sn)){
+						m2.addAnnotation(aa);
+					}
+				});
+			}
+		});
 	}
 	/**
 	 * put a reference to all module annotations into every message member of that module
@@ -425,24 +449,45 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 	
 	/**
-	 * scan through all messages and assign any message keys that have not been assigned.
+	 * scan through all messages and assign any moduie keys that have not been assigned.
+	 * Only the second from the top level gets a key, every child module assumes the same key
 	 */
 	private void fillInMissingModuleKeyValues() {
-		m_modules.forEach(m -> {
-			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-			if(a == null || a.getParameter(0, Number.class) == null) {
-				a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
-//				long n = getNextModuleKey();
-				long h = makeHashKey(m);
-				while(doesModuleKeyExist(h)) {
-					++h;
+		ListIterator<BlueModule> ms = m_modules.listIterator();
+		while(ms.hasNext()) {
+			BlueModule m = ms.next();
+			ScopeName sn = m.getName();
+			ScopeName sn2 = sn.getAncestorOfLevels(2);
+			int n = sn.getNumberOfLevels();
+			if(n > 2) {
+				//we're over two levels so need to:
+				//check for 2-level parent - if it exists
+				BlueModule match2 = null;
+				for(BlueModule mt : m_modules) {
+					if(mt.equals(sn2)) {
+						//we found a match
+						match2 = mt;
+					}
 				}
-				a.addParameter(new Number(h));
-				m.addAnnotation(a);
-				issueNote("Adding module_key: "+WriterUtils.formatAsHex(h)+" for module "+m.getName().toLowerSnake("\\"), m.getCoord());
-				
+				if(match2 == null) {
+					//there was no match so add one
+					ms.add(new BlueModule(sn2, null));
+					ms.previous();//step back in the iterator so the new element will get processed
+				}
+			} else if(n == 2) {
+				//we're a two level module so make sure it has a module_key
+				Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+				if(a == null) {
+					//ok, so it doesn't have a module key
+					a = new Annotation(Annotation.MODULE_KEY_ANNOTATION,null);
+					long k = getNextModuleKey();
+					a.addParameter(new Number(k));
+					issueNote("Adding module key for "+sn.toUpperCamel("::")+" --> "+WriterUtils.formatAsHex(k), m.getCoord());
+				}
+			} else {
+				//we're less than two levels so don't care
 			}
-		});
+		}
 	}
 	/**
 	 * scan through all messages and assign any message keys that have not been assigned.
@@ -1494,6 +1539,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			if(i >= 0) {
 				m = m_modules.get(i);
 			} else {
+				
 				m_modules.add(m);
 			}
 			m.addAnnotation(m_annotations);
@@ -2202,14 +2248,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		return m_errorDetected;
 	}
 	/**
-	 * Scan through all modules and messages, resetting the module_key and message_key annotation
+	 * Scan through all messages, resetting the message_key annotation
 	 * Then re-assign them from scratch.
 	 */
 	public void resetKeys() {
-		m_modules.forEach(m -> {
-			Annotation a = new Annotation(Annotation.MODULE_KEY_ANNOTATION, null);
-			m.addAnnotation(a);
-		});
+		
 		m_modules.forEach(m -> {
 			m.getMessages().forEachOfType(MessageField.class, false, msg -> {
 				Annotation a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
@@ -2217,7 +2260,6 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			});
 		});
 		fillInMissingMessageKeyValues();
-		fillInMissingModuleKeyValues();
 		assignModuleAnnotations();
 		checkForDuplicateMessageKeys();
 		
