@@ -1376,6 +1376,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		Object val = nvtGood ? m_tokens.relative(2, NameValueToken.class).getValue() : null;
 		Number nVal = val instanceof Number ? (Number)val : null;
 		String sVal = val instanceof String ? (String)val : null;
+		
 		TokenIdentifier idVal = val instanceof TokenIdentifier ? (TokenIdentifier)val : null;
 		
 		TokenIdentifier ti = btt != null ? btt.getKeyword() : null;
@@ -1436,7 +1437,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				
 			if(nVal == null) {
 				Coord c = nvtGood ? nvt.getStart() : it.getEnd();
-				issueSkipped("Const must include a name and value.", c);
+				String moreText = "";
+				if(val instanceof SymbolName) {
+					SymbolName sn = (SymbolName)val;
+					moreText = sn.toLowerCaseString() + " could not be interpreted as a number."; 
+					
+				}
+				issueSkipped("Const must include a name and value. "+moreText, c);
 				
 			} else {
 

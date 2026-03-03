@@ -52,16 +52,16 @@ public class Number {
 		if(sign) {
 			s2 = s2.substring(1);
 		}
-		if(s2.endsWith("d")) {
+		if(s2.contains(".") && s2.endsWith("d")) {//check for fixed point
 			result = new BigDecimal(s2.replace("d",""));
 			m_integer = false;
-		} else if(s2.contains(".") || s2.contains("e")) {
-			result = new BigDecimal(s2);
-			m_integer = false;
-		} else if(s2.startsWith("0x")) {
+		} else if(s2.startsWith("0x")) {//check for hex
 			s2 = s2.replace("0x", "");
 			result = new BigDecimal(Long.parseLong(s2, 16));
 			m_integer = true;
+		} else if(s2.contains(".") || s2.contains("e")) {
+			result = new BigDecimal(s2);
+			m_integer = false;
 		} else if(s2.startsWith("0d")) {
 			s2 = s2.replace("0d", "");
 			result = new BigDecimal(Long.parseLong(s2, 10));

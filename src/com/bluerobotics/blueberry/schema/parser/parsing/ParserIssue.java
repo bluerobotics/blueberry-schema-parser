@@ -52,7 +52,7 @@ public class ParserIssue {
 		return new ParserIssue(description, Type.NOTE, locations);
 	}
 	public static ParserIssue skipped(String description, Coord... locations) {
-		return new ParserIssue("Unimplemented feature:\n"+description, Type.SKIPPED, locations);
+		return new ParserIssue("Unimplemented feature?\n"+description, Type.SKIPPED, locations);
 	}
 	public Type getType() {
 		return m_type;
