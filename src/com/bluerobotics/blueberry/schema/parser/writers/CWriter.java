@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.constants.BooleanConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
@@ -74,7 +75,8 @@ public class CWriter extends SourceWriter {
 //			//mow make a header and source files for each message
 			
 			modules.forEach(mod -> {
-				if(mod.getConstants().size() > 0 || mod.getMessages().size() > 0) {
+
+				if(mod.getConstants().size() > 0 || mod.getMessages().size() > 0 || mod.hasEnums()) {
 					makeHeaderFile(mod);
 					makeSourceFile(mod);
 				}

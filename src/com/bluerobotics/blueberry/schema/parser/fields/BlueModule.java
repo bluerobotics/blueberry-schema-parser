@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
@@ -141,6 +142,16 @@ public class BlueModule implements AnnotationOwner {
 		result |= m_messages.size() == 0;
 //		result |= m_constants.size() == 0;
 		return result;
+	}
+	public boolean hasEnums() {
+		int en = 0;
+		ListIterator<Field> fs = getDefines().getIterator();
+		while(fs.hasNext()) {
+			if(fs.next() instanceof EnumField) {
+				++en;
+			}
+		}
+		return en > 0;
 	}
 	
 	
