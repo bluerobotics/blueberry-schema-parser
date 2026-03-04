@@ -182,6 +182,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			checkForDuplicateEnumValues();
 			checkForDuplicateAnnotations();
 			fillInMissingMessageKeyValues();
+			checkForMessagesInTopModuleLevel();
 			
 			fillInMissingModuleKeyValues();
 			propagateModuleAnnotations();
@@ -224,7 +225,19 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 
-	
+	/**
+	 * Messages should only be in 2nd or greater level below root module
+	 */
+	private void checkForMessagesInTopModuleLevel() {
+		m_modules.forEach(m -> {
+			if(m.getName().getNumberOfLevels() < 2) {
+				if(m.getMessages().size() > 0) {
+					m_log.issueError("Modules within one level of root should not contain messages.", m.getCoord());
+				}
+			}
+		});
+	}
+
 	private void checkForMessageKeys() {
 		for(BlueModule mod : m_modules) {
 			mod.getMessages().forEach(msg -> {
@@ -300,9 +313,11 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				});
 				Annotation[] aa = as.toArray(new Annotation[as.size()]);
 				m_modules.forEach(m2 -> {
-					ScopeName sn2 = m2.getName();
-					if(sn2.isChildOf(sn)){
-						m2.addAnnotation(aa);
+					if(m2 != m) {
+						ScopeName sn2 = m2.getName();
+						if(sn2.isChildOf(sn)){
+							m2.addAnnotation(aa);
+						}
 					}
 				});
 			}
@@ -480,6 +495,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					if(mt.equals(sn2)) {
 						//we found a match
 						match2 = mt;
+						break;
 					}
 				}
 				if(match2 == null) {
@@ -495,6 +511,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 					a = new Annotation(Annotation.MODULE_KEY_ANNOTATION,null);
 					long k = getNextModuleKey();
 					a.addParameter(new Number(k));
+					m.addAnnotation(a);
 					m_log.issueNote("Adding module key for "+sn.toUpperCamel("::")+" --> "+WriterUtils.formatAsHex(k), m.getCoord());
 				}
 			} else {

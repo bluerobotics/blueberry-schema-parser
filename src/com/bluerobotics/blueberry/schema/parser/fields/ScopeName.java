@@ -339,13 +339,14 @@ public class ScopeName extends SymbolName {
 
 	/**
 	 * Checks if the specified ScopeName forms a root of this scope name.
+	 * If the scope names are exactly equal (i.e. the specified one is not a child) then returns false
 	 * @param sn
 	 * @return
 	 */
 	public boolean isChildOf(ScopeName sn) {
 		int n = sn.getNumberOfLevels();
 		ScopeName sn2 = getAncestorOfLevels(n);
-		return sn2.equals(sn);
+		return sn2.equals(sn) && (!equals(sn));
 	}
 
 	
