@@ -43,7 +43,9 @@ public class ParserIssue {
 	
 	protected ParserIssue(String description, Type type, Coord... locations) {
 		ArrayList<Coord> cs = new ArrayList<>();
-		cs.addAll(Arrays.asList(locations));
+		if(locations != null) {
+			cs.addAll(Arrays.asList(locations));
+		}
 		ListIterator<Coord> lic = cs.listIterator();
 		while(lic.hasNext()) {
 			Coord c = lic.next();
@@ -94,7 +96,7 @@ public class ParserIssue {
 			firstTime = false;
 		
 		}
-		result += "^\n";
+		result += "\n";
 		return result;
 	}
 	

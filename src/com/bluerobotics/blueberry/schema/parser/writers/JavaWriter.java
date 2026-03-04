@@ -48,6 +48,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -60,8 +61,8 @@ public class JavaWriter extends SourceWriter {
 	private final ScopeName m_packagePrefix;
 
 
-	public JavaWriter(File dir, BlueberrySchemaParser parser, String header, String packagePrefix) {
-		super(dir, parser, header);
+	public JavaWriter(File dir, BlueberrySchemaParser parser, String header, String packagePrefix, ParserIssueLogger log) {
+		super(dir, parser, header, log);
 		m_packagePrefix = ScopeName.make(Case.LOWER_SNAKE, "\\.", packagePrefix);
 	}
 

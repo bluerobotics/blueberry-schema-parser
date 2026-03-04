@@ -42,6 +42,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName.Case;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
@@ -52,13 +53,14 @@ import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 public abstract class SourceWriter {
 	protected final File m_directory;
 	private static final String INDENT_STRING = "\t";
-
+	private final ParserIssueLogger m_log;
 
 	protected StringBuffer m_buffer = new StringBuffer();
 	protected final String m_fileHeader;
 	protected final BlueberrySchemaParser m_parser;
 	protected int m_indent = 0;
-	public SourceWriter(File dir, BlueberrySchemaParser parser, String header) {
+
+	public SourceWriter(File dir, BlueberrySchemaParser parser, String header, ParserIssueLogger log) {
 		if(!dir.exists()) {
 			dir.mkdir();
 			m_directory = dir;
@@ -69,6 +71,7 @@ public abstract class SourceWriter {
 		}
 		m_parser = parser;
 		m_fileHeader = header;
+		m_log = log;
 	}
 	/**
 	 * Main method that triggers the generation of all files for the specified messages and defines

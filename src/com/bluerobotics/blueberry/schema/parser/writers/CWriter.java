@@ -47,6 +47,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -59,8 +60,8 @@ public class CWriter extends SourceWriter {
 	private static final String TOPIC_NID_CHAR_STRING = "\\x80";
 	private static final String TOPIC_DEVICE_TYPE_CHAR_STRING = "\\x81";
 	
-	public CWriter(File dir, BlueberrySchemaParser parser, String header) {
-		super(dir, parser, header);
+	public CWriter(File dir, BlueberrySchemaParser parser, String header, ParserIssueLogger log) {
+		super(dir, parser, header, log);
 	}
 
 	

@@ -55,7 +55,12 @@ public class BlueModule implements AnnotationOwner {
 	@Override
 	public void addAnnotation(Annotation... as) {
 		for(Annotation a : as) {
-			m_annotations.add(a);
+			int i = m_annotations.indexOf(a);
+			if(i >= 0) {
+				m_annotations.set(i,  a);
+			} else {
+				m_annotations.add(a);
+			}
 		}
 	}
 	@Override

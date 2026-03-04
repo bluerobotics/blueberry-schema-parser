@@ -29,6 +29,7 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 
 /**
  * A SourceWriter to generate a pretty version of the schema
@@ -37,8 +38,8 @@ import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
  */
 public class PrettyWriter extends SourceWriter {
 
-	public PrettyWriter(File dir, BlueberrySchemaParser parser, String header) {
-		super(dir, parser, header);
+	public PrettyWriter(File dir, BlueberrySchemaParser parser, String header, ParserIssueLogger log) {
+		super(dir, parser, header, log);
 	}
 
 	@Override

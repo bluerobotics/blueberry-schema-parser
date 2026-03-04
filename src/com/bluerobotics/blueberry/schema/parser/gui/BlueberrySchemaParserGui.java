@@ -41,7 +41,9 @@ import javax.swing.text.StyleConstants;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssue;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.writers.CWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.JavaWriter;
 import com.bluerobotics.blueberry.schema.parser.writers.PrettyWriter;
@@ -62,6 +64,7 @@ import com.starfishmedical.utils.UtilMethods;
 public class BlueberrySchemaParserGui implements Constants {
 	private final Settings m_settings;
 	private final JFrame m_frame;
+	
 //	private MenuBar m_menuBar;
 	
 	public interface TextOutput {
@@ -75,11 +78,13 @@ public class BlueberrySchemaParserGui implements Constants {
 	private final Style STYLE_GREEN = addStyle("green", Color.GREEN);
 	private final Style STYLE_BLACK = addStyle("black", Color.BLACK);
 	private final Style STYLE_MAGENTA = addStyle("magenta", Color.MAGENTA);
-
-	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser((s,t) -> {
+	private final ParserIssueLogger m_log = new ParserIssueLogger((s,t) -> {
 		
 		append(s,t);
 	});
+
+	
+	private BlueberrySchemaParser m_parser = new BlueberrySchemaParser(m_log);
 	private void append(String s) {
 		append(s, null);
 	}
@@ -367,7 +372,7 @@ public class BlueberrySchemaParserGui implements Constants {
 			if(m_parser.getMessages().size() == 0) {
 				noThreadParse();
 			}
-			if(m_parser.isError()) {
+			if(m_log.isError()) {
 				append("Errors occured during parsing. Will not generate proceed with key reset.", ParserIssue.Type.ERROR);
 			} else {
 				append("Reseting module and message keys \n");
@@ -387,12 +392,12 @@ public class BlueberrySchemaParserGui implements Constants {
 			if(m_parser.getMessages().size() == 0) {
 				noThreadParse();
 			}
-			if(m_parser.isError()) {
+			if(m_log.isError()) {
 				append("Errors occured during parsing. Will not generate Java code.", ParserIssue.Type.ERROR);
 			} else {
 				append("Generating Java code in \"" + dir+"\"\n");
 				String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-				JavaWriter w = new JavaWriter(dir, m_parser, h, p);
+				JavaWriter w = new JavaWriter(dir, m_parser, h, p, m_log);
 				w.write();
 			}
 			append("Done");
@@ -410,13 +415,13 @@ public class BlueberrySchemaParserGui implements Constants {
 				noThreadParse();
 			}
 			
-			if(m_parser.isError()) {
+			if(m_log.isError()) {
 				append("Errors occured during parsing. Will not generate C code.", ParserIssue.Type.ERROR);
 			} else {
 				append("Generating C code in \"" + dir+"\"\n");
 		
 				String h = readHeader(m_settings.getUri(Key.CODE_HEADER_FILE_PATH));
-				CWriter w = new CWriter(dir, m_parser, h);
+				CWriter w = new CWriter(dir, m_parser, h, m_log);
 				w.write();
 			}
 			append("Done");
@@ -449,7 +454,7 @@ public class BlueberrySchemaParserGui implements Constants {
 //		}
 
 		String h = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
-		PrettyWriter pw = new PrettyWriter(dir, m_parser, h);
+		PrettyWriter pw = new PrettyWriter(dir, m_parser, h, m_log);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
 		append("Done");
 	}

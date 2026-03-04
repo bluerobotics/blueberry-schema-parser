@@ -31,13 +31,14 @@ import com.bluerobotics.blueberry.schema.parser.fields.BaseField;
 import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.StructField;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 
 /**
  * A class to test writing something useful from the computed schema packet format
  */
 public class TestWriter extends SourceWriter {
-	public TestWriter(File dir, BlueberrySchemaParser parser, String header) {
-		super(dir, parser, header);
+	public TestWriter(File dir, BlueberrySchemaParser parser, String header, ParserIssueLogger log) {
+		super(dir, parser, header, log);
 	}
 	StringWriter m_writer = new StringWriter();
 	public String getOutput() {
