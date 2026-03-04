@@ -74,8 +74,10 @@ public class CWriter extends SourceWriter {
 //			//mow make a header and source files for each message
 			
 			modules.forEach(mod -> {
-				makeHeaderFile(mod);
-				makeSourceFile(mod);
+				if(mod.getConstants().size() > 0 || mod.getMessages().size() > 0) {
+					makeHeaderFile(mod);
+					makeSourceFile(mod);
+				}
 			});
 			
 
