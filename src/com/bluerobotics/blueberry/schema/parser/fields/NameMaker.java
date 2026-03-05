@@ -113,7 +113,11 @@ public class NameMaker {
 		return result;
 	}
 	public static String makeEnumName(EnumField ef) {
-		return ef.getTypeName().deScope().toUpperCamelString();
+		String result = ef.getTypeName().deScope().toUpperCamelString();
+		if(!result.toLowerCase().endsWith("enum")) {
+			result += "Enum";
+		}
+		return result;
 	}
 	public static String makeEnumItemName(EnumField ef, NameValue nv) {
 		return nv.getName().prepend(ef.getTypeName().deScope()).toUpperSnakeString();
@@ -221,7 +225,7 @@ public class NameMaker {
 		return result;
 	}
 	public static String makeJavaConstantInterface(BlueModule m) {
-		String result = m.getName().deScope().append("constants").toUpperCamelString();
+		String result = m.getName().addLevelBelow(SymbolName.fromCamel("constants")).toUpperCamel("");
 		return result;
 	}
 	public static SymbolName makePacketBuilderName(BlueModule m) {

@@ -894,6 +894,9 @@ public class JavaWriter extends SourceWriter {
 	}
 	private void addTxMessageMaker(MessageField mf, boolean params) {
 		String messageName = NameMaker.makeJavaMessageClass(mf).toString();
+		if(messageName.toLowerCase().startsWith("flash")) {
+			System.out.println("Blah");
+		}
 		ArrayList<String> comments = new ArrayList<>();
 		comments.add("A constructor to create " + (params ? "a " : "an empty ") +messageName+" for transmission.");
 		comments.add(mf.getComment());
@@ -940,9 +943,7 @@ public class JavaWriter extends SourceWriter {
 			
 			SymbolName paramName = NameMaker.makeParamName(f);
 			String type = getType(f);
-			if(f instanceof EnumField) {
-				type = f.getTypeName().deScope().toUpperCamelString();
-			}
+			
 			paramList += type+" " + paramName+stuff;
 			
 			comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
@@ -1093,12 +1094,14 @@ public class JavaWriter extends SourceWriter {
 	private String getType(Field f) {
 		String result = null;
 		if(f instanceof EnumField) {
-			result = f.getTypeName().deScope().toUpperCamelString();
+			result = NameMaker.makeEnumName((EnumField)f);
 		} else {
 		
 		
 			switch(f.getTypeId()) {
-			
+			case CHAR:
+				result = "char";
+				break;
 			case BOOL:
 				result = "boolean";
 				break;
