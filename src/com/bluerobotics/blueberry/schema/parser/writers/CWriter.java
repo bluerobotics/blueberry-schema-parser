@@ -22,10 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 
 import com.bluerobotics.blueberry.schema.parser.constants.BooleanConstant;
 import com.bluerobotics.blueberry.schema.parser.constants.NumberConstant;
@@ -38,12 +36,10 @@ import com.bluerobotics.blueberry.schema.parser.fields.DefinedTypeField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField;
 import com.bluerobotics.blueberry.schema.parser.fields.EnumField.NameValue;
 import com.bluerobotics.blueberry.schema.parser.fields.Field;
-import com.bluerobotics.blueberry.schema.parser.fields.FieldList;
 import com.bluerobotics.blueberry.schema.parser.fields.MessageField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField;
 import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
 import com.bluerobotics.blueberry.schema.parser.fields.NameMaker;
-import com.bluerobotics.blueberry.schema.parser.fields.ParentField;
 import com.bluerobotics.blueberry.schema.parser.fields.SequenceField;
 import com.bluerobotics.blueberry.schema.parser.fields.StringField;
 import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
@@ -690,9 +686,7 @@ public class CWriter extends SourceWriter {
 			
 			SymbolName paramName = NameMaker.makeParamName(f);
 			String type = getType(f);
-			if(f instanceof EnumField) {
-				type = f.getTypeName().deScope().toUpperCamelString();
-			}
+			
 			paramList += type+" " + paramName+stuff;
 			
 			comments.add("@param " + paramName + prependHyphen( getFieldComment(f)));
@@ -1294,6 +1288,8 @@ public class CWriter extends SourceWriter {
 				f2 = ((DefinedTypeField)f2).getFirstChild();
 			}
 			result = getType(f2);
+		} else if(f instanceof EnumField) {
+			result = NameMaker.makeEnumName((EnumField)f);
 		} else {
 		
 			result = getType(f.getTypeId());
