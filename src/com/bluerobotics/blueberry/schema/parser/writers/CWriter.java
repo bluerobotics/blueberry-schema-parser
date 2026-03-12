@@ -650,7 +650,7 @@ public class CWriter extends SourceWriter {
 		ArrayList<Field> ss = new ArrayList<>();
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
-		mf.getUsefulChildren(false).forEach(true, f -> {
+		mf.getUsefulChildren(true).forEach(false, f -> {
 			
 			
 			String tp = getType(f);
@@ -659,6 +659,9 @@ public class CWriter extends SourceWriter {
 			
 			if(tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0) {
 				fs.add(f);
+				if(f.getBitCount() == 1) {
+					System.out.println("CWriter.makeMessageAdder");
+				}
 				
 			} else if(f.getTypeId() == TypeId.STRING || f.getTypeId() == TypeId.SEQUENCE) {
 				//build a list of all sequences and strings that are not in sequences
@@ -682,7 +685,6 @@ public class CWriter extends SourceWriter {
 			String stuff = "";
 			
 			paramList += ", ";
-			
 			
 			SymbolName paramName = NameMaker.makeParamName(f);
 			String type = getType(f);

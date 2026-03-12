@@ -908,7 +908,7 @@ public class JavaWriter extends SourceWriter {
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		if(params) {
-			mf.getUsefulChildren(false).forEach(true, f -> {
+			mf.getUsefulChildren(true).forEach(false, f -> {
 				
 				String tp = getType(f);
 				

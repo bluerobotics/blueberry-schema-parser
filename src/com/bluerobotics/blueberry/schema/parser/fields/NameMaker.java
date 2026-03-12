@@ -191,7 +191,7 @@ public class NameMaker {
 	}
 	
 	public static String  makeFieldGetterName(Field f, boolean includeMessage) {
-		return makeScopeName(f, includeMessage).toSymbolName().prepend("get").toLowerCamel().toString();
+		return makeScopeName(f, includeMessage).toSymbolName().prepend(f.getBitCount() > 1 ? "get" : "is").toLowerCamel().toString();
 	}
 	public static String  makeFieldSetterName(Field f, boolean includeMessage) {
 		return makeScopeName(f, includeMessage).toSymbolName().prepend("set").toLowerCamel().toString();
