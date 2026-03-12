@@ -21,83 +21,51 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
- * 
+ * A Field to contain 8 booleans
  */
-public class BoolFieldField extends BaseField {
-	private final ArrayList<BoolField> m_bools = new ArrayList<BoolField>();
-	public BoolFieldField() {
-		super(null, Type.BOOLFIELD, null);
+public class BoolFieldField extends ParentField {
+
+	public BoolFieldField(Coord c) {
+		super(null, null, TypeId.BOOLFIELD, null, c);
 	}
-	
-	
-	public void add(BoolField t) {
-		if(!isFull()) {
-			m_bools.add(t);
-			t.setParent(this);
-			t.setInHeader(isInHeader());
+
+	@Override
+	public Field makeInstance(SymbolName name) {
+		BoolFieldField bf = new BoolFieldField(getCoord());
+		bf.copyChildrenFrom(this);
+		return bf;
+	}
+
+	@Override
+	public void add(Field f) {
+		if(f.getBitCount() == 1) {
+			super.add(f);
+			int i = getChildren().getList().indexOf(f);
+			f.setIndex(i);
 		} else {
-			throw new RuntimeException("Cannot add more than 8 bits to this byte!");
+			throw new RuntimeException("Can only add 1 bit fields to this type.");
 		}
 	}
-	public boolean isFull() {
-		return m_bools.size() >= 8;
-	}
-	@Override
-	Type checkType(Type t) throws RuntimeException {
-		switch(t) {
-		case BLOCK:
-		case BOOL:
-		case COMPOUND:
-		case FLOAT32:
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			throw new RuntimeException("Field must only contain base types.");
-		case BOOLFIELD:
-			break;
-		default:
-			break;
-				
-		}
-		return t;
-	}
-	public boolean hasRoom() {
-		return m_bools.size() < 8;
-	}
-	public List<BoolField> getBoolFields(){
-		return m_bools;
-	}
-
 
 	@Override
-	public boolean equals(Object obj) {
-		boolean result =  super.equals(obj);
-		if(result) {
-			BoolFieldField bff = (BoolFieldField)obj;
-			for(int i = 0; i < m_bools.size(); ++i) {
-				if(!m_bools.get(i).equals(bff.m_bools.get(i))) {
-					result = false;
-				}
-			}
-		}
-		return result;
+	public int getMinAlignment() {
+		return 1;
 	}
-
 
 	@Override
-	public void setInHeader(boolean b) {
-		super.setInHeader(b);
-		m_bools.forEach(bool -> bool.setInHeader(b));
+	public int getPaddedByteCount() {
+		return getByteCount();
 	}
 
-
+	
+	
+	
+	
+	
 	
 	
 	

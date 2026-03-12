@@ -21,54 +21,47 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+
 /**
- * 
+ * A token that represents a name assigned (with an equals sign) to a value, which could be of whatever type (e.g. Number, String, etc)
  */
-public class NameValueToken extends AbstractToken {
-	private NumberToken value;
-	private final SingleWordToken name;
-	private final CommentToken comment;
-	public NameValueToken(SingleWordToken n, NumberToken v, CommentToken c){
-		super(n.getStart().getFirst(v != null ? v.getStart() : null).getFirst(c != null ? c.getStart() : null),
-				n.getEnd().getLast(v != null ? v.getEnd() : null).getLast(c != null ? c.getEnd() : null));
-		
-		name = n;
-		value = v;
-		comment = c;
+public class NameValueToken<T> extends AbstractToken {
+	private T m_value;
+	private final SymbolName m_name;
+	private final String m_comment;
+	public NameValueToken(Coord start, Coord end, SymbolName name, T value, String comment) {
+		super(start, end);
+
+		m_name = name;
+		m_value = value;
+		m_comment = comment;
+	
 	}
-	public NameValueToken(String n, long v) {
-		super(null, null);
-		name = new SingleWordToken(null, null, n);
-		value = NumberToken.make(v);
-		comment = null;
-	}
-	public String getName() {
-		return name.getName();
-	}
-	public NumberToken getNumberToken() {
-		return value;
-	}
-	public long getValue() {
-		return value.getNumber();
+
+	public T getValue() {
+		return m_value;
 	}
 	public boolean isValue() {
-		return value != null;
+		return m_value != null;
 	}
-	public CommentToken getComment() {
-		return comment;
+	public SymbolName getSymbolName() {
+		return m_name;
+	}
+	public String getComment() {
+		return m_comment;
 	}
 	public String toString() {
 		String s = getClass().getSimpleName();
 		s += "(";
-		s += name.getName();
+		s += m_name;
 		if(isValue()) {
 			s += " = ";
-			s += value.getName();
+			s += m_value;
 		}
 		s += ")";
 		return s;
 	}
-	public void setValue(long v) {
-		value = NumberToken.make(v);
-	}
+	
+
 }

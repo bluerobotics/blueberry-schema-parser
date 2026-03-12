@@ -21,23 +21,77 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.bluerobotics.blueberry.schema.parser.fields.MultipleField.Index;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+
 /**
- * 
+ * This defines an array field
+ * Note that in this case, the name of the array type is the field name. The type that this field is an array of is the type name
  */
-public class ArrayField extends BlockField {
+public class ArrayField extends ParentField implements MultipleField {
+	@Override
+	public List<Index> getIndeces() {
+		List<Index> result = new ArrayList<>();
+		int byteCount = getPaddedByteCount();
+		int ni = getNumber().length;
+		for(int i = 0; i < ni; ++i) {
+			int n = getNumber()[i];
+			byteCount /= n;
+			
+			result.add(new Index(this, i, ni, n,  byteCount));
+		}
+		return result;
+	}
+	private final int[] m_number;
 
-	public ArrayField(FieldName name, FieldName typeName, String comment) {
-		super(name, typeName, Type.ARRAY, comment);
-
+	public ArrayField(SymbolName name, ScopeName typeName,  TypeId typeId, int[] number, String comment, Coord c) {
+		super(name, typeName, TypeId.ARRAY, comment, c);
+		m_number = number;
+	}
+	@Override
+	public int[] getNumber() {
+		return m_number;
 	}
 
+
+	
 	@Override
-	Type checkType(Type t) throws RuntimeException {
-		if(t != Type.ARRAY) {
-			throw new RuntimeException("Type must be Array");
+	public int getBitCount() {
+
+		int n = super.getBitCount();
+		
+		for(int i : getNumber()) {
+			n *= i;
 		}
-		return t;
+		return n;
 	}
 	
+	@Override
+	public void add(Field f) {
+		if(size() > 0) {
+			throw new RuntimeException("Cannot add more than one child field to an array.");
+		}
+		super.add(f);
+	}
+	@Override
+	public Field makeInstance(SymbolName name) {
+		ArrayField f = new ArrayField(name, getTypeName(), getTypeId(), getNumber(), getComment(), getCoord());
+		f.copyChildrenFrom(this);
+		return f;
+	}
+	@Override
+	public int getMinAlignment() {
+		return getFirstChild().getMinAlignment();
+	}
+	@Override
+	public int getPaddedByteCount() {
+		return getBitCount()/8;
+	}
+
+
 
 }

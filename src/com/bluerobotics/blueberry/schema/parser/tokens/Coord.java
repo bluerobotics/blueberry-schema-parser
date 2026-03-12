@@ -21,20 +21,26 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.tokens.TokenConstants.TokenIdentifier;
+
 public class Coord implements Comparable<Coord> {
+	public static final Coord NULL = new Coord("", 0, 0, new String[] {});
+	public final String filePath;
 	public final int line;
 	public final int index;
 	private String[] m_lines;
-	public Coord(int l, int i, String[] lines){
+	public Coord(String path, int l, int i, String[] lines){
+		filePath = path;
 		line = l;
 		index = i;
 		m_lines = lines;
 	}
 	public Coord(Coord c){
+		filePath = c.filePath;
 		line = c.line;
 		index = c.index;
 		m_lines = c.m_lines;
-		
+
 	}
 	/**
 	 * advances to the start of the next line
@@ -44,12 +50,17 @@ public class Coord implements Comparable<Coord> {
 		Coord result = null;
 		int i = line + 1;
 		if(i < m_lines.length) {
-			result = new Coord(i, 0, m_lines);
+			result = new Coord(filePath, i, 0, m_lines);
 		}
 		return result;
 	}
+	/**
+	 * make a new Coord at the specified character of this Coord's line
+	 * @param i
+	 * @return
+	 */
 	public Coord updateIndex(int i) {
-		return new Coord(line, i, m_lines);
+		return new Coord(filePath, line, i, m_lines);
 	}
 	/**
 	 * Increments the specified increment of characters.
@@ -58,16 +69,15 @@ public class Coord implements Comparable<Coord> {
 	 */
 	public Coord incrementIndex(int i) {
 		int j = index + i;
-		Coord result = null;
 		int n = getString().length();
 		if(j > n) {
 			j = n;
-		
+
+		} else if(j < 0) {
+			j = 0;
 		}
 
-		result = new Coord(line, j, m_lines);
-		
-		return result;
+		return new Coord(filePath, line, j, m_lines);
 	}
 	/**
 	 * Increment the index by the length of the specified String.
@@ -82,7 +92,7 @@ public class Coord implements Comparable<Coord> {
 		return m_lines[line];
 	}
 	public Coord getLine(int i) {
-		return new Coord(i, index, m_lines);
+		return new Coord(filePath, i, index, m_lines);
 	}
 	/**
 	 * advances to the next non-whitespace character
@@ -94,7 +104,7 @@ public class Coord implements Comparable<Coord> {
 		Coord result = this;
 		boolean notDone = true;
 		while(notDone || result == null) {
-			if(result.index >= result.getString().length()) {
+			if(result.isAtEnd()) {
 				notDone = false;
 			} else {
 				char ch = result.getString().charAt(result.index);
@@ -107,11 +117,45 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
+	/**
+	 * retreats to be just after the last non-whitespace character
+	 * will not retreat to the previous line
+	 * @param c
+	 * @return
+	 */
+	public Coord trimEnd() {
+		Coord result = this;
+		boolean notDone = true;
+		boolean foundSpace = false;
+		while(notDone || result == null) {
+			if(!result.isAtStart() && result.isAtEnd()) {
+				result = result.incrementIndex(-1);
+				foundSpace = true;
+			}
+			if(result.isAtStart() && !foundSpace) {
+				notDone = false;
+			} else {
+				char ch = result.getString().charAt(result.index);
+				if(ch == ' ' || ch == '\t') {
+					//go back one
+					result = result.incrementIndex(-1);
+					foundSpace = true;
+				} else {
+					notDone = false;
+					//go ahead if we've processed a space
+					if(foundSpace) {
+						result = result.incrementIndex(1);
+					}
+				}
+			}
+		}
+		return result;
+	}
 	public Coord advanceToWhite() {
 		Coord result = this;
 		boolean notDone = true;
 		while(notDone && result != null) {
-			if(result.index >= result.getString().length()) {
+			if(result.isAtEnd()) {
 				notDone = false;
 			} else {
 				char ch = result.getString().charAt(result.index);
@@ -126,62 +170,130 @@ public class Coord implements Comparable<Coord> {
 		return result;
 	}
 	/**
-	 * this should advance from the current location to the next token
+	 * this should advance from the current location to the start of the next token
 	 * This means if we're on a token identifier we should move off it
 	 * If we're not on a token identifier we should move to the next one
 	 * @param matches
 	 * @return
 	 */
-	public Coord advanceToNext(char... matches) {
-		
+	public Coord advanceToNext(TokenIdentifier... matches) {
+
 		Coord result = this;
-		if(result.charMatches(matches)){
-			result = result.incrementIndex(1);
+		//move off the current one if we're on one
+		TokenIdentifier match = result.findMatch(matches);
+		if(match != null){
+			//we're on one of the specified identifiers so move past it and return
+			result = result.incrementIndex(match.id().length());
 		} else {
+			//we're not on an identifier
 			boolean notDone = true;
-			while(notDone && result != null) {
+			while(!result.isAtEnd()) {
+
 				
-				if(result.index >= result.getString().length()) {
-					notDone = false;
-				} else {
-					result = result.incrementIndex(1);
-					if(result.isEol()) {
-						notDone = false;
-						break;
-					}
-					
-					if(result.charMatches(matches)) {
-						notDone = false;
-						break;
-					} else {
-						
-					}
-				}
+				result = result.incrementIndex(1);
+				if(result.isEol() || result.matches(matches)) {
+					//if we've hit the end of a line or we get a match then we're done
+					break;
+				} 
 				
+
 			}
 		}
 		return result;
 	}
-	public boolean charMatches(char... matches) {
-		char ch = getString().charAt(index);
+	public boolean matches(TokenIdentifier... matches) {
 		boolean matched = false;
-		for(char cht : matches) {
-			if(cht == ch) {
+
+		for(TokenIdentifier m : matches) {
+			if(startsWith(m.id())) {
 				matched = true;
 				break;
 			}
+
 		}
+
 		return matched;
 	}
-	public boolean startsWith(String s) {
-		return getString().substring(index).startsWith(s);
+	/**
+	 * find the TokenIdentifier from the parameters that matches the start of this Coord.
+	 * If this Coord does not start with any of the specified TokenIdentifiers then it returns null
+	 * @param matches
+	 * @return
+	 */
+	public TokenIdentifier findMatch(TokenIdentifier... matches) {
+		TokenIdentifier matched = null;
+
+		for(TokenIdentifier m : matches) {
+			if(startsWith(m.id())) {
+				matched = m;
+				break;
+			}
+
+		}
+
+		return matched;
 	}
+	/**
+	 * finds the next occurrence of one of the specified strings
+	 * ignores the starting position, even if it matches.
+	 * If not found then returns end of string
+	 * @param ss
+	 * @return the location of the next occurrence
+	 */
+	public Coord findNext(String... ss) {
+		Coord result = incrementIndex(1);
+		boolean notDone = true;
+		while(notDone) {
+
+			if(result.startsWith(ss)) {
+				notDone = false;
+			} else if(result.isAtEnd()) {
+
+				notDone = false;
+			} else {
+				result = result.incrementIndex(1);
+				if(result.getString().length() <= result.index) {
+					notDone = false;
+					result = null;
+				}
+			}
+		}
+		return result;
+	}
+	/**
+	 * checks if this specified location starts with any of the specified strings
+	 * @param ss
+	 * @return true if there's a match
+	 */
+	public boolean startsWith(String... ss) {
+		boolean result = false;
+
+		for(String s : ss) {
+			result = getString().substring(index).startsWith(s);
+			if(result) {
+				break;
+			}
+		}
+		return result;
+
+	}
+	public boolean isAtEnd() {
+		return index >= getString().length();
+	}
+	public boolean isAtStart() {
+		return index <= 0;
+	}
+	/**
+	 * advance to the next occurrence of the specified string within the this Coord's line
+	 * @param s
+	 * @return
+	 */
 	public Coord indexOf(String s) {
 		return updateIndex(getString().indexOf(s, index));
 	}
 	public boolean contains(String s) {
 		return remainingString().indexOf(s) > -1;
-		
+
 	}
 	public String remainingString() {
 		return getString().substring(index);
@@ -203,12 +315,14 @@ public class Coord implements Comparable<Coord> {
 		return result;
 	}
 	public Coord gotoEol() {
-		return new Coord(this.line, getString().length(), this.m_lines);
+		return new Coord(this.filePath, this.line, getString().length(), this.m_lines);
 	}
 	public String toString() {
-		Coord end = incrementIndex(10);
+		Coord end = incrementIndex(15);
 		String s = fromThisToThatString(end);
-		s += "...";
+		if(s.length() > 14) {
+			s += "...";
+		}
 		s = "Coord(\""+s+"\")";
 		return s;
 	}
@@ -245,5 +359,36 @@ public class Coord implements Comparable<Coord> {
 		}
 		return result;
 	}
-	
+	public boolean isSameFile(Coord c) {
+		return c.filePath.equals(filePath);
+	}
+	/**
+	 * Determines the start coordinate of the specified tokens
+	 * @param ts - a list of tokens
+	 * @return - the coordinate of the start of the earliest token listed
+	 */
+	public static Coord findStart(Token... ts) {
+		Coord result = null;
+		for(Token t : ts) {
+			if(t != null) {
+				result = t.getStart().getFirst(result);
+			}
+		}
+		return result;
+	}
+	/**
+	 * Determines the end coordinate of the specified tokens
+	 * @param ts - a list of tokens
+	 * @return - the coordinate of the end of the last token listed
+	 */
+	public static Coord findEnd(Token... ts) {
+		Coord result = null;
+		for(Token t : ts) {
+			if(t != null) {
+				result = t.getEnd().getLast(result);
+			}
+		}
+		return result;
+	}
+
 }

@@ -21,24 +21,24 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
+import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
+
 /**
  * 
  */
 public class SingleWordToken extends AbstractToken {
-	private final String m_name;
 
 	
 	
-	public SingleWordToken(Coord start, Coord end, String name) {
+	public SingleWordToken(Coord start, Coord end) {
 		super(start, end);
-		m_name = name;
+		
 		
 		
 	}
+	
 	public String toString() {
-		return getClass().getSimpleName()+"(\""+m_name+"\")";
+		return getClass().getSimpleName()+"(\""+getName()+"\")";
 	}
-	public String getName() {
-		return m_name;
-	}
+	
 }

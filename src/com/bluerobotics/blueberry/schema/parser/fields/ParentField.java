@@ -22,124 +22,105 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
+
+import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.types.BaseType;
+import com.bluerobotics.blueberry.schema.parser.types.Type;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
 /**
- * 
+ * An abstract field that adds the concept of child fields
  */
-public interface ParentField extends Field, DefinedField {
+public abstract class ParentField extends AbstractField {
+	private final FieldList m_children = new FieldList();
+	protected ParentField(SymbolName name, ScopeName typeName, TypeId typeId, String comment, Coord c) {
+		super(name, typeName, typeId, comment, c);
+	}
+	public void add(Field f) {
+		m_children.add(f);
+	}
 
-	public  void add(AbstractField f);
-	public List<BaseField> getBaseFields();
-	
-	default void add(ArrayList<BaseField> fs, BaseField f) {
-		if(f instanceof BoolField) {
-			addBool(fs, (BoolField)f);
-		} else if(f.getBitCount() < 32) {
-			addSubWord(fs, f);
-	
-		} else {
-			fs.add(f);
-			f.setParent(this);
-		}
+	/**
+	 * Applies this specified consumer to all children of only the first level of this parental hierarchy
+	 * @param c
+	 */
+	public void scanThroughFields(Consumer<Field> c) {
+		m_children.forEach(c);
 	}
-	
-	default void addSubWord(ArrayList<BaseField> fs, AbstractField f) {
-		//first scan for an existing compound word that has room
-		CompoundField cf = null;
-		for(AbstractField ft : fs) {
-			if(ft instanceof CompoundField) {
-				CompoundField cft = (CompoundField)ft;
-				if(cft.getName() == null && cft.getRoom() >= f.getBitCount()) {
-					cf = cft;
-					break;
-				}
+	/**
+	 * Applies the specified consumer to all children of this parent field, recursively.
+	 * @param c
+	 */
+	public void scanThroughDeepFields(Consumer<Field> c) {
+		m_children.forEach(f -> {
+			if(f instanceof ParentField) {
+				ParentField pf = (ParentField)f;
+				pf.scanThroughDeepFields(c);
 			}
-		}
-		if(cf == null) {
-			//there is no existing cf with room
-			cf = new CompoundField(null, null, null);
-			fs.add(cf);
-			cf.setParent(this);
-		}
-		cf.add(f);
-		
+			c.accept(f);
+		});
 	}
-	default boolean addBool(ParentField pf, BoolField f) {
-		boolean result = false;
-		BoolFieldField bff = null;
-		
-		for(AbstractField ft2 : pf.getBaseFields()) {
-			if(ft2 instanceof BoolFieldField) {
-				BoolFieldField bff2 = (BoolFieldField)ft2;
-				if(!bff2.isFull()){
-					bff = bff2;
-					break;
-				}
-			}
-		}
-		if(bff == null) {
-			boolean room = false;
-		
-			if(pf instanceof CompoundField) {
-				CompoundField cf = (CompoundField)pf;
-				if(cf.getRoom() >= 8) {
-					room = true;
-				}
-				
-			} else if(pf instanceof CompactArrayField) {
-				room = true;
-			}
-			
-			if(room) {
-				bff = new BoolFieldField();
-				pf.add(bff);
-				bff.setParent(pf);
-				bff.setInHeader(pf.isInHeader());
-			}
-		}
-		if(bff != null) {
-			bff.add(f);
-			result = true;
-		}
+	public String toString() {
+		String result = getClass().getSimpleName();
+		result += "(";
+		result += getTypeName() == null ? "???" : getTypeName().toString();
+		result += ")";
 		return result;
 	}
-	
-	
-	default void addBool(ArrayList<BaseField> fs, BoolField f) {
-		BoolFieldField bff = null;
-		boolean success = false;
-		for(AbstractField ft : fs) {
-			if(ft instanceof CompoundField && ft.getName() == null) {
-				CompoundField cft = (CompoundField)ft;
-				success = addBool(cft, f);
-				if(success) {
-					break;
-				}
-				
-			} else if(ft instanceof CompactArrayField) {
-				CompactArrayField caf = (CompactArrayField)ft;
-				success = addBool(caf, f);
-				if(success) {
-					break;
-				}
-			}
-			
+	protected void copyChildrenFrom(ParentField pf) {
+		pf.scanThroughFields(f -> {
+			add(f.makeInstance(f.getName()));
+		});
+	}
+	public FieldList getChildren(){
+		return m_children;
+	}
+	public int size() {
+		return m_children.size();
+	}
+	/**
+	 * Gets the first assigned child field
+	 * @return
+	 * @throws SchemaParserException - if no children have been added yet
+	 */
+	public Field getFirstChild() throws SchemaParserException {
+		checkSize();
+		return m_children.getFirst();
+	}
+	/**
+	 * Gets the last assigned child field
+	 * @return
+	 * @throws SchemaParserException - if no children have been added yet
+	 */
+	public Field getLastChild() throws SchemaParserException {
+		checkSize();
+		return m_children.getLast();
+	}
+	/**
+	 * Checks to be sure there have been children-fields added
+	 * @throws SchemaParserException - if there are no children
+	 */
+	protected void checkSize() throws SchemaParserException {
+		if(m_children.size() <= 0) {
+			throw new SchemaParserException(getClass().getSimpleName() + " has not had a child assigned.", getCoord());
 		}
-		if(!success) {
-			bff = new BoolFieldField();
-			addSubWord(fs, bff);
-			bff.add(f);
-		}
+	}
+	
+	@Override
+	public int getBitCount() {
+		//compute the size per element first
+		int n = -getFirstChild().getIndex();
+		n += getLastChild().getIndex();
+		n += getLastChild().getPaddedByteCount();
 		
-	}
-	default int getBitCount(ArrayList<BaseField> fs) {
-		int result = 0;
-		for(AbstractField f : fs) {
-			result += f.getBitCount();
-		}
-		return result;
+		
+		return n*8;
 	}
 	
+
+	
+
 	
 }

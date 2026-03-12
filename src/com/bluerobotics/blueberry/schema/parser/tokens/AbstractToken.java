@@ -22,14 +22,26 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.tokens;
 
 /**
- * 
+ *
  */
 public abstract class AbstractToken implements Token {
+	@Override
+	public boolean isAfter(Token t) {
+		boolean result = false;
+		Coord e = t.getEnd();
+		Coord s = getStart();
+		if(e.isSameFile(s) && e.compareTo(s) < 0) {
+			result = true;
+		}
+			
+		return result;
+	}
+
 	private final Coord m_start;
 	private final Coord m_end;
 	public AbstractToken(Coord start, Coord end) {
 		m_start = start;
-		m_end = start;
+		m_end = end;
 	}
 	@Override
 	public Coord getStart() {
@@ -43,5 +55,9 @@ public abstract class AbstractToken implements Token {
 		return getClass().getSimpleName() + "()";
 	}
 	
-	
+	@Override
+	public final String getName() {
+		return m_start.fromThisToThatString(m_end);
+	}
+
 }

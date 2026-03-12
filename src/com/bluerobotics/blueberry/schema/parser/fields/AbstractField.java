@@ -21,24 +21,117 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
+
 public abstract class AbstractField implements Field {
-	private final FieldName m_name;
-	private final Type m_type;
+
+
+
+
+
+
+
+
+	private final SymbolName m_name;
+	private final ScopeName m_typeName;
 	private final String m_comment;
-	private Field m_parent = null;
-	private boolean m_inHeader = false;
-	
-	protected AbstractField(FieldName name, Type type, String comment) {
+	private String m_fileName = null;
+	private int m_index = -1;
+	private int m_ordinal = -1;
+
+	private final Coord m_coord;
+
+	private final TypeId m_typeId;
+	private ParentField m_parent = null;
+	private final ArrayList<Annotation> m_annotations = new ArrayList<>();
+	protected AbstractField(SymbolName name, ScopeName type, TypeId id, String comment, Coord c) {
 		m_name = name;
-		m_type = checkType(type);
+		m_typeName = type;
 		m_comment = comment;
+		m_typeId = id;
+		m_coord = c;
+	}
+	
+	
+	
+	
+
+
+
+//	@Override
+//	public boolean isSimpleField() {
+//		String tp = getType(this);
+//
+//		return tp != null && f.getTypeId() != TypeId.STRING && (MultipleField.getIndeces(f)).size() == 0 && !f.isFiller();
+//	}
+
+
+
+
+
+
+
+	@Override
+	public boolean isNotFiller() {
+		return getTypeId() != TypeId.FILLER;
+	}
+
+
+
+
+
+
+
+	@Override
+	public int getOrdinal() {
+		return m_ordinal;
+	}
+
+
+
+
+
+
+
+	@Override
+	public void setOrdinal(int o) {
+		m_ordinal = o;
+	}
+
+
+
+
+
+
+
+	@Override
+	public final int getByteCount() {
+		return getBitCount()/8;
+	}
+
+
+
+
+
+
+
+	@Override
+	public ScopeName getTypeName() {
+		return m_typeName;
 	}
 	@Override
-	public Type getType() {
-		return m_type;
+	public TypeId getTypeId() {
+		return m_typeId;
 	}
 	@Override
-	public FieldName getName() {
+	public SymbolName getName() {
 		return m_name;
 	}
 	@Override
@@ -47,64 +140,39 @@ public abstract class AbstractField implements Field {
 	}
 	@Override
 	public int getBitCount() {
-		return m_type.getBitCount();
+		return getTypeId().getBitCount();
 	}
-	/**
-	 * checks the type to see if it's compatible with this field
-	 * @param t the type to check
-	 * @return the same type
-	 * @throws RuntimeException if the type is not compatible
-	 */
-	abstract Type checkType(Type t) throws RuntimeException;
-	
+
+
 	public String toString() {
 		return getClass().getSimpleName()+"("+m_name+")";
 	}
-	
-	public boolean isInt() {
-		boolean result = false;
-		switch(getType()) {
-		case ARRAY:
-			break;
-		case BLOCK:
-			break;
-		case BOOL:
-			break;
-		case BOOLFIELD:
-			break;
-		case COMPOUND:
-			break;
-		case FLOAT32:
-			break;
-		case INT16:
-		case INT32:
-		case INT8:
-		case UINT16:
-		case UINT32:
-		case UINT8:
-			result = true;
-			break;
-		
-		}
-		return result;
-	}
+
+
 	@Override
-	public Field getParent() {
+	public ParentField getParent() {
 		return m_parent;
 	}
 	@Override
-	public void setParent(Field p) {
+	public void setParent(ParentField p) {
 		m_parent = p;
 	}
 	@Override
 	public boolean equals(Object obj) {
 		boolean result = false;
-		if(obj != null && obj.getClass().equals(getClass())) {
+		if(this == obj) {
+			result = true;
+		} else if(obj != null && obj.getClass().equals(getClass())) {
 			Field f = (Field)obj;
-			if(f.getType() == getType()) {
-				if(f.getParent() != null && f.getParent().equals(getParent())) {
-					if(f.getName() != null && f.getName().equals(getName())){
-						result = true;
+			ScopeName ftn = f.getTypeName();
+			ScopeName tn = getTypeName();
+			
+			if(f.getTypeName() == getTypeName() || (f.getTypeName() != null && f.getTypeName().equals(getTypeName()))) {
+				if(f.getTypeId() == getTypeId() || (f.getTypeId() != null && f.getTypeId().equals(getTypeId()))) {
+					if(f.getParent() == getParent() || (f.getParent() != null && f.getParent().equals(getParent()))) {
+						if(f.getName() == getName() || (f.getName() != null && f.getName().equals(getName()))){
+							result = true;
+						}
 					}
 				}
 			}
@@ -112,46 +180,140 @@ public abstract class AbstractField implements Field {
 		return result;
 	}
 	@Override
-	public void setInHeader(boolean b) {
-		m_inHeader = b;
+	public void addAnnotation(Annotation... as) {
+		for(Annotation a : as) {
+			int i = m_annotations.indexOf(a);
+			if(i == -1) {
+				m_annotations.add(a);
+			} else {
+				m_annotations.set(i, a);
+			}
+			
+		}
 	}
 	@Override
-	public boolean isInHeader() {
-		return m_inHeader;
+	public void addAnnotation(List<Annotation> as) {
+		for(Annotation a : as) {
+			addAnnotation(a);
+		}
 	}
 
 	@Override
-	public Field getContainingWord() {
-		Field bf = this;
-		Field f = bf;
-		if(bf instanceof BoolField) {
-			f = bf.getParent().getParent();
-		} else if(bf.getBitCount() < 32) {
-			f = bf.getParent();
+	public Annotation getAnnotation(SymbolName name) {
+		Annotation result = null;
+		for(Annotation a : m_annotations) {
+			if(a.getName().equals(name)){
+				result = a;
+				break;
+			}
 		}
-		if(f == null) {
-			System.out.println("CWriter.getCorrectedParent");
-		}
-		return f;
-	
-		
+		return result;
 	}
-	public FieldName getCorrectParentName() {
-		FieldName result = null;
-		Field f = getContainingWord();
-		Field p = f.getParent();
-		BlockField bf = null;
-		if(p != null) {
-			bf = (BlockField)p;
+	@Override
+	public void setFileName(String name) {
+		m_fileName = name;
+	}
+	@Override
+	public String getFileName() {
+		return m_fileName;
+	}
+
+
+	@Override
+	public void scanAnnotations(Consumer<Annotation> c) {
+		for(Annotation a : m_annotations) {
+			c.accept(a);
 		}
-		
-		if(f.isInHeader() && bf != null) {
-			result = bf.getTypeName();
-		} else if(bf != null) {
-			result = bf.getName();
+	}
+
+	@Override
+	public int getIndex() {
+		return m_index;
+	}
+
+	@Override
+	public void setIndex(int i) {
+		m_index = i;
+	}
+	@Override
+	public int getNextIndex() {
+		return m_index + getByteCount();
+	}
+
+
+	@Override
+	public Coord getCoord() {
+		return m_coord;
+	}
+
+
+
+	@Override
+	public final boolean inScope(ScopeName s) {
+		return getTypeName().removeLastLevel().equals(s);
+	}
+
+
+
+
+
+
+
+	@Override
+	public boolean isNamed() {
+		boolean result = false;
+		SymbolName name = getName();
+		if(name != null && !name.isEmpty()) {
+			result = true;
+		}
+		return result;
+	}
+
+
+
+
+
+
+
+	@Override
+	public <T extends Field> T asType(Class<T> c) {
+		T result = null;
+		if(c.isInstance(this)) {
+			result = c.cast(this);
 		}
 		return result;
 	}
 	
 	
+	public <T extends ParentField> T getAncestor(Class<T> c) {
+		T result = null;
+		Field f = this;
+		while(f != null && result == null) {
+			f = f.getParent();
+			if(c.isInstance(f)) {
+				result = c.cast(f);
+			}
+		}
+		return result;
+	}
+	/**
+	 * traverses upward through this fields parent hierarchy until a field of the specified class is found
+	 * Resulting list is ordered from most distant ancestor in index 0 and this field in spot (n - 1) where n is the size of the list
+	 */
+	public <T extends ParentField> List<Field> getAncestors(Class<T> c){
+		ArrayList<Field> result = new ArrayList<>();
+		Field f = this;
+		while(f != null) {
+			result.add(0, f);
+			if(c.isInstance(f)) {
+				break;
+			}
+			f = f.getParent();
+		}
+		return result;
+	}
+
+
+
+
 }

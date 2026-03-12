@@ -21,24 +21,125 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
-public interface Field {
+import java.util.List;
+import java.util.function.Consumer;
 
-	Type getType();
+import com.bluerobotics.blueberry.schema.parser.tokens.Annotation;
+import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
+import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
-	FieldName getName();
 
-	String getComment();
-
-	int getBitCount();
-	Field getParent();
-	void setParent(Field p);
-	void setInHeader(boolean b);
-	boolean isInHeader();
+/**
+ * A class to represent both a data type and an instance of that type
+ */
+public interface Field extends ThingFromFile, AnnotationOwner {
 	/**
-	 * return the 4 byte word that contains this field
-	 * if this is a 4 byte word then returns itself
+	 * This is the name of the type that this field consists
 	 * @return
 	 */
-	Field getContainingWord();
-	FieldName getCorrectParentName();
+	ScopeName getTypeName();
+	/**
+	 * This is the type of field this is
+	 * @return
+	 */
+	TypeId getTypeId();
+	
+	/**
+	 * gets the number of bits taken up by this field
+	 * @return
+	 */
+	int getBitCount();
+	/**
+	 * gets the number of bytes taken up by this field
+	 * @return
+	 */
+	int getByteCount();
+	/**
+	 * gets the parent of this field. Don't know if this is necessary
+	 * @return
+	 */
+	ParentField getParent();
+	/**
+	 * sets the parent of this field. Don't know if this is necessary
+	 * @param p
+	 */
+	void setParent(ParentField p);
+	/**
+	 * replicates this field for use in another struct, message, etc.
+	 * @param name
+	 * @return
+	 */
+	Field makeInstance(SymbolName name);
+	/**
+	 * Gets the byte index of this element within the message bytes
+	 * If this is a single bit then it could represent the bit index within it's containing byte
+	 * @return
+	 */
+	public int getIndex();
+//	/**
+//	 * indicates that this is a field that is of fixed size, not a string, sequence, struct or filler
+//	 * @return
+//	 */
+//	public boolean isSimpleField();
+	public boolean isNotFiller();
+	/**
+	 * Sets the byte index of this element within the message bytes
+	 * If this is a single bit then it could represent the bit index within it's containing byte
+	 * @param i
+	 */
+	public void setIndex(int i);
+	/**
+	 * gets the coordinate (essentially a reference to the location in the schema file that this field was defined 
+	 * @return
+	 */
+	public Coord getCoord();
+	
+	/**
+	 * gets the index for the location after this field
+	 * @return
+	 */
+	public int getNextIndex();
+	
+	public boolean inScope(ScopeName s);
+	boolean isNamed();
+	/**
+	 * Convenience method to cast as specified type.
+	 * 
+	 * @param <T>
+	 * @param c
+	 * @return null if this type does not match the specified one
+	 */
+	public <T extends Field> T asType(Class<T> c);
+
+	public <T extends ParentField> T getAncestor(Class<T> c);
+	public <T extends ParentField> List<Field> getAncestors(Class<T> c);
+	/**
+	 * get the minimum byte alginment that this field requires
+	 * 1 .. can align on any byte, 
+	 * 2 .. must be aligned to an even byte
+	 * 4 .. must be aligned to a 32 bit word boundary
+	 * 8 .. must be aligned to a 64 bit word boundary 
+	 * @return
+	 */
+	public int getMinAlignment();
+	/**
+	 * This is the number of bytes that this field needs if it were to be placed end to end with itself
+	 * This is only useful for packing arrays and things
+	 * @return
+	 */
+	public int getPaddedByteCount();
+	/**
+	 * gets the order value that this field was defined in the schema
+	 * This is used for determining if this field is included in a particular message version
+	 * This may turn out to not be necessary
+	 * @return
+	 */
+	public int getOrdinal();
+	/**
+	 * sets the order value. this is set during parsing
+	 * This is used for determining if this field is included in a particular message version
+	 * This may turn out to not be necessary
+	 * @param o
+	 */
+	public void setOrdinal(int o);
 }
