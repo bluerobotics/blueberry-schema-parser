@@ -22,6 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.function.Consumer;
 
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
@@ -110,13 +112,35 @@ public abstract class ParentField extends AbstractField {
 	
 	@Override
 	public int getBitCount() {
+		//scan all children and locate maximum index
+		int n = m_children.size();
+		if(n == 0) {
+			return 0;
+		}
+		
+		Field fMin = m_children.get(0);
+		Field fMax = fMin;
+		
+		
+		for(int j = 0; j < n; ++j) {
+			Field f = m_children.get(j);
+			
+			if(fMin.getIndex() > f.getIndex()) {
+				fMin = f;
+			} else if(fMax.getIndex() < f.getIndex()) {
+				fMax = f;
+			}
+		}
+		
+	
+		
 		//compute the size per element first
-		int n = -getFirstChild().getIndex();
-		n += getLastChild().getIndex();
-		n += getLastChild().getPaddedByteCount();
+		int result = -fMin.getIndex();
+		result += fMax.getIndex();
+		result += fMax.getPaddedByteCount();
+		result *= 8;
 		
-		
-		return n*8;
+		return result;
 	}
 	
 

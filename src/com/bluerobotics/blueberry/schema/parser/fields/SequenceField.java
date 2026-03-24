@@ -54,11 +54,27 @@ public class SequenceField extends ParentField implements MultipleField {
 
 	@Override
 	public int getMinAlignment() {	
-		return getFirstChild().getMinAlignment();
+		return 4;
 	}
 	@Override
 	public int getPaddedByteCount() {
-		return getFirstChild().getPaddedByteCount();
+		return 4;
+	}
+	
+	/**
+	 * compute the number of bytes for each element of this sequence
+	 * @return
+	 */
+	public int getBytesPerElement(){
+		int result = super.getBitCount()/8;
+		return result;
+	}
+	
+	
+
+	@Override
+	public int getBitCount() {
+		return 32;//sequence placeholder is 32 bits long
 	}
 
 	@Override

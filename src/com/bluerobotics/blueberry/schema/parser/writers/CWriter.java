@@ -347,7 +347,7 @@ public class CWriter extends SourceWriter {
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
 					
-					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getPaddedByteCount()+")");
+					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getBytesPerElement()+")");
 
 				});
 			});

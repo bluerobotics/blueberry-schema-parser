@@ -614,7 +614,7 @@ public class JavaWriter extends SourceWriter {
 			addLine();
 			addLineComment("Sequence Element Byte Counts");
 			fs.forEachOfType(SequenceField.class, false, sf -> {
-				addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getPaddedByteCount()+";");
+				addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getBytesPerElement()+";");
 			});
 		}
 		//string stuff
