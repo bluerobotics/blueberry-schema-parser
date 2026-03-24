@@ -21,6 +21,8 @@ THE SOFTWARE.
 */
 package com.bluerobotics.blueberry.schema.parser.fields;
 
+import java.util.ListIterator;
+
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
 import com.bluerobotics.blueberry.schema.parser.types.TypeId;
 
@@ -59,6 +61,24 @@ public class BoolFieldField extends ParentField {
 	@Override
 	public int getPaddedByteCount() {
 		return getByteCount();
+	}
+
+	@Override
+	public int getBitCount() {
+		return 8;
+	}
+
+	@Override
+	public int getOrdinal() {
+		int result = -1;
+		ListIterator<Field> fs = getChildren().getIterator();
+		while(fs.hasNext()) {
+			Field f = fs.next();
+			if(f.getOrdinal() > result) {
+				result = f.getOrdinal();
+			}
+		}
+		return result;
 	}
 
 	
