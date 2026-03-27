@@ -330,8 +330,8 @@ public abstract class SourceWriter {
 
 	
 	protected String makeFullMessageKey(MessageField mf) {
-		Annotation messA =  mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
-		Annotation modA = mf.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+		Annotation messA =  mf.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
+		Annotation modA = mf.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 		if(messA == null) {
 			throw new SchemaParserException("Message field is not annotated with a message key.", mf.getCoord());
 		}

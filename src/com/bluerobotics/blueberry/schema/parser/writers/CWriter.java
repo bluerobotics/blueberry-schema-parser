@@ -180,7 +180,7 @@ public class CWriter extends SourceWriter {
 		
 		addSectionDivider("Topic String Constants");
 		module.getMessages().forEachOfType(MessageField.class, false, msg -> {
-			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 			String t = a.getParameter(0, String.class);
 			addLine("extern const char "+NameMaker.makeTopicSymbol(msg)+"[];");
 		});
@@ -386,7 +386,7 @@ public class CWriter extends SourceWriter {
 		});
 		addSectionDivider("Topic String Constants");
 		module.getMessages().forEachOfType(MessageField.class, false, msg -> {
-			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 			String t = a.getParameter(0, String.class);
 			t = t.replace(Annotation.TOPIC_NID_STRING, TOPIC_NID_CHAR_STRING);
 			t = t.replace(Annotation.TOPIC_DEVICE_TYPE_STRING, TOPIC_DEVICE_TYPE_CHAR_STRING);

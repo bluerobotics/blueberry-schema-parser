@@ -44,6 +44,7 @@ public class BaseTypeToken extends IdentifierToken {
 		TokenIdentifier.UINT64,
 		TokenIdentifier.UINT8,
 		TokenIdentifier.LONG,
+		TokenIdentifier.LONG_LONG,
 		TokenIdentifier.SHORT,
 		TokenIdentifier.UNSIGNED,
 		TokenIdentifier.STRING,

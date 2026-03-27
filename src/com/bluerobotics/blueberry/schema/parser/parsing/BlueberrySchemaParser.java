@@ -160,8 +160,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			collapseIdentifiers();
 			collapseNumbers();
 			collapseSymbolNames();
-			collapseBaseTypes();
 			collapseLongLong();
+			collapseBaseTypes();
 			collapseScope();
 			collapseWhiteSpace();
 			collapseUnsigned();
@@ -241,7 +241,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void checkForMessageKeys() {
 		for(BlueModule mod : m_modules) {
 			mod.getMessages().forEach(msg -> {
-				Annotation a = msg.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+				Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 				if(a == null) {
 					m_log.issueError("No module key propagated to message "+msg.getName(), null);
 				}
@@ -431,7 +431,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_modules.forEach(mod -> {
 			keys.clear();
 			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
-				Annotation a = msg.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+				Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
 				
 				if(a != null) {
 					for(Annotation at : keys) {
@@ -449,7 +449,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void checkForMessageTopics() {
 		m_modules.forEach(mod -> {
 			mod.getMessages().forEachOfType(MessageField.class, false, msg -> {
-				Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+				Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 				
 				if(a == null) {
 					m_log.issueError("No topic annotation found for message"+msg.getName(), msg.getCoord());
@@ -505,10 +505,10 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 				}
 			} else if(n == 2) {
 				//we're a two level module so make sure it has a module_key
-				Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+				Annotation a = m.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 				if(a == null) {
 					//ok, so it doesn't have a module key
-					a = new Annotation(Annotation.MODULE_KEY_ANNOTATION,null);
+					a = new Annotation(Annotation.KnownAnnotation.MODULE_KEY.getName(),null);
 					long k = getNextModuleKey();
 					a.addParameter(new Number(k));
 					m.addAnnotation(a);
@@ -525,9 +525,9 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private void fillInMissingMessageKeyValues() {
 		for(BlueModule m : m_modules) {
 			m.getMessages().forEachOfType(MessageField.class, false, mf -> {
-				Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+				Annotation a = mf.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
 				if(a == null || a.getParameter(0, Number.class) == null) {
-					 a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
+					 a = new Annotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName(), null);
 					 long h = makeHashKey(mf);
 //					 long i = getNextMessageKey(m);
 					 
@@ -547,7 +547,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private boolean doesModuleKeyExist(long i) {
 		boolean result = false;
 		for(BlueModule m : m_modules) {
-			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			Annotation a = m.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
 				Number n = a.getParameter(0,  Number.class);
 				if(n != null && n.asLong() == i) {
@@ -564,7 +564,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		int n = m.getMessages().size();
 		for(int i = 0; i < n; ++i) {
 			MessageField msg = (MessageField)m.getMessages().get(i);
-			Annotation a = msg.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
 				Number nt = a.getParameter(0,  Number.class);
 				if(nt != null && nt.asLong() == h) {
@@ -612,7 +612,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private long getNextMessageKey(BlueModule m) {
 		final ArrayList<Integer> keys = new ArrayList<>();
 		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
-			Annotation a = mf.getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+			Annotation a = mf.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
 			if(a != null) {
 				Number an = a.getParameter(0, Number.class);
 				if(an != null) {
@@ -651,7 +651,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	private long getNextModuleKey() {
 		final ArrayList<Integer> keys = new ArrayList<>();
 		m_modules.forEach(m -> {
-			Annotation a = m.getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
+			Annotation a = m.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
 				Number an = a.getParameter(0, Number.class);
 				if(an != null) {
@@ -886,6 +886,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						newTi = TokenIdentifier.UINT32;
 						break;
 					case INT64:
+					case LONG_LONG:
 						newTi = TokenIdentifier.UINT64;
 						break;
 					default:
@@ -1855,7 +1856,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //					m_tokens.next();
 //				}
 			}
-			if(a.getName().equals(Annotation.FILE_PATH_ANNOTATION)) {
+			if(a.getName().equals(Annotation.KnownAnnotation.FILE_PATH.getName())) {
 				String fn = a.getParameter(0, String.class);
 				if(fn == null) {
 					m_log.issueError("File path annotation should have a string parameter.");
@@ -2266,7 +2267,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		
 		m_modules.forEach(m -> {
 			m.getMessages().forEachOfType(MessageField.class, false, msg -> {
-				Annotation a = new Annotation(Annotation.MESSAGE_KEY_ANNOTATION, null);
+				Annotation a = new Annotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName(), null);
 				msg.addAnnotation(a);
 			});
 		});

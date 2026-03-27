@@ -146,7 +146,7 @@ public class JavaWriter extends SourceWriter {
 		addSectionDivider("Topic String Constants");
 		FieldList ms = m.getMessages();
 		ms.forEachOfType(MessageField.class, false, msg -> {
-			Annotation a = msg.getAnnotation(Annotation.TOPIC_ANNOTATION);
+			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 			String t = a.getParameter(0, String.class);
 			addLine("public static final String "+NameMaker.makeTopicSymbol(msg)+" = \""+t+"\";");
 		});

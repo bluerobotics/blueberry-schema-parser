@@ -137,7 +137,7 @@ public abstract class ParentField extends AbstractField {
 		//compute the size per element first
 		int result = -fMin.getIndex();
 		result += fMax.getIndex();
-		result += fMax.getPaddedByteCount();
+		result += fMax.getByteCount();
 		result *= 8;
 		
 		return result;

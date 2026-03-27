@@ -32,19 +32,23 @@ import com.bluerobotics.blueberry.schema.parser.fields.SymbolName;
  *
  */
 public class Annotation  {
-	private enum KnownAnnotation {
+	public enum KnownAnnotation {
 		 FILE_PATH("file_path"),
 		 TOPIC("topic"),
 		 MESSAGE_KEY("message_key"),
+		 MODULE_KEY("module_key"),
 		 NAMESPACE("namespace"),
 		 SERIALIZATION("serialization"),
 		 REVISION("revision"),
+		 DEPRECATED("deprecated"),
+		 MIN("min"),
+		 MAX("max")
 		 ;
-		private final String name;
+		private final ScopeName name;
 		private KnownAnnotation(String n) {
-			name = n;
+			name =  ScopeName.wrap(SymbolName.fromSnake(n));
 		}
-		public String getName() {
+		public ScopeName getName() {
 			return name;
 		}
 	}
@@ -59,11 +63,7 @@ public class Annotation  {
 		}
 	}
 
-	public static final ScopeName FILE_PATH_ANNOTATION         = ScopeName.wrap(SymbolName.fromSnake("file_path"));
-	public static final ScopeName TOPIC_ANNOTATION             = ScopeName.wrap(SymbolName.fromSnake("topic"));
-	public static final ScopeName MESSAGE_KEY_ANNOTATION       = ScopeName.wrap(SymbolName.fromSnake("message_key"));
-	public static final ScopeName MODULE_KEY_ANNOTATION        = ScopeName.wrap(SymbolName.fromSnake("module_key"));
-	public static final ScopeName SERIALIZATION_ANNOTATION     = ScopeName.wrap(SymbolName.fromSnake("serialization"));
+
 	public static final String TOPIC_NID_STRING = "{nid}";
 	public static final String TOPIC_DEVICE_TYPE_STRING = "{device_type}";
 	private final KnownAnnotation m_known;

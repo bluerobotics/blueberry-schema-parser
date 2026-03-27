@@ -87,7 +87,7 @@ public class MessageField extends ParentField {
 	 */
 	public boolean useCdrNotBlueberry() {
 		boolean result = false;
-		Annotation a = getAnnotation(Annotation.SERIALIZATION_ANNOTATION);
+		Annotation a = getAnnotation(Annotation.KnownAnnotation.SERIALIZATION.getName());
 		if(a != null) {
 			Object s = a.getParameter(0, Object.class);
 			if(s.toString().equals("CDR")) {
@@ -103,7 +103,7 @@ public class MessageField extends ParentField {
 	 */
 	public String getTopic() {
 		String result = "";
-		Annotation a = getAnnotation(Annotation.TOPIC_ANNOTATION);
+		Annotation a = getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 		if(a != null) {
 			result = a.getParameter(0, Object.class).toString();
 		}
@@ -111,8 +111,8 @@ public class MessageField extends ParentField {
 	}
 	
 	public int getModuleMessageKey() {
-		Annotation modka = getAnnotation(Annotation.MODULE_KEY_ANNOTATION);
-		Annotation meska = getAnnotation(Annotation.MESSAGE_KEY_ANNOTATION);
+		Annotation modka = getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
+		Annotation meska = getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
 		
 				
 		if(modka == null) {
