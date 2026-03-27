@@ -175,10 +175,20 @@ public abstract class SourceWriter {
 	 * @param s
 	 */
 	protected void addLine(String s) {
+		
 		addIndent();
 		add(s);
 		addLine();
+		
 	}
+	
+	protected void addLines(List<String> ss) {
+		for(String s : ss) {
+			addLine(s);
+		}
+	}
+	
+	
 	/**
 	 * adds multiple lines - assuming that specified string includes newline characters
 	 * Indents to each line will be added as appropriate

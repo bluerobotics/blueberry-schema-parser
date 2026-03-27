@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.Constant;
@@ -446,7 +447,7 @@ public class JavaWriter extends SourceWriter {
 
 	private void writeConstants(BlueModule m) {
 
-		m.getMessages().sortByTypeName().forEachOfType(MessageField.class, false, mf -> {
+		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 
 			
@@ -548,10 +549,11 @@ public class JavaWriter extends SourceWriter {
 		addLine("private static final int "+NameMaker.makeMessageLengthName(msg)+" = "+msg.getPaddedByteCount()+";");
 		addLine();
 		
-		addLineComment("These values are used to index into this message to access the various fields.");
 		
-		FieldList fs = msg.getUsefulChildren(true);
+		
+		FieldList fs = msg.getUsefulChildren(true).makeListSortedByName();
 		FieldList fs2 = fs.duplicate();
+		
 		fs.forEach(f1 -> {
 //			fs.forEach(f2 -> {
 //				if(f1 == f2) {
@@ -564,6 +566,8 @@ public class JavaWriter extends SourceWriter {
 				fs2.remove(f1);
 			}
 		});
+		addLineComment("These values are used to index into this message to access the various fields.");
+		ArrayList<String> lines = new ArrayList<>();
 		fs2.forEach(f -> {
 			if(getType(f) != null || f instanceof ArrayField || f instanceof SequenceField) {
 			
@@ -571,16 +575,19 @@ public class JavaWriter extends SourceWriter {
 				if(f.getBitCount() == 1) {
 					fi = f.getParent().getIndex();
 				}
-				addLine("private static final int " + NameMaker.makeFieldIndexName(f) + " = "+fi+";");
+				lines.add("private static final int " + NameMaker.makeFieldIndexName(f) + " = "+fi+";");
 					
 			} else {
 				System.out.println("JavaWriter.writeMessageFile not sure how to do index constant for --> "+f);
 			}
 		});
+		Collections.sort(lines);
+		addLines(lines);
 		
 		addLine();
 		addLineComment("The following values represent the ordinals of the fields of this message.");
 		addLineComment("This corresponds to the order that they were defined in the schema");
+		lines.clear();
 		fs2.forEach(f -> {
 			List<Field> pis = f.getAncestors(MessageField.class);
 			boolean inSeq = false;
@@ -595,54 +602,67 @@ public class JavaWriter extends SourceWriter {
 				if(f.getBitCount() == 1) {
 					fi = f.getParent().getOrdinal();
 				}
-				addLine("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
+				lines.add("private static final int " + NameMaker.makeFieldOrdinalName(f) + " = "+fi+";");
 			}
 		});
+		Collections.sort(lines);
+		addLines(lines);
 		
 		//bit num stuff
 		addLine();
 		addLineComment("Bit Nums");
+		lines.clear();
 		fs.forEachOfType(BaseField.class, false, f -> {
 			if(f.getBitCount() == 1) {
-				addLine("private static final int " + NameMaker.makeBooleanBitNumName(f) + " = " +f.getIndex()+";");
+				lines.add("private static final int " + NameMaker.makeBooleanBitNumName(f) + " = " +f.getIndex()+";");
 			}
 		});
-		
+		Collections.sort(lines);
+		addLines(lines);
 	
 		//sequence stuff
 		if(fs.isChildrenOfType(SequenceField.class, false)) {
 			addLine();
 			addLineComment("Sequence Element Byte Counts");
+			lines.clear();
 			fs.forEachOfType(SequenceField.class, false, sf -> {
-				addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getBytesPerElement()+";");
+				lines.add("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " = "+sf.getBytesPerElement()+";");
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		//string stuff
 		if(fs.isChildrenOfType(StringField.class, false)) {
 			addLine();
 			addLineComment("String max length constants");
+			lines.clear();
 			fs.forEachOfType(StringField.class, false, sf -> {
-				addLine("private static final int " + NameMaker.makeStringMaxLengthName(sf) + " = "+sf.getMaxSize()+";");
+				lines.add("private static final int " + NameMaker.makeStringMaxLengthName(sf) + " = "+sf.getMaxSize()+";");
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		//array stuff
 		if(fs.isChildrenOfType(ArrayField.class, false)) {
 			addLine();
 			addLineComment("Add array sizes and element byte count");
+			lines.clear();
 			fs.forEachOfType(ArrayField.class, false, af -> {
 				List<Index> is = af.getIndeces();
 				int n = is.size();
 				if(n == 1) {
 					Index pi = is.get(0);
-					addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
-					addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+					lines.add("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
+					lines.add("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 				} else {
 					for(Index pi : is) { 
-						addLine("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
-						addLine("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
+						lines.add("private static final int " + NameMaker.makeArraySizeName(pi) + " = "+pi.n+";");
+						lines.add("private static final int " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " = "+pi.bytesPerElement+";");
 					}
 				}
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		
 		

@@ -210,6 +210,8 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			
 			computeIndeces();
 			
+			sortFields();
+			
 
 		} catch (SchemaParserException e) {
 			e.printStackTrace();
@@ -223,6 +225,24 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 		System.out.println("BlueberrySchemaParser.parse done.");
 
+	}
+	/**
+	 * sort of the field lists so the output files will have a pleasant order
+	 */
+	private void sortFields() {
+		for(BlueModule bm : m_modules) {
+			//sort constants
+			Collections.sort(bm.getConstants(), (a, b) -> {
+				String an = a.getName().toDotString();
+				String bn = b.getName().toDotString();
+				
+				return an.compareTo(bn);
+			});
+			//sort messages
+			bm.getMessages().sortByTypeName();
+			
+		}
+		
 	}
 
 	/**

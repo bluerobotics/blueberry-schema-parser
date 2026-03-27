@@ -33,34 +33,53 @@ import java.util.function.Consumer;
  * 
  */
 public class FieldList {
-	private final ArrayList<Field> m_fields;
+	private final ArrayList<Field> m_fields = new ArrayList<Field>();
 	public void add(Field f){
 		m_fields.add(f);
 	}
 	public FieldList() {
-		this(new ArrayList<Field>());
 	}
 	private FieldList(ArrayList<Field> fs) {
-		m_fields = fs;
+		for(Field f : fs) {
+			m_fields.add(f);
+		}
 		
 	}
-	private FieldList sort(Comparator<Field> comp) {
-		ArrayList<Field> result = new ArrayList<Field>();
-		for(Field f : m_fields) {
-			result.add(f);
-		}
-		Collections.sort(result, comp);
-		return new FieldList(result);
+
+	private void sort(Comparator<Field> comp) {
+		Collections.sort(m_fields, comp);
 	}
-	public FieldList sortByTypeName() {
-		return sort((a,b) -> {
-			ScopeName sna = a.getTypeName();
-			ScopeName snb = b.getTypeName();
+	public FieldList makeListSortedByName() {
+		FieldList result = new FieldList(m_fields);
+		result.sortByName();
+		return result;
+	}
+	public void sortByTypeName() {
+		sort((a,b) -> {
+			String sna = a.getTypeName().toLowerSnake("/");
+			String snb = b.getTypeName().toLowerSnake("/");
 			
-			return sna.toDotString().compareTo(snb.toDotString());
+			return sna.compareTo(snb);
 		});
 	}
-	/**
+	public void sortByName() {
+		sort((a,b) -> {
+			int result;
+			SymbolName sna = a.getName();
+			SymbolName snb = b.getName();
+			if(sna == null && snb == null) {
+				result = 0;
+			} else if(sna == null) {
+				result = -1;
+			} else if(snb == null) {
+				result = 1;
+			} else {
+				result = sna.toDotString().compareTo(snb.toDotString());
+			}
+			
+			return result;
+		});
+	}	/**
 	 * Applies the specified consumer to all members of this list that are of the specified type
 	 * @param <T>
 	 * @param c
@@ -209,10 +228,7 @@ public class FieldList {
 		return result;
 	}
 	public FieldList duplicate() {
-		FieldList result = new FieldList();
-		forEach(f -> {
-			result.add(f);
-		});
+		FieldList result = new FieldList(m_fields);
 		return result;
 	}
 	public void remove(Field f) {

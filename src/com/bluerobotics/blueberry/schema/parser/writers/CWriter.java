@@ -23,6 +23,7 @@ package com.bluerobotics.blueberry.schema.parser.writers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.bluerobotics.blueberry.schema.parser.constants.BooleanConstant;
@@ -243,6 +244,7 @@ public class CWriter extends SourceWriter {
 		//add defines for field indeces
 		//also keep track of any boolfieldfields
 		m_bools = false;
+		ArrayList<String> lines = new ArrayList<String>();
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 			
@@ -250,10 +252,10 @@ public class CWriter extends SourceWriter {
 				if(getType(f) != null) {
 					if(!(f instanceof BoolFieldField)) {
 						if(f.getBitCount() == 1) {
-							addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getParent().getIndex()+")");
+							lines.add("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getParent().getIndex()+")");
 							m_bools = true;
 						} else {
-							addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
+							lines.add("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 						}
 					}
 					if(f.getTypeId() == TypeId.STRING) {
@@ -263,23 +265,26 @@ public class CWriter extends SourceWriter {
 				} else {
 					if(f instanceof ArrayField) {
 						m_arrays = true;
-						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
+						lines.add("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 					} else if(f instanceof SequenceField) {
 						m_sequences = true;
-						addLine("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
+						lines.add("#define " + NameMaker.makeFieldIndexName(f) + " ("+f.getIndex()+")");
 					}
 				}
 			});
 		});
+		Collections.sort(lines);
+		addLines(lines);
 		addLine();
 		addLineComment("Add message field ordinals");
+		lines.clear();
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			
 			
 			mf.getChildren().forEach(true, f -> {
 				
 				if(f.getName() != null && f.isNotFiller()) {
-					addLine("#define " + NameMaker.makeFieldOrdinalName(f) + " ("+f.getOrdinal()+")");
+					lines.add("#define " + NameMaker.makeFieldOrdinalName(f) + " ("+f.getOrdinal()+")");
 				}
 						
 					
@@ -288,82 +293,96 @@ public class CWriter extends SourceWriter {
 				
 			});
 		});
+		Collections.sort(lines);
+		addLines(lines);
 
 		
 		addLine();
 		addLineComment("Add message max ordinals - the number of fields in the message and the ordinal of the last field of the message");
 		
 		//add a line for the max ordinal
+		lines.clear();
 		module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 
-			addLine("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getMaxOrdinal()+")");
-			addLine("#define "+NameMaker.makeMessageModuleMessageConstant(mf) + " ("+WriterUtils.formatAsHex(mf.getModuleMessageKey())+")");
+			lines.add("#define "+NameMaker.makeMessageMaxOrdinalName(mf) + " ("+mf.getMaxOrdinal()+")");
+			lines.add("#define "+NameMaker.makeMessageModuleMessageConstant(mf) + " ("+WriterUtils.formatAsHex(mf.getModuleMessageKey())+")");
 			
 		});
+		Collections.sort(lines);
+		addLines(lines);
 		
 		if(m_bools) {
 			addLine();
 			addLineComment("Add message boolean field masks");
 
 			//now add defines for bit field indeces and bit masks
+			lines.clear();
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEach(true, f -> {
 					if(f.getIndex() >= 0) {
 						if(f instanceof BaseField && f.getBitCount() == 1) {
-						
-							addLine("#define " + NameMaker.makeBooleanMaskName(f) + " (1 << "+f.getIndex()+")");
-	
+							lines.add("#define " + NameMaker.makeBooleanMaskName(f) + " (1 << "+f.getIndex()+")");
 						}
-						
-						
 					}
 				});
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		if(m_arrays) {
 			addLine();
 			addLineComment("Add array sizes and element byte count");
+			lines.clear();
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
+				
 				mf.getChildren().forEachOfType(ArrayField.class, true, af -> {
 					List<Index> is = af.getIndeces();
 					int n = is.size();
 					if(n == 1) {
 						Index pi = is.get(0);
-						addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
-						addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
+						lines.add("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+						lines.add("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 					} else {
 						for(Index pi : is) { 
-							addLine("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
-							addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
+							lines.add("#define " + NameMaker.makeArraySizeName(pi) + " ("+pi.n+")");
+							lines.add("#define " + NameMaker.makeMultipleFieldElementByteCountName(pi) + " ("+pi.bytesPerElement+")");
 						}
 					}
 					
 				});
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		if(m_sequences) {
 			addLine();
 			addLineComment("Add sequence element byte count");
+			lines.clear();
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(SequenceField.class, true, sf -> {
 					
-					addLine("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getBytesPerElement()+")");
+					lines.add("#define " + NameMaker.makeMultipleFieldElementByteCountName(sf.getIndeces().getFirst()) + " ("+sf.getBytesPerElement()+")");
 
 				});
 			});
+			Collections.sort(lines);
+			addLines(lines);
 			
 
 		}
 		if(m_strings) {
 			addLine();
 			addLineComment("Add string max length constants");
+			lines.clear();
 			module.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				mf.getChildren().forEachOfType(StringField.class, true, sf -> {
 					
-					addLine("#define " + NameMaker.makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
+					lines.add("#define " + NameMaker.makeStringMaxLengthName(sf) + " ("+sf.getMaxSize()+")");
 
 				});
 			});
+			Collections.sort(lines);
+			addLines(lines);
 		}
 		
 		
@@ -378,21 +397,27 @@ public class CWriter extends SourceWriter {
 		addSectionDivider("Types");
 
 		addSectionDivider("Variables");
+		lines.clear();
 		module.getConstants().forEach(c -> {
 			if(c instanceof StringConstant) {
 				StringConstant sc = (StringConstant)c;
-				addLine("const char "+NameMaker.makeConstantName(sc)+"[] = \"" + sc.getValue()+"\";");
+				lines.add("const char "+NameMaker.makeConstantName(sc)+"[] = \"" + sc.getValue()+"\";");
 			}
 		});
+		Collections.sort(lines);
+		addLines(lines);
 		addSectionDivider("Topic String Constants");
+		lines.clear();
 		module.getMessages().forEachOfType(MessageField.class, false, msg -> {
 			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 			String t = a.getParameter(0, String.class);
 			t = t.replace(Annotation.TOPIC_NID_STRING, TOPIC_NID_CHAR_STRING);
 			t = t.replace(Annotation.TOPIC_DEVICE_TYPE_STRING, TOPIC_DEVICE_TYPE_CHAR_STRING);
 
-			addLine("const char "+NameMaker.makeTopicSymbol(msg)+"[] = \""+t+"\";");
+			lines.add("const char "+NameMaker.makeTopicSymbol(msg)+"[] = \""+t+"\";");
 		});
+		Collections.sort(lines);
+		addLines(lines);
 
 		addSectionDivider("Function Prototypes");
 //		addBlockFunctionAdder(top, true);
