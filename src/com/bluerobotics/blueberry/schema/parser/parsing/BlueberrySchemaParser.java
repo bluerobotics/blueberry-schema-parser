@@ -1568,6 +1568,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 
 	}
 	private void assembleModule(IdentifierToken it) {
+		m_lastComment = null;
 		SymbolNameToken moduleName = m_tokens.relative(1, SymbolNameToken.class);
 		if(moduleName == null) {
 			moduleName = m_tokens.relative(1, ScopeNameToken.class);
