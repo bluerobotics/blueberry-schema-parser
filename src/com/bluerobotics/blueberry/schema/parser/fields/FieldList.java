@@ -22,6 +22,8 @@ THE SOFTWARE.
 package com.bluerobotics.blueberry.schema.parser.fields;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.function.BiConsumer;
@@ -31,9 +33,32 @@ import java.util.function.Consumer;
  * 
  */
 public class FieldList {
-	private final ArrayList<Field> m_fields = new ArrayList<>();
+	private final ArrayList<Field> m_fields;
 	public void add(Field f){
 		m_fields.add(f);
+	}
+	public FieldList() {
+		this(new ArrayList<Field>());
+	}
+	private FieldList(ArrayList<Field> fs) {
+		m_fields = fs;
+		
+	}
+	private FieldList sort(Comparator<Field> comp) {
+		ArrayList<Field> result = new ArrayList<Field>();
+		for(Field f : m_fields) {
+			result.add(f);
+		}
+		Collections.sort(result, comp);
+		return new FieldList(result);
+	}
+	public FieldList sortByTypeName() {
+		return sort((a,b) -> {
+			ScopeName sna = a.getTypeName();
+			ScopeName snb = b.getTypeName();
+			
+			return sna.toDotString().compareTo(snb.toDotString());
+		});
 	}
 	/**
 	 * Applies the specified consumer to all members of this list that are of the specified type

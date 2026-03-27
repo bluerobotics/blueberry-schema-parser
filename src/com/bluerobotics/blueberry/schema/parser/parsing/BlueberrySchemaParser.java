@@ -289,13 +289,13 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			IdentifierToken long1 = m_tokens.gotoNextId(TokenIdentifier.LONG);
 			IdentifierToken long2 = m_tokens.relativeId(1, TokenIdentifier.LONG);
 			if(long1 != null && long2 != null) {
-				m_tokens.next();
+				
 				m_tokens.remove(long2);
 				IdentifierToken longLong = new IdentifierToken(long1.getStart(), long2.getEnd(), TokenIdentifier.LONG_LONG);
 				m_tokens.replace(long1, longLong);
 				
 			}
-
+			m_tokens.next();
 		}
 		
 	}

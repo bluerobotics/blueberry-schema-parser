@@ -446,7 +446,7 @@ public class JavaWriter extends SourceWriter {
 
 	private void writeConstants(BlueModule m) {
 
-		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
+		m.getMessages().sortByTypeName().forEachOfType(MessageField.class, false, mf -> {
 			
 
 			

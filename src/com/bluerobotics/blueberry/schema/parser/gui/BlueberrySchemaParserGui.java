@@ -41,6 +41,7 @@ import javax.swing.text.StyleConstants;
 import com.bluerobotics.blueberry.schema.parser.parsing.BlueberrySchemaParser;
 import com.bluerobotics.blueberry.schema.parser.parsing.Constants;
 import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssue;
+import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssue.Type;
 import com.bluerobotics.blueberry.schema.parser.parsing.ParserIssueLogger;
 import com.bluerobotics.blueberry.schema.parser.parsing.SchemaParserException;
 import com.bluerobotics.blueberry.schema.parser.tokens.Coord;
@@ -470,6 +471,11 @@ public class BlueberrySchemaParserGui implements Constants {
 			loadFiles(dir, dir);
 			append("Starting Parser");
 			m_parser.parse();
+			int s = m_log.getIssueCountOfType(Type.SKIPPED);
+			int w = m_log.getIssueCountOfType(Type.WARNING);
+			int e = m_log.getIssueCountOfType(Type.ERROR);
+			int n = m_log.getIssueCountOfType(Type.NOTE);
+			append("Parsing Done: "+e+" Errors, "+w+" Warnings, "+s+" Skipped, "+n+" Notes.");
 		} catch(SchemaParserException e) {
 			append(e.toString());
 		}
