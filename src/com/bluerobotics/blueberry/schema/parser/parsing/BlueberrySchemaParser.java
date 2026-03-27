@@ -996,6 +996,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 	}
 
 	private void assembleImport(IdentifierToken it) {
+		m_lastComment = null;//clear this here. 
 		SymbolNameToken nameToken = m_tokens.relative(1, SymbolNameToken.class);//or this
 		if(nameToken == null) {
 			m_log.issueError("Import statement does not have a name specified", it.getStart());
