@@ -114,6 +114,23 @@ public class Annotation  {
 		}
 		return result;
 	}
+	/**
+	 * looks up the first parameter of the specified type
+	 * this is useful as most annotations only have one parameter
+	 * @param <C>
+	 * @param t - the type to look for
+	 * @return the parameter of the specified type or null if there isn't one
+	 */
+	public <C extends Object> C getParameter(Class<C> t) {
+		C result = null;
+		for(Object o : m_parameters) {
+			if(t.isInstance(o)) {
+				result = t.cast(o);
+				break;
+			}
+		}
+		return result;
+	}
 	public List<Object> getParameters(){
 		return m_parameters;
 	}

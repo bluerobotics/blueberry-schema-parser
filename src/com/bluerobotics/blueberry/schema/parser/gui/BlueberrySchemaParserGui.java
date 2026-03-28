@@ -403,7 +403,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				JavaWriter w = new JavaWriter(dir, m_parser, h, p, m_log);
 				w.write();
 			}
-			append("Done");
+			appendDone();
 		});
 	}
 
@@ -427,7 +427,7 @@ public class BlueberrySchemaParserGui implements Constants {
 				CWriter w = new CWriter(dir, m_parser, h, m_log);
 				w.write();
 			}
-			append("Done");
+			appendDone();
 		});
 	}
 	private String readHeader(URI uri) {
@@ -459,7 +459,7 @@ public class BlueberrySchemaParserGui implements Constants {
 		String h = readHeader(m_settings.getUri(Key.IDL_HEADER_FILE_PATH));
 		PrettyWriter pw = new PrettyWriter(dir, m_parser, h, m_log);
 //		pw.write(m_parser.getTopLevelField(), m_parser.getHeader());
-		append("Done");
+		appendDone();
 	}
 	private void noThreadParse() {
 
@@ -471,14 +471,17 @@ public class BlueberrySchemaParserGui implements Constants {
 			loadFiles(dir, dir);
 			append("Starting Parser");
 			m_parser.parse();
-			int s = m_log.getIssueCountOfType(Type.SKIPPED);
-			int w = m_log.getIssueCountOfType(Type.WARNING);
-			int e = m_log.getIssueCountOfType(Type.ERROR);
-			int n = m_log.getIssueCountOfType(Type.NOTE);
-			append("Parsing Done: "+e+" Errors, "+w+" Warnings, "+s+" Skipped, "+n+" Notes.");
+			appendDone();
 		} catch(SchemaParserException e) {
 			append(e.toString());
 		}
+	}
+	private void appendDone() {
+		int s = m_log.getIssueCountOfType(Type.SKIPPED);
+		int w = m_log.getIssueCountOfType(Type.WARNING);
+		int e = m_log.getIssueCountOfType(Type.ERROR);
+		int n = m_log.getIssueCountOfType(Type.NOTE);
+		append("Parsing Done: "+e+" Errors, "+w+" Warnings, "+s+" Skipped, "+n+" Notes.");
 	}
 	private void loadFiles(File root, File f) throws SchemaParserException {
 		append("Loading \""+f+"\"\n");

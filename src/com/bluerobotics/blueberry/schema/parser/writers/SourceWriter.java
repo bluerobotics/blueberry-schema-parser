@@ -348,7 +348,7 @@ public abstract class SourceWriter {
 		if(modA == null) {
 			throw new SchemaParserException("Message does not appear to be in a module annotated with a module key.", mf.getCoord());
 		}
-		Number messKey = messA.getParameter(0, Number.class);
+		Number messKey = messA.getParameter(Number.class);
 		Number modKey = modA.getParameter(0, Number.class);
 		if(messKey == null) {
 			throw new SchemaParserException("Message field annotation needs a parameter that is an integer.", mf.getCoord());

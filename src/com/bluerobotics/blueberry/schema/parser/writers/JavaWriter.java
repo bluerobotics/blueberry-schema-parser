@@ -148,7 +148,7 @@ public class JavaWriter extends SourceWriter {
 		FieldList ms = m.getMessages();
 		ms.forEachOfType(MessageField.class, false, msg -> {
 			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
-			String t = a.getParameter(0, String.class);
+			String t = a.getParameter(String.class);
 			addLine("public static final String "+NameMaker.makeTopicSymbol(msg)+" = \""+t+"\";");
 		});
 		addLine();

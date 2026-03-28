@@ -546,7 +546,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(BlueModule m : m_modules) {
 			m.getMessages().forEachOfType(MessageField.class, false, mf -> {
 				Annotation a = mf.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
-				if(a == null || a.getParameter(0, Number.class) == null) {
+				if(a == null || a.getParameter(Number.class) == null) {
 					 a = new Annotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName(), null);
 					 long h = makeHashKey(mf);
 //					 long i = getNextMessageKey(m);
@@ -569,7 +569,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		for(BlueModule m : m_modules) {
 			Annotation a = m.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
-				Number n = a.getParameter(0,  Number.class);
+				Number n = a.getParameter(Number.class);
 				if(n != null && n.asLong() == i) {
 					result = true;
 					break;
@@ -586,7 +586,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 			MessageField msg = (MessageField)m.getMessages().get(i);
 			Annotation a = msg.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
-				Number nt = a.getParameter(0,  Number.class);
+				Number nt = a.getParameter(Number.class);
 				if(nt != null && nt.asLong() == h) {
 					result = true;
 					break;
@@ -634,7 +634,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m.getMessages().forEachOfType(MessageField.class, false, mf -> {
 			Annotation a = mf.getAnnotation(Annotation.KnownAnnotation.MESSAGE_KEY.getName());
 			if(a != null) {
-				Number an = a.getParameter(0, Number.class);
+				Number an = a.getParameter(Number.class);
 				if(an != null) {
 					keys.add(an.asInt());
 				}
@@ -673,7 +673,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 		m_modules.forEach(m -> {
 			Annotation a = m.getAnnotation(Annotation.KnownAnnotation.MODULE_KEY.getName());
 			if(a != null) {
-				Number an = a.getParameter(0, Number.class);
+				Number an = a.getParameter(Number.class);
 				if(an != null) {
 					keys.add(an.asInt());
 				}
@@ -1879,7 +1879,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 //				}
 			}
 			if(a.getName().equals(Annotation.KnownAnnotation.FILE_PATH.getName())) {
-				String fn = a.getParameter(0, String.class);
+				String fn = a.getParameter(String.class);
 				if(fn == null) {
 					m_log.issueError("File path annotation should have a string parameter.");
 				} else {

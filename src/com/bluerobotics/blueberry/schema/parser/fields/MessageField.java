@@ -89,7 +89,7 @@ public class MessageField extends ParentField {
 		boolean result = false;
 		Annotation a = getAnnotation(Annotation.KnownAnnotation.SERIALIZATION.getName());
 		if(a != null) {
-			Object s = a.getParameter(0, Object.class);
+			Object s = a.getParameter(Object.class);
 			if(s.toString().equals("CDR")) {
 				result = true;
 				
@@ -105,7 +105,7 @@ public class MessageField extends ParentField {
 		String result = "";
 		Annotation a = getAnnotation(Annotation.KnownAnnotation.TOPIC.getName());
 		if(a != null) {
-			result = a.getParameter(0, Object.class).toString();
+			result = a.getParameter(String.class).toString();
 		}
 		return result;
 	}
@@ -120,8 +120,8 @@ public class MessageField extends ParentField {
 		} else if(meska == null) {
 			throw new SchemaParserException("Message is not contained in a module that includes a module key.", getCoord());
 		}
-		Number modkn = modka.getParameter(0, Number.class);
-		Number meskn = meska.getParameter(0, Number.class);
+		Number modkn = modka.getParameter(Number.class);
+		Number meskn = meska.getParameter(Number.class);
 		
 		if(modkn == null) {
 			throw new SchemaParserException("Message module key is not a number.", getCoord());
