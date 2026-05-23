@@ -826,7 +826,7 @@ public class BlueberrySchemaParser implements Constants, TokenConstants {
 						
 						if(df.getTypeName().isMatch(imports, typeName)) {
 							if(dft != null) {
-								m_log.issueWarning("Type shadowing: "+typeName.toUpperCamelString(), f.getCoord(), dft.getCoord());
+								m_log.issueWarning("Type shadowing: "+typeName.toUpperCamelString(), df.getCoord(), dft.getCoord());
 							} else {
 								dft = df;
 							}	
