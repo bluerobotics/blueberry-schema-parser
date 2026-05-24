@@ -551,7 +551,7 @@ public class JavaWriter extends SourceWriter {
 		
 		
 		
-		FieldList fs = msg.getUsefulChildren(true).makeListSortedByName();
+		FieldList fs = msg.getUsefulChildren().makeListSortedByName();
 		FieldList fs2 = fs.duplicate();
 		
 		fs.forEach(f1 -> {
@@ -673,7 +673,7 @@ public class JavaWriter extends SourceWriter {
 		addRxMessageWrapper(msg);
 		makeMessageFullTester(msg);
 		
-		msg.getUsefulChildren(true).forEach(false, f -> {
+		msg.getUsefulChildren().forEach(false, f -> {
 			if(NameMaker.makeFieldSetterName(f, false).equals("setTest10")) {
 				System.out.println("JavaWriter.writeMessageFile blah");
 			}
@@ -682,12 +682,12 @@ public class JavaWriter extends SourceWriter {
 			makeMessagePresenceTester(f);
 			
 		});
-		msg.getUsefulChildren(true).forEachOfType(SequenceField.class, false, f -> {
+		msg.getUsefulChildren().forEachOfType(SequenceField.class, false, f -> {
 			makeSequenceInit(f);
 			makeSequenceLengthGetter(f);
 
 		});
-		msg.getUsefulChildren(true).forEachOfType(StringField.class, false, f -> {
+		msg.getUsefulChildren().forEachOfType(StringField.class, false, f -> {
 			makeStringCopier(f, true);
 			makeStringCopier(f, false);
 		});
@@ -928,7 +928,7 @@ public class JavaWriter extends SourceWriter {
 		//first make a list of all top-level fields that are not strings or parent fields
 		//but also add contents of boolfieldfields
 		if(params) {
-			mf.getUsefulChildren(true).forEach(false, f -> {
+			mf.getUsefulChildren().forEach(false, f -> {
 				
 				String tp = getType(f);
 				

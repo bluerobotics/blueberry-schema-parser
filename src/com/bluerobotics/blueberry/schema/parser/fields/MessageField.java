@@ -139,17 +139,22 @@ public class MessageField extends ParentField {
 		return getPaddedByteCount()/4;
 	}
 	/**
-	 * make a list of all child fields of this message that are not part of the header and are not filler
+	 * Make a list of all child fields of this message that are not part of the header and are not filler
+	 * Excludes bool field fields and children of defined types
 	 * @param deep - when true recurses down sequences, arrays and structs
 	 * @return
 	 */
-	public FieldList getUsefulChildren(boolean deep) {
+	public FieldList getUsefulChildren() {
 		FieldList result = new FieldList();
-		getChildren().forEach(deep, f -> {
+		getChildren().forEach(true, f -> {
 			if(f.getName() != null && f.getName().equals(MessageField.MODULE_MESSAGE_KEY_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.LENGTH_FIELD_NAME)) {
 			} else if(f.getName() != null && f.getName().equals(MessageField.MAX_ORDINAL_FIELD_NAME)) {
 			} else if(f instanceof BoolFieldField) {
+				//don't include this, only its children will be included
+			} else if(f.getParent() instanceof DefinedTypeField) {
+				//don't add children if their parent is a defined type
+				
 			} else if(f.isNotFiller()) {
 				result.add(f);
 			}
