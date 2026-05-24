@@ -1235,6 +1235,8 @@ public class CWriter extends SourceWriter {
 		case DEFERRED:
 			break;
 		case DEFINED:
+			Field cf = ((DefinedTypeField)f).getFirstChild();
+			result = lookupBbGetSet(cf, getNotSet);
 			break;
 		}
 		return result;
