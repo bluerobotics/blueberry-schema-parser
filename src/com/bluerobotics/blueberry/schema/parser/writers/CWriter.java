@@ -1284,7 +1284,7 @@ public class CWriter extends SourceWriter {
 			result = "uint32_t";
 			break;
 		case UINT64:
-			result = "uint64";
+			result = "uint64_t";
 			break;
 		case UINT8:
 			result = "uint8_t";
