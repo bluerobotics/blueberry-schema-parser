@@ -1060,55 +1060,65 @@ public class JavaWriter extends SourceWriter {
 	private String makeBbGetSet(Field f, boolean setNotGet) {
 		SymbolName result = SymbolName.fromCamel(setNotGet ? "write" : "read");
 		
+		result = result.append(getTypeName(f));
+		
+		return result.toLowerCamelString();
+	}
+	
+	
+	private String getTypeName(Field f) {
+		String result = "";
 		switch(f.getTypeId()) {
 		default:
 		case ARRAY:
 		case BOOLFIELD:
 		case DEFERRED:
-		case DEFINED:
 		case FILLER:
 		case MESSAGE:
 		case SEQUENCE:
 		case STRING:
 		case STRUCT:
 			throw new RuntimeException("Should never have done this!");
+		case DEFINED:
+			Field cf = ((DefinedTypeField)f).getFirstChild();
+			result = getTypeName(cf);
+			break;
 		case BOOL:
-			result = result.append("bit");
+			result = "bit";
 			break;
 		case FLOAT32:
-			result = result.append("float32");
+			result = "float32";
 			break;
 		case FLOAT64:
-			result = result.append("float64");
+			result = "float64";
 			break;
 		case INT16:
-			result = result.append("int16");
+			result = "int16";
 			break;
 		case INT32:
-			result = result.append("int32");
+			result = "int32";
 			break;
 		case INT64:
-			result = result.append("int64");
+			result = "int64";
 			break;
 		case INT8:
-			result = result.append("int8");
+			result = "int8";
 			break;
 		case UINT16:
-			result = result.append("uint16");
+			result = "uint16";
 			break;
 		case UINT32:
-			result = result.append("uint32");
+			result = "uint32";
 			break;
 		case UINT64:
-			result = result.append("uint64");
+			result = "uint64";
 			break;
 		case UINT8:
-			result = result.append("uint8");
+			result = "uint8";
 			break;
 		
 		}
-		
-		return result.toLowerCamelString();
+		return result;
 	}
 
 	private String getType(Field f) {
@@ -1311,6 +1321,10 @@ public class JavaWriter extends SourceWriter {
 		case UINT8:
 			result += "Uint8";
 			break;
+		case DEFINED:
+			Field cf = ((DefinedTypeField)f).getFirstChild();
+			result = lookupGetSetName(cf, getNotSet);
+			break;
 		case FILLER:
 		case BOOLFIELD:
 		case STRUCT:
@@ -1319,7 +1333,7 @@ public class JavaWriter extends SourceWriter {
 		case SEQUENCE:
 		case STRING:
 		case DEFERRED:
-		case DEFINED:
+		
 			throw new RuntimeException("I don't think this should have happened.");
 		}
 		return result;
